@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "icon of one round glowing green crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 32,
+    "height": 32,
+    "no_background": true,
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_image",
+  "id": "9c812f74-e3f5-46a1-a39d-db37ed96bf3b",
+  "generatedAt": "2026-10-01T17:52:11.136Z"
+}

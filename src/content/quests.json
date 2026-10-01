@@ -1,0 +1,221 @@
+{
+  "assessment": {
+    "A": [
+      {"id": "A1a", "topic": 1, "kind": "cell-row", "table": 0, "row": 0, "column": 1},
+      {"id": "A1b", "topic": 1, "kind": "cell-row", "table": 0, "row": 1, "column": 2},
+      {"id": "A2a", "topic": 2, "kind": "cell-row", "table": 0, "row": 0, "column": 2},
+      {"id": "A2b", "topic": 2, "kind": "cell-row", "table": 0, "row": 2, "column": 1},
+      {"id": "A3a", "topic": 3, "kind": "cell-column", "table": 0, "row": 1, "column": 1, "columns": [1, 2]},
+      {"id": "A3b", "topic": 3, "kind": "cell-column", "table": 0, "row": 0, "column": 2, "columns": [1, 2]},
+      {"id": "A4a", "topic": 4, "kind": "section-order", "first": 0, "second": 2},
+      {"id": "A4b", "topic": 4, "kind": "section-order", "first": 3, "second": 4},
+      {"id": "A5a", "topic": 5, "kind": "row-cell", "table": 0, "row": 1, "column": 2, "distractors": [3, 5]},
+      {"id": "A5b", "topic": 5, "kind": "row-cell", "table": 0, "row": 4, "column": 2, "distractors": [0, 2]},
+      {"id": "A6a", "topic": 6, "kind": "quest-step-order", "first": 1, "second": 3},
+      {"id": "A6b", "topic": 6, "kind": "quest-step-order", "first": 4, "second": 5}
+    ],
+    "B": [
+      {"id": "B1a", "topic": 1, "kind": "cell-row", "table": 0, "row": 1, "column": 1},
+      {"id": "B1b", "topic": 1, "kind": "cell-row", "table": 0, "row": 0, "column": 2},
+      {"id": "B2a", "topic": 2, "kind": "cell-row", "table": 0, "row": 1, "column": 2},
+      {"id": "B2b", "topic": 2, "kind": "cell-row", "table": 0, "row": 0, "column": 1},
+      {"id": "B3a", "topic": 3, "kind": "cell-column", "table": 0, "row": 1, "column": 2, "columns": [1, 2]},
+      {"id": "B3b", "topic": 3, "kind": "cell-column", "table": 0, "row": 0, "column": 1, "columns": [1, 2]},
+      {"id": "B4a", "topic": 4, "kind": "section-order", "first": 1, "second": 3},
+      {"id": "B4b", "topic": 4, "kind": "section-order", "first": 4, "second": 5},
+      {"id": "B5a", "topic": 5, "kind": "row-cell", "table": 0, "row": 2, "column": 2, "distractors": [0, 4]},
+      {"id": "B5b", "topic": 5, "kind": "row-cell", "table": 0, "row": 3, "column": 2, "distractors": [1, 5]},
+      {"id": "B6a", "topic": 6, "kind": "quest-step-order", "first": 0, "second": 1},
+      {"id": "B6b", "topic": 6, "kind": "quest-step-order", "first": 2, "second": 4}
+    ]
+  },
+  "rooms": [
+    {
+      "room": 1,
+      "minigames": [
+        {
+          "kind": "match-terms",
+          "section": 1,
+          "assistBatch": 2,
+          "reference": [
+            {
+              "section": 1
+            }
+          ]
+        }
+      ],
+      "backup": [
+        {
+          "kind": "match-table-cells",
+          "table": 0,
+          "columns": [
+            1,
+            2
+          ]
+        }
+      ],
+      "selfCheck": [
+        {
+          "intro": true
+        },
+        {
+          "section": 2
+        }
+      ]
+    },
+    {
+      "room": 2,
+      "minigames": [
+        {
+          "kind": "sort-cases",
+          "basketTable": 0,
+          "answerKey": [
+            0,
+            1,
+            2
+          ],
+          "assistBatch": 1,
+          "reference": [
+            {
+              "table": 0
+            }
+          ]
+        }
+      ],
+      "backup": [
+        {
+          "kind": "match-table-cells",
+          "table": 0,
+          "columns": [
+            1,
+            2
+          ]
+        }
+      ],
+      "selfCheck": [
+        {
+          "section": 0
+        },
+        {
+          "section": 1
+        },
+        {
+          "section": 2
+        }
+      ]
+    },
+    {
+      "room": 3,
+      "minigames": [
+        {
+          "kind": "sort-items",
+          "question": 0,
+          "binTable": 0,
+          "binColumns": [
+            1,
+            2
+          ],
+          "answerKey": [
+            1,
+            2,
+            2,
+            2
+          ],
+          "assistBatch": 1,
+          "reference": [
+            {
+              "table": 0
+            }
+          ]
+        }
+      ],
+      "backup": [
+        {
+          "kind": "sort-table-cells",
+          "table": 0,
+          "columns": [
+            1,
+            2
+          ]
+        }
+      ],
+      "selfCheck": [
+        {
+          "section": 3
+        }
+      ]
+    },
+    {
+      "room": 4,
+      "minigames": [
+        {
+          "kind": "order-steps",
+          "assistBatch": 3
+        },
+        {
+          "kind": "accuracy",
+          "question": 1,
+          "reference": [
+            {
+              "section": 4
+            }
+          ]
+        }
+      ],
+      "backup": [
+        {
+          "kind": "step-pairs"
+        },
+        {
+          "kind": "accuracy-example",
+          "section": 4
+        }
+      ],
+      "selfCheck": [
+        {
+          "section": 2
+        },
+        {
+          "section": 5
+        }
+      ]
+    },
+    {
+      "room": 5,
+      "minigames": [
+        {
+          "kind": "match-table",
+          "table": 0,
+          "columns": [
+            1,
+            2
+          ],
+          "assistBatch": 3,
+          "reference": [
+            {
+              "table": 0
+            }
+          ]
+        }
+      ],
+      "backup": [
+        {
+          "kind": "match-table-cells",
+          "table": 0,
+          "columns": [
+            2
+          ],
+          "sample": 3
+        }
+      ],
+      "selfCheck": [
+        {
+          "intro": true
+        },
+        {
+          "section": 2
+        }
+      ]
+    }
+  ]
+}

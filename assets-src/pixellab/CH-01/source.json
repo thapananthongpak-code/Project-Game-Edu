@@ -1,0 +1,25 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage lab intern with short dark hair, white lab coat over a teal polo shirt, small ID badge on the chest, dark navy trousers, white sneakers, friendly calm face, gender-neutral, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงาน (ผู้เล่น) 4 ทิศ",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "7a2b2710-a459-496f-889e-1c0664ae414b",
+  "generatedAt": "2026-10-01T16:59:33.859Z",
+  "rejected": [
+    {
+      "tool": "create_character",
+      "id": "d5bb81ca-389b-4858-a3e9-c27f2b6285c1",
+      "reason": "เจนที่ size 64: ตัวละครสูง 65 px เท่าบานประตู เกินเกณฑ์ 48 px ใน ART_GUIDE จึงเจนใหม่ที่ size 48"
+    }
+  ]
+}

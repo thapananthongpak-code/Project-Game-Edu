@@ -1,0 +1,48 @@
+{
+  "name": "ai-trainer-quest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "เกมเว็บ 2D สอนวิชา 21906-2001 เปิดโลกเทคโนโลยีปัญญาประดิษฐ์ (ปวช. 2567)",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "convert:content": "python3 scripts/convert-content.py",
+    "validate:content": "node scripts/validate-content.ts",
+    "verify:content": "python3 scripts/verify-content.py",
+    "assets:build": "python3 scripts/build-assets.py",
+    "pixellab": "node --env-file-if-exists=.env scripts/pixellab-mcp.mjs",
+    "test:e2e": "node scripts/e2e.mjs",
+    "test:e2e:cloud": "node scripts/e2e-cloud.mjs",
+    "test:perf": "node scripts/perf.mjs",
+    "test": "vitest run",
+    "check:coverage": "node scripts/check-coverage.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@supabase/supabase-js": "^2.117.2",
+    "phaser": "^3.90.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "axe-core": "^4.13.0",
+    "playwright-core": "^1.63.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

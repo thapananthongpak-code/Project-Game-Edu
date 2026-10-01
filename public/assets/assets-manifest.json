@@ -1,0 +1,832 @@
+{
+  "generator": "Pixel Lab MCP (https://api.pixellab.ai/mcp)",
+  "styleSuffix": "cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+  "note": "สร้างโดย scripts/build-assets.py ห้ามแก้ด้วยมือ status placeholder = ภาพชั่วคราวที่สคริปต์วาด, generated = ภาพจริงจาก Pixel Lab (ต้นฉบับอยู่ใน assets-src/pixellab/<id>/ และ pixellab.id คือ id ที่ใช้ดึงซ้ำ)",
+  "assets": [
+    {
+      "id": "CH-01",
+      "kind": "character",
+      "name": "นักฝึกงาน (ผู้เล่น) 4 ทิศ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_player_south": "characters/ch_player_south.png",
+        "ch_player_north": "characters/ch_player_north.png",
+        "ch_player_east": "characters/ch_player_east.png",
+        "ch_player_west": "characters/ch_player_west.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, white lab coat over a teal polo shirt, small ID badge on the chest, dark navy trousers, white sneakers, friendly calm face, gender-neutral, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงาน (ผู้เล่น) 4 ทิศ",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "7a2b2710-a459-496f-889e-1c0664ae414b",
+        "generatedAt": "2026-10-01T16:59:33.859Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_character",
+          "id": "d5bb81ca-389b-4858-a3e9-c27f2b6285c1",
+          "reason": "เจนที่ size 64: ตัวละครสูง 65 px เท่าบานประตู เกินเกณฑ์ 48 px ใน ART_GUIDE จึงเจนใหม่ที่ size 48"
+        }
+      ]
+    },
+    {
+      "id": "CH-02",
+      "kind": "sprite",
+      "name": "พี่บิต พี่เลี้ยงหุ่นยนต์",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_south": "characters/ch_mentor_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "60466f78-1ef2-492a-be64-a0e8321113b9",
+        "generatedAt": "2026-10-01T16:59:35.347Z"
+      },
+      "status": "generated",
+      "postprocess": {
+        "removeColor": {
+          "color": "#85838a",
+          "fromRow": 49
+        }
+      },
+      "rejected": [
+        {
+          "tool": "create_character",
+          "id": "d8aca6aa-eee6-4456-86e4-c9ca0dffc6da",
+          "reason": "create_character ใช้โครงร่างมนุษย์: ได้หุ่นยนต์มีขายาว หน้าจอไม่มีตา ไม่ใช่ทรงกลมลอยได้"
+        },
+        {
+          "tool": "create_image_pixflux",
+          "id": "268a2744-0a26-436f-a15b-a489ba43a3bc",
+          "reason": "ทรงกลมลอยได้ไม่มีขา แต่หันข้างและตาเป็นเลนส์เดียว (เก็บไว้ที่ alt-hovering.png)",
+          "subject": "small spherical floating mentor robot drone, ball-shaped white and light gray body with no legs and no feet, hovering in the air, cyan screen face with two simple dot eyes, short antenna with a yellow light on top, two tiny detached floating hands, small blue thruster glow underneath, front view"
+        }
+      ],
+      "note": "ยังมีขาสั้น ไม่ตรงสเปก 'ไม่มีขา ลอยได้' ทั้งหมด เลือกเพราะหันหน้าตรงและมีหน้าจอตาสองจุด ภาพทางเลือกที่ลอยได้อยู่ที่ assets-src/pixellab/CH-02/alt-hovering.png"
+    },
+    {
+      "id": "TS-01",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้อง 1 ห้องปฐมนิเทศ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_r1": "tiles/ts_r1.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of clean pale teal lab floor tiles with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of white lab wall panels with a teal trim band and small round status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "f0f556e9-ab9b-4d95-bb73-ec5f4dc3404d",
+        "generatedAt": "2026-10-01T16:59:37.952Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-02",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้อง 2 โรงฝึกสามสาย",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_r2": "tiles/ts_r2.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of soft violet padded training mats with square seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of dark indigo dojo wall panels with thin violet neon trim lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "5627cfdf-81d6-47bd-9ead-610fbe5b319f",
+        "generatedAt": "2026-10-01T17:34:22.769Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-03",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้อง 3 คลังข้อมูล",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_r3": "tiles/ts_r3.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of dark green-gray metal grating warehouse floor, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of steel vault wall panels with rivets and small glowing green data slots, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "daf44755-f8e6-4eef-ad6b-d85bfe57f925",
+        "generatedAt": "2026-10-01T17:36:59.631Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-04",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้อง 4 โรงงานโมเดล",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_r4": "tiles/ts_r4.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of gunmetal factory floor plates with worn orange guide lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of industrial wall panels with orange and black hazard stripes and metal pipes, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "20fa3812-93ff-416b-b3ea-91028eeed221",
+        "generatedAt": "2026-10-01T17:41:18.735Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-05",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้อง 5 ลานชีวิตประจำวัน",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_r5": "tiles/ts_r5.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of warm cream and coral pink checkered plaza floor tiles, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of a cozy storefront wall with cream bricks and a coral pink awning trim, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "5e64b469-ff78-4465-ba68-77529d6e45aa",
+        "generatedAt": "2026-10-01T17:44:35.613Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-06",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้อง 6 สตูดิโอภาคสนาม",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_r6": "tiles/ts_r6.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of glossy dark navy studio floor with a light blue grid of marker lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of a white studio backdrop wall with an azure blue trim band and softbox light panels, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "556053dc-a183-4db0-8d78-37a8d0c66012",
+        "generatedAt": "2026-10-01T17:46:54.882Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-00",
+      "kind": "tileset",
+      "name": "ไทล์เซตส่วนกลาง (โถงทางเดิน)",
+      "requested": false,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_common_floor": "tiles/ts_common_floor.png",
+        "ts_common_wall": "tiles/ts_common_wall.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of smooth light gray lab floor panels with thin dark seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of white lab wall panels with a dark navy base trim and a thin yellow caution stripe, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0.0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "PR-C01",
+      "kind": "prop",
+      "name": "ประตูล็อก",
+      "requested": false,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_locked": "props/pr_door_locked.png"
+      },
+      "pixellab": {
+        "tool": "create_map_object",
+        "arguments": {
+          "description": "closed sliding metal lab door with a red lock light and an empty hexagon-shaped socket in the center, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_map_object",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "PR-C02",
+      "kind": "prop",
+      "name": "ประตูเปิด",
+      "requested": false,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_open": "props/pr_door_open.png"
+      },
+      "pixellab": {
+        "tool": "create_map_object",
+        "arguments": {
+          "description": "open sliding metal lab door with a green light and a dark doorway, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_map_object",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "PR-C03",
+      "kind": "prop",
+      "name": "แท่นวางแกน AI",
+      "requested": false,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_core_pedestal": "props/pr_core_pedestal.png"
+      },
+      "pixellab": {
+        "tool": "create_map_object",
+        "arguments": {
+          "description": "short white pedestal with an empty glowing glass dome on top, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_map_object",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "PR-C04",
+      "kind": "prop",
+      "name": "เสาสถานี",
+      "requested": false,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_station_terminal": "props/pr_station_terminal.png"
+      },
+      "pixellab": {
+        "tool": "create_map_object",
+        "arguments": {
+          "description": "slim standing info terminal with a blank glowing cyan screen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_map_object",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "PR-C05",
+      "kind": "prop",
+      "name": "โต๊ะสมุดบันทึก",
+      "requested": false,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_notebook_desk": "props/pr_notebook_desk.png"
+      },
+      "pixellab": {
+        "tool": "create_map_object",
+        "arguments": {
+          "description": "small white desk with an open blank notebook and a pen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_map_object",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "PR-102",
+      "kind": "prop",
+      "name": "เครื่อง Machine Learning (เครื่องฝึกของมินิเกม ใช้ทุกห้อง)",
+      "requested": false,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_r1_learning_machine": "props/pr_r1_learning_machine.png"
+      },
+      "pixellab": {
+        "tool": "create_map_object",
+        "arguments": {
+          "description": "rounded teal machine with a funnel on top filled with small sample cards, a glowing core window in the middle and one output slot, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_map_object",
+        "id": null,
+        "generatedAt": null
+      },
+      "status": "placeholder"
+    },
+    {
+      "id": "CORE-1",
+      "kind": "icon",
+      "name": "แกน AI ชิ้นที่ 1",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "core_1": "cores/core_1.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "icon of one round glowing teal crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_image",
+        "id": "139f9ff1-d3a3-4b3b-84fb-9e641c178ed1",
+        "generatedAt": "2026-10-01T17:51:46.939Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "f79c0e31-0a91-4c96-8f37-aa19ea7754b5",
+          "reason": "prompt เสี้ยวหกเหลี่ยมสลักสัญลักษณ์: ได้ลูกแก้วเหลี่ยมขนาดเล็ก รูปทรงไม่เข้ากับชิ้นอื่น จึงเจนใหม่ด้วย prompt ลูกแก้วชุดเดียวกันทั้ง 6 ชิ้น"
+        }
+      ]
+    },
+    {
+      "id": "CORE-2",
+      "kind": "icon",
+      "name": "แกน AI ชิ้นที่ 2",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "core_2": "cores/core_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "icon of one round glowing violet crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_image",
+        "id": "59fb39be-1538-46d5-938a-2f13924043f4",
+        "generatedAt": "2026-10-01T17:50:59.620Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "1c6e6fc7-b0fd-4ef8-8a65-28cca7e1b06b",
+          "reason": "เจนต่อจากภาพชิ้นที่ 1 (init_image strength 200): รูปทรงตรงกันแต่สีออกฟ้า ไม่ใช่ม่วง"
+        },
+        {
+          "tool": "create_image_pixflux",
+          "id": "a668a175-9e48-45c0-bea8-e488de377cdf",
+          "reason": "init_image + color_image จานสีม่วง: สียังเป็น teal ตามภาพตั้งต้น"
+        }
+      ]
+    },
+    {
+      "id": "CORE-3",
+      "kind": "icon",
+      "name": "แกน AI ชิ้นที่ 3",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "core_3": "cores/core_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "icon of one round glowing green crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9c812f74-e3f5-46a1-a39d-db37ed96bf3b",
+        "generatedAt": "2026-10-01T17:52:11.136Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CORE-4",
+      "kind": "icon",
+      "name": "แกน AI ชิ้นที่ 4",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "core_4": "cores/core_4.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "icon of one round glowing orange crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b7a26367-d18c-4308-9d54-5e9146502200",
+        "generatedAt": "2026-10-01T17:52:41.305Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CORE-5",
+      "kind": "icon",
+      "name": "แกน AI ชิ้นที่ 5",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "core_5": "cores/core_5.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "icon of one round glowing coral pink crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_image",
+        "id": "92770660-b92e-400e-8882-c05e10c17140",
+        "generatedAt": "2026-10-01T17:53:07.004Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CORE-6",
+      "kind": "icon",
+      "name": "แกน AI ชิ้นที่ 6",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "core_6": "cores/core_6.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "icon of one round glowing azure blue crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_image",
+        "id": "a00f6527-a303-45ef-a58a-6aa812f8b486",
+        "generatedAt": "2026-10-01T17:53:31.803Z"
+      },
+      "status": "generated"
+    }
+  ]
+}

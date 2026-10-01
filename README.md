@@ -1,0 +1,89 @@
+# AI Trainer Quest
+
+เกมเว็บ 2D สำหรับสอนวิชา 21906-2001 เปิดโลกเทคโนโลยีปัญญาประดิษฐ์ (หลักสูตร ปวช. 2567) หน่วยการเรียนรู้ Machine Learning
+ผู้เรียนเป็นนักฝึกงานใน Pixel AI Lab เดินเรียนและทำเควสผ่าน 6 ห้องตามลำดับ ห้องสุดท้ายออกไปสร้างโมเดลจริงด้วย [Teachable Machine](https://teachablemachine.withgoogle.com/)
+
+| เอกสาร | สำหรับ |
+|---|---|
+| [docs/TEACHER_GUIDE.md](docs/TEACHER_GUIDE.md) | ครูผู้สอน: วิธีใช้ในชั้นเรียน แดชบอร์ด และการพาผู้เรียนทำ Teachable Machine |
+| [docs/EVALUATION_PLAN.md](docs/EVALUATION_PLAN.md) | แผนเก็บข้อมูลเปรียบเทียบก่อนเรียน–หลังเรียน |
+| [docs/GDD.md](docs/GDD.md), [docs/ART_GUIDE.md](docs/ART_GUIDE.md) | ผู้พัฒนา: การออกแบบเกมและงานภาพ |
+| [CLAUDE.md](CLAUDE.md) | ผู้พัฒนา: กติกาของโค้ดและท่อข้อมูลเนื้อหา |
+
+## รันในเครื่อง
+
+ต้องมี Node 22.18 ขึ้นไป
+
+```sh
+npm install
+npm run dev        # http://localhost:5173  (แดชบอร์ดผู้สอนอยู่ที่ /teacher)
+```
+
+ไม่ต้องตั้งค่าอะไรก็เล่นได้ครบ 6 ห้อง: ความคืบหน้าเก็บในเบราว์เซอร์ และพี่บิตตอบด้วยคำใบ้สำเร็จรูป
+ระบบที่ต้องตั้งค่าเพิ่มมี 3 อย่าง แต่ละอย่างเปิดแยกกันได้:
+
+| ระบบ | ตัวแปร | ถ้าไม่ตั้ง |
+|---|---|---|
+| เก็บความคืบหน้าขึ้นฐานข้อมูลกลาง | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | เก็บในเครื่องของผู้เรียนอย่างเดียว |
+| แดชบอร์ดผู้สอน | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TEACHER_PASSWORD` | หน้า `/teacher` แจ้งว่ายังไม่ได้ตั้งค่า |
+| ติวเตอร์ AI | `ANTHROPIC_API_KEY` | พี่บิตให้คำใบ้สำเร็จรูปจากเนื้อหาของห้อง |
+
+คำอธิบายของแต่ละตัวแปรอยู่ใน [.env.example](.env.example)
+
+## นำขึ้นใช้งานจริง (Supabase + Vercel)
+
+### 1. ฐานข้อมูล Supabase
+
+1. สร้างโปรเจกต์ที่ [supabase.com](https://supabase.com) (แผนฟรีพอสำหรับหนึ่งรายวิชา)
+2. เมนู **SQL Editor** → วางเนื้อหาทั้งไฟล์ [supabase/schema.sql](supabase/schema.sql) → **Run** (รันซ้ำได้ ไม่ลบข้อมูลเดิม)
+3. เมนู **Authentication → Sign In / Providers** → เปิด **Allow anonymous sign-ins**
+4. เมนู **Authentication → Rate Limits** → เพิ่มค่า **anonymous sign-ins** (ค่าเริ่มต้นจำกัดต่อ IP ต่อชั่วโมง ทั้งห้องเรียนมักออกอินเทอร์เน็ตด้วย IP เดียวกัน) ให้มากกว่าจำนวนผู้เรียนที่จะลงทะเบียนพร้อมกัน เช่น 200
+5. เมนู **Project Settings → API** (หรือ **API Keys**) จดค่า 3 ค่า:
+   - Project URL → ใช้กับ `VITE_SUPABASE_URL` และ `SUPABASE_URL`
+   - คีย์ `anon` `public` (หรือ Publishable key) → `VITE_SUPABASE_ANON_KEY`
+   - คีย์ `service_role` (หรือ Secret key) → `SUPABASE_SERVICE_ROLE_KEY` **คีย์นี้อ่านข้อมูลได้ทุกแถว ห้ามใส่ในโค้ด ห้ามตั้งชื่อขึ้นต้นด้วย `VITE_` และห้ามส่งให้ใคร**
+
+ผู้เรียนไม่มีบัญชี ไม่มีอีเมล ไม่มีรหัสผ่าน เกมล็อกอินแบบไม่ระบุตัวตนต่ออุปกรณ์เมื่อผู้เรียนใส่รหัสห้องเรียน
+ผู้เรียนอ่านได้เฉพาะแถวของตัวเองและเขียนได้ผ่านฟังก์ชันใน schema เท่านั้น (ทดสอบกับ Postgres ใน `supabase/schema.test.ts`)
+
+### 2. Vercel
+
+1. ที่ [vercel.com](https://vercel.com) → **Add New… → Project** → Import repository นี้จาก GitHub (Vercel รู้จัก Vite เอง ไม่ต้องแก้คำสั่ง build)
+2. ก่อนกด Deploy เปิด **Environment Variables** แล้วใส่ 6 ตัวแปรตาม [.env.example](.env.example) ให้ครบทั้ง Production และ Preview
+3. กด **Deploy**
+
+หรือใช้ CLI:
+
+```sh
+npx vercel login
+npx vercel link
+for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY TEACHER_PASSWORD ANTHROPIC_API_KEY; do npx vercel env add "$name" production; done
+npx vercel --prod
+```
+
+ตัวแปรที่ขึ้นต้นด้วย `VITE_` ถูกฝังลงในโค้ดตอน build **แก้ค่าแล้วต้อง Redeploy** จึงมีผล ตัวแปรที่เหลืออ่านตอนฟังก์ชันทำงาน แต่ Vercel ก็ต้อง Redeploy เพื่อส่งค่าใหม่ให้ฟังก์ชันเช่นกัน
+
+### 3. ตรวจหลังขึ้นระบบ
+
+1. เปิดเว็บ → เริ่มเกมใหม่ → ต้องมีช่อง **รหัสห้องเรียน** (ถ้าไม่มี แปลว่า `VITE_SUPABASE_*` ยังไม่เข้า build ให้ Redeploy)
+2. ลงทะเบียนด้วยรหัสห้องเรียนทดลอง ทำแบบทดสอบก่อนเรียนให้จบ → เปิดสมุดเควส ต้องขึ้น "บันทึกขึ้นฐานข้อมูลแล้ว" และมีรหัสเล่นต่อ
+3. เปิด `/teacher` ใส่รหัสผ่านครู → ต้องเห็นผู้เรียนทดลอง แล้วใช้ปุ่ม "ลบข้อมูลห้องนี้" ลบข้อมูลทดลองออก
+4. เข้าห้อง 1 กด "ถามพี่บิต" ถามคำถามหนึ่งข้อ → ถ้าตั้ง `ANTHROPIC_API_KEY` แล้วจะได้คำตอบจาก AI และตัวนับคำถามลดลง
+
+## คำสั่งตรวจสอบ
+
+```sh
+npm test                 # unit test: เครื่องยนต์ปรับระดับ ข้อสอบ คะแนนพัฒนาการ ที่เก็บข้อมูล แดชบอร์ด ติวเตอร์ และ schema ของฐานข้อมูล (Postgres ในหน่วยความจำ)
+npm run build            # ตรวจชนิด + build
+npm run validate:content # โครงสร้างเนื้อหา เฉลย และข้อสอบสองชุด
+npm run verify:content   # เทียบเนื้อหากับไฟล์ Word ต้นฉบับทีละบรรทัด
+npm run check:coverage   # ทุกหัวข้อมีบทสอน เควส คำถามทบทวน ห้องซ่อม ข้อสอบ และภาพครบ
+npm run test:e2e         # เล่นจบ 6 ห้องด้วย Chrome + แดชบอร์ด + คีย์บอร์ดอย่างเดียว + จอสัมผัส + ตรวจการเข้าถึง (ต้องเปิด npm run dev)
+npm run test:e2e:cloud   # การซิงก์กับฐานข้อมูลกลาง (Supabase จำลอง) ดูวิธีเปิดเซิร์ฟเวอร์ในหัวไฟล์ scripts/e2e-cloud.mjs
+npm run test:perf        # เวลาโหลดและเฟรมเรตเมื่อถ่วง CPU และเครือข่าย (ต้อง build แล้วเปิด npx vite preview --port 4173)
+```
+
+## ที่มาของเนื้อหา
+
+เนื้อหาบทเรียนทั้งหมดมาจากใบเนื้อหาใน `source/course-content.docx` แปลงเป็น `src/content/course.json` ด้วยสคริปต์ ไม่มีการสรุปย่อหรือแต่งเพิ่ม (ยกเว้นคำตอบของติวเตอร์ AI ซึ่งถูกจำกัดให้ใช้เฉพาะเนื้อหาของห้องที่ผู้เรียนอยู่)
+ภาพพิกเซลสร้างด้วย Pixel Lab รายการและ prompt อยู่ใน `public/assets/assets-manifest.json`

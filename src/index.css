@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* จานสีจาก docs/ART_GUIDE.md ข้อ 3 */
+@theme {
+  --color-ink: #1a1c2c;
+  --color-slate: #333c57;
+  --color-steel: #566c86;
+  --color-mist: #94b0c2;
+  --color-paper: #f4f4f4;
+  --color-cream: #fff4dc;
+  /* เข้มกว่าสี #1B6E73 ของภาพพิกเซลเล็กน้อย ให้ตัวอักษรบนพื้นเขียวอ่อนมีคอนทราสต์เกิน 4.5:1 */
+  --color-teal-dark: #17636a;
+  --color-teal: #2fb8ac;
+  --color-teal-light: #a8ede0;
+  --color-correct: #38b764;
+  /* สีเขียวสำหรับตัวอักษรบนพื้นสว่าง (สีเขียวของจานสีอ่อนเกินไปสำหรับข้อความ: คอนทราสต์ 2.4:1) */
+  --color-correct-dark: #1a6e3b;
+  --color-wrong: #b13e53;
+  --color-hint: #ffcd75;
+  /* ตัวอักษรเล็กสุดของ UI = 13px (ค่าเดิมของ Tailwind คือ 12px ซึ่งเล็กเกินไปสำหรับอักษรไทย) */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.45;
+  --font-sans: "Noto Sans Thai", "Sarabun", "Thonburi", "Leelawadee UI", Tahoma, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-ink);
+  overscroll-behavior: none;
+}
+
+/* แดชบอร์ดผู้สอนเป็นหน้าเอกสารธรรมดา เลื่อนได้ทั้งหน้า */
+body.teacher,
+body.teacher #root {
+  background: var(--color-paper);
+  overscroll-behavior: auto;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+canvas {
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* กรอบแผง UI แบบพิกเซล: ขอบหนาสีหมึก พื้นครีม */
+.panel {
+  background: var(--color-cream);
+  border: 3px solid var(--color-ink);
+  border-radius: 10px;
+  box-shadow: 0 4px 0 0 var(--color-ink);
+}
+
+.btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 3px solid var(--color-ink);
+  border-radius: 10px;
+  background: var(--color-teal);
+  color: var(--color-ink);
+  font-weight: 700;
+  box-shadow: 0 3px 0 0 var(--color-ink);
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) {
+  background: var(--color-teal-light);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+.btn:disabled {
+  background: var(--color-mist);
+  color: var(--color-steel);
+  cursor: not-allowed;
+}
+/* วงโฟกัสสำหรับผู้ใช้คีย์บอร์ด: เส้นสีหมึกซ้อนขอบเหลือง เห็นชัดทั้งบนพื้นครีมและพื้นเข้ม */
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 7px var(--color-hint);
+}
+[role="dialog"]:focus-visible {
+  outline: none;
+  box-shadow: 0 4px 0 0 var(--color-ink);
+}
+.btn-ghost {
+  background: var(--color-paper);
+}
+
+/* บัตรโจทย์เลื่อนเข้าเครื่องสแกน (แบบทดสอบก่อนเรียน) */
+@keyframes slide-in {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.slide-in {
+  animation: slide-in 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide-in {
+    animation: none;
+  }
+}
+
+/* คำภาษาอังกฤษในวงเล็บ เน้นสีในสไตล์ดูภาพและลงมือทำ (GDD ข้อ 7.4) */
+.term-mark {
+  background: var(--color-hint);
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+
+/* พิมพ์ใบประกาศ: แสดงเฉพาะใบประกาศ ซ่อนเกมและปุ่ม */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none;
+  }
+}

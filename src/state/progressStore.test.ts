@@ -1,0 +1,328 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { course } from "../content";
+import { emptyField } from "./field";
+import {
+  CLASS_CODE_PATTERN,
+  emptyRoom,
+  emptySave,
+  LocalProgressStore,
+  migrateSave,
+  normalizeClassCode,
+  type RemoteBackend,
+  type RemoteRecord,
+  type SaveData,
+  SyncedProgressStore,
+  type SyncStatus,
+  withoutEvidenceImage,
+} from "./progressStore";
+
+function fakeStorage(initial: Record<string, string> = {}) {
+  const map = new Map(Object.entries(initial));
+  return {
+    map,
+    getItem: (key: string) => map.get(key) ?? null,
+    setItem: (key: string, value: string) => void map.set(key, value),
+    removeItem: (key: string) => void map.delete(key),
+  };
+}
+
+const sample: SaveData = {
+  version: 3,
+  updatedAt: "2026-10-02T01:00:00.000Z",
+  profile: { name: "ทดสอบ", style: "visual", classCode: "PVC1-67" },
+  pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
+  posttest: null,
+  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false } } },
+};
+
+const withImage = (data: SaveData, image: string | null): SaveData => ({
+  ...data,
+  rooms: { ...data.rooms, 6: { ...emptyRoom(), field: { ...emptyField(course.finalQuest), evidence: { image, outsideGame: false } } } },
+});
+
+describe("LocalProgressStore", () => {
+  it("ยังไม่มีข้อมูล: load คืน null", async () => {
+    expect(await new LocalProgressStore(fakeStorage()).load()).toBeNull();
+  });
+
+  it("save แล้ว load ได้ข้อมูลเดิม", async () => {
+    const store = new LocalProgressStore(fakeStorage());
+    await store.save(sample);
+    expect(await store.load()).toEqual(sample);
+  });
+
+  it("clear ลบข้อมูล", async () => {
+    const storage = fakeStorage();
+    const store = new LocalProgressStore(storage);
+    await store.save(sample);
+    await store.clear();
+    expect(await store.load()).toBeNull();
+    expect(storage.map.size).toBe(0);
+  });
+
+  it("ข้อมูลเสีย: load คืน null ไม่โยน error", async () => {
+    expect(await new LocalProgressStore(fakeStorage({ "ai-trainer-quest-save": "{not json" })).load()).toBeNull();
+  });
+
+  it("พื้นที่เก็บเต็ม: บันทึกความคืบหน้าโดยไม่มีภาพหลักฐาน", async () => {
+    const storage = fakeStorage();
+    const setItem = storage.setItem;
+    storage.setItem = (key, value) => {
+      if (value.includes("data:image")) throw new DOMException("full", "QuotaExceededError");
+      setItem(key, value);
+    };
+    const store = new LocalProgressStore(storage);
+    await store.save(withImage(sample, "data:image/jpeg;base64,AAAA"));
+    const loaded = await store.load();
+    expect(loaded?.rooms[1].core).toBe(true);
+    expect(loaded?.rooms[6].field?.evidence).toEqual({ image: null, outsideGame: false, onDevice: true });
+  });
+});
+
+describe("migrateSave", () => {
+  it("รุ่น 1 ของต้นแบบห้อง 1: เก็บความคืบหน้าของห้องไว้ โปรไฟล์และแบบทดสอบก่อนเรียนว่าง", () => {
+    const v1 = { state: { progress: { 1: { stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } } }, version: 1 };
+    expect(migrateSave(v1)).toEqual({
+      ...emptySave(),
+      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } },
+    });
+  });
+
+  it("รุ่น 2: เติมรหัสห้องเรียนว่าง ผลก่อนเรียนเหลือคะแนนรายหัวข้อ ห้องได้ช่องข้อมูลใหม่", () => {
+    const v2 = {
+      version: 2,
+      profile: { name: "ทดสอบ", style: "hands" },
+      pretest: { correctByTopic: { 1: 1 }, items: [{ topic: 1, correct: true, timeMs: 5 }], completedAt: "2026-09-01T00:00:00.000Z" },
+      rooms: { 1: { stationsSeen: 2, minigameDone: false, stars: 0, outcome: null, summary: null, reviewAnswers: [], reviewDone: false, field: null, core: false, coreAt: null } },
+    };
+    expect(migrateSave(v2)).toEqual({
+      ...emptySave(),
+      profile: { name: "ทดสอบ", style: "hands", classCode: "" },
+      pretest: { form: "A", correctByTopic: { 1: 1 }, items: [], completedAt: "2026-09-01T00:00:00.000Z" },
+      rooms: { 1: { ...emptyRoom(), stationsSeen: 2 } },
+    });
+  });
+
+  it("ข้อมูลผิดรูป (ไฟล์เสีย หรือถูกแก้จากนอกเกม): เติมค่าเริ่มต้นทีละช่อง ไม่ปล่อยค่าผิดชนิดเข้าเกมหรือแดชบอร์ดครู", () => {
+    const hostile = {
+      version: 3,
+      updatedAt: 5,
+      profile: { name: "ก".repeat(200), style: "telepathy", classCode: 7 },
+      pretest: { form: "Z", correctByTopic: { 1: "สอง", 2: 2 }, items: [{ id: "A1a", topic: 1, correct: "yes" }, "junk", null], completedAt: {} },
+      posttest: "ยังไม่ทำ",
+      rooms: {
+        1: { stationsSeen: "5", stars: 99, tutor: null, missed: { ก: -1, ข: 2, ค: "x" }, reviewAnswers: ["ดี", 5, null], outcome: "bad", field: { results: "x", notes: [1], evidence: { image: "javascript:alert(1)" } } },
+        2: null,
+        99: { core: true },
+        abc: { core: true },
+      },
+    };
+    const save = migrateSave(hostile) as SaveData;
+    expect(save.updatedAt).toBe(emptySave().updatedAt);
+    expect(save.profile).toEqual({ name: "ก".repeat(40), style: "read", classCode: "" });
+    expect(save.pretest).toEqual({ form: "A", correctByTopic: { 1: 0, 2: 2 }, items: [{ id: "A1a", topic: 1, correct: false, timeMs: 0 }], completedAt: "" });
+    expect(save.posttest).toBeNull();
+    expect(Object.keys(save.rooms)).toEqual(["1", "2"]);
+    expect(save.rooms[2]).toEqual(emptyRoom());
+    expect(save.rooms[1]).toEqual({ ...emptyRoom(), stars: 3, missed: { ข: 2 }, reviewAnswers: ["ดี", "", ""], outcome: { totalMisses: 0, requiredRepair: false }, field: emptyField(course.finalQuest) });
+  });
+
+  it("ข้อมูลที่ถูกต้องอ่านกลับได้เหมือนเดิมทุกช่อง", () => {
+    const full: SaveData = { ...withImage(sample, "data:image/jpeg;base64,AAAA"), posttest: sample.pretest };
+    expect(migrateSave(JSON.parse(JSON.stringify(full)))).toEqual(full);
+  });
+
+  it("รูปแบบที่ไม่รู้จัก: คืน null", () => {
+    expect(migrateSave(null)).toBeNull();
+    expect(migrateSave("text")).toBeNull();
+    expect(migrateSave({ version: 99 })).toBeNull();
+  });
+});
+
+describe("withoutEvidenceImage", () => {
+  it("ตัดภาพออกและจดว่าภาพอยู่ในเครื่อง ส่วนอื่นคงเดิม", () => {
+    const stripped = withoutEvidenceImage(withImage(sample, "data:image/jpeg;base64,AAAA"));
+    expect(JSON.stringify(stripped)).not.toContain("data:image");
+    expect(stripped.rooms[6].field?.evidence).toEqual({ image: null, outsideGame: false, onDevice: true });
+    expect(stripped.rooms[1]).toBe(sample.rooms[1]);
+  });
+
+  it("ไม่มีภาพ: ไม่เปลี่ยนอะไร", () => {
+    expect(withoutEvidenceImage(sample)).toEqual(sample);
+  });
+});
+
+describe("รหัสห้องเรียน", () => {
+  it("ตัดช่องว่างและแปลงเป็นตัวพิมพ์ใหญ่ก่อนตรวจ", () => {
+    expect(normalizeClassCode("  pvc1-67 ")).toBe("PVC1-67");
+    expect(CLASS_CODE_PATTERN.test("PVC1-67")).toBe(true);
+    for (const bad of ["", "ปวช1", "A B", "A".repeat(21), "A/1"]) expect(CLASS_CODE_PATTERN.test(bad)).toBe(false);
+  });
+});
+
+function fakeRemote(initial: RemoteRecord | null = null) {
+  const state = { record: initial, saves: [] as SaveData[], resets: 0, failing: false, log: [] as string[], gate: Promise.resolve() };
+  const backend: RemoteBackend = {
+    load: async () => {
+      if (state.failing) throw new Error("offline");
+      return state.record;
+    },
+    save: async (data) => {
+      if (state.failing) throw new Error("offline");
+      await state.gate;
+      state.saves.push(data);
+      state.log.push("save");
+      state.record = { data, resumeCode: "ABCDE12345" };
+      return "ABCDE12345";
+    },
+    reset: async () => {
+      if (state.failing) throw new Error("offline");
+      state.resets += 1;
+      state.log.push("reset");
+      state.record = null;
+    },
+    detach: async () => {
+      state.log.push("detach");
+    },
+    claim: async (code) => (code === "ABCDE12345" ? state.record : null),
+  };
+  return { state, backend };
+}
+
+describe("SyncedProgressStore", () => {
+  const statuses: [SyncStatus, string | null][] = [];
+  const make = (remote: RemoteBackend, local = new LocalProgressStore(fakeStorage())) => ({
+    local,
+    store: new SyncedProgressStore(local, remote, { delayMs: 1000, retryMs: 5000, loadTimeoutMs: 3000, onStatus: (status, code) => statuses.push([status, code]) }),
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    statuses.length = 0;
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("save: เก็บในเครื่องทันที ส่งขึ้นฐานข้อมูลกลางครั้งเดียวหลังหน่วง ด้วยข้อมูลล่าสุด", async () => {
+    const remote = fakeRemote();
+    const { store, local } = make(remote.backend);
+    await store.save(sample);
+    await store.save({ ...sample, updatedAt: "2026-10-02T02:00:00.000Z" });
+    expect((await local.load())?.updatedAt).toBe("2026-10-02T02:00:00.000Z");
+    expect(remote.state.saves).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(remote.state.saves.map((data) => data.updatedAt)).toEqual(["2026-10-02T02:00:00.000Z"]);
+    expect(statuses.at(-1)).toEqual(["synced", "ABCDE12345"]);
+  });
+
+  it("ไม่มีรหัสห้องเรียน: ไม่ส่งออกจากเครื่อง", async () => {
+    const remote = fakeRemote();
+    const { store, local } = make(remote.backend);
+    await store.save({ ...sample, profile: { name: "ทดสอบ", style: "read", classCode: "" } });
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(remote.state.saves).toHaveLength(0);
+    expect(await local.load()).not.toBeNull();
+  });
+
+  it("ภาพหลักฐานอยู่ในเครื่องเท่านั้น ไม่ถูกส่งขึ้นฐานข้อมูลกลาง", async () => {
+    const remote = fakeRemote();
+    const { store, local } = make(remote.backend);
+    await store.save(withImage(sample, "data:image/jpeg;base64,AAAA"));
+    await store.flush();
+    expect(JSON.stringify(remote.state.saves)).not.toContain("data:image");
+    expect(remote.state.saves[0].rooms[6].field?.evidence.onDevice).toBe(true);
+    expect((await local.load())?.rooms[6].field?.evidence.image).toBe("data:image/jpeg;base64,AAAA");
+  });
+
+  it("เครือข่ายล่ม: เกมยังบันทึกในเครื่องได้ แล้วส่งใหม่เองเมื่อกลับมา", async () => {
+    const remote = fakeRemote();
+    remote.state.failing = true;
+    const { store, local } = make(remote.backend);
+    await store.save(sample);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(statuses.at(-1)?.[0]).toBe("error");
+    expect(await local.load()).toEqual(sample);
+    remote.state.failing = false;
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(remote.state.saves).toHaveLength(1);
+    expect(statuses.at(-1)).toEqual(["synced", "ABCDE12345"]);
+  });
+
+  it("load: ฐานข้อมูลกลางใหม่กว่า ใช้ของฐานข้อมูลกลาง และใส่ภาพหลักฐานของเครื่องนี้คืน", async () => {
+    const newer = withoutEvidenceImage(withImage({ ...sample, updatedAt: "2026-10-03T00:00:00.000Z" }, "data:image/jpeg;base64,AAAA"));
+    const remote = fakeRemote({ data: newer, resumeCode: "ABCDE12345" });
+    const { store, local } = make(remote.backend);
+    await local.save(withImage(sample, "data:image/jpeg;base64,AAAA"));
+    const loaded = await store.load();
+    expect(loaded?.updatedAt).toBe("2026-10-03T00:00:00.000Z");
+    expect(loaded?.rooms[6].field?.evidence.image).toBe("data:image/jpeg;base64,AAAA");
+    expect(statuses.at(-1)).toEqual(["synced", "ABCDE12345"]);
+    expect(remote.state.saves).toHaveLength(0);
+  });
+
+  it("load: สำเนาในเครื่องใหม่กว่า ใช้ของเครื่องและส่งขึ้นไปแทน", async () => {
+    const remote = fakeRemote({ data: { ...sample, updatedAt: "2026-10-01T00:00:00.000Z" }, resumeCode: "ABCDE12345" });
+    const { store, local } = make(remote.backend);
+    await local.save(sample);
+    expect((await store.load())?.updatedAt).toBe(sample.updatedAt);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(remote.state.saves.map((data) => data.updatedAt)).toEqual([sample.updatedAt]);
+  });
+
+  it("load: ฐานข้อมูลกลางไม่ตอบ ใช้สำเนาในเครื่องโดยไม่ค้าง", async () => {
+    const hanging: RemoteBackend = { ...fakeRemote().backend, load: () => new Promise(() => {}) };
+    const { store, local } = make(hanging);
+    await local.save(sample);
+    const loading = store.load();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(await loading).toEqual(sample);
+    expect(statuses.at(-1)?.[0]).toBe("error");
+  });
+
+  it("clear: ลบสำเนาในเครื่อง ยกเลิกรายการที่ค้าง และแจ้งฐานข้อมูลกลางให้เก็บถาวร", async () => {
+    const remote = fakeRemote();
+    const { store, local } = make(remote.backend);
+    await store.save(sample);
+    await store.clear();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(await local.load()).toBeNull();
+    expect(remote.state.saves).toHaveLength(0);
+    expect(remote.state.resets).toBe(1);
+    expect(statuses.at(-1)).toEqual(["local", null]);
+  });
+
+  it("clear ระหว่างที่กำลังส่ง: คำสั่งเริ่มใหม่ไปถึงหลังการบันทึกเสมอ", async () => {
+    const remote = fakeRemote();
+    let open = () => {};
+    remote.state.gate = new Promise<void>((resolve) => (open = resolve));
+    const { store } = make(remote.backend);
+    await store.save(sample);
+    const flushing = store.flush();
+    await Promise.resolve(); // คำขอบันทึกออกไปแล้ว แต่ยังไม่ได้คำตอบ
+    const clearing = store.clear();
+    open();
+    await Promise.all([flushing, clearing]);
+    expect(remote.state.log).toEqual(["save", "reset"]);
+  });
+
+  it("detach (ผู้เรียนคนใหม่ใช้เครื่องเดิม): ส่งงานที่ค้างของคนเดิมก่อน แล้วตัดการเชื่อมโดยไม่เก็บถาวร", async () => {
+    const remote = fakeRemote();
+    const { store, local } = make(remote.backend);
+    await store.save(sample);
+    await store.detach();
+    expect(remote.state.log).toEqual(["save", "detach"]);
+    expect(remote.state.resets).toBe(0);
+    expect(remote.state.record?.data.profile?.name).toBe("ทดสอบ");
+    expect(await local.load()).toBeNull();
+    expect(statuses.at(-1)).toEqual(["local", null]);
+  });
+
+  it("claim: รหัสถูก ได้ข้อมูลมาเก็บในเครื่อง รหัสผิดคืน null", async () => {
+    const remote = fakeRemote({ data: sample, resumeCode: "ABCDE12345" });
+    const { store, local } = make(remote.backend);
+    expect(await store.claim("WRONG")).toBeNull();
+    expect(await local.load()).toBeNull();
+    expect(await store.claim("ABCDE12345")).toEqual(sample);
+    expect(await local.load()).toEqual(sample);
+    expect(statuses.at(-1)).toEqual(["synced", "ABCDE12345"]);
+  });
+});

@@ -1,0 +1,381 @@
+# AI Trainer Quest — Art Guide
+
+คู่มือภาพสำหรับผลิตแอสเซตพิกเซลอาร์ตด้วย Pixel Lab ใช้คู่กับ `docs/GDD.md` (ชื่อห้อง ธีม และกลไกอ้างจากเอกสารนั้น)
+
+ภาพทุกชิ้นต้องไม่มีตัวอักษร ข้อความในเกมทั้งหมดมาจาก `src/content/course.json` และไฟล์ข้อความ UI แล้วแสดงด้วยฟอนต์ของเบราว์เซอร์ทับบนภาพ
+
+---
+
+## 1. ขนาดพิกเซล
+
+| รายการ | ขนาด | เหตุผล |
+|---|---|---|
+| ความละเอียดฐานของเกม | 640×360 | ขยายแบบจำนวนเต็มได้พอดี: 2 เท่า = 1280×720 (จอ 1366×768 ที่พบมากในห้องคอมพิวเตอร์) และ 3 เท่า = 1920×1080 พิกเซลจึงคมไม่เบลอ |
+| ไทล์ | 32×32 | ไอเทมในมินิเกมต้องดูออกว่าเป็นอะไร (ตารางยอดขาย ภาพผลไม้ เสียงพูด ข้อความรีวิว) ที่ 16×16 รายละเอียดไม่พอ ส่วน 64×64 ทำให้ห้องเหลือ 10×5 ไทล์ วางสถานี 6 จุดของห้อง 4 ไม่ได้ และไทล์เซต 64 ของ Pixel Lab ต้องใช้โหมด pro |
+| ขนาดห้อง | 20×11 ไทล์ (640×352) | ทั้งห้องอยู่ในจอเดียว ไม่ต้องเลื่อนกล้อง ผู้เล่นเห็นสถานีครบและรู้ว่าเหลืออะไร แถว 8 พิกเซลที่เหลือให้ HUD |
+| ตัวละคร (ผู้เล่น, พี่บิต) | ตัวสูงราว 48 px ในภาพ 64×64 | สูงประมาณ 1.5 ไทล์ พอให้เห็นเสื้อกาวน์ บัตรพนักงาน และหน้าจอของหุ่นยนต์ จุดยืนอยู่กึ่งกลางแนวนอนที่ y = 60 กล่องชนใช้ 18×10 ที่เท้า |
+| วัตถุในห้อง | 32×32, 32×64, 64×32, 64×64, 96×64 | เป็นจำนวนเท่าของ 32 วางลงกริดได้พอดี |
+| ไอคอน (ไอเทม การ์ด แกน AI ไอคอน UI) | 32×32 | เท่ากับ 1 ไทล์ ใช้ได้ทั้งวางในห้องและบนการ์ดโดยไม่ต้องย่อขยาย |
+| ภาพหน้าพี่บิตในกล่องสนทนา | 64×64 | พอแสดงสีหน้า 4 แบบ |
+| กรอบ UI | สร้างที่ 192×192 แล้วตัดแบบ 9-slice มุม 16 px | เครื่องมือ UI ของ Pixel Lab มีขนาดขั้นต่ำ 192 |
+
+กติกาที่ห้ามละเมิด: 1 พิกเซลของภาพ = 1 พิกเซลของความละเอียดฐานเสมอ ห้ามย่อหรือขยายแอสเซตรายชิ้น ขยายได้ทั้งจอแบบจำนวนเต็มด้วย nearest-neighbor เท่านั้น
+
+ขนาดตัวละครยืนยันจากการเจนจริงแล้ว: ค่า `size` ของ Pixel Lab คือความสูงของตัวละครโดยประมาณ ไม่ใช่ขนาดภาพ (size 64 ได้ตัวสูง 65 px เท่าบานประตู ส่วน size 48 ได้ตัวสูง 49 px ในภาพ 68×68) จึงใช้ size 48 แล้วให้ `npm run assets:build` จัดลงภาพ 64×64 โดยไม่ย่อขยายพิกเซล
+
+## 2. มุมมอง
+
+- top-down แบบเฉียง 3/4 (ใน Pixel Lab คือ `low top-down`): พื้นมองจากด้านบน วัตถุและตัวละครเห็นด้านหน้ากับด้านบน ผนังด้านบนของห้องเห็นหน้าผนังสูง 2 ไทล์
+- ใช้มุมเดียวกันทุกชิ้น ทั้งตัวละคร วัตถุ และไทล์
+- ผู้เล่นมี 4 ทิศ: ใต้ (หันหาจอ) เหนือ ตะวันออก ตะวันตก ไม่ใช้การกลับภาพซ้ายขวาแทนทิศตะวันตก เพราะบัตรพนักงานอยู่ข้างเดียว ส่วนพี่บิตมีทิศเดียว (หันหาจอ)
+- แสงมาจากซ้ายบนทุกชิ้น เงาตกขวาล่าง
+- ลำดับชั้นภาพ: พื้นและผนังไม่มีเส้นขอบ วัตถุและตัวละครมีเส้นขอบสีเดียว ของที่โต้ตอบได้จึงเด่นจากฉาก
+
+## 3. จานสี
+
+สีกลางใช้ร่วมทุกห้อง (โทนเทาอมน้ำเงินจากจานสี Sweetie 16):
+
+| ชื่อ | Hex | ใช้กับ |
+|---|---|---|
+| Ink | `#1A1C2C` | เส้นขอบ ตัวอักษร |
+| Slate | `#333C57` | เงาเข้ม ผม กางเกง |
+| Steel | `#566C86` | โลหะ ของที่ล็อก ปิดใช้งาน |
+| Mist | `#94B0C2` | โลหะอ่อน ตัวหุ่นยนต์ส่วนเงา |
+| Paper | `#F4F4F4` | เสื้อกาวน์ ตัวหุ่นยนต์ ผนังขาว |
+| Cream | `#FFF4DC` | พื้นกล่องสนทนา การ์ด กระดาษ |
+
+สีประจำห้อง ห้องละ 3 ระดับ (เข้ม / หลัก / อ่อน):
+
+| ห้อง | ธีม | เข้ม | หลัก | อ่อน |
+|---|---|---|---|---|
+| 1 ห้องปฐมนิเทศ | Teal | `#1B6E73` | `#2FB8AC` | `#A8EDE0` |
+| 2 โรงฝึกสามสาย | Violet | `#46308F` | `#7B5CE0` | `#CDBDFF` |
+| 3 คลังข้อมูล | Green | `#1F6B45` | `#38B764` | `#A7F070` |
+| 4 โรงงานโมเดล | Orange | `#9C4A1A` | `#F08C2E` | `#FFCD75` |
+| 5 ลานชีวิตประจำวัน | Coral | `#9E2F4F` | `#EF6A82` | `#FFC4CC` |
+| 6 สตูดิโอภาคสนาม | Azure | `#2A4FA3` | `#41A6F6` | `#B8DCFF` |
+| โถงต้อนรับ / ห้องซ่อม | เทากลาง + เหลือง | `#566C86` | `#94B0C2` | `#FFCD75` |
+
+สีความหมาย (ใช้เหมือนกันทุกห้อง และต้องมีไอคอนกำกับเสมอ ไม่ใช้สีอย่างเดียว):
+
+| ความหมาย | Hex | ไอคอนกำกับ |
+|---|---|---|
+| ถูก | `#38B764` | UI-13 |
+| ผิด | `#B13E53` | UI-14 |
+| คำใบ้ / รางวัล / ดาว | `#FFCD75` | UI-15, UI-10 |
+| ล็อก / ปิดใช้งาน | `#566C86` | UI-12 |
+
+**ตัวอักษรของ UI** (HTML ที่วางทับฉาก) ต้องมีคอนทราสต์กับพื้นไม่ต่ำกว่า 4.5:1 สีของจานสีบางสีอ่อนเกินไปสำหรับตัวอักษร จึงใช้ได้เฉพาะเป็นพื้น ขอบ หรือไอคอน:
+
+| ใช้เป็นตัวอักษร | Hex | แทนสี | เหตุผล |
+|---|---|---|---|
+| ข้อความรอง | `#333C57` (Slate) | Steel `#566C86` | Steel บนพื้นเขียวอ่อนได้ 4.1:1 |
+| ข้อความ "ถูก" | `#1A6E3B` | `#38B764` | เขียวบนพื้นครีมได้ 2.4:1 |
+| หัวข้อ | `#17636A` | Teal dark `#1B6E73` | บนพื้น `#A8EDE0` ได้ 4.5:1 พอดี |
+| ตัวอักษรบนพื้นเขียว `#38B764` | `#1A1C2C` (Ink) | ขาว | ขาวบนเขียวได้ 2.4:1 |
+
+ค่าเหล่านี้อยู่ใน `src/index.css` ภาพพิกเซลยังใช้จานสีเดิมทั้งหมด
+
+สีเฉพาะตัวละคร: ผิว `#F2C9A0` เงาผิว `#C98E62` หน้าจอพี่บิต `#73EFF7` ไฟเสาอากาศ `#FFCD75`
+
+ตะกร้า 3 ใบของห้อง 2 ใช้สีหลักของ Azure, Coral และ Orange ตามลำดับ Supervised, Unsupervised, Reinforcement และมีสัญลักษณ์ต่างกัน (ป้ายชื่อ / จุดจับกลุ่ม / เหรียญดาว)
+
+Pixel Lab ไม่รับค่า hex ใน prompt ได้แม่นยำ prompt จึงใช้ชื่อสี หลังสร้างแต่ละชิ้นให้ปรับสีเข้าจานสีนี้ในโปรแกรมแต่งพิกเซลอาร์ตก่อนนำเข้าเกม ห้องหนึ่งใช้สีกลาง + สีประจำห้องนั้น + สีความหมาย ไม่ยืมสีประจำห้องอื่น ยกเว้นแกน AI และตะกร้าห้อง 2
+
+## 4. ค่าตั้งใน Pixel Lab และคำบรรยายสไตล์
+
+คำบรรยายสไตล์ต่อท้าย prompt ทุกชิ้น ใช้ข้อความนี้ตรงตัว ห้ามแก้เฉพาะชิ้น ถ้าจะปรับต้องปรับทุกชิ้นพร้อมกัน:
+
+```text
+cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text
+```
+
+ค่าตั้งต่อประเภทแอสเซต ใช้ค่าเดียวกันทั้งประเภท:
+
+| ประเภท | เครื่องมือ | ขนาด | view | outline | shading | detail |
+|---|---|---|---|---|---|---|
+| ผู้เล่น | Create character (`create_character`), 4 directions, proportions `chibi` | size 48 | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
+| พี่บิต | Create image (`create_image_pixflux`), ไม่มีพื้นหลัง, direction `south` | 64×64 | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
+| ไทล์พื้นและผนัง | Top-down tileset (`create_topdown_tileset`, พื้น = lower, ผนัง = upper, transition 0) | tile 32 | `low top-down` | `lineless` | `basic shading` | `low detail` |
+| วัตถุในห้อง | Map object | ตามตาราง | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
+| ไอคอนและภาพหน้า | Create image, ไม่มีพื้นหลัง | 32×32 / 64×64 | ไม่ระบุ | `single color outline` | `basic shading` | `low detail` |
+| กรอบ UI | Create UI asset | 192×192 ขึ้นไป | ไม่ระบุ | — | — | — |
+
+ชื่อเครื่องมือและตัวเลือกตรงกับ Pixel Lab MCP ที่ใช้เจนจริงเมื่อ 1–2 ตุลาคม 2569 ค่าสไตล์เป็นแนวทางให้โมเดลเท่านั้น ผลอาจไม่ตรงทุกข้อ ต้องตรวจภาพทุกชิ้น ข้อที่พบจากการเจนจริง:
+
+- `create_character` ใช้โครงร่างมนุษย์เสมอ ใช้กับพี่บิต (หุ่นยนต์ทรงกลม) ไม่ได้ จะได้หุ่นยนต์ตัวสูงมีขา พี่บิตจึงเจนเป็นภาพเดี่ยวด้วย `create_image_pixflux` (ขนาด 16–400 px ใช้ 1 generation)
+- ไทล์เซตที่ได้เป็นชุด Wang 16 ไทล์ (แผ่น 128×128) เลือกไทล์จากชนิดพื้นผิวที่มุมทั้งสี่ ผนังเป็นพื้นผิวมองจากด้านบน ไม่มีหน้าผนังตั้ง เกมวาดชุดนี้เลื่อนครึ่งไทล์เพื่อให้ขอบพื้นตรงกับกริด ชุดหนึ่งใช้ราว 3 generations
+- ภาพเดี่ยวอาจมีเงาพื้นติดมา ให้บันทึกสีเงาใน `postprocess` ของ `assets-src/pixellab/<id>/source.json` เพื่อให้ `assets:build` ลบออก
+
+การใช้ตัวละครเป็นภาพอ้างอิงสไตล์ของ `create_character` ทำได้เฉพาะโหมด pro (20–40 generations ต่อชิ้น) โหมด standard พึ่งคำบรรยายสไตล์ท้าย prompt อย่างเดียว
+
+---
+
+## 5. รายการแอสเซตและ prompt
+
+### 5.1 ตัวละคร
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| CH-01 | `ch_player` | นักฝึกงาน (ผู้เล่น) 4 ทิศ | 64×64 | teenage lab intern with short dark hair, white lab coat over a teal polo shirt, small ID badge on the chest, dark navy trousers, white sneakers, friendly calm face, gender-neutral, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-02 | `ch_mentor` | พี่บิต พี่เลี้ยงหุ่นยนต์ (ทิศเดียว หันหาจอ) | 64×64 | small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-03 | `ch_mentor_face_neutral` | หน้าพี่บิต: ปกติ | 64×64 | close-up portrait of a small round white mentor robot, cyan screen face with two dot eyes and a calm small smile, antenna with a yellow light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-04 | `ch_mentor_face_happy` | หน้าพี่บิต: ดีใจ (ตอบถูก) | 64×64 | close-up portrait of a small round white mentor robot, cyan screen face with eyes curved in a big happy smile, antenna glowing bright yellow, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-05 | `ch_mentor_face_think` | หน้าพี่บิต: คิด (ให้คำใบ้) | 64×64 | close-up portrait of a small round white mentor robot, cyan screen face with one eye squinted and three small blinking dots, one tiny hand on its chin, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-06 | `ch_mentor_face_cheer` | หน้าพี่บิต: ให้กำลังใจ (ตอบผิด) | 64×64 | close-up portrait of a small round white mentor robot, cyan screen face with a gentle encouraging smile, one tiny hand giving a thumbs up, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+### 5.2 ไทล์เซต 6 ห้อง + ส่วนกลาง
+
+ไทล์ 32×32 ชุดหนึ่งมี prompt 2 ส่วน: พื้น (`lower_description`) และผนัง (`upper_description`) ส่งพร้อมกันในการเจนครั้งเดียว ได้แผ่นไทล์ Wang 1 ไฟล์ต่อห้อง
+
+| รหัส | ไฟล์ | ห้อง | ส่วน | Prompt |
+|---|---|---|---|---|
+| TS-00 | `ts_common_floor` | ส่วนกลาง (โถงต้อนรับ + ห้องซ่อม) | พื้น | seamless floor tile of smooth light gray lab floor panels with thin dark seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-00 | `ts_common_wall` | ส่วนกลาง (โถงต้อนรับ + ห้องซ่อม) | ผนัง | seamless wall tile of white lab wall panels with a dark navy base trim and a thin yellow caution stripe, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-01 | `ts_r1_floor` | ห้อง 1 ห้องปฐมนิเทศ (teal) | พื้น | seamless floor tile of clean pale teal lab floor tiles with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-01 | `ts_r1_wall` | ห้อง 1 ห้องปฐมนิเทศ (teal) | ผนัง | seamless wall tile of white lab wall panels with a teal trim band and small round status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-02 | `ts_r2_floor` | ห้อง 2 โรงฝึกสามสาย (violet) | พื้น | seamless floor tile of soft violet padded training mats with square seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-02 | `ts_r2_wall` | ห้อง 2 โรงฝึกสามสาย (violet) | ผนัง | seamless wall tile of dark indigo dojo wall panels with thin violet neon trim lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-03 | `ts_r3_floor` | ห้อง 3 คลังข้อมูล (green) | พื้น | seamless floor tile of dark green-gray metal grating warehouse floor, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-03 | `ts_r3_wall` | ห้อง 3 คลังข้อมูล (green) | ผนัง | seamless wall tile of steel vault wall panels with rivets and small glowing green data slots, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-04 | `ts_r4_floor` | ห้อง 4 โรงงานโมเดล (orange) | พื้น | seamless floor tile of gunmetal factory floor plates with worn orange guide lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-04 | `ts_r4_wall` | ห้อง 4 โรงงานโมเดล (orange) | ผนัง | seamless wall tile of industrial wall panels with orange and black hazard stripes and metal pipes, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-05 | `ts_r5_floor` | ห้อง 5 ลานชีวิตประจำวัน (coral) | พื้น | seamless floor tile of warm cream and coral pink checkered plaza floor tiles, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-05 | `ts_r5_wall` | ห้อง 5 ลานชีวิตประจำวัน (coral) | ผนัง | seamless wall tile of a cozy storefront wall with cream bricks and a coral pink awning trim, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-06 | `ts_r6_floor` | ห้อง 6 สตูดิโอภาคสนาม (azure) | พื้น | seamless floor tile of glossy dark navy studio floor with a light blue grid of marker lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-06 | `ts_r6_wall` | ห้อง 6 สตูดิโอภาคสนาม (azure) | ผนัง | seamless wall tile of a white studio backdrop wall with an azure blue trim band and softbox light panels, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+### 5.3 วัตถุในห้องและไอคอนมินิเกม
+
+รหัส PR = วัตถุวางในห้อง, IC = ไอคอนบนการ์ดหรือไอเทมของมินิเกม
+
+**วัตถุส่วนกลาง (ใช้ทุกห้อง)**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-C01 | `pr_door_locked` | ประตูล็อก | 32×64 | closed sliding metal lab door with a red lock light and an empty hexagon-shaped socket in the center, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C02 | `pr_door_open` | ประตูเปิด | 32×64 | open sliding metal lab door with a green light and a dark doorway, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C03 | `pr_core_pedestal` | แท่นวางแกน AI | 32×64 | short white pedestal with an empty glowing glass dome on top, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C04 | `pr_station_terminal` | เสาสถานี (จุดเริ่มบทสนทนา) | 32×64 | slim standing info terminal with a blank glowing cyan screen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C05 | `pr_notebook_desk` | โต๊ะสมุดบันทึก (คำถามทบทวน) | 64×64 | small white desk with an open blank notebook and a pen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C06 | `pr_scanner_gate` | ประตูสแกน (แบบทดสอบก่อนเรียน) | 96×64 | security scanner gate arch with a card slot and a blank blue scan screen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C07 | `pr_repair_door` | ประตูห้องซ่อม | 32×64 | small yellow maintenance door with a wrench emblem and a soft yellow light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-C08 | `pr_repair_bench` | โต๊ะช่างในห้องซ่อม | 64×64 | yellow workbench with a wrench, a screwdriver and a small blank monitor, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ห้อง 1 ห้องปฐมนิเทศ**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-101 | `pr_r1_rule_machine` | เครื่องโปรแกรมแบบกำหนดกฎ | 64×64 | boxy gray machine with exposed gears and a rigid checklist clipboard bolted to its front, one input slot and one output slot, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-102 | `pr_r1_learning_machine` | เครื่อง Machine Learning | 64×64 | rounded teal machine with a funnel on top filled with small sample cards, a glowing core window in the middle and one output slot, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-103 | `pr_r1_mail_sorter` | โต๊ะคัดแยกจดหมาย | 64×32 | small desk with two mail trays, one tray holding plain envelopes and one tray holding envelopes marked with a red warning triangle, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-104 | `pr_r1_photo_board` | บอร์ดภาพแมวและสุนัข | 64×32 | wall pin board with one photo of a cat and one photo of a dog, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-105 | `pr_r1_ring_emblem` | ตราวงแหวนซ้อนบนพื้น (AI ครอบ ML) | 64×64 | flat floor emblem of one large teal ring containing a smaller glowing ring inside it, seen from above, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-101 | `ic_r1_data` | บัตรคำ: ข้อมูล (Data) | 32×32 | icon of a small stack of sample items: a tiny photo, a tiny document and a tiny bar chart, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-102 | `ic_r1_training` | บัตรคำ: การฝึก (Training) | 32×32 | icon of a wrench adjusting a glowing chip while small cards flow into it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-103 | `ic_r1_model` | บัตรคำ: โมเดล (Model) | 32×32 | icon of a single glowing teal chip, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-104 | `ic_r1_prediction` | บัตรคำ: การทำนาย (Prediction) | 32×32 | icon of a glowing chip sending an arrow toward a small blank result card, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ห้อง 2 โรงฝึกสามสาย**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-201 | `pr_r2_basket_supervised` | ตะกร้า Supervised | 64×64 | azure blue storage basket with a paper label tag hanging on the front, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-202 | `pr_r2_basket_unsupervised` | ตะกร้า Unsupervised | 64×64 | coral pink storage basket with three small clusters of dots painted on the front, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-203 | `pr_r2_basket_reinforcement` | ตะกร้า Reinforcement | 64×64 | orange storage basket with a gold star medal on the front, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-204 | `pr_r2_flashcard_desk` | โต๊ะบัตรภาพติดป้ายชื่อ | 64×64 | teacher desk with fruit picture cards, each card has a small blank name tag clipped to it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-205 | `pr_r2_cluster_table` | โต๊ะบล็อกจัดกลุ่ม | 64×64 | round table with untagged colored blocks gathered into three loose groups, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-206 | `pr_r2_maze_arena` | สนามเขาวงกตจิ๋ว | 64×64 | tiny tabletop maze with a small robot figure inside and a gold coin at the exit, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-207 | `pr_r2_compare_board` | กระดานตารางเปรียบเทียบ | 64×64 | standing whiteboard with an empty table grid of three columns and four rows, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-201 | `ic_r2_case_waste` | การ์ดกรณี: ภาพขยะที่ระบุชนิด | 32×32 | icon of three small recycling bins for plastic, paper and metal, each with a tag, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-202 | `ic_r2_case_songs` | การ์ดกรณี: แบ่งกลุ่มเพลง | 32×32 | icon of music notes gathered into three untagged color groups, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-203 | `ic_r2_case_maze` | การ์ดกรณี: ตัวละครในเขาวงกต | 32×32 | icon of a small character walking in a maze toward an exit with a gold reward star, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ห้อง 3 คลังข้อมูล**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-301 | `pr_r3_cabinet_structured` | ตู้ลิ้นชักตาราง (มีโครงสร้าง) | 64×64 | steel filing cabinet with a neat grid of identical drawers and small green lights, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-302 | `pr_r3_crate_unstructured` | ลังข้อมูลปนกัน (ไม่มีโครงสร้าง) | 64×64 | large open wooden crate overflowing with mixed photos, cassette tapes and loose paper notes, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-303 | `pr_r3_server_rack` | ตู้เซิร์ฟเวอร์ (ของตกแต่ง) | 32×64 | tall server rack with blinking green lights, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-304 | `pr_r3_label_printer` | เครื่องพิมพ์ป้ายกำกับ | 32×32 | small label printer printing a strip of blank tags, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-305 | `pr_r3_quality_scanner` | ซุ้มตรวจคุณภาพข้อมูล | 64×64 | inspection scanner arch over a short conveyor with a green check light and a red reject bin beside it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-306 | `pr_r3_compare_board` | กระดานตารางเปรียบเทียบ | 64×64 | standing green-framed board with an empty table grid of three columns and four rows, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-307 | `pr_r3_intake_table` | โต๊ะรับของ (ถาดไอเทมมินิเกม) | 64×32 | low steel intake table with a short roller tray, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-301 | `ic_r3_sales_table` | ไอเทม: ตารางยอดขาย | 32×32 | icon of a spreadsheet page with rows and columns and a small bar chart, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-302 | `ic_r3_fruit_photo` | ไอเทม: ภาพผลไม้ | 32×32 | icon of a photo print showing an apple and a banana, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-303 | `ic_r3_speech_audio` | ไอเทม: เสียงพูด | 32×32 | icon of a microphone with a sound wave, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-304 | `ic_r3_review_text` | ไอเทม: ข้อความรีวิว | 32×32 | icon of a speech bubble filled with wavy handwriting lines and a row of small stars, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ห้อง 4 โรงงานโมเดล**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-401 | `pr_r4_conveyor` | สายพานท่อนตรง (วนภาพ 4 เฟรม) | 32×32 | seamless straight conveyor belt segment seen from above with a dark rubber belt and orange side rails, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-402 | `pr_r4_card_slot` | ช่องเสียบการ์ดขั้นตอน | 32×32 | empty rectangular card slot plate mounted on a rail with a small orange light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-411 | `pr_r4_station_collect` | สถานี 1 เก็บรวบรวมข้อมูล | 64×64 | factory station with a camera on a small crane arm above a crate collecting photo cards of hand gestures, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-412 | `pr_r4_station_prepare` | สถานี 2 จัดเตรียมและทำความสะอาดข้อมูล | 64×64 | factory washing station with brushes and a filter tray removing torn and duplicate photo cards, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-413 | `pr_r4_station_split` | สถานี 3 แบ่งชุดข้อมูล | 64×64 | factory splitter machine dividing photo cards into one large bin and one small bin, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-414 | `pr_r4_station_train` | สถานี 4 ฝึกโมเดล | 64×64 | factory press machine with a glowing chip in the center being fed photo cards from a large bin, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-415 | `pr_r4_station_evaluate` | สถานี 5 ประเมินผล | 64×64 | factory inspection desk with a gauge dial, a board of check marks and cross marks, and a small bin of photo cards, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-416 | `pr_r4_station_deploy` | สถานี 6 นำไปใช้งาน | 64×64 | factory kiosk with a webcam on top and a finished glowing chip plugged into it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-420 | `pr_r4_calculator` | เครื่องคิด Accuracy | 64×64 | chunky floor-standing calculator terminal with a blank display, a division key and a percent key, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-401 | `ic_r4_step_collect` | การ์ดขั้นตอน: เก็บรวบรวมข้อมูล | 32×32 | icon of a camera above a stack of photos, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-402 | `ic_r4_step_prepare` | การ์ดขั้นตอน: จัดเตรียมและทำความสะอาดข้อมูล | 32×32 | icon of a sponge with sparkles cleaning a photo, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-403 | `ic_r4_step_split` | การ์ดขั้นตอน: แบ่งชุดข้อมูล | 32×32 | icon of a stack of cards split into one big pile and one small pile, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-404 | `ic_r4_step_train` | การ์ดขั้นตอน: ฝึกโมเดล | 32×32 | icon of a chip lifting a small dumbbell, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-405 | `ic_r4_step_evaluate` | การ์ดขั้นตอน: ประเมินผล | 32×32 | icon of a magnifying glass over a check mark and a cross mark, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-406 | `ic_r4_step_deploy` | การ์ดขั้นตอน: นำไปใช้งาน | 32×32 | icon of a glowing chip with an upward launch arrow next to a small webcam, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ห้อง 5 ลานชีวิตประจำวัน**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-501 | `pr_r5_tv` | โทรทัศน์ (แนะนำภาพยนตร์หรือเพลง) | 64×64 | television on a low stand showing a row of movie and music thumbnails with one highlighted, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-502 | `pr_r5_face_phone` | โทรศัพท์สแกนหน้า (จดจำใบหน้า) | 64×64 | large smartphone on a stand scanning a simple face outline inside a green frame, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-503 | `pr_r5_speaker` | ลำโพงอัจฉริยะ (ผู้ช่วยเสียง) | 64×64 | smart speaker on a small table with a glowing ring and sound waves, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-504 | `pr_r5_shop_kiosk` | ตู้ร้านค้าออนไลน์ (แนะนำสินค้า) | 64×64 | online shop kiosk with a shopping cart and product boxes on its screen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-505 | `pr_r5_mailbox` | ตู้จดหมายมีกรวยกรอง (กรองอีเมลสแปม) | 64×64 | mailbox with a filter funnel, plain envelopes going in and one marked envelope dropping into a side bin, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-506 | `pr_r5_dictation` | ไมโครโฟนต่อสมุดโน้ต (แปลงเสียงเป็นข้อความ) | 64×64 | microphone on a desk connected to a notepad where sound waves turn into wavy handwriting lines, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-507 | `pr_r5_light_switch` | สวิตช์ไฟธรรมดาบนผนัง | 32×32 | plain wall light switch with a small ceiling lamp above it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-508 | `pr_r5_notice_board` | ป้ายประกาศกลางลาน | 32×64 | standing notice board with a blank cream sheet and a coral pink frame, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-501 | `ic_r5_sys_recommend_media` | การ์ดระบบ: แนะนำภาพยนตร์หรือเพลง | 32×32 | icon of a film clapper and a music note with a small heart, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-502 | `ic_r5_sys_face` | การ์ดระบบ: จดจำใบหน้า | 32×32 | icon of a simple face outline inside scan frame corners, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-503 | `ic_r5_sys_voice_assistant` | การ์ดระบบ: ผู้ช่วยเสียง | 32×32 | icon of a smart speaker with sound waves, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-504 | `ic_r5_sys_recommend_product` | การ์ดระบบ: แนะนำสินค้า | 32×32 | icon of a shopping cart with a small heart, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-505 | `ic_r5_sys_spam_filter` | การ์ดระบบ: กรองอีเมลสแปม | 32×32 | icon of an envelope passing through a filter funnel, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-506 | `ic_r5_sys_speech_to_text` | การ์ดระบบ: แปลงเสียงเป็นข้อความ | 32×32 | icon of a microphone with an arrow pointing to a page of wavy lines, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ห้อง 6 สตูดิโอภาคสนาม**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PR-601 | `pr_r6_portal_pc` | จอใหญ่ ประตูสู่เว็บจริง | 64×64 | large desktop computer with a glowing azure screen showing a blank browser window and an arrow pointing outward, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-602 | `pr_r6_webcam` | กล้องบนขาตั้ง | 32×64 | webcam on a tripod with a small ring light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-603 | `pr_r6_poster_rock` | โปสเตอร์ท่าค้อน | 32×32 | wall poster showing a hand making a closed fist, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-604 | `pr_r6_poster_paper` | โปสเตอร์ท่ากระดาษ | 32×32 | wall poster showing an open flat hand, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-605 | `pr_r6_poster_scissors` | โปสเตอร์ท่ากรรไกร | 32×32 | wall poster showing a hand with two fingers extended like scissors, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-606 | `pr_r6_result_board` | กระดานตารางบันทึกผล | 64×64 | whiteboard on wheels with an empty table grid of five columns and five rows, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-607 | `pr_r6_checklist_stand` | ป้ายเช็คลิสต์ 6 ขั้นตอน | 32×64 | clipboard on a stand with six empty checkboxes in a column, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-608 | `pr_r6_cert_printer` | เครื่องพิมพ์ใบประกาศ | 64×64 | printer machine printing a blank certificate sheet with a gold ribbon seal, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-601 | `ic_r6_class_rock` | ไอคอนคลาส: ค้อน | 32×32 | icon of a hand making a closed fist, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-602 | `ic_r6_class_paper` | ไอคอนคลาส: กระดาษ | 32×32 | icon of an open flat hand, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| IC-603 | `ic_r6_class_scissors` | ไอคอนคลาส: กรรไกร | 32×32 | icon of a hand with two fingers extended like scissors, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+### 5.4 ไอคอนแกน AI 6 ชิ้น
+
+แกน AI เป็นลูกแก้วเรืองแสง 6 ลูก ห้องละลูก สีตามห้อง ในเกมแต่ละชิ้นแสดงคู่กับ `topics[N-1].title` แบบเดิมออกแบบเป็นหกเหลี่ยมแบ่ง 6 เสี้ยว แต่ที่ขนาด 32×32 Pixel Lab ให้ผลเป็นลูกแก้วกลม (CORE-1) ชิ้นที่ 2–6 จึงใช้ prompt ลูกแก้วกลมแบบเดียวกัน เปลี่ยนเฉพาะสี (ลองเจนต่อจากภาพชิ้นที่ 1 ด้วย `init_image` แล้ว รูปทรงตรงกันแต่สีไม่เปลี่ยนตาม prompt แม้บังคับจานสีด้วย `color_image` จึงไม่ใช้วิธีนั้น) CORE-0 และ CORE-7 (ฐานหกเหลี่ยมและแกนประกอบครบ) ยังไม่ได้ใช้ในเกม
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| CORE-1 | `core_1` | แกน AI ชิ้นที่ 1 (ห้อง 1, teal) | 32×32 | icon of one round glowing teal crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-2 | `core_2` | แกน AI ชิ้นที่ 2 (ห้อง 2, violet) | 32×32 | icon of one round glowing violet crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-3 | `core_3` | แกน AI ชิ้นที่ 3 (ห้อง 3, green) | 32×32 | icon of one round glowing green crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-4 | `core_4` | แกน AI ชิ้นที่ 4 (ห้อง 4, orange) | 32×32 | icon of one round glowing orange crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-5 | `core_5` | แกน AI ชิ้นที่ 5 (ห้อง 5, coral) | 32×32 | icon of one round glowing coral pink crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-6 | `core_6` | แกน AI ชิ้นที่ 6 (ห้อง 6, azure) | 32×32 | icon of one round glowing azure blue crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-0 | `core_socket` | ฐานแกนหกเหลี่ยมว่าง (HUD และใบประกาศ) | 64×64 | icon of an empty dark metal hexagon frame divided into six empty wedge-shaped sockets, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CORE-7 | `core_complete` | แกน AI ประกอบครบ 6 ชิ้น | 64×64 | icon of a glowing hexagon crystal made of six wedges colored teal, violet, green, orange, coral pink and azure blue, with a bright white center, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+### 5.5 UI
+
+**กรอบและชุดปุ่ม**
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| UI-01 | `ui_panel_dialog` | กรอบกล่องสนทนา (9-slice) | 192×192 | game UI dialogue panel, rounded rectangle with a cream fill, a dark navy border and small teal corner bolts, empty inside, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-02 | `ui_panel_window` | กรอบหน้าต่าง/แผงอ้างอิง (9-slice) | 192×192 | game UI window panel, rounded rectangle with a light gray fill, a dark navy border and a slim teal title bar, empty inside, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-03 | `ui_buttons` | ชุดปุ่ม 4 สถานะ: ปกติ/ชี้/กด/ปิดใช้งาน | 192×192 | game UI sheet of four wide rounded buttons stacked vertically: teal normal, lighter teal hover, darker teal pressed, gray disabled, all blank, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-04 | `ui_cards` | ชุดกรอบการ์ดลาก 4 สถานะ: ปกติ/เลือก/ถูก/ผิด | 256×192 | game UI sheet of four blank cards with rounded corners in a row: cream default, yellow-outlined selected, green-outlined correct, red-outlined wrong, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-05 | `ui_slots` | ช่องวางการ์ด 2 สถานะ: ว่าง/ชี้อยู่ | 192×192 | game UI sheet of two empty card slots with dashed dark navy outlines, one plain and one glowing yellow, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-06 | `ui_map_nodes` | จุดแผนที่ 3 สถานะ: ล็อก/กำลังเล่น/ผ่านแล้ว | 192×192 | game UI sheet of three round map nodes in a row: gray locked node with a padlock, yellow glowing current node, green cleared node with a check mark, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-07 | `ui_cert_frame` | กรอบใบประกาศ | 640×360 | certificate border frame with a dark navy and gold edge, a gold ribbon seal in the bottom-right corner and an empty hexagon emblem space at the top center, cream paper, empty center, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-08 | `ui_title_emblem` | ตราเกมหน้าเริ่ม | 192×192 | game title emblem of a small round white mentor robot hovering in front of a glowing six-colored hexagon crystal, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ไอคอน UI (32×32 ทุกชิ้น)**
+
+| รหัส | ไฟล์ | ชิ้นงาน | Prompt |
+|---|---|---|---|
+| UI-10 | `ui_ic_star_full` | ดาวเต็ม | icon of a filled gold star, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-11 | `ui_ic_star_empty` | ดาวว่าง | icon of an empty star outline in dark gray, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-12 | `ui_ic_lock` | ล็อก | icon of a closed gray padlock, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-13 | `ui_ic_check` | ถูก | icon of a green check mark in a round badge, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-14 | `ui_ic_cross` | ผิด | icon of a red cross mark in a round badge, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-15 | `ui_ic_peek` | เปิดอ่านแผงอ้างอิง | icon of an open book with a small yellow light bulb above it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-16 | `ui_ic_style_read` | สไตล์: อ่าน | icon of an open book, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-17 | `ui_ic_style_visual` | สไตล์: ดูภาพ | icon of an eye above a small framed picture, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-18 | `ui_ic_style_hands` | สไตล์: ลงมือทำ | icon of a hand pulling a lever, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-19 | `ui_ic_tier_assist` | ระดับ: ประคอง | icon of a life ring, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-20 | `ui_ic_tier_standard` | ระดับ: ปกติ | icon of a single upward chevron badge, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-21 | `ui_ic_tier_challenge` | ระดับ: ท้าทาย | icon of a small flame badge, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-22 | `ui_ic_notebook` | สมุดบันทึก | icon of a closed notebook with a pen, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-23 | `ui_ic_external` | เปิดเว็บภายนอก | icon of an arrow leaving a square box toward the top-right, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-24 | `ui_ic_upload` | แนบภาพหน้าจอ | icon of a camera with a small upward arrow, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-25 | `ui_ic_print` | พิมพ์ | icon of a printer with a sheet of paper, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-26 | `ui_ic_download` | ดาวน์โหลด | icon of a downward arrow into a tray, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-27 | `ui_ic_settings` | ตั้งค่า | icon of a gear, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-28 | `ui_ic_sound_on` | เสียงเปิด | icon of a speaker with sound waves, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-29 | `ui_ic_sound_off` | เสียงปิด | icon of a speaker with a diagonal slash, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-30 | `ui_ic_next` | ถัดไป | icon of a right-pointing triangle arrow, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-31 | `ui_ic_back` | ย้อนกลับ | icon of a left-pointing triangle arrow, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-32 | `ui_ic_close` | ปิด | icon of a dark navy diagonal cross, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-33 | `ui_ic_clock` | เวลาแนะนำ | icon of a round clock, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-34 | `ui_ic_repair` | ห้องซ่อม | icon of a yellow wrench, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-35 | `ui_ic_checkbox_off` | ช่องติ๊กว่าง | icon of an empty square checkbox, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-36 | `ui_ic_checkbox_on` | ช่องติ๊กแล้ว | icon of a square checkbox with a green check mark, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-37 | `ui_ic_hand_open` | เคอร์เซอร์มือ | icon of an open pointing hand cursor, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| UI-38 | `ui_ic_hand_grab` | เคอร์เซอร์มือจับ | icon of a closed grabbing hand cursor, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+### 5.6 สรุปจำนวน
+
+| กลุ่ม | จำนวน prompt |
+|---|---|
+| ตัวละคร (ผู้เล่น 4 ทิศ, พี่บิตทิศเดียว) | 2 |
+| ภาพหน้าพี่บิต | 4 |
+| ไทล์เซต (7 ชุด × พื้นและผนัง) | 14 |
+| วัตถุในห้อง | 52 |
+| ไอคอนมินิเกม | 26 |
+| แกน AI | 8 |
+| กรอบ UI | 8 |
+| ไอคอน UI | 29 |
+| **รวม** | **143** |
+
+---
+
+## 6. แอนิเมชัน
+
+สร้างจากตัวละครหรือวัตถุที่ผ่านการตรวจรับแล้ว คำสั่งแอนิเมชันเป็นคำบรรยายการเคลื่อนไหว ไม่ต้องต่อคำบรรยายสไตล์ เพราะสไตล์มาจากภาพต้นทาง
+
+| ชิ้นงาน | แอนิเมชัน | ทิศ | เฟรม | คำสั่ง |
+|---|---|---|---|---|
+| CH-01 | ยืนนิ่ง | 4 ทิศ | 4 | `idle, gentle breathing` |
+| CH-01 | เดิน | 4 ทิศ | 6 | `walking` |
+| CH-01 | ดีใจ (รับแกน AI) | ใต้ | 6 | `cheering with both arms raised` |
+| CH-02 | ยืนนิ่ง | ใต้ | 4 | `idle, gentle bobbing` |
+| CH-02 | พูด | ใต้ | 4 | `talking, screen eyes blinking, hands gesturing` |
+| CH-02 | ดีใจ | ใต้ | 6 | `spinning once happily, antenna flashing` |
+| PR-C01 → PR-C02 | ประตูเปิด | — | 4 | `door sliding open, light turning from red to green` |
+| PR-401 | สายพานเดิน | — | 4 | `belt surface scrolling to the right` |
+| CORE-7 | แกนเรืองแสง | — | 4 | `soft pulsing glow` |
+
+## 7. ลำดับการผลิตและการตรวจรับ
+
+ลำดับ: (1) CH-01 เพื่อล็อกขนาดและสไตล์ (2) CH-02 และภาพหน้า (3) TS-01 กับวัตถุห้อง 1 แล้วประกอบห้อง 1 ทั้งห้องเพื่อตรวจว่าเข้ากัน (4) ห้อง 2–6 ทีละห้อง (5) แกน AI (6) UI
+
+ตรวจทุกชิ้นก่อนรับ:
+
+- ขนาดตรงตามตาราง และวางลงกริด 32 ได้พอดี
+- พื้นหลังโปร่งใส (ยกเว้นไทล์พื้น ผนัง และ PR-401)
+- ไม่มีตัวอักษรหรือตัวเลขในภาพ
+- ปรับสีเข้าจานสีข้อ 3 แล้ว ไม่มีสีนอกจานสี
+- แสงมาจากซ้ายบน มุมมองเดียวกับชิ้นอื่นในห้อง
+- ขอบคม ไม่มีพิกเซลกึ่งโปร่งใส
+- ไทล์พื้นและผนังต่อกันแล้วไม่เห็นรอยต่อ
+- เนื้อหาในภาพตรงกับตัวอย่างที่ `course.json` กล่าวถึง ไม่เพิ่มตัวอย่างใหม่ (เช่น ไอเทมห้อง 3 มี 4 อย่างตามคำถามทบทวนเท่านั้น)
+
+## 8. การตั้งชื่อและจัดเก็บไฟล์
+
+- ไฟล์ PNG ชื่อตามคอลัมน์ "ไฟล์" ตัวพิมพ์เล็กคั่นด้วยขีดล่าง
+- โฟลเดอร์: `assets/characters/`, `assets/tiles/`, `assets/props/`, `assets/icons/`, `assets/cores/`, `assets/ui/`
+- แอนิเมชันต่อท้ายชื่อด้วยชื่อท่าและทิศ เช่น `ch_player_walk_south.png` เป็นแถบเฟรมเรียงแนวนอน
+- เก็บ prompt ที่ใช้จริงและค่า seed ของแต่ละชิ้นไว้ใน `assets/PROMPTS_LOG.md` เพื่อสร้างซ้ำได้ ถ้า prompt ที่ใช้ต่างจากเอกสารนี้ ให้แก้เอกสารนี้ด้วย

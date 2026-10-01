@@ -1,0 +1,12 @@
+{
+  "rewrites": [{ "source": "/teacher", "destination": "/index.html" }],
+  "functions": {
+    "api/tutor.ts": {
+      "maxDuration": 30,
+      "includeFiles": "src/content/course.json"
+    },
+    "api/teacher.ts": {
+      "maxDuration": 15
+    }
+  }
+}

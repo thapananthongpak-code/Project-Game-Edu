@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "icon of one round glowing coral pink crystal orb with a bright white center and a dark outline, centered, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 32,
+    "height": 32,
+    "no_background": true,
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_image",
+  "id": "92770660-b92e-400e-8882-c05e10c17140",
+  "generatedAt": "2026-10-01T17:53:07.004Z"
+}

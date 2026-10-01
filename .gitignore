@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# ความลับ: token/API key อยู่ใน .env เท่านั้น
+.env
+.env.*
+!.env.example
+
+.DS_Store
+__pycache__/
+# ไฟล์ล็อกชั่วคราวของ Word
+~$*
+
+# ผลการทดสอบอัตโนมัติ (ภาพหน้าจอ)
+test-results/
