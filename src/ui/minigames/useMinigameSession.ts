@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { playSfx } from "../../audio/engine";
 import { type AdaptiveEvent, evaluateMinigame, type MinigameState } from "../../state/adaptive";
-import { startTierOf, useGameStore } from "../../state/gameStore";
+import { planOf, startTierOf, useGameStore } from "../../state/gameStore";
 
 export type Feedback = "start" | "selected" | "correct" | "wrong" | "roundWrong" | "stageDone" | "complete";
 
@@ -31,6 +31,8 @@ export interface MinigameSession {
  */
 export function useMinigameSession(room: number): MinigameSession {
   const [startTier] = useState(() => startTierOf(useGameStore.getState(), room));
+  // ระดับความยากของเกมกำหนดระดับความช่วยเหลือต่ำสุด: ตอบผิดแล้วระดับไม่ลดต่ำกว่านี้ (GDD ข้อ 15)
+  const [floor] = useState(() => planOf(useGameStore.getState()).minTier);
   const [events, setEvents] = useState<AdaptiveEvent[]>([]);
   const [peeksUsed, setPeeksUsed] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>("start");
@@ -38,7 +40,7 @@ export function useMinigameSession(room: number): MinigameSession {
   const [offerDeclinedAt, setOfferDeclinedAt] = useState(-1);
   const lastEventAt = useRef(performance.now());
 
-  const state = evaluateMinigame(startTier, events);
+  const state = evaluateMinigame(startTier, events, floor);
   const peeksLeft = Math.max(0, state.peeksAllowed - peeksUsed);
 
   return {

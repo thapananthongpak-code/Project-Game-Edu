@@ -4,7 +4,7 @@ import { questOf, resolveRefs, type Station, stripNumber, topicOf } from "../../
 import { shuffled } from "../../content/choices";
 import type { Minigame, Topic } from "../../content/schema";
 import { fmt, ui } from "../../content/ui-strings";
-import { useGameStore } from "../../state/gameStore";
+import { roomProgress, useGameStore } from "../../state/gameStore";
 import type { IMPLEMENTED_MINIGAMES } from "../../state/rules";
 import { PageView } from "../ContentView";
 import { RepairBay } from "../RepairBay";
@@ -135,9 +135,9 @@ function PeekPanel({ reference, onClose }: { reference: Station[]; onClose: () =
  */
 export function MinigameOverlay() {
   const room = useGameStore((s) => s.room) as number;
-  const style = useGameStore((s) => s.profile?.style ?? "read");
   const completeMinigame = useGameStore((s) => s.completeMinigame);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
+  const openOverlay = useGameStore((s) => s.openOverlay);
   const setTutorOpen = useGameStore((s) => s.setTutorOpen);
   const session = useMinigameSession(room);
   const stages = useMemo(() => (questOf(room)?.minigames ?? []).flatMap((game) => stagesOf(room, topicOf(room), game)), [room]);
@@ -158,8 +158,11 @@ export function MinigameOverlay() {
   };
   const finish = () => {
     playSfx("star");
+    const hadCore = roomProgress(useGameStore.getState(), room).core;
     completeMinigame(state);
-    closeOverlay();
+    // ระดับยาก: ผ่านเควสแล้วได้แกน AI ของหัวข้อนี้ทันที แสดงหน้ารับแกน
+    if (!hadCore && roomProgress(useGameStore.getState(), room).core) openOverlay("reward");
+    else closeOverlay();
   };
   const instruction = !session.roundMode ? ui.quest[stage.kind].instruction : stage.kind === "accuracy" ? ui.minigame.accuracyRound : ui.minigame.roundInstruction;
 
@@ -246,7 +249,7 @@ export function MinigameOverlay() {
 
       {peeking && <PeekPanel reference={stage.reference} onClose={() => setPeeking(false)} />}
 
-      {session.inRepair && <RepairBay room={room} style={style} stations={stage.repair} onDone={session.leaveRepair} />}
+      {session.inRepair && <RepairBay room={room} stations={stage.repair} onDone={session.leaveRepair} />}
     </div>
   );
 }

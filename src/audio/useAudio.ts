@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { isFieldRoom } from "../content";
-import { coreCount, useGameStore } from "../state/gameStore";
+import { battleOf } from "../state/campaign";
+import { coreCount, difficultyOf, useGameStore } from "../state/gameStore";
 import { getAudioSettings, installAudioLifecycle, playSfx, setMusic, subscribeAudioSettings } from "./engine";
 
 /** การตั้งค่าเสียงปัจจุบัน (เปลี่ยนแล้วคอมโพเนนต์วาดใหม่) */
@@ -15,17 +15,18 @@ export function useAudioDirector(): void {
     const removeLifecycle = installAudioLifecycle();
 
     const pickMusic = () => {
-      const { screen, room, overlay, battleRoom } = useGameStore.getState();
-      if (overlay === "battle" && battleRoom !== null) return setMusic(isFieldRoom(battleRoom) ? "boss" : "battle");
+      const state = useGameStore.getState();
+      const { screen, zone, overlay, battleId } = state;
+      if (overlay === "battle" && battleId !== null) return setMusic(battleOf(difficultyOf(state), battleId)?.boss ? "boss" : "battle");
       if (overlay === "story") return setMusic("story");
       if (overlay === "certificate") return setMusic("victory");
-      if (screen === "room" && room !== null) return setMusic("study", room);
+      if (screen === "room" && zone !== null) return setMusic("study", zone);
       setMusic("lab");
     };
     pickMusic();
 
     const unsubscribe = useGameStore.subscribe((state, previous) => {
-      if (state.screen !== previous.screen || state.room !== previous.room || state.overlay !== previous.overlay || state.battleRoom !== previous.battleRoom) pickMusic();
+      if (state.screen !== previous.screen || state.zone !== previous.zone || state.overlay !== previous.overlay || state.battleId !== previous.battleId) pickMusic();
       if (coreCount(state) > coreCount(previous)) playSfx("core");
       else if (state.overlay !== previous.overlay && state.overlay !== null && previous.overlay === null) playSfx("open");
       else if (state.overlay === null && previous.overlay !== null) playSfx("close");

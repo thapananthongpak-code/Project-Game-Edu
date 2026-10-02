@@ -407,6 +407,206 @@
       "status": "generated"
     },
     {
+      "id": "CH-14",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดนักวิจัยภาคสนาม 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_researcher": "characters/ch_a_researcher.png"
+      },
+      "web": {
+        "ch_a_researcher_south": "characters/ch_a_researcher_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, khaki field research vest with many pockets over a teal shirt, a small tablet strapped to the forearm, gray trousers, brown boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดนักวิจัยภาคสนาม 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "f354c82d-082f-4ddb-8cdb-014848c49192",
+        "generatedAt": "2026-10-02T07:25:56.783Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-15",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดผู้บัญชาการ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_commander": "characters/ch_a_commander.png"
+      },
+      "web": {
+        "ch_a_commander_south": "characters/ch_a_commander_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, long white commander coat with gold epaulettes and gold trim over a dark navy uniform, white gloves, dark boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดผู้บัญชาการ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "46979e3a-81cb-48c4-9b30-1d0781d54e56",
+        "generatedAt": "2026-10-02T07:28:12.401Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-16",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดนักวิจัยภาคสนาม 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_researcher": "characters/ch_b_researcher.png"
+      },
+      "web": {
+        "ch_b_researcher_south": "characters/ch_b_researcher_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, khaki field research vest with many pockets over a teal shirt, a small tablet strapped to the forearm, gray trousers, brown boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดนักวิจัยภาคสนาม 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "3e8e16dc-eaab-491f-8723-d2baceac8a8e",
+        "generatedAt": "2026-10-02T07:31:03.991Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-17",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดผู้บัญชาการ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_commander": "characters/ch_b_commander.png"
+      },
+      "web": {
+        "ch_b_commander_south": "characters/ch_b_commander_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, long white commander coat with gold epaulettes and gold trim over a dark navy uniform, white gloves, dark boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดผู้บัญชาการ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "62a13eb1-3453-4141-9ea5-04560f3ea326",
+        "generatedAt": "2026-10-02T07:33:46.547Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "CH-02",
       "kind": "sprite",
       "name": "พี่บิต พี่เลี้ยงหุ่นยนต์",
@@ -2673,6 +2873,337 @@
       "status": "generated"
     },
     {
+      "id": "BT-07",
+      "kind": "battle",
+      "name": "บอสร่างที่ 2 (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_boss_2": "battle/bt_boss_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "colossal final boss kaiju second form facing left, dark blue dragon beast with glowing crimson cracks across its armored body, four tattered wings, a second pair of clawed arms, a crown of horns, menacing glowing red eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "79e42f38-446b-4b40-ad3d-726b71cf0bf7",
+        "generatedAt": "2026-10-02T07:12:59.045Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-08",
+      "kind": "battle",
+      "name": "บอสร่างสุดท้าย (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_boss_3": "battle/bt_boss_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "colossal final boss kaiju final form facing left, towering black and gold dragon god beast wreathed in white-hot energy, six wings spread wide, a glowing golden core in its chest, glowing golden eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "81c2e796-8bbe-43b1-9d98-ee38cb0048a9",
+        "generatedAt": "2026-10-02T07:14:16.184Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-01",
+      "kind": "backdrop",
+      "name": "บทนำ 1: ไคจูตัวแรก",
+      "requested": true,
+      "size": [
+        320,
+        149
+      ],
+      "files": {},
+      "web": {
+        "st_prologue_1": "story/st_prologue_1.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a colossal dark blue dragon kaiju silhouette rising behind a city skyline at night, small buildings with lit windows, red glow in the sky, drifting smoke, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "a5980151-59d0-4e46-b66c-e38f1fc3e83f",
+        "generatedAt": "2026-10-02T07:15:14.498Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-02",
+      "kind": "backdrop",
+      "name": "บทนำ 2: โอเมก้าบุกแล็บ",
+      "requested": true,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_prologue_2": "story/st_prologue_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a wrecked research laboratory at night, a huge dark blue dragon claw smashing through the wall, a white and teal mech robot fallen on the floor with sparks, six small glowing colored orbs scattered on the ground, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "67ce7e36-0705-4bfb-a210-673e2ddb5823",
+        "generatedAt": "2026-10-02T07:16:03.901Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-03",
+      "kind": "backdrop",
+      "name": "บทนำ 3: อาจารย์วิน",
+      "requested": true,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_prologue_3": "story/st_prologue_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a kind gray-haired scientist professor with round glasses sitting up in a hospital bed with one arm in a sling, smiling gently and talking to a small round white hovering robot with a cyan screen face, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "01db8e3e-857e-4ee1-ba41-026f718b1d0e",
+        "generatedAt": "2026-10-02T07:17:02.093Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-04",
+      "kind": "backdrop",
+      "name": "บทนำ 4: ทางเดินห้องวิจัย (ตอน build วางแกน AI ทั้ง 6 ชิ้นทับ ได้เป็น `st_prologue_4`)",
+      "requested": true,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_corridor": "story/st_corridor.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a bright laboratory hallway with a row of closed metal doors, six glowing crystal orbs floating in the air in teal, violet, green, orange, pink and blue, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9b2c326c-13f5-452d-b4a3-323383f1a4f0",
+        "generatedAt": "2026-10-02T07:37:29.402Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "9f870eb6-1fc3-4a3a-b743-3ae25be5104f",
+          "reason": "สั่งลูกแก้ว 6 ลูก ได้ 5 ลูก ไม่ตรงกับเนื้อเรื่อง (แกน AI 6 ชิ้น)"
+        },
+        {
+          "tool": "create_image_pixflux",
+          "id": "9102dab3-5b27-4984-804a-23cbb04fa134",
+          "reason": "ระบุ exactly six แล้วได้ 4 ลูก จึงเปลี่ยนเป็นเจนเฉพาะทางเดิน แล้ววางภาพแกน AI จริงทั้ง 6 ชิ้นทับตอน build"
+        }
+      ]
+    },
+    {
+      "id": "ST-05",
+      "kind": "backdrop",
+      "name": "บทนำ 5: โรงเก็บหุ่น",
+      "requested": true,
+      "size": [
+        320,
+        166
+      ],
+      "files": {},
+      "web": {
+        "st_prologue_5": "story/st_prologue_5.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a giant white and teal guardian mech robot standing in a maintenance hangar dock, a small round white hovering robot with a cyan screen face pointing up at it, a teenage intern in a white lab coat seen from behind looking up, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c8b625e6-067c-4fcc-bd9d-9376feeb0282",
+        "generatedAt": "2026-10-02T07:18:02.907Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-06",
+      "kind": "backdrop",
+      "name": "ห้อง 6: งานภาคสนาม",
+      "requested": true,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_field": "story/st_field.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a teenage intern in a white lab coat seen from behind sitting at a computer desk with a webcam on a tripod, raising one hand to make a scissors gesture toward the camera, a glowing blue monitor, a small round white robot hovering beside, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "63f91e30-56eb-4fe1-943b-440c66a408a7",
+        "generatedAt": "2026-10-02T07:19:02.145Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-08",
+      "kind": "backdrop",
+      "name": "บทส่งท้าย 2: อาจารย์วิน",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_ending_2": "story/st_ending_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a kind gray-haired scientist professor with round glasses and one arm in a sling giving a proud thumbs up, a small round white robot with a cyan screen face cheering beside him, bright laboratory background, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "71074c8b-a099-4106-a4ca-162aa8601f5a",
+        "generatedAt": "2026-10-02T07:20:39.809Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-09",
+      "kind": "backdrop",
+      "name": "บทส่งท้าย 3: ใบประกาศ",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_ending_3": "story/st_ending_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a small round white hovering robot with a cyan screen face holding up a rolled certificate with a gold ribbon seal, colorful confetti falling, bright laboratory background, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "983b9525-e1e3-46ea-8da3-e7636afda1f6",
+        "generatedAt": "2026-10-02T07:36:09.353Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "1c4ebcda-4c18-421b-b46f-0e7068509de6",
+          "reason": "มีตัวอักษรปลอมบนลำตัวหุ่น จึงเพิ่ม plain smooth white body และ blank parchment ใน prompt แล้วเจนใหม่"
+        }
+      ]
+    },
+    {
       "id": "BG-01",
       "kind": "backdrop",
       "name": "ฉากต่อสู้ 1 หน้าแล็บ",
@@ -2895,6 +3426,202 @@
         "generatedAt": "2026-10-02T04:35:36.190Z"
       },
       "status": "generated"
+    },
+    {
+      "id": "ST-KAIJU-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_1 + bt_kaiju_1)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_1": "story/st_kaiju_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_1",
+        "bt_kaiju_1"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_2 + bt_kaiju_2)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_2": "story/st_kaiju_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_2",
+        "bt_kaiju_2"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_3 + bt_kaiju_3)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_3": "story/st_kaiju_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_3",
+        "bt_kaiju_3"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-4",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_4 + bt_kaiju_4)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_4": "story/st_kaiju_4.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_4",
+        "bt_kaiju_4"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-5",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_5 + bt_kaiju_5)",
+      "requested": false,
+      "size": [
+        320,
+        150
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_5": "story/st_kaiju_5.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_5",
+        "bt_kaiju_5"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-6",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_6 + bt_kaiju_6)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_6": "story/st_kaiju_6.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_6",
+        "bt_kaiju_6"
+      ]
+    },
+    {
+      "id": "ST-BOSS-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_6 + bt_boss_2)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_boss_2": "story/st_boss_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_6",
+        "bt_boss_2"
+      ]
+    },
+    {
+      "id": "ST-BOSS-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_6 + bt_boss_3)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_boss_3": "story/st_boss_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_6",
+        "bt_boss_3"
+      ]
+    },
+    {
+      "id": "ST-PROLOGUE-4",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (st_corridor + แกน AI 6 ชิ้น)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_prologue_4": "story/st_prologue_4.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "st_corridor",
+        "core_1",
+        "core_2",
+        "core_3",
+        "core_4",
+        "core_5",
+        "core_6"
+      ]
+    },
+    {
+      "id": "ST-ENDING-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_5 + bt_robot + bt_kaiju_6)",
+      "requested": false,
+      "size": [
+        320,
+        150
+      ],
+      "files": {},
+      "web": {
+        "st_ending_1": "story/st_ending_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_5",
+        "bt_robot",
+        "bt_kaiju_6"
+      ]
     }
   ]
 }

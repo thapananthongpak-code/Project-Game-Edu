@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "public" / "assets"
@@ -403,13 +403,29 @@ def art_guide_prompts():
 
 
 # สีชุดของตัวละครชั่วคราว (ใช้เมื่อยังไม่มีภาพจริง)
-OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57"}
+OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57", "researcher": "#C9B27C", "commander": "#FFF4DC"}
 # ตัวละครผู้เล่น: (รหัส, แบบ, ชุด) แบบ a = ผมสั้น แบบ b = ผมหางม้า
 PLAYER_CHARACTERS = [
     ("CH-01", "a", "lab"), ("CH-07", "b", "lab"),
     ("CH-08", "a", "engineer"), ("CH-09", "a", "pilot"), ("CH-10", "a", "guardian"),
     ("CH-11", "b", "engineer"), ("CH-12", "b", "pilot"), ("CH-13", "b", "guardian"),
+    ("CH-14", "a", "researcher"), ("CH-15", "a", "commander"), ("CH-16", "b", "researcher"), ("CH-17", "b", "commander"),
 ]
+# ภาพประกอบเนื้อเรื่องที่เจนจาก Pixel Lab: (รหัส, ไฟล์)
+STORY_PANELS = [
+    ("ST-01", "st_prologue_1"), ("ST-02", "st_prologue_2"), ("ST-03", "st_prologue_3"), ("ST-04", "st_corridor"), ("ST-05", "st_prologue_5"),
+    ("ST-06", "st_field"), ("ST-08", "st_ending_2"), ("ST-09", "st_ending_3"),
+]
+# ภาพประกอบเนื้อเรื่องที่ประกอบจากฉากหลังกับไคจู: ไฟล์ -> (ฉากหลัง, ภาพไคจู)
+STORY_COMPOSITES = {
+    **{f"st_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(1, 7)},
+    "st_boss_2": ("bg_battle_6", "bt_boss_2"),
+    "st_boss_3": ("bg_battle_6", "bt_boss_3"),
+}
+# บทนำช่องที่ 4: ทางเดินห้องวิจัย + แกน AI ทั้ง 6 ชิ้นของเกม (เจนภาพให้มีลูกแก้วครบ 6 ไม่ได้ จึงวางภาพแกนจริงทับ)
+STORY_CORES = ("st_prologue_4", "st_corridor")
+# บทส่งท้ายช่องที่ 1: หุ่นการ์เดียนของเกมยืนอยู่ โอเมก้าล้มอยู่ข้างหลัง (ภาพที่เจนได้หุ่นหน้าตาไม่ตรงกับการ์เดียน จึงประกอบจากภาพของเกมเอง)
+STORY_VICTORY = ("st_ending_1", "bg_battle_5", "bt_robot", "bt_kaiju_6")
 KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
 # วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
 ROOM_PROPS = [
@@ -557,6 +573,9 @@ def main():
         *[core(room) for room in ROOM_COLORS],
         image("BT-00", "bt_robot", (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "battle", {**BATTLE_SETTINGS, "direction": "east"}, "battle", web=True),
         *[kaiju(n) for n in KAIJU_COLORS],
+        image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
+        image("BT-08", "bt_boss_3", (128, 128), lambda: draw_blob(128, INK, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
+        *[image(asset_id, key, (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "story", web=True) for asset_id, key in STORY_PANELS],
         *[backdrop(n) for n in ROOM_COLORS],
         image("PT-01", "pt_professor", (64, 64), lambda: draw_block(64, 64, SKIN, PAPER), "portrait",
               {"no_background": True, "outline": "single color outline", "shading": "basic shading", "detail": "medium detail"}, "portraits", web=True),
@@ -588,6 +607,47 @@ def main():
             images[key].save(target)
         out.append(asset)
 
+    # ภาพประกอบเนื้อเรื่องของแต่ละด่าน: ฉากหลังของด่าน + ไคจูตัวนั้นยืนอยู่ทางขวา (ไม่ใช้เครดิตเจน)
+    built = {key: ASSETS / path for a in out for key, path in {**a["files"], **a.get("web", {})}.items()}
+    for key, (backdrop_key, kaiju_key) in STORY_COMPOSITES.items():
+        scene = Image.open(built[backdrop_key]).convert("RGBA")
+        monster = Image.open(built[kaiju_key]).convert("RGBA")
+        scene.alpha_composite(monster, (scene.width - monster.width - 24, scene.height - monster.height - 4))
+        target = ASSETS / "story" / f"{key}.png"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        scene.convert("RGB").save(target)
+        out.append({"id": key.upper().replace("_", "-"), "kind": "composite", "name": f"ภาพประกอบเนื้อเรื่อง ({backdrop_key} + {kaiju_key})", "requested": False, "size": list(scene.size),
+                    "files": {}, "web": {key: f"story/{key}.png"}, "status": "composed", "composedFrom": [backdrop_key, kaiju_key]})
+
+    key, corridor_key = STORY_CORES
+    scene = Image.open(built[corridor_key]).convert("RGBA")
+    for n in range(1, 7):
+        core = Image.open(built[f"core_{n}"]).convert("RGBA")
+        core = core.resize((core.width * 2, core.height * 2), Image.NEAREST)
+        # สองแถว แถวละสามชิ้น ลอยอยู่กลางทางเดิน
+        col, row = (n - 1) % 3, (n - 1) // 3
+        x = scene.width // 2 + (col - 1) * 84 - core.width // 2
+        y = 22 + row * 62 + (10 if col == 1 else 0)
+        scene.alpha_composite(core, (x, y))
+    scene.convert("RGB").save(ASSETS / "story" / f"{key}.png")
+    out.append({"id": key.upper().replace("_", "-"), "kind": "composite", "name": f"ภาพประกอบเนื้อเรื่อง ({corridor_key} + แกน AI 6 ชิ้น)", "requested": False, "size": list(scene.size),
+                "files": {}, "web": {key: f"story/{key}.png"}, "status": "composed", "composedFrom": [corridor_key, *[f"core_{n}" for n in range(1, 7)]]})
+
+    key, backdrop_key, robot_key, kaiju_key = STORY_VICTORY
+    scene = Image.open(built[backdrop_key]).convert("RGBA")
+    fallen = Image.open(built[kaiju_key]).convert("RGBA").rotate(90, expand=True)
+    alpha = fallen.getchannel("A")
+    dimmed = ImageEnhance.Color(ImageEnhance.Brightness(fallen.convert("RGB")).enhance(0.6)).enhance(0.5)
+    fallen = Image.merge("RGBA", (*dimmed.split(), alpha))
+    fallen = fallen.crop(fallen.getbbox())
+    scene.alpha_composite(fallen, (scene.width - fallen.width - 10, scene.height - fallen.height - 2))
+    robot = Image.open(built[robot_key]).convert("RGBA")
+    robot = robot.crop(robot.getbbox())
+    scene.alpha_composite(robot, (40, scene.height - robot.height - 4))
+    scene.convert("RGB").save(ASSETS / "story" / f"{key}.png")
+    out.append({"id": key.upper().replace("_", "-"), "kind": "composite", "name": f"ภาพประกอบเนื้อเรื่อง ({backdrop_key} + {robot_key} + {kaiju_key})", "requested": False, "size": list(scene.size),
+                "files": {}, "web": {key: f"story/{key}.png"}, "status": "composed", "composedFrom": [backdrop_key, robot_key, kaiju_key]})
+
     # ลบไฟล์ภาพที่ไม่มีแอสเซตใดใช้แล้ว
     wanted = {ASSETS / path for a in out for path in [*a["files"].values(), *a.get("web", {}).values()]}
     for stale in ASSETS.rglob("*.png"):
@@ -602,6 +662,7 @@ def main():
         "assets": out,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     generated = [a["id"] for a in out if a["status"] == "generated"]
+    print(f"ภาพที่ประกอบจากชิ้นอื่น: {sum(1 for a in out if a['status'] == 'composed')}")
     placeholders = [a["id"] for a in out if a["status"] == "placeholder"]
     print(f"เขียน {MANIFEST.relative_to(ROOT)}: {len(out)} แอสเซต, {sum(len(a['files']) + len(a.get('web', {})) for a in out)} ไฟล์ภาพ")
     print(f"ภาพจริงจาก Pixel Lab ({len(generated)}): {', '.join(generated) or '-'}")

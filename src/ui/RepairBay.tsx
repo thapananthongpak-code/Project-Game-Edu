@@ -3,43 +3,39 @@ import { playSfx } from "../audio/engine";
 import type { Station } from "../content";
 import { buildRepairItems } from "../content/choices";
 import { fmt, ui } from "../content/ui-strings";
-import { nextStyle, repairPracticeDone } from "../state/adaptive";
-import { ADAPTIVE, type LearningStyle } from "../state/adaptive.config";
+import { repairPracticeDone } from "../state/adaptive";
+import { ADAPTIVE, type PageStyle } from "../state/adaptive.config";
 import { ChoiceCard } from "./ChoiceCard";
-import { PageView, revealUnits } from "./ContentView";
+import { PageView } from "./ContentView";
 import { useDialog } from "./useDialog";
 
 interface RepairBayProps {
   room: number;
-  /** สไตล์ที่ผู้เล่นใช้อยู่ ห้องซ่อมทบทวนด้วยสไตล์ถัดไป */
-  style: LearningStyle;
   /** เนื้อหาที่ใช้ทบทวน: แผงอ้างอิงของด่านที่ผู้เล่นติดอยู่ */
   stations: Station[];
   onDone: () => void;
 }
 
 /**
- * ห้องซ่อม (GDD ข้อ 7.3): ทบทวนเนื้อหาเดิมด้วยสไตล์ถัดไป แล้วฝึกโจทย์จากชุดสำรองจนถูกติดต่อกันครบเกณฑ์
+ * ห้องซ่อม (GDD ข้อ 7.3): ทบทวนเนื้อหาเดิมในรูปแบบเน้นคำสำคัญและการ์ด (ต่างจากที่สถานี) แล้วฝึกโจทย์จากชุดสำรองจนถูกติดต่อกันครบเกณฑ์
  * ต้นแบบนี้ทำเป็นหน้าต่างซ้อนบนมินิเกม ยังไม่มีฉากห้องซ่อมแยก
  */
-export function RepairBay({ room, style, stations, onDone }: RepairBayProps) {
-  const reviewStyle = nextStyle(style);
-  const pages = stations.flatMap((station) => station.pages);
-  const [revealed, setRevealed] = useState<ReadonlySet<number>[]>(() => pages.map(() => new Set<number>()));
+const REVIEW_STYLE: PageStyle = "visual";
+
+export function RepairBay({ room, stations, onDone }: RepairBayProps) {
   const [practicing, setPracticing] = useState(false);
 
   const [items, setItems] = useState(() => buildRepairItems(room));
   const [index, setIndex] = useState(0);
-  const [answered, setAnswered] = useState<number | null | undefined>(undefined);
+  const [answered, setAnswered] = useState<number | undefined>(undefined);
   const [results, setResults] = useState<boolean[]>([]);
 
-  const reviewDone = reviewStyle !== "hands" || pages.every((page, i) => revealed[i].size >= revealUnits(page));
   // ชุดสำรองที่ไม่มีโจทย์เลือกตอบ: ทบทวนแล้วกลับไปเล่นต่อได้เลย
   const done = items.length === 0 || repairPracticeDone(results);
   const streak = results.length - (results.lastIndexOf(false) + 1);
   const item = items[index];
 
-  const answer = (option: number | null) => {
+  const answer = (option: number) => {
     setAnswered(option);
     setResults([...results, option === item.answer]);
     playSfx(option === item.answer ? "correct" : "wrong");
@@ -55,7 +51,6 @@ export function RepairBay({ room, style, stations, onDone }: RepairBayProps) {
   };
 
   const dialog = useDialog<HTMLDivElement>();
-  let pageNumber = 0;
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-ink/90 p-2 sm:p-4" data-testid="repair">
       <div ref={dialog} role="dialog" aria-modal="true" tabIndex={-1} aria-label={ui.repair.title} className="panel mx-auto flex max-w-2xl flex-col gap-3 border-hint p-3 sm:p-4">
@@ -63,25 +58,16 @@ export function RepairBay({ room, style, stations, onDone }: RepairBayProps) {
 
         {!practicing ? (
           <>
-            <h3 className="text-sm font-bold text-slate">{fmt(ui.repair.reviewStep, { style: ui.style[reviewStyle].name })}</h3>
+            <h3 className="text-sm font-bold text-slate">{ui.repair.reviewStep}</h3>
             {stations.map((station) => (
               <section key={station.title} className="flex flex-col gap-2" data-testid="repair-review">
                 <h4 className="font-extrabold text-teal-dark">{station.title}</h4>
-                {station.pages.map((page) => {
-                  const i = pageNumber++;
-                  return (
-                    <PageView
-                      key={i}
-                      page={page}
-                      style={reviewStyle}
-                      revealed={revealed[i]}
-                      onReveal={(unit) => setRevealed(revealed.map((set, j) => (j === i ? new Set(set).add(unit) : set)))}
-                    />
-                  );
-                })}
+                {station.pages.map((page, i) => (
+                  <PageView key={i} page={page} style={REVIEW_STYLE} />
+                ))}
               </section>
             ))}
-            <button type="button" className="btn self-end" disabled={!reviewDone} data-testid="repair-to-practice" onClick={() => (items.length === 0 ? onDone() : setPracticing(true))}>
+            <button type="button" className="btn self-end" data-testid="repair-to-practice" onClick={() => (items.length === 0 ? onDone() : setPracticing(true))}>
               {items.length === 0 ? ui.repair.back : ui.repair.toPractice}
             </button>
           </>

@@ -1,18 +1,16 @@
 import { setAudioSettings } from "../audio/engine";
 import { useAudioSettings } from "../audio/useAudio";
 import { course, isFieldRoom, questTitle, ROOM_COUNT, stationsOf } from "../content";
-import { kaijuName } from "../content/story";
+import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
-import { emptyField, fieldStatus } from "../state/field";
-import { cloudEnabled, coreCount, isRoomUnlocked, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
-import { MIN_ANSWER_CHARS } from "../state/rules";
-import { creditBalance } from "../state/shop";
+import { BATTLE } from "../state/battle.config";
+import { zoneOfTopic } from "../state/campaign";
+import { armorParts, cloudEnabled, coreCount, creditsOf, difficultyOf, fieldComplete, isRoomUnlocked, isTopicOpen, planOf, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
 import { art } from "./art";
-import { StylePicker } from "./Onboarding";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
 
-/** สมุดเควสและโปรไฟล์: ผู้เล่น สไตล์การเรียน แกน AI ที่เก็บได้ สมรรถนะที่ผ่าน และขั้นตอนของห้องที่กำลังเล่น */
+/** สมุดเควสและโปรไฟล์: ผู้เล่น ระดับความยาก แกน AI ที่เก็บได้ สมรรถนะที่ผ่าน และขั้นตอนของห้องที่กำลังเล่น */
 export function QuestLog() {
   const room = useGameStore((s) => s.room);
   const profile = useGameStore((s) => s.profile);
@@ -23,27 +21,35 @@ export function QuestLog() {
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const progress = useGameStore((s) => s.progress);
-  const setStyle = useGameStore((s) => s.setStyle);
+  const battles = useGameStore((s) => s.battles);
   const outfit = useGameStore((s) => s.shop.outfit);
-  const credits = useGameStore((s) => creditBalance({ rooms: s.progress, posttest: s.posttest }, s.shop));
+  const credits = useGameStore(creditsOf);
   const audio = useAudioSettings();
-  const focus = room ?? 1;
-  const p = roomProgress({ progress }, focus);
+  const run = { profile, progress, battles };
+  const plan = planOf(run);
+  const difficulty = difficultyOf(run);
+  // หัวข้อที่แสดงขั้นตอน: หัวข้อที่กำลังทำ หรือหัวข้อแรกที่ยังไม่ได้แกน AI
+  const focus = room ?? course.topics.find((topic) => !roomProgress(run, topic.id).core)?.id ?? ROOM_COUNT;
+  const p = roomProgress(run, focus);
   const total = stationsOf(focus).length;
+  // ด่านต่อสู้ที่ต้องใช้แกน AI ของหัวข้อนี้
+  const battle = plan.battles.find((b) => b.requires.includes(focus));
+  const battleStep = battle ? [{ done: battles[battle.id]?.won ?? false, text: fmt(ui.questLog.stepBattle, { kaiju: foeName(battle.forms[0].art) }) }] : [];
 
   const steps = isFieldRoom(focus)
     ? [
-        { done: fieldStatus(p.field ?? emptyField(course.finalQuest), course.finalQuest, MIN_ANSWER_CHARS).complete, text: ui.questLog.stepField },
+        { done: fieldComplete(p), text: ui.questLog.stepField },
         { done: posttest !== null, text: ui.questLog.stepPosttest },
         { done: p.core, text: ui.questLog.stepCertificate },
-        { done: p.battle.won, text: fmt(ui.questLog.stepBattle, { kaiju: kaijuName(focus) }) },
+        ...battleStep,
       ]
     : [
-        { done: p.stationsSeen >= total, text: fmt(ui.questLog.stepStations, { n: p.stationsSeen, total }) },
+        ...(plan.stations === "required" ? [{ done: p.stationsSeen >= total, text: fmt(ui.questLog.stepStations, { n: p.stationsSeen, total }) }] : []),
+        ...(plan.stations === "optional" ? [{ done: p.stationsSeen >= total, text: ui.questLog.stepArchive }] : []),
         { done: p.minigameDone, text: fmt(ui.questLog.stepMinigame, { quest: questTitle(focus) }) },
-        { done: p.reviewDone, text: ui.questLog.stepReview },
+        ...(plan.review ? [{ done: p.reviewDone, text: ui.questLog.stepReview }] : []),
         { done: p.core, text: ui.questLog.stepCore },
-        { done: p.battle.won, text: fmt(ui.questLog.stepBattle, { kaiju: kaijuName(focus) }) },
+        ...battleStep,
       ];
 
   return (
@@ -83,8 +89,12 @@ export function QuestLog() {
                 )}
               </div>
             )}
-            <h3 className="text-xs font-bold text-slate">{ui.questLog.style}</h3>
-            <StylePicker value={profile.style} onChange={setStyle} />
+            <h3 className="text-xs font-bold text-slate">{ui.questLog.difficulty}</h3>
+            <div className="rounded-md border-2 border-ink bg-paper px-3 py-2 text-sm" data-testid="profile-difficulty" data-difficulty={difficulty}>
+              <div className="font-extrabold">{ui.difficulty[difficulty].name}</div>
+              <div className="text-slate">{ui.difficulty[difficulty].detail}</div>
+              <div className="text-xs text-slate">{ui.questLog.difficultyNote}</div>
+            </div>
             <h3 className="text-xs font-bold text-slate">{ui.sound.title}</h3>
             <div className="flex flex-wrap gap-2">
               {(["music", "sfx"] as const).map((kind) => (
@@ -106,7 +116,7 @@ export function QuestLog() {
 
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate" data-testid="profile-cores">
-            {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: ROOM_COUNT })}
+            {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: ROOM_COUNT })} · {fmt(ui.questLog.armor, { n: Math.min(BATTLE.armorMax, armorParts(run)), total: BATTLE.armorMax })}
           </h3>
           <div className="flex flex-wrap gap-2">
             {course.topics.map((topic) => {
@@ -130,7 +140,8 @@ export function QuestLog() {
           <ul className="flex flex-col gap-1">
             {course.topics.map((topic) => {
               const rp = roomProgress({ progress }, topic.id);
-              const status = rp.core ? ui.questLog.passed : isRoomUnlocked({ progress }, topic.id) ? ui.questLog.statusOpen : ui.questLog.statusLocked;
+              const open = isRoomUnlocked(run, zoneOfTopic(difficulty, topic.id)) && isTopicOpen(run, topic.id);
+              const status = rp.core ? ui.questLog.passed : open ? ui.questLog.statusOpen : ui.questLog.statusLocked;
               return (
                 <li key={topic.id} data-passed={rp.core} className="flex items-start gap-2 rounded-md border-2 border-ink bg-paper px-2 py-1 text-sm">
                   <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 border-ink text-xs font-extrabold ${rp.core ? "bg-correct text-ink" : "bg-cream"}`}>
@@ -140,7 +151,7 @@ export function QuestLog() {
                     <div className={rp.core ? "font-semibold" : "text-slate"}>{topic.objective}</div>
                     <div className="truncate text-xs text-slate">
                       {topic.title}
-                      {pretest && topic.id < ROOM_COUNT && ` · ${fmt(ui.questLog.startTier, { name: ui.tier[startTierOf({ pretest, progress }, topic.id)] })}`}
+                      {pretest && topic.id < ROOM_COUNT && ` · ${fmt(ui.questLog.startTier, { name: ui.tier[startTierOf({ pretest, progress, profile }, topic.id)] })}`}
                     </div>
                   </div>
                   {rp.stars > 0 && <Stars count={rp.stars} />}

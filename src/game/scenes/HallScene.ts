@@ -1,16 +1,18 @@
-import { ROOM_COUNT, topicOf } from "../../content";
-import { kaijuName } from "../../content/story";
+import { topicOf } from "../../content";
+import { foeName } from "../../content/story";
 import { fmt, ui } from "../../content/ui-strings";
-import { isRoomUnlocked, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
-import { PLAYABLE_ROOMS } from "../../state/rules";
+import { type DifficultySpec, gateOf } from "../../state/campaign";
+import { difficultyOf, isRoomUnlocked, pendingBattle, planOf, roomProgress, useGameStore } from "../../state/gameStore";
 import { SCENE } from "../constants";
-import { hallMap, type MapObject, objectBaseY, objectX } from "../maps";
+import { hallMapOf, type MapObject, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
-/** โถงทางเดิน: ประตู 6 บานเรียงตามลำดับห้อง เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น และร้านสหกรณ์แล็บ */
+/** โถงทางเดิน: ประตูห้องตามจำนวนห้องของระดับความยาก (6, 3 หรือ 1 บาน) เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น และร้านสหกรณ์แล็บ */
 export class HallScene extends WorldScene {
   private from: { room?: number; hangar?: boolean } = {};
   private doors: MapObject[] = [];
+  /** ห้องของระดับความยาก ณ ตอนสร้างฉาก (ฉากนี้เป็นฉากหลังของเมนูและหน้าลงทะเบียนด้วย ระดับที่ผู้เล่นเลือกอาจเปลี่ยนก่อนฉากถูกสร้างใหม่) */
+  private zones: DifficultySpec["zones"] = [];
 
   constructor() {
     super(SCENE.hall);
@@ -21,24 +23,27 @@ export class HallScene extends WorldScene {
   }
 
   create(): void {
-    this.buildMap(hallMap);
     const store = () => useGameStore.getState();
+    const zones = planOf(store()).zones;
+    this.zones = zones;
+    this.buildMap(hallMapOf(zones.length));
     this.doors = this.objectsOf("door");
 
     for (const door of this.doors) {
-      const room = door.index as number;
+      const zone = door.index as number;
+      const topics = zones[zone - 1].topics;
+      const title = topics.length === 1 ? fmt(ui.prompt.enterRoom, { n: zone, title: topicOf(topics[0]).title }) : fmt(ui.prompt.enterZone, { n: zone, from: topics[0], to: topics[topics.length - 1] });
       this.addInteractable(
         door,
-        `door-${room}`,
-        () => (isRoomUnlocked(store(), room) ? fmt(ui.prompt.enterRoom, { n: room, title: topicOf(room).title }) : fmt(ui.prompt.roomLocked, { n: room })),
+        `door-${zone}`,
+        () => (isRoomUnlocked(store(), zone) ? title : fmt(ui.prompt.roomLocked, { n: zone })),
         () => {
           const state = store();
-          if (!isRoomUnlocked(state, room)) {
-            // ได้แกน AI ของห้องก่อนหน้าแล้วแต่ยังไม่ชนะไคจู: บอกให้ไปโรงเก็บหุ่น
-            const needsBattle = roomProgress(state, room - 1).core;
-            state.showToast(needsBattle ? fmt(ui.toast.roomLockedBattle, { n: room, kaiju: kaijuName(room - 1) }) : fmt(ui.toast.roomLocked, { n: room, prev: room - 1 }));
-          } else if (!PLAYABLE_ROOMS.includes(room)) state.showToast(fmt(ui.toast.roomNotBuilt, { n: room }));
-          else state.enterRoom(room);
+          if (isRoomUnlocked(state, zone)) return state.enterRoom(zone);
+          // ได้แกน AI ของห้องก่อนหน้าครบแล้วแต่ยังไม่ชนะไคจูที่เฝ้าห้องนี้: บอกให้ไปโรงเก็บหุ่น
+          const missing = zones[zone - 2].topics.find((topic) => !roomProgress(state, topic).core);
+          const gate = gateOf(difficultyOf(state), zone);
+          state.showToast(missing === undefined && gate ? fmt(ui.toast.roomLockedBattle, { n: zone, kaiju: foeName(gate.forms[0].art) }) : fmt(ui.toast.roomLocked, { n: zone, prev: missing ?? topics[0] - 1 }));
         },
       );
     }
@@ -61,16 +66,17 @@ export class HallScene extends WorldScene {
   /** ประตู ป้ายเลขห้อง และลูกศรชี้เป้าหมายตามความคืบหน้า */
   private syncWithProgress(): void {
     const state = useGameStore.getState();
+    const cleared = (zone: number) => this.zones[zone - 1].topics.every((topic) => roomProgress(state, topic).core);
     for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");
 
     const battle = pendingBattle(state);
-    const nextRoom = Array.from({ length: ROOM_COUNT }, (_, i) => i + 1).find((room) => !roomProgress(state, room).core);
-    this.pointAt(battle !== null ? "gate" : nextRoom ? `door-${nextRoom}` : null);
+    const nextZone = this.doors.map((door) => door.index as number).find((zone) => !cleared(zone));
+    this.pointAt(battle !== null ? "gate" : nextZone ? `door-${nextZone}` : null);
 
     const labels = this.doors.map((door) => {
-      const room = door.index as number;
-      const tone = roomProgress(state, room).core ? ("done" as const) : isRoomUnlocked(state, room) ? ("default" as const) : ("locked" as const);
-      return { id: `door-${room}`, x: objectX(door), y: objectBaseY(door) - 58, text: String(room), tone };
+      const zone = door.index as number;
+      const tone = cleared(zone) ? ("done" as const) : isRoomUnlocked(state, zone) ? ("default" as const) : ("locked" as const);
+      return { id: `door-${zone}`, x: objectX(door), y: objectBaseY(door) - 58, text: String(zone), tone };
     });
     if (JSON.stringify(labels) !== JSON.stringify(state.labels)) state.setLabels(labels);
   }

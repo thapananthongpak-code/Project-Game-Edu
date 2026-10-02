@@ -1,14 +1,16 @@
 import { create } from "zustand";
-import { ROOM_COUNT, stationsOf } from "../content";
+import { course, ROOM_COUNT, stationsOf } from "../content";
 import type { FormId } from "../content/schema";
-import { roomBeat } from "../content/story";
-import { type MinigameState, roomStartTier, shouldSuggestStyleChange } from "./adaptive";
-import type { LearningStyle, Tier } from "./adaptive.config";
-import type { FieldProgress } from "./field";
+import { zoneBeat } from "../content/story";
+import { type MinigameState, roomStartTier } from "./adaptive";
+import type { Tier } from "./adaptive.config";
+import { type BattleSpec, campaignOf, type Difficulty, type DifficultySpec, gateOf } from "./campaign";
+import { emptyField, type FieldProgress, fieldStatus } from "./field";
 import {
   type AccountInfo,
   type AssessmentResult,
   type BattleRecord,
+  emptyBattle,
   emptyRoom,
   emptyShop,
   LocalProgressStore,
@@ -21,13 +23,17 @@ import {
   SyncedProgressStore,
   type SyncStatus,
 } from "./progressStore";
-import { creditBalance, equip, purchase, type PurchaseError } from "./shop";
+import { MIN_ANSWER_CHARS } from "./rules";
+import { creditBalance, type Earning, equip, purchase, type PurchaseError } from "./shop";
 import type { Avatar, Supply } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions";
+
+/** stationIndex พิเศษ: เปิดคลังความรู้ของหัวข้อ (บทสอนทุกสถานีต่อกัน ใช้ในระดับกลางที่ไม่บังคับฟังสถานี) */
+export const ARCHIVE = -1;
 
 /** ป้าย HTML ที่วางทับฉากเกม พิกัดเป็นพิกเซลของความละเอียดฐาน 640×360 */
 export interface WorldLabel {
@@ -50,19 +56,20 @@ interface GameState {
   /** บัญชีที่เครื่องนี้ใช้กับฐานข้อมูลกลาง (null = ยังไม่เคยส่งข้อมูล) */
   account: AccountInfo | null;
   screen: Screen;
+  /** ห้องที่ผู้เล่นอยู่ (ลำดับห้องของระดับความยาก นับจาก 1) ห้องหนึ่งสอนได้หลายหัวข้อ */
+  zone: number | null;
+  /** หัวข้อ (1–6) ที่หน้าต่างและ HUD กำลังทำงานด้วย ในระดับง่ายเท่ากับเลขห้องเสมอ */
   room: number | null;
   overlay: Overlay;
   stationIndex: number | null;
   /** ฉากเนื้อเรื่องที่กำลังแสดง (รหัสใน src/content/story.ts) */
   storyBeat: string | null;
-  /** ด่านต่อสู้ที่กำลังเล่น (ด่าน = เลขห้อง) */
-  battleRoom: number | null;
+  /** ด่านต่อสู้ที่กำลังเล่น (รหัสด่านใน src/state/campaign.ts) */
+  battleId: string | null;
   /** หน้าต่างถามพี่บิต เปิดซ้อนบนหน้าต่างอื่นได้ */
   tutorOpen: boolean;
-  /** ห้องที่พี่บิตตอบคำถาม: ห้องที่ผู้เล่นอยู่ หรือห้องของโจทย์ในด่านต่อสู้ */
+  /** หัวข้อที่พี่บิตตอบคำถาม: หัวข้อที่ผู้เล่นทำอยู่ หรือหัวข้อของโจทย์ในด่านต่อสู้ */
   tutorRoom: number | null;
-  /** พี่บิตเสนอให้เปลี่ยนสไตล์การเรียน หลังถูกบังคับเข้าห้องซ่อมหลายห้องติดกัน (GDD ข้อ 7.2) */
-  styleSuggestion: boolean;
   prompt: string | null;
   toast: { id: number; text: string } | null;
   labels: WorldLabel[];
@@ -71,6 +78,7 @@ interface GameState {
   pretest: AssessmentResult | null;
   posttest: AssessmentResult | null;
   progress: Record<number, RoomProgress>;
+  battles: Record<string, BattleRecord>;
   story: string[];
   shop: ShopState;
 
@@ -82,19 +90,21 @@ interface GameState {
   continueGame: () => void;
   toMenu: () => void;
   setProfile: (profile: Profile) => void;
-  setStyle: (style: LearningStyle) => void;
   setAvatar: (avatar: Avatar) => void;
   completePretest: (result: AssessmentResult) => void;
   completePosttest: (result: AssessmentResult) => void;
-  enterRoom: (room: number) => void;
+  /** เข้าห้องลำดับที่ zone ของระดับความยากนี้ */
+  enterRoom: (zone: number) => void;
+  /** เลือกหัวข้อที่จะทำงานด้วย (ห้องที่มีหลายหัวข้อ) */
+  focusTopic: (topic: number) => void;
   exitToHall: () => void;
   enterHangar: () => void;
   openStory: (beat: string) => void;
   /** ปิดฉากเนื้อเรื่องและบันทึกว่าดูแล้ว */
   finishStory: () => void;
-  openBattle: (room: number) => void;
+  openBattle: (id: string) => void;
   /** บันทึกผลการออกปฏิบัติการหนึ่งครั้ง */
-  recordBattle: (room: number, result: { won: boolean; asked: number; correct: number }) => void;
+  recordBattle: (id: string, result: { won: boolean; asked: number; correct: number }) => void;
   buy: (itemId: string) => PurchaseError | null;
   equip: (kind: "outfit" | "paint", value: string) => void;
   /** ใช้ของหนึ่งชิ้นในด่านต่อสู้ คืน false ถ้าไม่มีของ */
@@ -108,7 +118,6 @@ interface GameState {
   recordMisses: (labels: string[]) => void;
   recordTutor: (kind: "ai" | "hints") => void;
   addRoomTime: (room: number, ms: number) => void;
-  dismissStyleSuggestion: () => void;
   saveReview: (answers: string[]) => void;
   setField: (field: FieldProgress) => void;
   collectCore: () => void;
@@ -127,7 +136,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     const current = progress[room] ?? emptyRoom();
     set({ progress: { ...progress, [room]: { ...current, ...patch(current) } } });
   };
-  const closed = { room: null, overlay: null, stationIndex: null, storyBeat: null, battleRoom: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
 
   return {
     ready: false,
@@ -136,14 +145,14 @@ export const useGameStore = create<GameState>()((set, get) => {
     resumeCode: null,
     account: null,
     screen: "menu",
+    zone: null,
     room: null,
     overlay: null,
     stationIndex: null,
     storyBeat: null,
-    battleRoom: null,
+    battleId: null,
     tutorOpen: false,
     tutorRoom: null,
-    styleSuggestion: false,
     prompt: null,
     toast: null,
     labels: [],
@@ -151,27 +160,33 @@ export const useGameStore = create<GameState>()((set, get) => {
     pretest: null,
     posttest: null,
     progress: {},
+    battles: {},
     story: [],
     shop: emptyShop(),
 
     setReady: () => set({ ready: true }),
     hydrate: (data) =>
-      set({ hydrated: true, profile: data?.profile ?? null, pretest: data?.pretest ?? null, posttest: data?.posttest ?? null, progress: data?.rooms ?? {}, story: data?.story ?? [], shop: data?.shop ?? emptyShop() }),
+      set({
+        hydrated: true,
+        profile: data?.profile ?? null,
+        pretest: data?.pretest ?? null,
+        posttest: data?.posttest ?? null,
+        progress: data?.rooms ?? {},
+        battles: data?.battles ?? {},
+        story: data?.story ?? [],
+        shop: data?.shop ?? emptyShop(),
+      }),
     setSync: (sync, resumeCode) => set({ sync, resumeCode }),
     setAccount: (account) => set({ account }),
 
-    // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อ เลือกสไตล์ และแบบทดสอบก่อนเรียน (GDD ข้อ 3)
-    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, story: [], shop: emptyShop(), styleSuggestion: false, screen: "onboarding" }),
+    // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อ เลือกระดับความยาก และแบบทดสอบก่อนเรียน (GDD ข้อ 3)
+    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, battles: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
     continueGame: () => {
       const { profile, pretest } = get();
       set({ ...closed, screen: profile && pretest ? "hall" : "onboarding" });
     },
     toMenu: () => set({ ...closed, screen: "menu" }),
     setProfile: (profile) => set({ profile }),
-    setStyle: (style) => {
-      const { profile } = get();
-      if (profile) set({ profile: { ...profile, style } });
-    },
     setAvatar: (avatar) => {
       const { profile } = get();
       if (profile) set({ profile: { ...profile, avatar } });
@@ -179,9 +194,17 @@ export const useGameStore = create<GameState>()((set, get) => {
     completePretest: (result) => set({ pretest: result, screen: "hall" }),
     completePosttest: (result) => set({ posttest: result }),
 
-    enterRoom: (room) => {
-      const { progress } = get();
-      set({ ...closed, screen: "room", room, progress: { ...progress, [room]: progress[room] ?? emptyRoom() } });
+    enterRoom: (zone) => {
+      const state = get();
+      const topics = planOf(state).zones[zone - 1]?.topics ?? [];
+      // หัวข้อที่กำลังทำ = หัวข้อแรกของห้องที่ยังไม่ได้แกน AI (ครบแล้วใช้หัวข้อสุดท้าย)
+      const room = topics.find((topic) => !roomProgress(state, topic).core) ?? topics[topics.length - 1] ?? null;
+      if (room === null) return;
+      set({ ...closed, screen: "room", zone, room, progress: { ...state.progress, [room]: state.progress[room] ?? emptyRoom() } });
+    },
+    focusTopic: (topic) => {
+      const { progress, room } = get();
+      if (room !== topic || !progress[topic]) set({ room: topic, progress: { ...progress, [topic]: progress[topic] ?? emptyRoom() } });
     },
     exitToHall: () => set({ ...closed, screen: "hall" }),
     enterHangar: () => set({ ...closed, screen: "hangar" }),
@@ -191,15 +214,15 @@ export const useGameStore = create<GameState>()((set, get) => {
       const { storyBeat, story } = get();
       set({ overlay: null, storyBeat: null, story: storyBeat && !story.includes(storyBeat) ? [...story, storyBeat] : story });
     },
-    openBattle: (room) => set({ overlay: "battle", battleRoom: room, prompt: null }),
-    recordBattle: (room, result) =>
-      updateRoom(
-        (p) => ({ battle: { won: p.battle.won || result.won, sorties: p.battle.sorties + 1, asked: p.battle.asked + result.asked, correct: p.battle.correct + result.correct } satisfies BattleRecord }),
-        room,
-      ),
+    openBattle: (id) => set({ overlay: "battle", battleId: id, prompt: null }),
+    recordBattle: (id, result) => {
+      const { battles } = get();
+      const before = battles[id] ?? emptyBattle();
+      set({ battles: { ...battles, [id]: { won: before.won || result.won, wins: before.wins + (result.won ? 1 : 0), sorties: before.sorties + 1, asked: before.asked + result.asked, correct: before.correct + result.correct } } });
+    },
     buy: (itemId) => {
       const state = get();
-      const result = purchase(state.shop, itemId, creditBalance({ rooms: state.progress, posttest: state.posttest }, state.shop));
+      const result = purchase(state.shop, itemId, creditBalance(earningOf(state), state.shop));
       if (typeof result === "string") return result;
       set({ shop: result });
       return null;
@@ -217,13 +240,14 @@ export const useGameStore = create<GameState>()((set, get) => {
       const { stationIndex, room } = get();
       if (finished && stationIndex !== null && room !== null) {
         const total = stationsOf(room).length;
-        // นับเฉพาะสถานีถัดไปที่ยังไม่เคยฟังจบ การฟังซ้ำไม่เพิ่มตัวนับ
-        updateRoom((p) => (stationIndex === p.stationsSeen ? { stationsSeen: Math.min(total, p.stationsSeen + 1) } : {}));
+        // คลังความรู้: อ่านจบทั้งหัวข้อในครั้งเดียว สถานี: นับเฉพาะสถานีถัดไปที่ยังไม่เคยฟังจบ การฟังซ้ำไม่เพิ่มตัวนับ
+        if (stationIndex === ARCHIVE) updateRoom(() => ({ stationsSeen: total }));
+        else updateRoom((p) => (stationIndex === p.stationsSeen ? { stationsSeen: Math.min(total, p.stationsSeen + 1) } : {}));
       }
-      set({ overlay: null, stationIndex: null });
+      set({ overlay: null, stationIndex: null, room: focusAfter(get()) });
     },
     openOverlay: (overlay) => set({ overlay, prompt: null }),
-    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleRoom: null }),
+    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, room: focusAfter(get()) }),
     setTutorOpen: (tutorOpen, room) => set({ tutorOpen, tutorRoom: tutorOpen ? (room ?? get().room) : null }),
 
     completeMinigame: (result) => {
@@ -233,10 +257,9 @@ export const useGameStore = create<GameState>()((set, get) => {
         outcome: { totalMisses: result.totalMisses, requiredRepair: result.requiredRepair },
         summary: { checks: result.summary.checks, correct: result.summary.correct, totalTimeMs: result.summary.totalTimeMs, repairVisits: result.repairVisits },
       }));
-      // ผลของห้องที่เล่นจบแล้วเรียงตามลำดับห้อง จนถึงห้องนี้
-      const { progress, room } = get();
-      const outcomes = Array.from({ length: room ?? 0 }, (_, i) => progress[i + 1]?.outcome).filter((o) => o != null);
-      if (result.requiredRepair && shouldSuggestStyleChange(outcomes)) set({ styleSuggestion: true });
+      // ระดับที่ไม่มีบทสอนและคำถามทบทวน: ผ่านเควสแล้วได้แกน AI ของหัวข้อนั้นทันที
+      const state = get();
+      if (state.room !== null && autoCore(planOf(state)) && !isFieldTopic(state.room)) updateRoom((p) => (p.core ? {} : { core: true, coreAt: new Date().toISOString() }));
     },
     recordMisses: (labels) =>
       updateRoom((p) => {
@@ -244,11 +267,10 @@ export const useGameStore = create<GameState>()((set, get) => {
         for (const label of labels) missed[label] = (missed[label] ?? 0) + 1;
         return { missed };
       }),
-    // นับให้ห้องที่ถาม: ห้องที่ผู้เล่นอยู่ หรือห้องของโจทย์ในด่านต่อสู้
+    // นับให้หัวข้อที่ถาม: หัวข้อที่ผู้เล่นทำอยู่ หรือหัวข้อของโจทย์ในด่านต่อสู้
     recordTutor: (kind) => updateRoom((p) => ({ tutor: { ...p.tutor, [kind]: p.tutor[kind] + 1 } }), get().tutorRoom ?? get().room),
-    // รับเลขห้องตรง ๆ เพราะช่วงเวลาสุดท้ายถูกบันทึกหลังผู้เล่นออกจากห้องแล้ว
+    // รับเลขหัวข้อตรง ๆ เพราะช่วงเวลาสุดท้ายถูกบันทึกหลังผู้เล่นออกจากห้องแล้ว
     addRoomTime: (room, ms) => updateRoom((p) => ({ timeMs: p.timeMs + ms }), room),
-    dismissStyleSuggestion: () => set({ styleSuggestion: false }),
     saveReview: (answers) => updateRoom(() => ({ reviewAnswers: answers, reviewDone: true })),
     setField: (field) => updateRoom(() => ({ field })),
     collectCore: () => updateRoom((p) => (p.core ? {} : { core: true, coreAt: new Date().toISOString() })),
@@ -264,37 +286,87 @@ export const useGameStore = create<GameState>()((set, get) => {
   };
 });
 
-type Saved = Pick<GameState, "profile" | "pretest" | "posttest" | "progress" | "story" | "shop">;
+type Saved = Pick<GameState, "profile" | "pretest" | "posttest" | "progress" | "battles" | "story" | "shop">;
+type Level = Pick<GameState, "profile">;
+type Run = Pick<GameState, "profile" | "progress" | "battles">;
 
 export const roomProgress = (state: Pick<GameState, "progress">, room: number): RoomProgress => state.progress[room] ?? emptyRoom();
 
-/** ห้อง N เปิดเมื่อเป็นห้องแรก หรือมีแกน AI ของห้อง N-1 และชนะด่านต่อสู้ของห้อง N-1 แล้ว (GDD ข้อ 4.4 และ 12) */
-export const isRoomUnlocked = (state: Pick<GameState, "progress">, room: number): boolean =>
-  room === 1 || (roomProgress(state, room - 1).core && roomProgress(state, room - 1).battle.won);
+export const difficultyOf = (state: Level): Difficulty => state.profile?.difficulty ?? "easy";
 
-/** ด่านต่อสู้ที่ออกปฏิบัติการได้ตอนนี้: ห้องแรกที่ได้แกน AI แล้วแต่ยังไม่ชนะไคจู ไม่มีคืน null */
-export function pendingBattle(state: Pick<GameState, "progress">): number | null {
-  for (let room = 1; room <= ROOM_COUNT; room++) {
-    const p = roomProgress(state, room);
-    if (!p.core) return null;
-    if (!p.battle.won) return room;
-  }
-  return null;
+/** โครงของระดับความยากที่ผู้เล่นเลือก: ห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
+export const planOf = (state: Level): DifficultySpec => campaignOf(state.profile?.difficulty);
+
+/** หัวข้อที่ HUD ควรแสดงหลังปิดหน้าต่าง: ถ้าหัวข้อที่ทำอยู่ได้แกน AI แล้ว เลื่อนไปหัวข้อถัดไปของห้องที่ยังไม่ได้ */
+function focusAfter(state: Pick<GameState, "screen" | "zone" | "room" | "profile" | "progress">): number | null {
+  if (state.screen !== "room" || state.zone === null || state.room === null || !roomProgress(state, state.room).core) return state.room;
+  const topics = planOf(state).zones[state.zone - 1]?.topics ?? [];
+  return topics.find((topic) => !roomProgress(state, topic).core) ?? state.room;
 }
 
-/** ชนะไคจูครบทุกด่านแล้ว */
-export const allBattlesWon = (state: Pick<GameState, "progress">): boolean =>
-  Array.from({ length: ROOM_COUNT }, (_, i) => roomProgress(state, i + 1).battle.won).every(Boolean);
+/** หัวข้อสุดท้ายเป็นภารกิจภาคสนาม ไม่มีเควสและคำถามทบทวน */
+const isFieldTopic = (topic: number): boolean => topic === ROOM_COUNT;
+
+/** ระดับที่ผ่านเควสแล้วได้แกน AI ทันที (ไม่มีบทสอนและไม่มีคำถามทบทวน) */
+export const autoCore = (level: DifficultySpec): boolean => level.stations === "none" && !level.review;
+
+/** ภารกิจภาคสนามครบตามเงื่อนไขหรือยัง (GDD ข้อ 6.5) */
+export const fieldComplete = (p: RoomProgress): boolean => fieldStatus(p.field ?? emptyField(course.finalQuest), course.finalQuest, MIN_ANSWER_CHARS).complete;
+
+export type TopicStep = "station" | "minigame" | "review" | "core" | "field" | "posttest" | "done";
+
+/** ขั้นถัดไปของหัวข้อตามระดับความยาก (GDD ข้อ 4.1 และ 15) */
+export function nextStepOf(state: Pick<GameState, "profile" | "progress" | "posttest">, topic: number): TopicStep {
+  const p = roomProgress(state, topic);
+  if (p.core) return "done";
+  if (isFieldTopic(topic)) return !fieldComplete(p) ? "field" : state.posttest ? "core" : "posttest";
+  const level = planOf(state);
+  if (level.stations === "required" && p.stationsSeen < stationsOf(topic).length) return "station";
+  if (!p.minigameDone) return "minigame";
+  if (level.review && !p.reviewDone) return "review";
+  return "core";
+}
+
+/** หัวข้อนี้ทำได้แล้วหรือยัง: หัวข้อแรกของห้อง หรือหัวข้อก่อนหน้าในห้องเดียวกันได้แกน AI แล้ว (เนื้อหาต่อยอดกันตามลำดับ) */
+export function isTopicOpen(state: Pick<GameState, "profile" | "progress">, topic: number): boolean {
+  const zone = planOf(state).zones.find((z) => z.topics.includes(topic));
+  const index = zone?.topics.indexOf(topic) ?? 0;
+  return index <= 0 || roomProgress(state, (zone as { topics: readonly number[] }).topics[index - 1]).core;
+}
+
+/** ห้องลำดับที่ zone เปิดเมื่อเป็นห้องแรก หรือได้แกน AI ครบทุกหัวข้อของห้องก่อนหน้า และชนะด่านที่เฝ้าห้องนี้แล้ว (GDD ข้อ 4.4 และ 12) */
+export function isRoomUnlocked(state: Run, zone: number): boolean {
+  if (zone <= 1) return true;
+  const level = planOf(state);
+  const previous = level.zones[zone - 2];
+  if (!previous || !previous.topics.every((topic) => roomProgress(state, topic).core)) return false;
+  const gate = gateOf(difficultyOf(state), zone);
+  return !gate || (state.battles[gate.id]?.won ?? false);
+}
+
+/** ด่านต่อสู้ที่ออกปฏิบัติการได้ตอนนี้: ด่านแรกตามลำดับที่ยังไม่ชนะ และมีแกน AI ที่ด่านต้องใช้ครบแล้ว ไม่มีคืน null */
+export function pendingBattle(state: Run): BattleSpec | null {
+  const next = planOf(state).battles.find((battle) => !state.battles[battle.id]?.won);
+  return next && next.requires.every((topic) => roomProgress(state, topic).core) ? next : null;
+}
+
+/** ชนะครบทุกด่านของระดับความยากนี้แล้ว */
+export const allBattlesWon = (state: Run): boolean => planOf(state).battles.every((battle) => state.battles[battle.id]?.won);
+
+export const battlesWon = (state: Run): number => planOf(state).battles.filter((battle) => state.battles[battle.id]?.won).length;
+
+/** ชิ้นส่วนอัปเกรดการ์เดียน = จำนวนไคจูประจำห้องที่ชนะแล้ว (ไม่นับบอส) */
+export const armorParts = (state: Run): number => planOf(state).battles.filter((battle) => !battle.boss && state.battles[battle.id]?.won).length;
 
 /**
  * ฉากเนื้อเรื่องที่ควรแสดงตอนนี้ (ยังไม่เคยดู) ไม่มีคืน null
  * บทนำ: เมื่อเข้าแล็บครั้งแรก, บรรยายสรุปของห้อง: เมื่อเข้าห้องนั้นครั้งแรก, บทส่งท้าย: เมื่อชนะครบทุกด่าน
  */
-export function pendingStory(state: Pick<GameState, "screen" | "room" | "story" | "pretest" | "progress">): string | null {
+export function pendingStory(state: Pick<GameState, "screen" | "zone" | "story" | "pretest" | "progress" | "battles" | "profile">): string | null {
   if (state.screen !== "hall" && state.screen !== "hangar" && state.screen !== "room") return null;
   const unseen = (beat: string) => !state.story.includes(beat);
   if (state.pretest && unseen("prologue")) return "prologue";
-  if (state.screen === "room" && state.room !== null && unseen(roomBeat(state.room))) return roomBeat(state.room);
+  if (state.screen === "room" && state.zone !== null && unseen(zoneBeat(difficultyOf(state), state.zone))) return zoneBeat(difficultyOf(state), state.zone);
   if (allBattlesWon(state) && unseen("ending")) return "ending";
   return null;
 }
@@ -302,9 +374,14 @@ export function pendingStory(state: Pick<GameState, "screen" | "room" | "story" 
 export const coreCount = (state: Pick<GameState, "progress">): number =>
   Object.values(state.progress).filter((p) => p.core).length;
 
-/** ระดับเริ่มต้นของมินิเกมในห้อง จากแบบทดสอบก่อนเรียนและผลของห้องก่อนหน้า (GDD ข้อ 7.1–7.2) */
-export const startTierOf = (state: Pick<GameState, "pretest" | "progress">, room: number): Tier =>
-  roomStartTier(state.pretest?.correctByTopic[room] ?? 0, state.progress[room - 1]?.outcome ?? null);
+/** ระดับเริ่มต้นของมินิเกมของหัวข้อ จากแบบทดสอบก่อนเรียน ผลของหัวข้อก่อนหน้า และระดับความยากของเกม (GDD ข้อ 7.1–7.2 และ 15) */
+export const startTierOf = (state: Pick<GameState, "pretest" | "progress" | "profile">, room: number): Tier =>
+  roomStartTier(state.pretest?.correctByTopic[room] ?? 0, state.progress[room - 1]?.outcome ?? null, planOf(state).minTier);
+
+/** ข้อมูลที่ใช้คำนวณเครดิตวิจัย */
+export const earningOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "posttest">): Earning => ({ difficulty: state.profile?.difficulty, rooms: state.progress, battles: state.battles, posttest: state.posttest });
+
+export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "posttest" | "shop">): number => creditBalance(earningOf(state), state.shop);
 
 export const hasSave = (state: Saved): boolean => state.profile !== null || Object.keys(state.progress).length > 0;
 
@@ -315,6 +392,7 @@ const toSaveData = (state: Saved): SaveData => ({
   pretest: state.pretest,
   posttest: state.posttest,
   rooms: state.progress,
+  battles: state.battles,
   story: state.story,
   shop: state.shop,
 });
@@ -369,6 +447,7 @@ export async function connectProgressStore(store?: ProgressStore): Promise<() =>
       state.pretest === previous.pretest &&
       state.posttest === previous.posttest &&
       state.progress === previous.progress &&
+      state.battles === previous.battles &&
       state.story === previous.story &&
       state.shop === previous.shop
     )

@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { playSfx } from "../audio/engine";
 import { fmt, ui } from "../content/ui-strings";
-import { useGameStore } from "../state/gameStore";
-import { creditBalance, ownsItem } from "../state/shop";
-import { AVATARS, CATALOG, PAINT_FILTER, type Outfit, type Paint, type ShopItem } from "../state/shop.config";
+import { creditsOf, useGameStore } from "../state/gameStore";
+import { ownsItem } from "../state/shop";
+import { AVATARS, CATALOG, PAINT_FILTER, type Outfit, type Paint, type ShopItem, type Supply } from "../state/shop.config";
 import { art } from "./art";
 import { useDialog } from "./useDialog";
 
 type ItemId = keyof typeof ui.shop.items;
 const KINDS = ["outfit", "paint", "supply"] as const;
-const SUPPLY_ICON = { "repair-kit": "🧰", shield: "🛡" } as const;
+const SUPPLY_ICON: Record<Supply, string> = { "repair-kit": "🧰", shield: "🛡", overcharge: "🔋", analyzer: "🔍", reboot: "💠" };
 
 /** ของเริ่มต้นที่ทุกคนมี แสดงคู่กับของในร้านเพื่อให้สลับกลับได้ */
 const DEFAULTS = { outfit: { id: "outfit-lab", value: "lab" as Outfit }, paint: { id: "paint-standard", value: "standard" as Paint } };
@@ -18,7 +18,7 @@ const DEFAULTS = { outfit: { id: "outfit-lab", value: "lab" as Outfit }, paint: 
 export function Shop() {
   const profile = useGameStore((s) => s.profile);
   const shop = useGameStore((s) => s.shop);
-  const balance = useGameStore((s) => creditBalance({ rooms: s.progress, posttest: s.posttest }, s.shop));
+  const balance = useGameStore(creditsOf);
   const buy = useGameStore((s) => s.buy);
   const equip = useGameStore((s) => s.equip);
   const setAvatar = useGameStore((s) => s.setAvatar);
@@ -42,7 +42,7 @@ export function Shop() {
       <img src={art.robot} alt="" className="pixelated h-16 w-16" style={{ filter: PAINT_FILTER[value as Paint] }} />
     ) : (
       <span className="flex h-16 w-16 items-center justify-center text-4xl" aria-hidden="true">
-        {SUPPLY_ICON[value as keyof typeof SUPPLY_ICON]}
+        {SUPPLY_ICON[value as Supply]}
       </span>
     );
 
@@ -56,6 +56,7 @@ export function Shop() {
         <div className="min-w-0 flex-1">
           <div className="font-extrabold">{strings.name}</div>
           <div className="text-sm text-slate">{strings.detail}</div>
+          {kind === "outfit" && ui.shop.perks[value as Outfit] && <div className="text-sm font-bold text-teal-dark">⚔ {fmt(ui.shop.perkLabel, { perk: ui.shop.perks[value as Outfit] })}</div>}
           {item && item.kind === "supply" && <div className="text-xs font-bold text-slate">{fmt(ui.shop.holding, { n: shop.supplies[item.value], max: item.max })}</div>}
           {item && !owned && <div className="text-sm font-bold text-teal-dark">{fmt(ui.shop.price, { n: item.price })}</div>}
         </div>

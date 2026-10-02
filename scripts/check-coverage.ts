@@ -54,6 +54,7 @@ for (const topic of course.topics) {
   add(imageKeys.has(`core_${room}`), `ไอคอนแกน AI (${imageKeys.get(`core_${room}`) ?? "ไม่มี"})`);
   const battle = quests.battles?.find((b) => b.room === room);
   add((battle?.pools.length ?? 0) > 0, `ด่านต่อสู้: ชุดโจทย์ ${battle?.pools.map((pool) => pool.kind).join(" + ") ?? "ไม่มี"}`);
+  add((battle?.hard.length ?? 0) > 0, `ด่านต่อสู้ระดับกลางและยาก: ชุดโจทย์ยาก ${battle?.hard.map((pool) => pool.kind).join(" + ") ?? "ไม่มี"}`);
   add(imageKeys.has(`bt_kaiju_${room}`) && imageKeys.has(`bg_battle_${room}`), `ภาพไคจูและฉากต่อสู้ (${imageKeys.get(`bt_kaiju_${room}`) ?? "ไม่มี"})`);
 
   const missing = lines.filter((line) => !line.ok).length;

@@ -110,7 +110,7 @@ function Card({ label, value, note }: { label: string; value: string; note?: str
   );
 }
 
-type SortKey = "name" | "roomReached" | "cores" | "stars" | "reviewsDone" | "battlesWon" | "fieldAccuracy" | "pre" | "post" | "gain" | "tutorAi" | "timeMs" | "updatedAt";
+type SortKey = "name" | "difficulty" | "roomReached" | "cores" | "stars" | "reviewsDone" | "battlesWon" | "fieldAccuracy" | "pre" | "post" | "gain" | "tutorAi" | "timeMs" | "updatedAt";
 
 function StudentsTable({ players }: { players: Player[] }) {
   const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: "name", descending: false });
@@ -145,6 +145,7 @@ function StudentsTable({ players }: { players: Player[] }) {
           <tr>
             {head("name", t.students.name)}
             <th className={th}>{t.students.classCode}</th>
+            {head("difficulty", t.students.difficulty)}
             {head("roomReached", t.students.room)}
             {head("cores", t.students.cores)}
             {head("stars", t.students.stars)}
@@ -180,6 +181,9 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
           {s.archived && <span className="ml-1 rounded bg-slate px-1 text-xs font-semibold text-paper">{t.students.archived}</span>}
         </th>
         <td className={td}>{s.classCode}</td>
+        <td className={td} data-testid="teacher-difficulty">
+          {t.students.difficultyNames[s.difficulty]}
+        </td>
         <td className={td}>{s.roomReached || "—"}</td>
         <td className={td}>
           {s.cores}/{course.topics.length}
@@ -188,10 +192,10 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
           {s.stars}/{s.starsMax}
         </td>
         <td className={td}>
-          {s.reviewsDone}/{s.reviewsTotal}
+          {s.reviewsTotal === 0 ? "—" : `${s.reviewsDone}/${s.reviewsTotal}`}
         </td>
         <td className={td}>
-          {s.battlesWon}/{course.topics.length}
+          {s.battlesWon}/{s.battlesTotal}
         </td>
         <td className={td} data-testid="teacher-accuracy">
           {s.fieldAccuracy === null ? "—" : `${s.fieldAccuracy}%`}
@@ -215,7 +219,7 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
       </tr>
       {open && (
         <tr className="bg-cream">
-          <td className={td} colSpan={15}>
+          <td className={td} colSpan={16}>
             {s.resumeCode && (
               <p className="mb-2 text-sm">
                 {t.students.resumeCode}: <span className="font-mono font-bold tracking-widest">{s.resumeCode}</span>

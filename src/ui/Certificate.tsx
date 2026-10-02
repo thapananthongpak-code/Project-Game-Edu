@@ -3,7 +3,7 @@ import { reviewBlocks } from "../content/review";
 import { fmt, ui } from "../content/ui-strings";
 import { gainOf } from "../state/assessment";
 import { accuracyPercent, emptyField, fieldTotals } from "../state/field";
-import { roomProgress, useGameStore } from "../state/gameStore";
+import { battlesWon, difficultyOf, planOf, roomProgress, useGameStore } from "../state/gameStore";
 import type { Profile, RoomProgress } from "../state/progressStore";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
@@ -64,6 +64,9 @@ function download(name: string, html: string): void {
 export function Certificate() {
   const profile = useGameStore((s) => s.profile);
   const progress = useGameStore((s) => s.progress);
+  const won = useGameStore(battlesWon);
+  const battleTotal = useGameStore((s) => planOf(s).battles.length);
+  const difficulty = useGameStore(difficultyOf);
   const pretest = useGameStore((s) => s.pretest);
   const posttest = useGameStore((s) => s.posttest);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
@@ -105,7 +108,7 @@ export function Certificate() {
             {ui.certificate.date} {date}
           </p>
           <p className="mt-1 text-sm font-bold text-teal-dark" data-testid="certificate-guardian">
-            ⚔ {fmt(ui.certificate.guardian, { n: course.topics.filter((topic) => roomProgress({ progress }, topic.id).battle.won).length, total: ROOM_COUNT })}
+            ⚔ {fmt(ui.certificate.guardian, { n: won, total: battleTotal })} · {fmt(ui.certificate.difficulty, { name: ui.difficulty[difficulty].name })}
           </p>
         </header>
 

@@ -3,6 +3,7 @@ import { ASSESSMENT_ITEMS_PER_TOPIC, course, quests, ROOM_COUNT } from "../conte
 import { reviewBlocks } from "../content/review";
 import type { FormId } from "../content/schema";
 import { gainOf, totalCorrect } from "../state/assessment";
+import { campaignOf, type Difficulty } from "../state/campaign";
 import { fieldTotals } from "../state/field";
 import { emptyRoom, migrateSave, type RoomProgress, type SaveData } from "../state/progressStore";
 
@@ -50,13 +51,15 @@ export interface StudentSummary {
   archived: boolean;
   updatedAt: string;
   resumeCode: string | null;
-  /** ห้องสูงสุดที่เข้าแล้ว (0 = ยังไม่เข้าห้องใด) */
+  /** ระดับความยากที่ผู้เรียนเลือกตอนเริ่มเกม (GDD ข้อ 15) */
+  difficulty: Difficulty;
+  /** หัวข้อสูงสุดที่เริ่มทำแล้ว (0 = ยังไม่เริ่มหัวข้อใด) */
   roomReached: number;
   cores: number;
   /** ดาวรวมของมินิเกมห้อง 1–5 */
   stars: number;
   starsMax: number;
-  /** จำนวนห้องที่ส่งคำตอบทบทวนแล้ว */
+  /** จำนวนหัวข้อที่ส่งคำตอบทบทวนแล้ว (ระดับยากไม่มีคำถามทบทวน reviewsTotal = 0) */
   reviewsDone: number;
   reviewsTotal: number;
   /** ความแม่นยำรวมที่ผู้เรียนกรอกจากการทดสอบโมเดลจริง (%) */
@@ -72,8 +75,9 @@ export interface StudentSummary {
   timeMs: number;
   /** จำนวนห้องที่ถูกบังคับเข้าห้องซ่อม */
   forcedRepairs: number;
-  /** ด่านต่อสู้ไคจูที่ชนะแล้ว และโจทย์ในด่านต่อสู้ที่ตอบทั้งหมดกับที่ตอบถูก */
+  /** ด่านต่อสู้ไคจูที่ชนะแล้วจากจำนวนด่านของระดับความยาก และโจทย์ในด่านต่อสู้ที่ตอบทั้งหมดกับที่ตอบถูก (รวมการซ้อมรบ) */
   battlesWon: number;
+  battlesTotal: number;
   battleAsked: number;
   battleCorrect: number;
 }
@@ -84,6 +88,10 @@ export function summarizeStudent(player: Player): StudentSummary {
   const lessons = lessonRooms().map((id) => roomOf(save, id));
   const final = roomOf(save, ROOM_COUNT);
   const growth = gainOf(save.pretest, save.posttest, ASSESSMENT_ITEMS_PER_TOPIC);
+  const difficulty = save.profile?.difficulty ?? "easy";
+  const level = campaignOf(difficulty);
+  // นับเฉพาะด่านของระดับความยากที่เล่นอยู่ (ข้อมูลของระดับอื่นไม่มีอยู่แล้ว เพราะเปลี่ยนระดับได้เมื่อเริ่มเกมใหม่เท่านั้น)
+  const fought = level.battles.map((battle) => save.battles[battle.id]).filter((record) => record !== undefined);
   return {
     id: player.id,
     name: player.name,
@@ -91,12 +99,13 @@ export function summarizeStudent(player: Player): StudentSummary {
     archived: player.archived,
     updatedAt: player.updatedAt,
     resumeCode: player.resumeCode,
+    difficulty,
     roomReached: Math.max(0, ...Object.keys(save.rooms).map(Number)),
     cores: rooms.filter((room) => room.core).length,
     stars: lessons.reduce((sum, room) => sum + room.stars, 0),
     starsMax: lessons.length * 3,
     reviewsDone: lessons.filter((room) => room.reviewDone).length,
-    reviewsTotal: lessons.length,
+    reviewsTotal: level.review ? lessons.length : 0,
     fieldAccuracy: final.field ? fieldTotals(final.field.results, course.finalQuest).accuracy : null,
     fieldDone: final.core,
     pre: save.pretest ? totalCorrect(save.pretest) : null,
@@ -108,9 +117,10 @@ export function summarizeStudent(player: Player): StudentSummary {
     tutorHints: rooms.reduce((sum, room) => sum + room.tutor.hints, 0),
     timeMs: rooms.reduce((sum, room) => sum + room.timeMs, 0),
     forcedRepairs: rooms.filter((room) => room.outcome?.requiredRepair).length,
-    battlesWon: rooms.filter((room) => room.battle.won).length,
-    battleAsked: rooms.reduce((sum, room) => sum + room.battle.asked, 0),
-    battleCorrect: rooms.reduce((sum, room) => sum + room.battle.correct, 0),
+    battlesWon: fought.filter((record) => record.won).length,
+    battlesTotal: level.battles.length,
+    battleAsked: fought.reduce((sum, record) => sum + record.asked, 0),
+    battleCorrect: fought.reduce((sum, record) => sum + record.correct, 0),
   };
 }
 
@@ -286,6 +296,7 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
       s.name,
       s.archived,
       s.updatedAt,
+      s.difficulty,
       s.roomReached,
       s.cores,
       s.stars,
@@ -302,6 +313,7 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
       s.forcedRepairs,
       minutes(s.timeMs),
       s.battlesWon,
+      s.battlesTotal,
       s.battleAsked,
       s.battleCorrect,
       ...topics.map((id) => save.pretest?.correctByTopic[id] ?? null),

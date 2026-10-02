@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Station } from "../content";
 import { fmt, ui } from "../content/ui-strings";
-import { roomProgress, useGameStore } from "../state/gameStore";
+import { planOf, roomProgress, useGameStore } from "../state/gameStore";
 import { askTutor, recordTutorUse, type TutorTurn, tutorUsed } from "../tutor/client";
 import { TUTOR } from "../tutor/config";
 import { fallbackHint } from "../tutor/fallback";
@@ -48,7 +48,9 @@ export function TutorPanel() {
   const [waiting, setWaiting] = useState(false);
   const [used, setUsed] = useState(tutorUsed);
   const listEnd = useRef<HTMLDivElement>(null);
-  const remaining = Math.max(0, TUTOR.questionsPerSession - used);
+  // ระดับความยากสูงถามได้น้อยลง (ไม่เกินขีดจำกัดของเซิร์ฟเวอร์)
+  const limit = useGameStore((s) => Math.min(TUTOR.questionsPerSession, planOf(s).tutorQuestions));
+  const remaining = Math.max(0, limit - used);
 
   useEffect(() => {
     threads.set(room, entries);
@@ -96,7 +98,7 @@ export function TutorPanel() {
             {ui.tutor.title}
           </h2>
           <div className="flex items-center gap-2">
-            <span className="rounded border-2 border-ink bg-paper px-2 py-0.5 text-xs font-bold" data-testid="tutor-remaining">
+            <span className="rounded border-2 border-ink bg-paper px-2 py-0.5 text-xs font-bold" data-testid="tutor-remaining" data-limit={limit}>
               {remaining > 0 ? fmt(ui.tutor.remaining, { n: remaining }) : ui.tutor.limitReached}
             </span>
             <button type="button" className="btn btn-ghost !min-h-9 text-sm" onClick={() => setTutorOpen(false)}>

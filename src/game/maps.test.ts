@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ROOM_COUNT, stationsOf } from "../content";
+import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMap, hangarMap, isFloorCell, type MapObject, reachableCells, roomMaps } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMap, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
 
 interface ManifestAsset {
   size: [number, number];
@@ -13,7 +14,17 @@ const manifest = JSON.parse(readFileSync(new URL("../../public/assets/assets-man
 const sizes = new Map(manifest.assets.flatMap((asset) => Object.keys(asset.files).map((key) => [key, asset.size] as const)));
 const tilesets = new Set(manifest.assets.flatMap((asset) => Object.keys(asset.files).map((key) => key.replace(/_(floor|wall)$/, ""))));
 
-const maps: [string, GameMap][] = [["โถง", hallMap], ["โรงเก็บหุ่น", hangarMap], ...Object.entries(roomMaps).map(([room, map]): [string, GameMap] => [`ห้อง ${room}`, map])];
+const hallMap = hallMapOf(ROOM_COUNT);
+const named = (label: string, rooms: Record<number, GameMap>): [string, GameMap][] => Object.entries(rooms).map(([room, map]) => [`${label} ${room}`, map]);
+const maps: [string, GameMap][] = [
+  ["โถง 6 ประตู", hallMap],
+  ["โถง 3 ประตู", hallMapOf(3)],
+  ["โถง 1 ประตู", hallMapOf(1)],
+  ["โรงเก็บหุ่น", hangarMap],
+  ...named("ห้อง", roomMaps),
+  ...named("ระดับกลาง ห้อง", normalMaps),
+  ...named("ระดับยาก ห้อง", hardMaps),
+];
 const count = (map: GameMap, kind: MapObject["kind"]) => map.objects.filter((object) => object.kind === kind).length;
 const canReach = (map: GameMap, object: MapObject) => {
   const reachable = reachableCells(map);
@@ -82,5 +93,32 @@ describe("แผนที่ของทุกฉาก", () => {
     expect(doors.map((door) => door.col)).toEqual([...doors.map((door) => door.col)].sort((a, b) => a - b));
     expect([count(hallMap, "gate"), count(hallMap, "shop")]).toEqual([1, 1]);
     expect(["console", "robot", "wardrobe", "hologram", "door"].map((kind) => count(hangarMap, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 1]);
+  });
+
+  it("ทุกระดับความยากมีแผนที่ครบทุกห้อง และโถงมีประตูเท่าจำนวนห้อง", () => {
+    for (const difficulty of DIFFICULTIES) {
+      const zones = CAMPAIGN[difficulty].zones;
+      zones.forEach((_, i) => expect(zoneMap(difficulty, i + 1), `${difficulty} ห้อง ${i + 1}`).toBeDefined());
+      expect(hallMapOf(zones.length).objects.filter((o) => o.kind === "door").map((door) => door.index)).toEqual(zones.map((_, i) => i + 1));
+    }
+  });
+
+  it("ระดับกลาง: แต่ละหัวข้อของห้องมีคลังความรู้ เครื่องฝึก โต๊ะสมุดบันทึก และแท่นแกน AI ของตัวเอง หัวข้อภาคสนามมีจอภารกิจและแท่น", () => {
+    CAMPAIGN.normal.zones.forEach((zone, i) => {
+      const map = normalMaps[i + 1];
+      const of = (kind: MapObject["kind"]) => map.objects.filter((o) => o.kind === kind).map((o) => o.topic).sort();
+      const lessons = zone.topics.filter((topic) => topic < ROOM_COUNT);
+      for (const kind of ["archive", "minigame", "review"] as const) expect(of(kind), `ห้อง ${i + 1} ${kind}`).toEqual(lessons);
+      expect(of("core"), `ห้อง ${i + 1} แท่น`).toEqual([...zone.topics]);
+      expect(of("field")).toEqual(zone.topics.filter((topic) => topic === ROOM_COUNT));
+      expect([count(map, "station"), count(map, "door")]).toEqual([0, 1]);
+    });
+  });
+
+  it("ระดับยาก: ห้องเดียว มีเครื่องทดสอบรวมหนึ่งเครื่อง จอภารกิจ และแท่นของแกนชิ้นสุดท้าย ไม่มีสถานี คลังความรู้ หรือโต๊ะสมุดบันทึก", () => {
+    const map = hardMaps[1];
+    expect(["minigame", "field", "core", "door", "station", "archive", "review"].map((kind) => count(map, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 0, 0, 0]);
+    expect(map.objects.find((o) => o.kind === "minigame")?.topic).toBeUndefined();
+    expect(map.objects.find((o) => o.kind === "core")?.topic).toBe(ROOM_COUNT);
   });
 });

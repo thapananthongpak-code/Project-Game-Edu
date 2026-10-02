@@ -1,27 +1,41 @@
 // เครดิตวิจัยและการซื้อของในร้านสหกรณ์แล็บ (ฟังก์ชันล้วน, docs/GDD.md ข้อ 13)
-// เครดิตที่ได้คำนวณจากความคืบหน้าทุกครั้ง ไม่เก็บยอดสะสม เล่นด่านเดิมซ้ำจึงไม่ได้เครดิตเพิ่ม
+// เครดิตที่ได้คำนวณจากความคืบหน้าทุกครั้ง ไม่เก็บยอดสะสม ระดับความยากที่สูงกว่าได้เครดิตมากกว่า (ตัวคูณใน campaign.ts)
 import { course } from "../content";
+import { BATTLE } from "./battle.config";
+import { campaignOf, type Difficulty } from "./campaign";
 import { emptyField, fieldStatus } from "./field";
-import type { AssessmentResult, RoomProgress, ShopState } from "./progressStore";
+import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
 import { MIN_ANSWER_CHARS } from "./rules";
 import { CATALOG, REWARDS, type ShopItem } from "./shop.config";
 
-interface Earning {
+export interface Earning {
+  difficulty: Difficulty | undefined;
   rooms: Record<number, RoomProgress>;
+  battles: Record<string, BattleRecord>;
   posttest: AssessmentResult | null;
 }
 
+/** เครดิตของด่านต่อสู้หนึ่งด่าน: ชนะครั้งแรก โบนัสชนะในการออกปฏิบัติการครั้งแรก และการซ้อมรบซ้ำ (จำกัดจำนวนครั้ง) */
+export function battleCredits(record: BattleRecord | undefined, boss: boolean): number {
+  if (!record?.won) return 0;
+  const replays = Math.min(BATTLE.replayRewards, Math.max(0, record.wins - 1));
+  // ชนะตั้งแต่ครั้งแรกที่ออกปฏิบัติการ = จำนวนครั้งที่ออกเท่ากับจำนวนครั้งที่ชนะ
+  const flawless = record.sorties <= record.wins ? REWARDS.firstSortie : 0;
+  return (boss ? REWARDS.boss : REWARDS.battle) + flawless + replays * REWARDS.replay;
+}
+
 /** เครดิตวิจัยทั้งหมดที่ผู้เล่นได้จากความคืบหน้าจนถึงตอนนี้ */
-export function earnedCredits({ rooms, posttest }: Earning): number {
+export function earnedCredits({ difficulty, rooms, battles, posttest }: Earning): number {
+  const level = campaignOf(difficulty);
   let total = posttest ? REWARDS.posttest : 0;
   for (const room of Object.values(rooms)) {
     total += room.stationsSeen * REWARDS.station + room.stars * REWARDS.star;
     if (room.reviewDone) total += REWARDS.review;
     if (room.core) total += REWARDS.core;
-    if (room.battle.won) total += REWARDS.battle + (room.battle.sorties <= 1 ? REWARDS.firstSortie : 0);
     if (room.field && fieldStatus(room.field ?? emptyField(course.finalQuest), course.finalQuest, MIN_ANSWER_CHARS).complete) total += REWARDS.field;
   }
-  return total;
+  for (const battle of level.battles) total += battleCredits(battles[battle.id], battle.boss);
+  return Math.round(total * level.creditMultiplier);
 }
 
 export const creditBalance = (earning: Earning, shop: ShopState): number => Math.max(0, earnedCredits(earning) - shop.spent);

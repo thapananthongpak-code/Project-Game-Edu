@@ -1,11 +1,14 @@
-// แผนที่ของทุกฉาก: โถง โรงเก็บหุ่น และห้อง 1–6 แต่ละห้องมีผังไม่เหมือนกัน (docs/GDD.md ข้อ 3 และ 5)
+// แผนที่ของทุกฉาก: โถง โรงเก็บหุ่น และห้องของแต่ละระดับความยาก แต่ละห้องมีผังไม่เหมือนกัน (docs/GDD.md ข้อ 3, 5 และ 15)
 // ไฟล์นี้เป็นข้อมูลล้วน ไม่ import Phaser จึงทดสอบได้ว่าผู้เล่นเดินถึงทุกจุดโต้ตอบ (maps.test.ts)
+import type { Difficulty } from "../state/campaign";
 import { MAP_COLS, MAP_ROWS, MAP_TOP, TILE } from "./constants";
 
 export type ObjectKind =
   /** ประตูกลับโถง (ในห้องและโรงเก็บหุ่น) หรือประตูเข้าห้อง index (ในโถง) */
   | "door"
   | "station"
+  /** คลังความรู้: บทสอนทั้งหัวข้อ เปิดอ่านได้โดยไม่บังคับ (ระดับกลาง) */
+  | "archive"
   | "minigame"
   | "review"
   | "core"
@@ -31,6 +34,8 @@ export interface MapObject {
   mount?: boolean;
   /** ลำดับสถานี (เริ่มที่ 0) หรือเลขห้องของประตูในโถง */
   index?: number;
+  /** หัวข้อ (1–6) ที่วัตถุนี้เป็นของ ใช้ในห้องที่มีหลายหัวข้อ ไม่ระบุ = หัวข้อเดียวของห้อง หรือ (เครื่องฝึกของระดับยาก) หัวข้อถัดไปที่ยังไม่ผ่าน */
+  topic?: number;
 }
 
 export interface GameMap {
@@ -61,14 +66,16 @@ const backDoor = (col: number): MapObject => ({ kind: "door", prop: "pr_door_ope
 const station = (index: number, col: number, row: number, prop = TERMINAL, w = 1): MapObject => ({ kind: "station", prop, col, row, w, index });
 const decor = (prop: string, col: number, row: number, w = 2, mount = false): MapObject => ({ kind: "decor", prop, col, row, w, mount });
 
-/** โถงทางเดิน: ประตูห้อง 1–6 ประตูโรงเก็บหุ่นตรงกลาง และร้านสหกรณ์แล็บ */
-export const HALL_DOOR_COLS = [2, 5, 8, 11, 14, 17];
-export const hallMap: GameMap = {
+/** ตำแหน่งประตูในโถงตามจำนวนห้องของระดับความยาก (ประตูโรงเก็บหุ่นอยู่ตรงกลางที่ช่อง 9–10) */
+const HALL_DOOR_COLS: Record<number, number[]> = { 6: [2, 5, 8, 11, 14, 17], 3: [4, 7, 13], 1: [6] };
+
+/** โถงทางเดิน: ประตูห้องตามจำนวนห้องของระดับความยาก ประตูโรงเก็บหุ่นตรงกลาง และร้านสหกรณ์แล็บ */
+export const hallMapOf = (zones: number): GameMap => ({
   tileset: "ts_common",
   shape: RECT,
   spawn: { col: 2, row: 3 },
   objects: [
-    ...HALL_DOOR_COLS.map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
+    ...(HALL_DOOR_COLS[zones] ?? HALL_DOOR_COLS[6]).map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
     { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
     { kind: "shop", prop: "pr_shop", col: 2, row: 8, w: 2 },
     decor("pr_hall_plant", 1, 5, 1),
@@ -77,7 +84,7 @@ export const hallMap: GameMap = {
     decor("pr_hall_bench", 12, 9),
     decor("pr_hall_plant", 17, 9, 1),
   ],
-};
+});
 
 /** โรงเก็บหุ่น: หุ่นการ์เดียน แผงสั่งปฏิบัติการ ตู้เสื้อผ้า และเครื่องฉายข้อความของอาจารย์ */
 export const hangarMap: GameMap = {
@@ -283,6 +290,138 @@ export const roomMaps: Record<number, GameMap> = {
     ],
   },
 };
+
+const of = (topic: number, object: MapObject): MapObject => ({ ...object, topic });
+const archive = (topic: number, col: number, row: number): MapObject => ({ kind: "archive", prop: TERMINAL, col, row, topic });
+const desk = (topic: number, col: number, row: number): MapObject => ({ kind: "review", prop: "pr_notebook_desk", col, row, w: 2, topic });
+const pedestal = (topic: number, col: number, row: number): MapObject => ({ kind: "core", prop: "pr_core_pedestal", col, row, topic });
+const machine = (topic: number, prop: string, col: number, row: number, w = 2): MapObject => ({ kind: "minigame", prop, col, row, w, topic });
+
+/** ระดับกลาง: 3 ห้อง ห้องละ 2 หัวข้อ แต่ละหัวข้อมีคลังความรู้ เครื่องฝึก โต๊ะสมุดบันทึก และแท่นแกน AI ของตัวเอง */
+export const normalMaps: Record<number, GameMap> = {
+  // ห้อง 1 (หัวข้อ 1–2): สองปีกคั่นด้วยผนังกลาง ปีกซ้ายหัวข้อ 1 ปีกขวาหัวข้อ 2
+  1: {
+    tileset: "ts_r2",
+    shape: [
+      "####################",
+      "####################",
+      "#........##........#",
+      "#........##........#",
+      "#........##........#",
+      "#........##........#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    spawn: { col: 1, row: 3 },
+    objects: [
+      backDoor(1),
+      archive(1, 3, 2),
+      machine(1, "pr_r1_learning_machine", 5, 2),
+      desk(1, 2, 5),
+      pedestal(1, 6, 5),
+      archive(2, 12, 2),
+      machine(2, "pr_r2_flashcard_desk", 14, 2),
+      desk(2, 12, 5),
+      pedestal(2, 16, 5),
+      decor("pr_r2_maze_arena", 9, 8),
+    ],
+  },
+  // ห้อง 2 (หัวข้อ 3–4): ชั้นบนหัวข้อ 3 ชั้นล่างหัวข้อ 4 เชื่อมกันด้วยช่องกลาง
+  2: {
+    tileset: "ts_r4",
+    shape: [
+      "####################",
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#####........#######",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    spawn: { col: 1, row: 3 },
+    objects: [
+      backDoor(1),
+      archive(3, 3, 2),
+      machine(3, "pr_r3_quality_scanner", 5, 2),
+      desk(3, 9, 2),
+      pedestal(3, 13, 2),
+      decor("pr_r3_server_rack", 16, 2, 1),
+      archive(4, 2, 6),
+      machine(4, "pr_r4_calculator", 14, 6),
+      desk(4, 17, 6),
+      pedestal(4, 9.5, 8),
+    ],
+  },
+  // ห้อง 3 (หัวข้อ 5–6): หัวข้อ 5 อยู่ด้านล่างซ้าย ภารกิจภาคสนามของหัวข้อ 6 อยู่กลางห้อง แท่นใบประกาศอยู่มุมขวาบน
+  3: {
+    tileset: "ts_r6",
+    shape: [
+      "####################",
+      "####################",
+      "#......#######.....#",
+      "#......#######.....#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    spawn: { col: 2, row: 3 },
+    objects: [
+      backDoor(2),
+      archive(5, 4, 2),
+      machine(5, "pr_r5_notice_board", 2, 6, 1),
+      desk(5, 4, 6),
+      pedestal(5, 7, 6),
+      of(6, { kind: "field", prop: "pr_r6_portal_pc", col: 9, row: 4, w: 2 }),
+      decor("pr_r6_webcam", 12, 4, 1),
+      pedestal(6, 15, 2),
+      decor("pr_r6_cert_printer", 17, 3),
+    ],
+  },
+};
+
+/** ระดับยาก: ห้องเดียว ไม่มีบทสอน เครื่องทดสอบรวมตรงกลางทำเควสทีละหัวข้อ ผ่านแล้วได้แกน AI ทันที */
+export const hardMaps: Record<number, GameMap> = {
+  1: {
+    tileset: "ts_hangar",
+    shape: [
+      "####################",
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#...##........##...#",
+      "#..................#",
+      "#..................#",
+      "#...##........##...#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    spawn: { col: 1, row: 3 },
+    objects: [
+      backDoor(1),
+      decor("pr_mission_console", 3, 2),
+      { kind: "minigame", prop: "pr_r1_learning_machine", col: 9, row: 3, w: 2 },
+      of(6, { kind: "field", prop: "pr_r6_portal_pc", col: 14, row: 2, w: 2 }),
+      decor("pr_r6_webcam", 16, 2, 1),
+      pedestal(6, 9.5, 7),
+      decor("pr_r6_cert_printer", 16, 8),
+    ],
+  },
+};
+
+/** แผนที่ของห้องลำดับที่ zone ตามระดับความยาก */
+export const zoneMap = (difficulty: Difficulty, zone: number): GameMap => (difficulty === "easy" ? roomMaps : difficulty === "normal" ? normalMaps : hardMaps)[zone];
 
 // ---------------------------------------------------------------- เรขาคณิต
 

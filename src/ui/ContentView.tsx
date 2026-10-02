@@ -1,12 +1,6 @@
 import type { DialoguePage } from "../content";
 import type { ContentTable } from "../content/schema";
-import { fmt, ui } from "../content/ui-strings";
-import type { LearningStyle } from "../state/adaptive.config";
-
-/** จำนวนชิ้นที่ต้องเปิดเองในสไตล์ลงมือทำ: ข้อความ 1 ชิ้นต่อหน้า ตาราง 1 ชิ้นต่อเซลล์ */
-export function revealUnits(page: DialoguePage): number {
-  return page.kind === "table" ? page.table.rows.length * page.table.headers.length : 1;
-}
+import type { PageStyle } from "../state/adaptive.config";
 
 /** เน้นคำภาษาอังกฤษในวงเล็บโดยไม่เปลี่ยนตัวข้อความ */
 function Marked({ text }: { text: string }) {
@@ -50,29 +44,18 @@ export function TableView({ table }: { table: ContentTable }) {
   );
 }
 
-/** ตารางแบบการ์ด 1 ใบต่อ 1 แถว (สไตล์ดูภาพ และลงมือทำซึ่งเซลล์คว่ำอยู่จนกว่าจะแตะ) */
-function CardTable({ table, revealed, onReveal }: { table: ContentTable; revealed?: ReadonlySet<number>; onReveal?: (unit: number) => void }) {
-  const columns = table.headers.length;
+/** ตารางแบบการ์ด 1 ใบต่อ 1 แถว (รูปแบบเน้นคำสำคัญ) */
+function CardTable({ table }: { table: ContentTable }) {
   return (
     <div className="grid max-h-[46dvh] gap-2 overflow-auto sm:grid-cols-2" data-testid="card-table">
-      {table.rows.map((row, r) => (
+      {table.rows.map((row) => (
         <div key={row[0]} className="rounded-lg border-2 border-ink bg-paper p-2 text-sm">
-          {row.map((cell, c) => {
-            const unit = r * columns + c;
-            const hidden = revealed !== undefined && !revealed.has(unit);
-            return (
-              <div key={c} className={c === 0 ? "mb-1" : "mt-1 border-t border-mist pt-1"}>
-                <div className="text-xs font-bold text-slate">{table.headers[c]}</div>
-                {hidden ? (
-                  <button type="button" data-testid="flip-cell" className="mt-0.5 w-full rounded border-2 border-dashed border-ink bg-teal-light py-1 text-xs font-bold" onClick={() => onReveal?.(unit)}>
-                    {ui.dialogue.faceDown}
-                  </button>
-                ) : (
-                  <div className={c === 0 ? "font-bold text-teal-dark" : ""}>{cell}</div>
-                )}
-              </div>
-            );
-          })}
+          {row.map((cell, c) => (
+            <div key={c} className={c === 0 ? "mb-1" : "mt-1 border-t border-mist pt-1"}>
+              <div className="text-xs font-bold text-slate">{table.headers[c]}</div>
+              <div className={c === 0 ? "font-bold text-teal-dark" : ""}>{cell}</div>
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -81,33 +64,14 @@ function CardTable({ table, revealed, onReveal }: { table: ContentTable; reveale
 
 interface PageViewProps {
   page: DialoguePage;
-  style?: LearningStyle;
-  /** ชิ้นที่เปิดแล้ว (ใช้เฉพาะสไตล์ลงมือทำ) */
-  revealed?: ReadonlySet<number>;
-  onReveal?: (unit: number) => void;
+  style?: PageStyle;
 }
 
 /**
- * แสดงหน้าเนื้อหาหนึ่งหน้าตามสไตล์การเรียน (GDD ข้อ 7.4) ทุกสไตล์ใช้ข้อความจาก course.json ชุดเดียวกันครบทุกคำ
- * อ่าน = ข้อความและตารางเต็ม, ดูภาพ = เน้นคำสำคัญและตารางเป็นการ์ด, ลงมือทำ = ต้องเปิดเองทีละชิ้นก่อนอ่าน
+ * แสดงหน้าเนื้อหาหนึ่งหน้า (GDD ข้อ 7.4) ทุกรูปแบบใช้ข้อความจาก course.json ชุดเดียวกันครบทุกคำ
+ * read = ข้อความและตารางเต็ม (บทสอน), visual = เน้นคำสำคัญและตารางเป็นการ์ด (ห้องซ่อม)
  */
-export function PageView({ page, style = "read", revealed, onReveal }: PageViewProps) {
-  const hands = style === "hands" && revealed !== undefined;
-  if (page.kind === "table") {
-    if (style === "read") return <TableView table={page.table} />;
-    return (
-      <div className="flex flex-col gap-1">
-        {hands && <p className="text-xs font-semibold text-slate">{fmt(ui.dialogue.flipHint, { n: revealed.size, total: revealUnits(page) })}</p>}
-        <CardTable table={page.table} revealed={hands ? revealed : undefined} onReveal={onReveal} />
-      </div>
-    );
-  }
-  if (hands && !revealed.has(0)) {
-    return (
-      <button type="button" data-testid="pull-lever" className="btn w-full" onClick={() => onReveal?.(0)}>
-        ⇩ {ui.dialogue.pullLever}
-      </button>
-    );
-  }
+export function PageView({ page, style = "read" }: PageViewProps) {
+  if (page.kind === "table") return style === "read" ? <TableView table={page.table} /> : <CardTable table={page.table} />;
   return <p className="whitespace-pre-line text-base leading-relaxed">{style === "read" ? page.text : <Marked text={page.text} />}</p>;
 }

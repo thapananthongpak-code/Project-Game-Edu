@@ -129,7 +129,7 @@ async function pretest(page) {
   await page.getByTestId("pretest").waitFor();
   const form = await page.getByTestId("pretest").getAttribute("data-form");
   for (let i = 0; i < quests.assessment[form].length; i++) {
-    await page.getByTestId("choice-unknown").click();
+    await page.getByTestId("choice-option").first().click();
     await page.waitForTimeout(30);
   }
   await page.getByTestId("assessment-finish").click();
@@ -164,8 +164,8 @@ try {
   assert.equal(db.signups, 1, "ล็อกอินแบบไม่ระบุตัวตนครั้งเดียว ตอนส่งข้อมูลครั้งแรก");
   assert.equal(db.players.length, 1);
   const row = db.players[0];
-  assert.deepEqual([row.class_code, row.display_name, row.data.version, row.data.pretest.items.length], ["PVC1-67", "แก้ว", 4, 12], "แถวในฐานข้อมูล: รหัสห้อง (ตัวพิมพ์ใหญ่) ชื่อที่แสดง และผลก่อนเรียนรายข้อ");
-  assert.deepEqual(Object.keys(row.data).sort(), ["posttest", "pretest", "profile", "rooms", "shop", "story", "updatedAt", "version"], "ไม่มีข้อมูลอื่นนอกจากความคืบหน้าในเกม");
+  assert.deepEqual([row.class_code, row.display_name, row.data.version, row.data.pretest.items.length], ["PVC1-67", "แก้ว", 5, 12], "แถวในฐานข้อมูล: รหัสห้อง (ตัวพิมพ์ใหญ่) ชื่อที่แสดง และผลก่อนเรียนรายข้อ");
+  assert.deepEqual(Object.keys(row.data).sort(), ["battles", "posttest", "pretest", "profile", "rooms", "shop", "story", "updatedAt", "version"], "ไม่มีข้อมูลอื่นนอกจากความคืบหน้าในเกม");
   const code = (await store(first)).resumeCode;
   assert.equal(code, row.resume_code);
   await first.getByRole("button", { name: "สมุดเควส" }).click();
@@ -175,29 +175,33 @@ try {
   await first.getByRole("button", { name: "ปิด", exact: true }).click();
   log(`เครื่องที่ 1: ลงทะเบียนด้วยรหัสห้อง PVC1-67 ข้อมูลขึ้นฐานข้อมูลกลาง สมุดเควสแสดงสถานะและรหัสเล่นต่อ ${code}`);
 
-  // --- เปลี่ยนสไตล์การเรียน: ส่งขึ้นแบบหน่วง รวมหลายครั้งเป็นครั้งเดียว
+  assert.deepEqual([row.data.profile.difficulty, Object.keys(row.data.profile).sort()], ["easy", ["avatar", "classCode", "difficulty", "name"]], "โปรไฟล์ในฐานข้อมูล: ระดับความยาก (ค่าเริ่มต้นง่าย) ไม่มีช่องอื่น");
+
+  // --- เปลี่ยนตัวละครหลายครั้งติดกัน: ส่งขึ้นแบบหน่วง รวมหลายครั้งเป็นครั้งเดียว
   const savesBefore = db.saves;
-  await first.getByRole("button", { name: "สมุดเควส" }).click();
-  await first.getByTestId("style-visual").click();
-  await first.getByTestId("style-hands").click();
-  await first.getByRole("button", { name: "ปิด", exact: true }).click();
+  await first.evaluate(() => {
+    const game = window.__aitq.store.getState();
+    game.setAvatar("b");
+    game.setAvatar("a");
+    game.setAvatar("b");
+  });
   await first.waitForFunction(() => window.__aitq.snapshot().store.sync === "pending");
   await synced(first);
   assert.equal(db.saves, savesBefore + 1, "การเปลี่ยนแปลงถี่ ๆ ถูกรวมเป็นการส่งครั้งเดียว");
-  assert.equal(row.data.profile.style, "hands");
+  assert.equal(row.data.profile.avatar, "b");
   log("การเปลี่ยนแปลงถี่ ๆ ถูกรวมแล้วส่งครั้งเดียว ฐานข้อมูลได้ค่าล่าสุด");
 
   // --- เครือข่ายล่ม: เกมยังเล่นและบันทึกในเครื่องได้ กลับมาแล้วส่งเอง
   db.down = true;
   await first.getByRole("button", { name: "สมุดเควส" }).click();
-  await first.getByTestId("style-read").click();
+  await first.evaluate(() => window.__aitq.store.getState().setAvatar("a"));
   await first.waitForFunction(() => window.__aitq.snapshot().store.sync === "error", null, { timeout: 15000 });
   assert.match(await first.getByTestId("sync").innerText(), /ข้อมูลยังอยู่ในเครื่อง/);
-  assert.equal(JSON.parse(await first.evaluate(() => localStorage.getItem("ai-trainer-quest-save"))).profile.style, "read");
+  assert.equal(JSON.parse(await first.evaluate(() => localStorage.getItem("ai-trainer-quest-save"))).profile.avatar, "a");
   await first.getByRole("button", { name: "ปิด", exact: true }).click();
   db.down = false;
   await synced(first);
-  assert.equal(row.data.profile.style, "read");
+  assert.equal(row.data.profile.avatar, "a");
   log("เครือข่ายล่ม: บันทึกในเครื่องต่อได้ แจ้งสถานะ และส่งขึ้นเองเมื่อเครือข่ายกลับมา");
 
   // --- เครื่องที่ 2: เล่นต่อด้วยรหัส

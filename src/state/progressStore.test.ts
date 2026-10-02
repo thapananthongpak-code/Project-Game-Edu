@@ -4,6 +4,7 @@ import { emptyField } from "./field";
 import {
   type AccountInfo,
   CLASS_CODE_PATTERN,
+  emptyBattle,
   emptyRoom,
   emptySave,
   emptyShop,
@@ -28,17 +29,18 @@ function fakeStorage(initial: Record<string, string> = {}) {
   };
 }
 
-const won = { won: true, sorties: 1, asked: 5, correct: 4 };
+const won = { won: true, wins: 1, sorties: 1, asked: 5, correct: 4 };
 
 const sample: SaveData = {
-  version: 4,
+  version: 5,
   updatedAt: "2026-10-02T01:00:00.000Z",
-  profile: { name: "ทดสอบ", style: "visual", classCode: "PVC1-67", avatar: "b" },
+  profile: { name: "ทดสอบ", difficulty: "normal", classCode: "PVC1-67", avatar: "b" },
   pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
   posttest: null,
-  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false }, battle: won } },
-  story: ["prologue", "room-1"],
-  shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
+  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false } } },
+  battles: { n1: won },
+  story: ["prologue", "zone-n1"],
+  shop: { spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1, reboot: 1 }, outfit: "engineer", paint: "standard" },
 };
 
 const withImage = (data: SaveData, image: string | null): SaveData => ({
@@ -90,7 +92,8 @@ describe("migrateSave", () => {
     const v1 = { state: { progress: { 1: { stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } } }, version: 1 };
     expect(migrateSave(v1)).toEqual({
       ...emptySave(),
-      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true, battle: { ...emptyRoom().battle, won: true } } },
+      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } },
+      battles: { k1: { ...emptyBattle(), won: true, wins: 1 } },
     });
   });
 
@@ -103,7 +106,7 @@ describe("migrateSave", () => {
     };
     expect(migrateSave(v2)).toEqual({
       ...emptySave(),
-      profile: { name: "ทดสอบ", style: "hands", classCode: "", avatar: "a" },
+      profile: { name: "ทดสอบ", difficulty: "easy", classCode: "", avatar: "a" },
       pretest: { form: "A", correctByTopic: { 1: 1 }, items: [], completedAt: "2026-09-01T00:00:00.000Z" },
       rooms: { 1: { ...emptyRoom(), stationsSeen: 2 } },
     });
@@ -116,16 +119,62 @@ describe("migrateSave", () => {
       profile: { name: "ทดสอบ", style: "read", classCode: "PVC1" },
       pretest: sample.pretest,
       posttest: null,
-      rooms: { 1: { ...emptyRoom(), battle: undefined, core: true }, 2: { ...emptyRoom(), battle: undefined, stationsSeen: 2 } },
+      rooms: { 1: { ...emptyRoom(), core: true }, 2: { ...emptyRoom(), stationsSeen: 2 } },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v3))) as SaveData;
-    expect(save.version).toBe(4);
+    expect(save.version).toBe(5);
     expect(save.updatedAt).toBe(v3.updatedAt);
-    expect(save.profile).toEqual({ name: "ทดสอบ", style: "read", classCode: "PVC1", avatar: "a" });
+    expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1", avatar: "a" });
     expect(save.pretest).toEqual(sample.pretest);
-    expect([save.rooms[1].battle.won, save.rooms[2].battle.won]).toEqual([true, false]);
+    expect(save.battles).toEqual({ k1: { ...emptyBattle(), won: true, wins: 1 } });
     expect(save.story).toEqual([]);
     expect(save.shop).toEqual(emptyShop());
+  });
+
+  it("รุ่น 4 (สไตล์การเรียน และผลด่านต่อสู้เก็บไว้กับห้อง): เป็นระดับง่าย ผลด่านย้ายไปเก็บตามรหัสด่าน ความคืบหน้าอื่นคงเดิม", () => {
+    const battle = (patch: object) => ({ won: false, sorties: 0, asked: 0, correct: 0, ...patch });
+    const v4 = {
+      version: 4,
+      updatedAt: "2026-10-02T01:00:00.000Z",
+      profile: { name: "ทดสอบ", style: "visual", classCode: "PVC1-67", avatar: "b" },
+      pretest: sample.pretest,
+      posttest: null,
+      rooms: {
+        1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, battle: battle({ won: true, sorties: 2, asked: 9, correct: 6 }) },
+        2: { ...emptyRoom(), core: true, battle: battle({ sorties: 1, asked: 4, correct: 1 }) },
+        3: { ...emptyRoom(), stationsSeen: 1, battle: battle({}) },
+        6: { ...emptyRoom(), core: true, battle: battle({ won: true, sorties: 1, asked: 12, correct: 12 }) },
+      },
+      story: ["prologue", "room-1"],
+      shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
+    };
+    const save = migrateSave(JSON.parse(JSON.stringify(v4))) as SaveData;
+    expect(save.version).toBe(5);
+    expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1-67", avatar: "b" });
+    expect(save.battles).toEqual({
+      k1: { won: true, wins: 1, sorties: 2, asked: 9, correct: 6 },
+      k2: { won: false, wins: 0, sorties: 1, asked: 4, correct: 1 },
+      omega: { won: true, wins: 1, sorties: 1, asked: 12, correct: 12 },
+    });
+    expect(save.rooms[1]).toEqual({ ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true });
+    expect("battle" in save.rooms[1]).toBe(false);
+    expect(save.story).toEqual(["prologue", "room-1"]);
+    expect(save.shop).toEqual({ spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1 }, outfit: "engineer", paint: "standard" });
+    // ย้ายซ้ำได้ผลเดิม
+    expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
+  });
+
+  it("ผลด่านต่อสู้ที่ผิดรูป: ตัดรหัสด่านที่ไม่ถูกรูปแบบ เติมตัวเลขที่หายไป และด่านที่ชนะแล้วนับว่าชนะอย่างน้อยหนึ่งครั้ง", () => {
+    const save = migrateSave({ ...JSON.parse(JSON.stringify(sample)), battles: { k1: { won: true }, "BAD ID": { won: true }, omega: "x", n2: { won: false, wins: 4, sorties: -2, asked: "9", correct: 3 } } }) as SaveData;
+    expect(Object.keys(save.battles).sort()).toEqual(["k1", "n2", "omega"]);
+    expect(save.battles.k1).toMatchObject({ won: true, wins: 1 });
+    expect(save.battles.omega).toEqual(emptyBattle());
+    expect(save.battles.n2).toMatchObject({ won: false, sorties: 0, correct: 3 });
+  });
+
+  it("ระดับความยากที่ไม่รู้จัก: เป็นระดับง่าย", () => {
+    const save = migrateSave({ ...JSON.parse(JSON.stringify(sample)), profile: { name: "ทดสอบ", difficulty: "nightmare", classCode: "", avatar: "b" } }) as SaveData;
+    expect(save.profile?.difficulty).toBe("easy");
   });
 
   it("ร้านค้าที่ผิดรูป: ตัดสินค้าที่ไม่มีในร้าน จำกัดจำนวนของใช้ และไม่ให้สวมของที่ยังไม่ได้ซื้อ", () => {
@@ -135,12 +184,12 @@ describe("migrateSave", () => {
       shop: { spent: -5, owned: ["outfit-pilot", "outfit-pilot", "free-everything", "supply-shield", 7], supplies: { "repair-kit": 99, shield: "x" }, outfit: "guardian", paint: "gold" },
     }) as SaveData;
     expect(save.story).toEqual(["prologue"]);
-    expect(save.shop).toEqual({ spent: 0, owned: ["outfit-pilot"], supplies: { "repair-kit": 3, shield: 0 }, outfit: "lab", paint: "standard" });
+    expect(save.shop).toEqual({ spent: 0, owned: ["outfit-pilot"], supplies: { ...emptyShop().supplies, "repair-kit": 3 }, outfit: "lab", paint: "standard" });
   });
 
   it("ข้อมูลผิดรูป (ไฟล์เสีย หรือถูกแก้จากนอกเกม): เติมค่าเริ่มต้นทีละช่อง ไม่ปล่อยค่าผิดชนิดเข้าเกมหรือแดชบอร์ดครู", () => {
     const hostile = {
-      version: 4,
+      version: 5,
       updatedAt: 5,
       profile: { name: "ก".repeat(200), style: "telepathy", classCode: 7 },
       pretest: { form: "Z", correctByTopic: { 1: "สอง", 2: 2 }, items: [{ id: "A1a", topic: 1, correct: "yes" }, "junk", null], completedAt: {} },
@@ -154,7 +203,8 @@ describe("migrateSave", () => {
     };
     const save = migrateSave(hostile) as SaveData;
     expect(save.updatedAt).toBe(emptySave().updatedAt);
-    expect(save.profile).toEqual({ name: "ก".repeat(40), style: "read", classCode: "", avatar: "a" });
+    expect(save.profile).toEqual({ name: "ก".repeat(40), difficulty: "easy", classCode: "", avatar: "a" });
+    expect(save.battles).toEqual({});
     expect(save.story).toEqual([]);
     expect(save.shop).toEqual(emptyShop());
     expect(save.pretest).toEqual({ form: "A", correctByTopic: { 1: 0, 2: 2 }, items: [{ id: "A1a", topic: 1, correct: false, timeMs: 0 }], completedAt: "" });
@@ -254,7 +304,7 @@ describe("SyncedProgressStore", () => {
   it("ไม่มีรหัสห้องเรียน: ไม่ส่งออกจากเครื่อง", async () => {
     const remote = fakeRemote();
     const { store, local } = make(remote.backend);
-    await store.save({ ...sample, profile: { name: "ทดสอบ", style: "read", classCode: "", avatar: "a" } });
+    await store.save({ ...sample, profile: { name: "ทดสอบ", difficulty: "easy", classCode: "", avatar: "a" } });
     await vi.advanceTimersByTimeAsync(10000);
     expect(remote.state.saves).toHaveLength(0);
     expect(await local.load()).not.toBeNull();
@@ -364,7 +414,7 @@ describe("SyncedProgressStore", () => {
   });
 
   describe("เข้าสู่ระบบด้วย Google", () => {
-    const solo: SaveData = { ...sample, profile: { name: "เล่นคนเดียว", style: "read", classCode: "", avatar: "a" } };
+    const solo: SaveData = { ...sample, profile: { name: "เล่นคนเดียว", difficulty: "easy", classCode: "", avatar: "a" } };
     /** ฐานข้อมูลกลางจำลองที่มีระบบบัญชี: จำว่าเครื่องนี้ใช้บัญชีอะไร และถูกสั่งให้ไปล็อกอินแบบไหน */
     function googleRemote(account: AccountInfo | null, record: RemoteRecord | null = null, authError: string | null = null) {
       const remote = fakeRemote(record);

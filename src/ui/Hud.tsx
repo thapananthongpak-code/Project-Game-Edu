@@ -1,54 +1,75 @@
 import { setAudioSettings } from "../audio/engine";
 import { useAudioSettings } from "../audio/useAudio";
-import { course, isFieldRoom, questTitle, ROOM_COUNT, stationsOf, topicOf } from "../content";
-import { kaijuName } from "../content/story";
+import { isFieldRoom, questTitle, stationsOf, topicOf } from "../content";
+import { ROOM_COUNT } from "../content";
+import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
-import { emptyField, fieldStatus } from "../state/field";
-import { allBattlesWon, coreCount, pendingBattle, roomProgress, useGameStore } from "../state/gameStore";
-import { MIN_ANSWER_CHARS } from "../state/rules";
-import { creditBalance } from "../state/shop";
+import { allBattlesWon, coreCount, creditsOf, nextStepOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
 
-/** เป้าหมายถัดไปของผู้เล่น ตามลำดับการเล่นของห้อง (GDD ข้อ 4.1) และด่านต่อสู้ (GDD ข้อ 12) */
+/** เป้าหมายถัดไปของผู้เล่น ตามลำดับการเล่นของระดับความยาก (GDD ข้อ 4.1 และ 15) และด่านต่อสู้ (GDD ข้อ 12) */
 function useObjective(): string {
-  const room = useGameStore((s) => s.room);
+  const zone = useGameStore((s) => s.zone);
   const screen = useGameStore((s) => s.screen);
+  const profile = useGameStore((s) => s.profile);
   const progress = useGameStore((s) => s.progress);
-  if (room === null) {
-    const battle = pendingBattle({ progress });
+  const battles = useGameStore((s) => s.battles);
+  const posttest = useGameStore((s) => s.posttest);
+  const state = { profile, progress, battles, posttest };
+  const plan = planOf(state);
+  const battle = pendingBattle(state);
+  const kaiju = battle ? foeName(battle.forms[0].art) : "";
+
+  if (zone === null) {
     if (screen === "hangar") {
-      if (battle !== null) return fmt(ui.objective.hangarBattle, { kaiju: kaijuName(battle) });
-      return allBattlesWon({ progress }) ? ui.objective.hangarDone : ui.objective.hangarIdle;
+      if (battle) return fmt(ui.objective.hangarBattle, { kaiju });
+      return allBattlesWon(state) ? ui.objective.hangarDone : ui.objective.hangarIdle;
     }
-    if (battle !== null) return fmt(ui.objective.hallBattle, { kaiju: kaijuName(battle) });
-    // ห้องถัดไปบนเส้นทาง 1→6 คือห้องแรกที่ยังไม่มีแกน AI
-    const next = course.topics.find((topic) => !roomProgress({ progress }, topic.id).core);
-    return next ? fmt(ui.objective.hall, { n: next.id }) : fmt(ui.objective.hallDone, { n: ROOM_COUNT });
+    if (battle) return fmt(ui.objective.hallBattle, { kaiju });
+    // ห้องถัดไปบนเส้นทาง คือห้องแรกที่ยังมีหัวข้อไม่ได้แกน AI
+    const next = plan.zones.findIndex((z) => z.topics.some((topic) => !roomProgress(state, topic).core)) + 1;
+    return next > 0 ? fmt(ui.objective.hall, { n: next }) : fmt(ui.objective.hallDone, { n: plan.zones.length });
   }
-  const p = roomProgress({ progress }, room);
-  const kaiju = kaijuName(room);
-  if (isFieldRoom(room)) {
-    if (p.core) return p.battle.won ? ui.objective.fieldDone : fmt(ui.objective.fieldBattle, { kaiju });
-    return fieldStatus(p.field ?? emptyField(course.finalQuest), course.finalQuest, MIN_ANSWER_CHARS).complete ? ui.objective.fieldCore : ui.objective.field;
+
+  const topics = plan.zones[zone - 1]?.topics ?? [];
+  const single = topics.length === 1;
+  const topic = topics.find((t) => !roomProgress(state, t).core);
+  if (topic === undefined) {
+    const field = topics.some(isFieldRoom);
+    if (battle) return fmt(field ? ui.objective.fieldBattle : ui.objective.battle, { kaiju });
+    return field ? ui.objective.fieldDone : single ? ui.objective.done : ui.objective.zoneDone;
   }
-  const total = stationsOf(room).length;
-  if (p.stationsSeen < total) return fmt(ui.objective.station, { n: p.stationsSeen + 1, total });
-  if (!p.minigameDone) return fmt(ui.objective.minigame, { quest: questTitle(room) });
-  if (!p.reviewDone) return ui.objective.review;
-  if (!p.core) return ui.objective.core;
-  return p.battle.won ? ui.objective.done : fmt(ui.objective.battle, { kaiju });
+  const p = roomProgress(state, topic);
+  switch (nextStepOf(state, topic)) {
+    case "field":
+      return ui.objective.field;
+    case "posttest":
+      return ui.objective.fieldCore;
+    case "station":
+      return fmt(ui.objective.station, { n: p.stationsSeen + 1, total: stationsOf(topic).length });
+    case "minigame":
+      if (plan.stations === "optional") return fmt(ui.objective.archive, { n: topic, quest: questTitle(topic) });
+      return fmt(single ? ui.objective.minigame : ui.objective.minigameTopic, { n: topic, quest: questTitle(topic) });
+    case "review":
+      return single ? ui.objective.review : fmt(ui.objective.reviewTopic, { n: topic });
+    default:
+      return isFieldRoom(topic) ? ui.objective.fieldCore : single ? ui.objective.core : fmt(ui.objective.coreTopic, { n: topic });
+  }
 }
 
 export function Hud() {
+  const zone = useGameStore((s) => s.zone);
   const room = useGameStore((s) => s.room);
   const screen = useGameStore((s) => s.screen);
   const cores = useGameStore(coreCount);
-  const credits = useGameStore((s) => creditBalance({ rooms: s.progress, posttest: s.posttest }, s.shop));
+  const credits = useGameStore(creditsOf);
+  // ห้องที่มีหลายหัวข้อ: บอกด้วยว่ากำลังทำเรื่องที่เท่าไร
+  const multi = useGameStore((s) => s.zone !== null && (planOf(s).zones[s.zone - 1]?.topics.length ?? 1) > 1);
   const openOverlay = useGameStore((s) => s.openOverlay);
   const setTutorOpen = useGameStore((s) => s.setTutorOpen);
   const toMenu = useGameStore((s) => s.toMenu);
   const objective = useObjective();
   const audio = useAudioSettings();
-  const topic = room === null ? null : topicOf(room);
+  const topic = zone === null || room === null ? null : topicOf(room);
   const soundOn = audio.music || audio.sfx;
 
   // เอาโฟกัสออกจากปุ่มหลังกด ไม่ให้ Space/Enter ที่ใช้โต้ตอบในเกมไปกดปุ่มซ้ำ
@@ -58,11 +79,16 @@ export function Hud() {
   };
 
   return (
-    <header className="z-10 flex shrink-0 items-center gap-2 border-b-[3px] border-ink bg-cream px-2 py-1 text-sm sm:gap-3 sm:px-3">
+    <header className="z-10 flex shrink-0 items-center gap-2 border-b-[3px] border-ink bg-cream px-2 py-1 text-sm sm:gap-3 sm:px-3" data-zone={zone ?? undefined} data-topic={topic ? room : undefined}>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="shrink-0 font-extrabold text-teal-dark">{topic ? fmt(ui.hud.room, { n: room as number }) : screen === "hangar" ? ui.hud.hangar : ui.hud.hall}</span>
-          {topic && <span className="truncate font-semibold">{topic.title}</span>}
+          <span className="shrink-0 font-extrabold text-teal-dark">{topic ? fmt(ui.hud.room, { n: zone as number }) : screen === "hangar" ? ui.hud.hangar : ui.hud.hall}</span>
+          {topic && (
+            <span className="truncate font-semibold" data-testid="hud-topic">
+              {multi && `${fmt(ui.hud.topic, { n: room as number })}: `}
+              {topic.title}
+            </span>
+          )}
           {topic && <span className="hidden shrink-0 text-xs text-slate md:inline">{fmt(ui.hud.minutes, { n: topic.minutes })}</span>}
         </div>
         <div className="truncate text-xs text-slate" data-testid="objective">

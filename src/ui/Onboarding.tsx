@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ui } from "../content/ui-strings";
 import { otherForm } from "../state/assessment";
-import { LEARNING_STYLES, type LearningStyle } from "../state/adaptive.config";
+import { DIFFICULTIES, type Difficulty } from "../state/campaign";
 import { cloudEnabled, randomForm, useGameStore } from "../state/gameStore";
 import { CLASS_CODE_PATTERN, normalizeClassCode } from "../state/progressStore";
 import { MAX_NAME_CHARS } from "../state/rules";
@@ -10,21 +10,26 @@ import { art } from "./art";
 import { AssessmentRun } from "./AssessmentRun";
 import { useDialog } from "./useDialog";
 
-export function StylePicker({ value, onChange }: { value: LearningStyle; onChange: (style: LearningStyle) => void }) {
+const DIFFICULTY_MARK: Record<Difficulty, string> = { easy: "★", normal: "★★", hard: "★★★" };
+
+/** เลือกระดับความยากของเกม (GDD ข้อ 15) ค่าเริ่มต้นคือง่าย */
+function DifficultyPicker({ value, onChange }: { value: Difficulty; onChange: (difficulty: Difficulty) => void }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
-      {LEARNING_STYLES.map((style) => (
+    <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={ui.onboarding.difficulty}>
+      {DIFFICULTIES.map((difficulty) => (
         <button
-          key={style}
+          key={difficulty}
           type="button"
           role="radio"
-          aria-checked={value === style}
-          data-testid={`style-${style}`}
-          onClick={() => onChange(style)}
-          className={`rounded-lg border-[3px] border-ink p-2 text-left ${value === style ? "bg-hint shadow-[0_3px_0_0_#1a1c2c]" : "bg-paper hover:bg-teal-light"}`}
+          aria-checked={value === difficulty}
+          data-testid={`difficulty-${difficulty}`}
+          onClick={() => onChange(difficulty)}
+          className={`rounded-lg border-[3px] border-ink p-2 text-left ${value === difficulty ? "bg-hint shadow-[0_3px_0_0_#1a1c2c]" : "bg-paper hover:bg-teal-light"}`}
         >
-          <div className="font-extrabold">{ui.style[style].name}</div>
-          <div className="text-sm text-slate">{ui.style[style].detail}</div>
+          <div className="font-extrabold">
+            {ui.difficulty[difficulty].name} <span aria-hidden="true">{DIFFICULTY_MARK[difficulty]}</span>
+          </div>
+          <div className="text-sm text-slate">{ui.difficulty[difficulty].detail}</div>
         </button>
       ))}
     </div>
@@ -52,14 +57,14 @@ export function AvatarPicker({ value, onChange }: { value: Avatar; onChange: (av
   );
 }
 
-/** ขั้นแรกของเกมใหม่: ตั้งชื่อที่แสดง ใส่รหัสห้องเรียน เลือกสไตล์การเรียน แล้วทำแบบทดสอบก่อนเรียน (GDD ข้อ 3 และ 7.1) */
+/** ขั้นแรกของเกมใหม่: ตั้งชื่อที่แสดง ใส่รหัสห้องเรียน เลือกตัวละครและระดับความยาก แล้วทำแบบทดสอบก่อนเรียน (GDD ข้อ 3, 7.1 และ 15) */
 export function Onboarding() {
   const profile = useGameStore((s) => s.profile);
   const setProfile = useGameStore((s) => s.setProfile);
   const completePretest = useGameStore((s) => s.completePretest);
   const [name, setName] = useState(profile?.name ?? "");
   const [classCode, setClassCode] = useState(profile?.classCode ?? "");
-  const [style, setStyle] = useState<LearningStyle>(profile?.style ?? "read");
+  const [difficulty, setDifficulty] = useState<Difficulty>(profile?.difficulty ?? "easy");
   const [avatar, setAvatar] = useState<Avatar>(profile?.avatar ?? "a");
   // สุ่มชุดข้อสอบก่อนเรียน ผู้เรียนครึ่งหนึ่งได้ชุด A อีกครึ่งได้ชุด B แล้วสลับชุดตอนหลังเรียน
   const [form] = useState(randomForm);
@@ -77,7 +82,7 @@ export function Onboarding() {
             className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
-              if (name.trim() && codeValid) setProfile({ name: name.trim(), style, classCode: code, avatar });
+              if (name.trim() && codeValid) setProfile({ name: name.trim(), difficulty, classCode: code, avatar });
             }}
           >
             <h1 className="text-2xl font-extrabold text-teal-dark">{ui.onboarding.title}</h1>
@@ -115,8 +120,8 @@ export function Onboarding() {
               <AvatarPicker value={avatar} onChange={setAvatar} />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="font-semibold">{ui.onboarding.style}</span>
-              <StylePicker value={style} onChange={setStyle} />
+              <span className="font-semibold">{ui.onboarding.difficulty}</span>
+              <DifficultyPicker value={difficulty} onChange={setDifficulty} />
             </div>
             <button type="submit" className="btn self-end" disabled={!name.trim() || !codeValid} data-testid="onboarding-next">
               {ui.onboarding.next}

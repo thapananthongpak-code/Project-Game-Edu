@@ -187,13 +187,46 @@ canvas {
   outline-offset: -6px;
   border-radius: 50%;
 }
+/* บอสกลายร่าง: ร่างใหม่ปรากฏขึ้นพร้อมแสงวาบ */
+@keyframes battle-transform {
+  0% {
+    transform: scale(0.4);
+    filter: brightness(4) saturate(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    filter: brightness(2);
+    opacity: 1;
+  }
+}
+.battle-kaiju-transform {
+  animation: battle-transform 0.8s ease-out;
+}
+.battle-enraged {
+  filter: drop-shadow(0 0 5px #e43b44) saturate(1.4);
+}
 .battle-defeated {
   opacity: 0.35;
   transform: rotate(8deg) translateY(6%);
   transition: all 0.6s ease-in;
 }
+/* ฉากเนื้อเรื่องแบบช่องการ์ตูน (src/ui/StoryDialog.tsx): ภาพของช่องใหม่ค่อย ๆ ปรากฏ */
+@keyframes story-art-in {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+.story-art {
+  animation: story-art-in 0.45s ease-out;
+}
+.story-panel {
+  box-shadow: 0 4px 0 0 #1a1c2c;
+}
 @media (prefers-reduced-motion: reduce) {
   .slide-in,
+  .story-art,
   [class*="battle-"] {
     animation: none;
     transition: none;

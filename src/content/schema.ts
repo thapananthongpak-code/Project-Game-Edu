@@ -147,7 +147,13 @@ export type BackupPool =
   /** บัตร = definition ของ sections[section].terms ตัวเลือก = term ทุกคำ */
   | { kind: "term-definitions"; section: number }
   /** สุ่ม finalQuest.steps 2 ข้อ ถามว่าข้อใดมาก่อน (ใช้ได้กับหัวข้อสุดท้ายเท่านั้น) */
-  | { kind: "quest-step-pairs" };
+  | { kind: "quest-step-pairs" }
+  /** บัตร = reviewQuestions ทุกข้อ ตัวเลือก = คอลัมน์แรกของ tables[basketTable], answerKey[i] = index แถวที่ถูกของบัตรใบที่ i */
+  | { kind: "review-cases"; basketTable: number; answerKey: number[] }
+  /** บัตร = หัวข้อย่อยหนึ่งข้อ ตัวเลือก = หัวข้อย่อยอื่นทั้งหมด ถามว่าข้อใดอยู่ถัดไป */
+  | { kind: "step-next" }
+  /** บัตร = ขั้นตอนหนึ่งของ finalQuest.steps ตัวเลือก = ขั้นตอนอื่นทั้งหมด ถามว่าข้อใดอยู่ถัดไป (หัวข้อสุดท้ายเท่านั้น) */
+  | { kind: "quest-step-next" };
 
 /** ชุดของแบบทดสอบก่อนเรียน/หลังเรียน สองชุดคู่ขนานกัน ผู้เรียนได้ชุดหนึ่งก่อนเรียนและอีกชุดหลังเรียน */
 export type FormId = "A" | "B";
@@ -183,9 +189,12 @@ export interface RoomQuest {
 
 /** ชุดโจทย์ของด่านต่อสู้ไคจูหลังได้แกน AI ของห้องนั้น (GDD ข้อ 12) ด่านสุดท้ายใช้ชุดของทุกห้องเรียงตามเฟส */
 export interface BattleQuest {
-  /** เลขห้อง 1-6 */
+  /** เลขหัวข้อ 1-6 */
   room: number;
+  /** ชุดพื้นฐาน ใช้ในระดับง่าย */
   pools: BackupPool[];
+  /** ชุดที่ยากกว่า (ตัวเลือกมากขึ้น หรือถามแบบนำไปใช้) ระดับกลางใช้รวมกับชุดพื้นฐาน ระดับยากใช้ชุดนี้อย่างเดียว */
+  hard: BackupPool[];
 }
 
 export interface Quests {

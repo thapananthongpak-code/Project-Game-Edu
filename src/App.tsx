@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { useAudioDirector } from "./audio/useAudio";
 import { PhaserGame } from "./game/PhaserGame";
 import { pendingStory, useGameStore } from "./state/gameStore";
-import { ui, fmt } from "./content/ui-strings";
-import { nextStyle } from "./state/adaptive";
-import { art } from "./ui/art";
 import { Battle } from "./ui/Battle";
 import { Certificate } from "./ui/Certificate";
 import { CoreReward } from "./ui/CoreReward";
@@ -12,6 +9,7 @@ import { DialogueBox } from "./ui/DialogueBox";
 import { FieldMission } from "./ui/FieldMission";
 import { Hud } from "./ui/Hud";
 import { MainMenu } from "./ui/MainMenu";
+import { Missions } from "./ui/Missions";
 import { Onboarding, Posttest } from "./ui/Onboarding";
 import { QuestLog } from "./ui/QuestLog";
 import { ReviewNotebook } from "./ui/ReviewNotebook";
@@ -33,37 +31,6 @@ function useTouchDevice(): boolean {
     return () => window.removeEventListener("touchstart", onTouch);
   }, []);
   return touch;
-}
-
-/** พี่บิตเสนอให้เปลี่ยนสไตล์การเรียน หลังถูกบังคับเข้าห้องซ่อม 2 ห้องติดกัน ปฏิเสธได้ (GDD ข้อ 7.2) */
-function StyleSuggestion() {
-  const open = useGameStore((s) => s.styleSuggestion && s.overlay === null);
-  const style = useGameStore((s) => s.profile?.style ?? "read");
-  const setStyle = useGameStore((s) => s.setStyle);
-  const dismiss = useGameStore((s) => s.dismissStyleSuggestion);
-  if (!open) return null;
-  const suggested = nextStyle(style);
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center p-3" data-testid="style-suggestion">
-      <div className="panel flex max-w-xl flex-wrap items-center gap-3 p-3">
-        <img src={art.mentor} alt="" className="pixelated h-12 w-12" />
-        <p className="min-w-0 flex-1 text-sm font-semibold">{fmt(ui.styleSuggestion.text, { style: ui.style[suggested].name })}</p>
-        <button type="button" className="btn btn-ghost !min-h-9 text-sm" onClick={dismiss}>
-          {ui.styleSuggestion.decline}
-        </button>
-        <button
-          type="button"
-          className="btn !min-h-9 text-sm"
-          onClick={() => {
-            setStyle(suggested);
-            dismiss();
-          }}
-        >
-          {ui.styleSuggestion.accept}
-        </button>
-      </div>
-    </div>
-  );
 }
 
 /** เปิดฉากเนื้อเรื่องที่ถึงคิวเมื่อผู้เล่นว่างอยู่ (ไม่มีหน้าต่างอื่นเปิด) */
@@ -100,11 +67,11 @@ export function App() {
       {overlay === "field" && <FieldMission />}
       {overlay === "posttest" && <Posttest />}
       {overlay === "certificate" && <Certificate />}
-      <StyleSuggestion />
       {overlay === "review" && <ReviewNotebook />}
       {overlay === "reward" && <CoreReward />}
       {overlay === "questlog" && <QuestLog />}
       {overlay === "shop" && <Shop />}
+      {overlay === "missions" && <Missions />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}
       {tutorOpen && tutorRoom !== null && <TutorPanel />}

@@ -37,13 +37,13 @@ async function measure(browser, profile) {
   const loadMs = Date.now() - started;
   const press = (locator) => (profile.mobile ? locator.tap() : locator.click());
 
-  // เข้าเกม: ลงทะเบียนและทำแบบทดสอบก่อนเรียน (กดยังไม่รู้ทุกข้อ)
+  // เข้าเกม: ลงทะเบียนและทำแบบทดสอบก่อนเรียน (เลือกตัวเลือกแรกทุกข้อ)
   await press(page.getByTestId("menu-new"));
   await page.getByTestId("player-name").fill("วัดผล");
   await press(page.getByTestId("onboarding-next"));
   for (let i = 0; i < 12; i++) {
     const before = await page.getByTestId("assessment-progress").innerText();
-    await press(page.getByTestId("choice-unknown"));
+    await press(page.getByTestId("choice-option").first());
     if (i < 11) await page.waitForFunction((old) => document.querySelector('[data-testid="assessment-progress"]')?.textContent !== old, before);
   }
   await press(page.getByTestId("assessment-finish"));

@@ -5,9 +5,11 @@
 export const TIERS = ["assist", "standard", "challenge"] as const;
 export type Tier = (typeof TIERS)[number];
 
-/** สไตล์การเรียน เรียงตามลำดับที่ห้องซ่อมใช้สลับ: อ่าน → ดูภาพ → ลงมือทำ → อ่าน (GDD ข้อ 7.3–7.4) */
-export const LEARNING_STYLES = ["read", "visual", "hands"] as const;
-export type LearningStyle = (typeof LEARNING_STYLES)[number];
+/**
+ * รูปแบบการนำเสนอเนื้อหา (GDD ข้อ 7.4): read = ข้อความและตารางเต็ม ใช้กับบทสอน, visual = เน้นคำสำคัญและตารางเป็นการ์ด ใช้กับห้องซ่อม
+ * ผู้เล่นไม่ได้เลือกเอง (ตัวเลือกของผู้เล่นคือระดับความยาก ใน src/state/campaign.ts)
+ */
+export type PageStyle = "read" | "visual";
 
 export type CheckMode = "piece" | "round";
 
@@ -22,8 +24,6 @@ export const ADAPTIVE = {
   missesToRequireRepair: 4,
   /** ออกจากห้องซ่อมได้เมื่อตอบถูกติดต่อกันครบจำนวนนี้ */
   repairExitStreak: 2,
-  /** ถูกบังคับเข้าห้องซ่อมติดกันครบจำนวนห้องนี้: เสนอให้เปลี่ยนสไตล์การเรียน */
-  requiredRepairRoomsToSuggestStyle: 2,
 
   /** จำนวนครั้งที่เปิดอ่านแผงอ้างอิงได้ต่อมินิเกม */
   peeks: { assist: Number.POSITIVE_INFINITY, standard: 2, challenge: 0 } as Record<Tier, number>,

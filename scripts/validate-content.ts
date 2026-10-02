@@ -199,6 +199,22 @@ function checkPool(pool: BackupPool, topic: Topic, at: string): number {
       check(topic.id === topics.length, `${at} ใช้ขั้นตอนของภารกิจภาคสนาม จึงต้องเป็นหัวข้อสุดท้าย`);
       check(fq.steps.length >= 2, `${at} ต้องมี finalQuest.steps อย่างน้อย 2 ข้อ`);
       return (fq.steps.length * (fq.steps.length - 1)) / 2;
+    case "review-cases": {
+      const rows = topic.tables[pool.basketTable]?.rows.length ?? 0;
+      check(rows > 0, `${at}.basketTable ชี้นอกช่วง`);
+      check(
+        Array.isArray(pool.answerKey) && pool.answerKey.length === topic.reviewQuestions.length && pool.answerKey.every((k) => isIndex(k, rows)),
+        `${at}.answerKey ต้องมีเฉลยครบ ${topic.reviewQuestions.length} ข้อ และชี้แถวที่มีในตาราง`,
+      );
+      return topic.reviewQuestions.length;
+    }
+    case "step-next":
+      check(topic.sections.length >= 3, `${at} ต้องมี sections อย่างน้อย 3 ข้อ`);
+      return topic.sections.length - 1;
+    case "quest-step-next":
+      check(topic.id === topics.length, `${at} ใช้ขั้นตอนของภารกิจภาคสนาม จึงต้องเป็นหัวข้อสุดท้าย`);
+      check(fq.steps.length >= 3, `${at} ต้องมี finalQuest.steps อย่างน้อย 3 ข้อ`);
+      return fq.steps.length - 1;
     default:
       errors.push(`${at}.kind ไม่รู้จัก: ${(pool as { kind: string }).kind}`);
       return 0;
@@ -322,6 +338,10 @@ battles.forEach((battle, i) => {
   check(Array.isArray(battle.pools) && battle.pools.length > 0, `${at}.pools ว่าง`);
   const items = (battle.pools ?? []).reduce((n, pool, j) => n + (pool.kind === "accuracy-example" ? 0 : checkPool(pool, topic, `${at}.pools[${j}]`)), 0);
   check(items >= MIN_BATTLE_ITEMS, `${at} สร้างโจทย์ได้ ${items} ข้อ ต้องมีอย่างน้อย ${MIN_BATTLE_ITEMS}`);
+  // ชุดยาก (ระดับกลางและยาก): ต้องมี และสร้างโจทย์ได้พอเช่นกัน
+  check(Array.isArray(battle.hard) && battle.hard.length > 0, `${at}.hard ว่าง`);
+  const hardItems = (battle.hard ?? []).reduce((n, pool, j) => n + (pool.kind === "accuracy-example" ? 0 : checkPool(pool, topic, `${at}.hard[${j}]`)), 0);
+  check(hardItems >= MIN_BATTLE_ITEMS, `${at}.hard สร้างโจทย์ได้ ${hardItems} ข้อ ต้องมีอย่างน้อย ${MIN_BATTLE_ITEMS}`);
 });
 
 if (errors.length > 0) {

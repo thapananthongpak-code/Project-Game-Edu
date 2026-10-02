@@ -2,12 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   type AdaptiveEvent,
   evaluateMinigame,
-  nextStyle,
   pretestTier,
   repairPracticeDone,
   roomStartTier,
   shiftTier,
-  shouldSuggestStyleChange,
   starsFor,
 } from "./adaptive";
 import { ADAPTIVE } from "./adaptive.config";
@@ -143,25 +141,22 @@ describe("roomStartTier (GDD 7.2)", () => {
   });
 });
 
-describe("shouldSuggestStyleChange (GDD 7.2)", () => {
-  const forced = { totalMisses: 4, requiredRepair: true };
-  const fine = { totalMisses: 0, requiredRepair: false };
-  it("เสนอเมื่อถูกบังคับเข้าห้องซ่อม 2 ห้องติดกัน", () => {
-    expect(shouldSuggestStyleChange([fine, forced, forced])).toBe(true);
+describe("ระดับขั้นต่ำตามระดับความยากของเกม (GDD 15)", () => {
+  it("ระดับเริ่มต้นไม่ต่ำกว่าขั้นต่ำ แม้แบบทดสอบก่อนเรียนผิดทุกข้อหรือห้องก่อนหน้าถูกบังคับเข้าห้องซ่อม", () => {
+    expect(roomStartTier(0, null, "standard")).toBe("standard");
+    expect(roomStartTier(0, { totalMisses: 5, requiredRepair: true }, "challenge")).toBe("challenge");
+    expect(roomStartTier(2, null, "standard")).toBe("challenge");
   });
-  it("ไม่เสนอเมื่อไม่ติดกัน หรือยังมีห้องเดียว", () => {
-    expect(shouldSuggestStyleChange([forced, fine, forced])).toBe(false);
-    expect(shouldSuggestStyleChange([forced])).toBe(false);
-    expect(shouldSuggestStyleChange([])).toBe(false);
+  it("ตอบผิดติดกันแล้วระดับไม่ลดต่ำกว่าขั้นต่ำ แต่ห้องซ่อมยังทำงานเหมือนเดิม", () => {
+    const events = [miss(), miss(), miss(), miss()];
+    expect(evaluateMinigame("challenge", events).tier).toBe("assist");
+    const hard = evaluateMinigame("challenge", events, "challenge");
+    expect(hard).toMatchObject({ tier: "challenge", checkMode: "round", peeksAllowed: 0, repair: "required" });
+    expect(evaluateMinigame("assist", [miss(), miss()], "standard")).toMatchObject({ tier: "standard", repair: "offer" });
   });
 });
 
 describe("ห้องซ่อม (GDD 7.3)", () => {
-  it("สไตล์ที่ใช้ทบทวนวน อ่าน → ดูภาพ → ลงมือทำ → อ่าน", () => {
-    expect(nextStyle("read")).toBe("visual");
-    expect(nextStyle("visual")).toBe("hands");
-    expect(nextStyle("hands")).toBe("read");
-  });
   it("ออกได้เมื่อตอบถูก 2 ข้อติดต่อกัน", () => {
     expect(repairPracticeDone([true])).toBe(false);
     expect(repairPracticeDone([true, false, true])).toBe(false);
@@ -175,7 +170,6 @@ describe("ค่าคงที่ตรงกับ GDD", () => {
     expect(ADAPTIVE.consecutiveMissesToOfferRepair).toBe(2);
     expect(ADAPTIVE.missesToRequireRepair).toBe(4);
     expect(ADAPTIVE.repairExitStreak).toBe(2);
-    expect(ADAPTIVE.requiredRepairRoomsToSuggestStyle).toBe(2);
     expect(ADAPTIVE.pretestItemsPerTopic).toBe(2);
     expect(ADAPTIVE.peeks).toEqual({ assist: Number.POSITIVE_INFINITY, standard: 2, challenge: 0 });
   });

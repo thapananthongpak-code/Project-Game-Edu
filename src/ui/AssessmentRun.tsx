@@ -17,7 +17,7 @@ interface AssessmentRunProps {
 
 /**
  * แบบทดสอบก่อนเรียน ("ด่านสแกนเข้าแล็บ") และหลังเรียน ("ด่านสแกนออกจากแล็บ") ใช้ชุดข้อสอบคู่ขนานคนละชุด
- * บัตรโจทย์เข้ามาทีละใบ ไม่เฉลยรายข้อ ผลก่อนเรียนใช้ตั้งระดับความช่วยเหลือ ไม่ปลดล็อกห้อง (GDD ข้อ 7.1)
+ * บัตรโจทย์เข้ามาทีละใบ ต้องเลือกหนึ่งตัวเลือกทุกข้อ ไม่เฉลยรายข้อ ผลก่อนเรียนใช้ตั้งระดับความช่วยเหลือ ไม่ปลดล็อกห้อง (GDD ข้อ 7.1)
  */
 export function AssessmentRun({ phase, form, onFinish, onCancel }: AssessmentRunProps) {
   const [items] = useState(() => buildAssessment(form));
@@ -26,7 +26,7 @@ export function AssessmentRun({ phase, form, onFinish, onCancel }: AssessmentRun
   const index = results.length;
   const text = ui[phase];
 
-  const answer = (option: number | null) => {
+  const answer = (option: number) => {
     const item = items[index];
     const now = performance.now();
     setResults([...results, { id: item.id ?? String(index), topic: item.topic, correct: option === item.answer, timeMs: Math.round(now - shownAt.current) }]);
@@ -54,7 +54,7 @@ export function AssessmentRun({ phase, form, onFinish, onCancel }: AssessmentRun
       </div>
       {index < items.length ? (
         <>
-          <ChoiceCard key={index} item={items[index]} onAnswer={answer} allowUnknown />
+          <ChoiceCard key={index} item={items[index]} onAnswer={answer} />
           {onCancel && index === 0 && (
             <button type="button" className="btn btn-ghost self-start" data-testid="assessment-cancel" onClick={onCancel}>
               {ui.posttest.later}

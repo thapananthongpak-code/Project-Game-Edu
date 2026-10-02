@@ -4,7 +4,7 @@
 // หมายเหตุสองข้อจาก GDD:
 // - เวลาถูกบันทึกและสรุปให้ครู แต่ไม่ใช้ตัดสิน เพราะเกมผ่านด้วยความเข้าใจ ไม่ใช่ความเร็ว (GDD ข้อ 1)
 // - "ข้าม" ได้เฉพาะห้องซ่อมที่ถูกเสนอ (canSkipRepair) การข้ามห้องเรียนไม่มีในเกม (GDD ข้อ 1 และ 4.4)
-import { ADAPTIVE, type CheckMode, LEARNING_STYLES, type LearningStyle, TIERS, type Tier } from "./adaptive.config";
+import { ADAPTIVE, type CheckMode, TIERS, type Tier } from "./adaptive.config";
 
 /** เหตุการณ์ในมินิเกมหนึ่งรอบ เรียงตามเวลา */
 export type AdaptiveEvent =
@@ -60,9 +60,15 @@ export function starsFor(misses: number): number {
   return (ADAPTIVE.stars.find((row) => misses <= row.maxMisses) ?? ADAPTIVE.stars[ADAPTIVE.stars.length - 1]).stars;
 }
 
-/** ประเมินมินิเกมจากประวัติทั้งหมดตั้งแต่เริ่ม (GDD ข้อ 4.2 และ 7.2–7.3) */
-export function evaluateMinigame(startTier: Tier, events: readonly AdaptiveEvent[]): MinigameState {
-  let tier = startTier;
+/** ระดับที่สูงกว่าระหว่างสองระดับ */
+export const higherTier = (a: Tier, b: Tier): Tier => (TIERS.indexOf(a) >= TIERS.indexOf(b) ? a : b);
+
+/**
+ * ประเมินมินิเกมจากประวัติทั้งหมดตั้งแต่เริ่ม (GDD ข้อ 4.2 และ 7.2–7.3)
+ * floor = ระดับต่ำสุดตามระดับความยากของเกม ระดับความช่วยเหลือไม่ลดต่ำกว่านี้ (GDD ข้อ 15)
+ */
+export function evaluateMinigame(startTier: Tier, events: readonly AdaptiveEvent[], floor: Tier = TIERS[0]): MinigameState {
+  let tier = higherTier(startTier, floor);
   let consecutiveMisses = 0;
   let totalMisses = 0;
   let missesSinceRepair = 0;
@@ -77,8 +83,8 @@ export function evaluateMinigame(startTier: Tier, events: readonly AdaptiveEvent
     // ข้อเสนอห้องซ่อมมีผลเฉพาะทันทีหลังการตรวจที่ทำให้เกิด เหตุการณ์ถัดไปถือว่าผู้เล่นเลือกแล้ว
     offer = false;
     if (event.type === "repair") {
-      // กลับจากห้องซ่อม: ระดับประคอง เริ่มนับผิดติดต่อกันใหม่ ผิดสะสมที่ใช้คิดดาวคงเดิม
-      tier = TIERS[0];
+      // กลับจากห้องซ่อม: ระดับต่ำสุดที่ระดับความยากอนุญาต เริ่มนับผิดติดต่อกันใหม่ ผิดสะสมที่ใช้คิดดาวคงเดิม
+      tier = floor;
       consecutiveMisses = 0;
       missesSinceRepair = 0;
       repairVisits++;
@@ -95,7 +101,7 @@ export function evaluateMinigame(startTier: Tier, events: readonly AdaptiveEvent
     totalMisses++;
     missesSinceRepair++;
     if (consecutiveMisses % ADAPTIVE.consecutiveMissesToOfferRepair === 0) {
-      tier = shiftTier(tier, -1);
+      tier = higherTier(shiftTier(tier, -1), floor);
       offer = true;
     }
     if (missesSinceRepair >= ADAPTIVE.missesToRequireRepair) requiredRepair = true;
@@ -123,23 +129,10 @@ export function evaluateMinigame(startTier: Tier, events: readonly AdaptiveEvent
  * ระดับเริ่มต้นของห้อง: ระดับจากแบบทดสอบก่อนเรียนของหัวข้อนั้น ปรับตามผลของห้องก่อนหน้า (GDD ข้อ 7.2)
  * สูงขึ้น 1 ขั้นเมื่อห้องก่อนหน้าผ่านมินิเกมโดยไม่ผิดเลย ต่ำลง 1 ขั้นเมื่อห้องก่อนหน้าถูกบังคับเข้าห้องซ่อม
  */
-export function roomStartTier(pretestCorrect: number, previous: RoomOutcome | null): Tier {
+export function roomStartTier(pretestCorrect: number, previous: RoomOutcome | null, floor: Tier = TIERS[0]): Tier {
   const base = pretestTier(pretestCorrect);
-  if (!previous) return base;
-  if (previous.requiredRepair) return shiftTier(base, -1);
-  if (previous.totalMisses === 0) return shiftTier(base, 1);
-  return base;
-}
-
-/** เสนอให้เปลี่ยนสไตล์การเรียนเมื่อห้องล่าสุดที่เล่นจบติดกันถูกบังคับเข้าห้องซ่อมทุกห้อง (GDD ข้อ 7.2) */
-export function shouldSuggestStyleChange(outcomesInRoomOrder: readonly RoomOutcome[]): boolean {
-  const n = ADAPTIVE.requiredRepairRoomsToSuggestStyle;
-  return outcomesInRoomOrder.length >= n && outcomesInRoomOrder.slice(-n).every((o) => o.requiredRepair);
-}
-
-/** สไตล์ถัดไปที่ห้องซ่อมใช้ทบทวน วนตามลำดับใน LEARNING_STYLES (GDD ข้อ 7.3) */
-export function nextStyle(style: LearningStyle): LearningStyle {
-  return LEARNING_STYLES[(LEARNING_STYLES.indexOf(style) + 1) % LEARNING_STYLES.length];
+  const adjusted = !previous ? base : previous.requiredRepair ? shiftTier(base, -1) : previous.totalMisses === 0 ? shiftTier(base, 1) : base;
+  return higherTier(adjusted, floor);
 }
 
 /** ออกจากห้องซ่อมได้เมื่อผลการฝึกล่าสุดถูกติดต่อกันครบตามเกณฑ์ (GDD ข้อ 7.3) */

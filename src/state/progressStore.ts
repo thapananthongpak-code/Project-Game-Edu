@@ -6,26 +6,29 @@
 // createProgressStore() เลือกตาม VITE_SUPABASE_URL และ VITE_SUPABASE_ANON_KEY (ดู docs/TEACHER_GUIDE.md และ supabase/schema.sql)
 import { course } from "../content";
 import type { FormId } from "../content/schema";
-import { LEARNING_STYLES, type LearningStyle } from "./adaptive.config";
+import { DIFFICULTIES, type Difficulty } from "./campaign";
 import { emptyField, type FieldProgress } from "./field";
 import { MAX_ANSWER_CHARS, MAX_NAME_CHARS } from "./rules";
-import { AVATARS, type Avatar, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, type Supply } from "./shop.config";
+import { AVATARS, type Avatar, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, SUPPLIES, type Supply } from "./shop.config";
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface Profile {
   /** ชื่อที่แสดง แนะนำให้ใช้ชื่อเล่นหรือเลขที่ ไม่ใช้ชื่อจริง */
   name: string;
-  style: LearningStyle;
+  /** ระดับความยากของเกม เลือกตอนเริ่มเกม กำหนดจำนวนห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
+  difficulty: Difficulty;
   /** รหัสห้องเรียนที่ครูกำหนด ว่าง = เล่นคนเดียว ไม่ส่งข้อมูลให้ครู */
   classCode: string;
   /** ตัวละครที่เลือก (รูปลักษณ์ในเกมเท่านั้น ไม่ใช่ข้อมูลเพศของผู้เรียน และไม่แสดงในแดชบอร์ดผู้สอน) */
   avatar: Avatar;
 }
 
-/** ผลของด่านต่อสู้ไคจูของห้อง (GDD ข้อ 12) */
+/** ผลของด่านต่อสู้หนึ่งด่าน (GDD ข้อ 12) */
 export interface BattleRecord {
   won: boolean;
+  /** จำนวนครั้งที่ชนะ รวมการซ้อมรบซ้ำหลังชนะครั้งแรก */
+  wins: number;
   /** จำนวนครั้งที่ออกปฏิบัติการ (รวมครั้งที่ถอยกลับมาซ่อม) */
   sorties: number;
   /** โจทย์ที่ตอบทั้งหมด และที่ตอบถูก สะสมทุกครั้ง */
@@ -77,7 +80,6 @@ export interface RoomProgress {
   timeMs: number;
   /** จำนวนครั้งที่ถามพี่บิตในห้องนี้: ได้คำตอบจาก AI และได้คำใบ้สำเร็จรูป */
   tutor: { ai: number; hints: number };
-  battle: BattleRecord;
 }
 
 export interface SaveData {
@@ -88,6 +90,8 @@ export interface SaveData {
   pretest: AssessmentResult | null;
   posttest: AssessmentResult | null;
   rooms: Record<number, RoomProgress>;
+  /** ผลของด่านต่อสู้ คีย์คือรหัสด่านใน src/state/campaign.ts */
+  battles: Record<string, BattleRecord>;
   /** ฉากเนื้อเรื่องที่ดูจบแล้ว (รหัสใน src/content/story.ts) */
   story: string[];
   shop: ShopState;
@@ -114,12 +118,13 @@ export const emptyRoom = (): RoomProgress => ({
   coreAt: null,
   timeMs: 0,
   tutor: { ai: 0, hints: 0 },
-  battle: { won: false, sorties: 0, asked: 0, correct: 0 },
 });
 
-export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: { "repair-kit": 0, shield: 0 }, outfit: "lab", paint: "standard" });
+export const emptyBattle = (): BattleRecord => ({ won: false, wins: 0, sorties: 0, asked: 0, correct: 0 });
 
-export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, story: [], shop: emptyShop() });
+export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>, outfit: "lab", paint: "standard" });
+
+export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, battles: {}, story: [], shop: emptyShop() });
 
 // ---------------------------------------------------------------- อ่านข้อมูลที่บันทึกไว้
 // ข้อมูลที่อ่านกลับมาอาจไม่ครบหรือผิดรูป (รุ่นเก่า ไฟล์เสีย หรือถูกแก้จากนอกเกม) ทุกช่องจึงถูกตรวจชนิดและเติมค่าเริ่มต้น
@@ -170,9 +175,24 @@ function roomOf(raw: unknown): RoomProgress {
     coreAt: typeof data.coreAt === "string" ? data.coreAt : null,
     timeMs: count(data.timeMs),
     tutor: { ai: count(object(data.tutor).ai), hints: count(object(data.tutor).hints) },
-    battle: { won: object(data.battle).won === true, sorties: count(object(data.battle).sorties), asked: count(object(data.battle).asked), correct: count(object(data.battle).correct) },
   };
 }
+
+function battleOf(raw: unknown): BattleRecord {
+  const data = object(raw);
+  const won = data.won === true;
+  return { won, wins: won ? Math.max(1, Math.floor(count(data.wins))) : 0, sorties: count(data.sorties), asked: count(data.asked), correct: count(data.correct) };
+}
+
+const MAX_BATTLES = 20;
+function battlesOf(raw: unknown): Record<string, BattleRecord> {
+  const battles: Record<string, BattleRecord> = {};
+  for (const [id, value] of Object.entries(object(raw)).slice(0, MAX_BATTLES)) if (/^[a-z0-9-]{1,20}$/.test(id)) battles[id] = battleOf(value);
+  return battles;
+}
+
+/** รหัสด่านของระดับง่ายที่ตรงกับห้องในข้อมูลรุ่นก่อน (ด่านเคยเก็บไว้กับห้อง) */
+const legacyBattleId = (room: number): string => (room === course.topics.length ? "omega" : `k${room}`);
 
 function shopOf(raw: unknown): ShopState {
   const data = object(raw);
@@ -203,19 +223,20 @@ const roomsOf = (raw: unknown): Record<number, RoomProgress> => {
   return rooms;
 };
 
-/** ห้องจากรุ่นที่ยังไม่มีด่านต่อสู้: ห้องที่ได้แกน AI แล้วถือว่าผ่านด่านต่อสู้ */
-const legacyRooms = (raw: unknown): Record<number, RoomProgress> => {
-  const rooms = roomsOf(raw);
-  for (const room of Object.values(rooms)) if (room.core) room.battle = { ...room.battle, won: true };
-  return rooms;
+/** ข้อมูลจากรุ่นที่ยังไม่มีด่านต่อสู้: ห้องที่ได้แกน AI แล้วถือว่าผ่านด่านต่อสู้ของห้องนั้น */
+const battlesFromCores = (rooms: Record<number, RoomProgress>): Record<string, BattleRecord> => {
+  const battles: Record<string, BattleRecord> = {};
+  for (const [room, progress] of Object.entries(rooms)) if (progress.core) battles[legacyBattleId(Number(room))] = { ...emptyBattle(), won: true, wins: 1 };
+  return battles;
 };
 
 function profileOf(raw: unknown): Profile | null {
   const data = object(raw);
   const name = text(data.name, MAX_NAME_CHARS).trim();
   if (!name) return null;
-  const style = LEARNING_STYLES.find((candidate) => candidate === data.style) ?? "read";
-  return { name, style, classCode: text(data.classCode, 20), avatar: AVATARS.find((candidate) => candidate === data.avatar) ?? "a" };
+  // ข้อมูลรุ่นก่อนไม่มีระดับความยาก (เคยมีสไตล์การเรียนแทน): เป็นระดับง่าย ซึ่งมีโครงห้องเหมือนเกมรุ่นก่อน
+  const difficulty = DIFFICULTIES.find((candidate) => candidate === data.difficulty) ?? "easy";
+  return { name, difficulty, classCode: text(data.classCode, 20), avatar: AVATARS.find((candidate) => candidate === data.avatar) ?? "a" };
 }
 
 function assessmentOf(raw: unknown): AssessmentResult | null {
@@ -245,13 +266,33 @@ export function migrateSave(raw: unknown): SaveData | null {
       pretest: assessmentOf(data.pretest),
       posttest: assessmentOf(data.posttest),
       rooms: roomsOf(data.rooms),
+      battles: battlesOf(data.battles),
+      story: storyOf(data.story),
+      shop: shopOf(data.shop),
+    };
+  }
+  // รุ่น 4: ผลด่านต่อสู้เก็บไว้กับห้อง และมีสไตล์การเรียนแทนระดับความยาก
+  if (data.version === 4 && hasRooms) {
+    const battles: Record<string, BattleRecord> = {};
+    for (const [room, value] of Object.entries(object(data.rooms))) {
+      const record = battleOf(object(value).battle);
+      if (record.won || record.sorties > 0) battles[legacyBattleId(Number(room))] = record;
+    }
+    return {
+      version: SAVE_VERSION,
+      updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : emptySave().updatedAt,
+      profile: profileOf(data.profile),
+      pretest: assessmentOf(data.pretest),
+      posttest: assessmentOf(data.posttest),
+      rooms: roomsOf(data.rooms),
+      battles,
       story: storyOf(data.story),
       shop: shopOf(data.shop),
     };
   }
   // รุ่น 3: ยังไม่มีเนื้อเรื่อง ด่านต่อสู้ และร้านค้า ห้องที่ได้แกน AI แล้วถือว่าผ่านด่านต่อสู้ของห้องนั้น ห้องถัดไปจึงไม่ถูกล็อกย้อนหลัง
   if (data.version === 3 && hasRooms) {
-    const rooms = legacyRooms(data.rooms);
+    const rooms = roomsOf(data.rooms);
     return {
       ...emptySave(),
       updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : emptySave().updatedAt,
@@ -259,16 +300,21 @@ export function migrateSave(raw: unknown): SaveData | null {
       pretest: assessmentOf(data.pretest),
       posttest: assessmentOf(data.posttest),
       rooms,
+      battles: battlesFromCores(rooms),
     };
   }
   // รุ่น 2: ยังไม่มีรหัสห้องเรียน แบบทดสอบหลังเรียน และรหัสข้อ ผลก่อนเรียนเดิมสุ่มโจทย์ จึงเก็บไว้เฉพาะคะแนนรายหัวข้อ
   if (data.version === 2 && hasRooms) {
     const pretest = assessmentOf(data.pretest);
-    return { ...emptySave(), profile: profileOf(data.profile), pretest: pretest && { ...pretest, form: "A", items: [] }, rooms: legacyRooms(data.rooms) };
+    const rooms = roomsOf(data.rooms);
+    return { ...emptySave(), profile: profileOf(data.profile), pretest: pretest && { ...pretest, form: "A", items: [] }, rooms, battles: battlesFromCores(rooms) };
   }
   // รุ่น 1 (ต้นแบบห้อง 1): { state: { progress }, version: 1 }
   const legacy = object(data.state).progress;
-  if (legacy && typeof legacy === "object") return { ...emptySave(), rooms: legacyRooms(legacy) };
+  if (legacy && typeof legacy === "object") {
+    const rooms = roomsOf(legacy);
+    return { ...emptySave(), rooms, battles: battlesFromCores(rooms) };
+  }
   return null;
 }
 

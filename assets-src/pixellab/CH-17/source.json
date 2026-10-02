@@ -1,0 +1,22 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage girl lab intern with dark hair tied in a high ponytail, long white commander coat with gold epaulettes and gold trim over a dark navy uniform, white gloves, dark boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงานแบบ ข ชุดผู้บัญชาการ 4 ทิศ + เดิน 6 เฟรม",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "animate": {
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk"
+  },
+  "id": "62a13eb1-3453-4141-9ea5-04560f3ea326",
+  "generatedAt": "2026-10-02T07:33:46.547Z"
+}

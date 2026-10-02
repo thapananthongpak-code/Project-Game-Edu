@@ -15,7 +15,7 @@ function result(form: "A" | "B", correctIds: string[]): AssessmentResult {
 }
 
 function player(name: string, patch: Partial<SaveData>, extra: Partial<Player> = {}): Player {
-  return { id: name, classCode: "PVC1", name, save: { ...emptySave(), profile: { name, style: "read", classCode: "PVC1", avatar: "a" }, ...patch }, resumeCode: null, updatedAt: "2026-10-02T03:00:00.000Z", archived: false, ...extra };
+  return { id: name, classCode: "PVC1", name, save: { ...emptySave(), profile: { name, difficulty: "easy", classCode: "PVC1", avatar: "a" }, ...patch }, resumeCode: null, updatedAt: "2026-10-02T03:00:00.000Z", archived: false, ...extra };
 }
 
 const field = { ...emptyField(course.finalQuest), results: course.finalQuest.resultTable.classes.map((_, i) => ({ images: 30, correct: 10 - i })) };
@@ -35,6 +35,30 @@ const ton = player("ต้น", {
   rooms: { 1: { ...emptyRoom(), minigameDone: true, stars: 2, core: true, timeMs: 900000, missed: { Label: 1 }, tutor: { ai: 0, hints: 3 } } },
 });
 const mai = player("ใหม่", { pretest: result("A", []) });
+const win = { won: true, wins: 1, sorties: 1, asked: 6, correct: 5 };
+
+describe("ระดับความยากและด่านต่อสู้", () => {
+  it("นับด่านที่ชนะจากจำนวนด่านของระดับความยากที่ผู้เรียนเลือก รวมโจทย์ของการแพ้และการซ้อมรบ", () => {
+    const easy = player("ง่าย", { battles: { k1: { ...win, wins: 3, sorties: 4, asked: 20, correct: 15 }, k2: { won: false, wins: 0, sorties: 1, asked: 4, correct: 1 } } });
+    expect(summarizeStudent(easy)).toMatchObject({ difficulty: "easy", battlesWon: 1, battlesTotal: 6, battleAsked: 24, battleCorrect: 16, reviewsTotal: 5 });
+    const normal = player("กลาง", { profile: { name: "กลาง", difficulty: "normal", classCode: "PVC1", avatar: "a" }, battles: { n1: win, n2: win } });
+    expect(summarizeStudent(normal)).toMatchObject({ difficulty: "normal", battlesWon: 2, battlesTotal: 4, reviewsTotal: 5 });
+    const hard = player("ยาก", { profile: { name: "ยาก", difficulty: "hard", classCode: "PVC1", avatar: "a" }, battles: { end: win } });
+    // ระดับยากไม่มีคำถามทบทวน
+    expect(summarizeStudent(hard)).toMatchObject({ difficulty: "hard", battlesWon: 1, battlesTotal: 1, reviewsTotal: 0 });
+  });
+
+  it("ไฟล์ CSV มีคอลัมน์ระดับความยากและจำนวนด่านทั้งหมด", () => {
+    const hard = player("ยาก", { profile: { name: "ยาก", difficulty: "hard", classCode: "PVC1", avatar: "a" }, battles: { end: win } });
+    const [header, row] = studentsCsv([hard], { fixed: t.csv.students, pre: t.csv.pre, post: t.csv.post, stars: t.csv.stars, minutes: t.csv.minutes })
+      .replace("\uFEFF", "")
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => line.split(","));
+    const cell = (name: string) => row[header.indexOf(name)];
+    expect([cell("difficulty"), cell("kaiju_defeated"), cell("kaiju_total"), cell("battle_answers"), cell("battle_correct")]).toEqual(["hard", "1", "1", "6", "5"]);
+  });
+});
 
 describe("summarizeStudent", () => {
   it("สรุปห้องที่ถึง แกน AI ดาว การทบทวน Accuracy ภาคสนาม และคะแนนพัฒนาการ", () => {
@@ -138,7 +162,7 @@ describe("CSV", () => {
     expect(lines).toHaveLength(4);
     const width = t.csv.students.length + 6 + 6 + 5 + 6;
     for (const line of lines) expect(line.split(",")).toHaveLength(width);
-    expect(lines[1].startsWith("PVC1,แก้ว,false,2026-10-02T03:00:00.000Z,6,3,4,1,90,true,A,2,6,4,0.4,2,1,1,17,")).toBe(true);
+    expect(lines[1].startsWith("PVC1,แก้ว,false,2026-10-02T03:00:00.000Z,easy,6,3,4,1,90,true,A,2,6,4,0.4,2,1,1,17,")).toBe(true);
   });
 
   it("คำตอบแบบพิมพ์: จับคู่กับคำถามจาก course.json และกันสูตรในคำตอบของผู้เรียน", () => {

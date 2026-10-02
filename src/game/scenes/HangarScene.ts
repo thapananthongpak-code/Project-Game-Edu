@@ -1,12 +1,13 @@
 import type * as Phaser from "phaser";
 import { ROOM_COUNT } from "../../content";
 import { fmt, ui } from "../../content/ui-strings";
-import { allBattlesWon, coreCount, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
+import { BATTLE } from "../../state/battle.config";
+import { armorParts, coreCount, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
 import { SCENE } from "../constants";
 import { hangarMap, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
-/** โรงเก็บหุ่น: หุ่นการ์เดียนที่ติดตั้งแกน AI ตามที่เก็บได้ แผงสั่งปฏิบัติการ (ด่านต่อสู้) ตู้เสื้อผ้า และข้อความของอาจารย์ */
+/** โรงเก็บหุ่น: หุ่นการ์เดียนที่ติดตั้งแกน AI ตามที่เก็บได้ แผงสั่งปฏิบัติการ (รายการด่านต่อสู้และการซ้อมรบ) ตู้เสื้อผ้า และข้อความของอาจารย์ */
 export class HangarScene extends WorldScene {
   private cores: Phaser.GameObjects.Image[] = [];
 
@@ -22,7 +23,7 @@ export class HangarScene extends WorldScene {
     this.addInteractable(door, "door-entry", () => ui.prompt.backToHall, () => store().exitToHall());
 
     const [robot] = this.objectsOf("robot");
-    this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().showToast(fmt(ui.toast.robotStatus, { n: coreCount(store()), total: ROOM_COUNT })));
+    this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().showToast(fmt(ui.toast.robotStatus, { n: coreCount(store()), total: ROOM_COUNT, parts: Math.min(BATTLE.armorMax, armorParts(store())), maxParts: BATTLE.armorMax })));
     // แกน AI ที่ติดตั้งแล้วเรียงเป็นแถวใต้หุ่น
     const baseY = objectBaseY(robot);
     this.cores = Array.from({ length: ROOM_COUNT }, (_, i) =>
@@ -33,12 +34,7 @@ export class HangarScene extends WorldScene {
     );
 
     const [console_] = this.objectsOf("console");
-    this.addInteractable(console_, "console", () => ui.prompt.missionConsole, () => {
-      const state = store();
-      const room = pendingBattle(state);
-      if (room !== null) state.openBattle(room);
-      else state.showToast(allBattlesWon(state) ? ui.toast.allBattlesWon : ui.toast.noBattle);
-    });
+    this.addInteractable(console_, "console", () => ui.prompt.missionConsole, () => store().openOverlay("missions"));
 
     const [hologram] = this.objectsOf("hologram");
     this.addInteractable(hologram, "hologram", () => ui.prompt.hologram, () => store().openStory("prologue"));

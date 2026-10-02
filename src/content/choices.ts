@@ -14,8 +14,8 @@ export interface ChoiceItem {
   caption: string;
   /** ข้อความบนบัตร (ว่างเมื่อโจทย์ถามจากตัวเลือกอย่างเดียว) */
   card: string;
-  /** สิ่งที่ถาม: pick = เลือก label ที่ตรงกับบัตร, column = เลือกหัวคอลัมน์ที่บัตรอยู่, first = เลือกข้อที่มาก่อน */
-  ask: { type: "pick"; label: string } | { type: "column" } | { type: "first" };
+  /** สิ่งที่ถาม: pick = เลือก label ที่ตรงกับบัตร, column = เลือกหัวคอลัมน์ที่บัตรอยู่, first = เลือกข้อที่มาก่อน, next = เลือกข้อที่อยู่ถัดจากบัตร */
+  ask: { type: "pick"; label: string } | { type: "column" } | { type: "first" } | { type: "next" };
   options: string[];
   answer: number;
 }
@@ -117,6 +117,23 @@ export function buildChoiceItems(topicId: number, pool: BackupPool, rng: Rng = M
       });
       break;
     }
+    case "review-cases": {
+      const table = topic.tables[pool.basketTable];
+      topic.reviewQuestions.forEach((question, index) => {
+        items.push({ topic: topicId, caption: "", card: question.question, ask: { type: "pick", label: table.headers[0] }, options: table.rows.map((row) => row[0]), answer: pool.answerKey[index] });
+      });
+      break;
+    }
+    case "step-next":
+    case "quest-step-next": {
+      // ตัดเลขนำหน้าของหัวข้อย่อยออก ไม่เช่นนั้นเลขจะเฉลยลำดับ
+      const steps = pool.kind === "step-next" ? topic.sections.map((section) => stripNumber(section.heading)) : course.finalQuest.steps;
+      for (let index = 0; index + 1 < steps.length; index++) {
+        const options = shuffled(steps.filter((_, i) => i !== index), rng);
+        items.push({ topic: topicId, caption: "", card: steps[index], ask: { type: "next" }, options, answer: options.indexOf(steps[index + 1]) });
+      }
+      break;
+    }
     case "quest-step-pairs": {
       const steps = course.finalQuest.steps;
       for (let first = 0; first < steps.length; first++) {
@@ -177,8 +194,21 @@ export function buildRepairItems(room: number, rng: Rng = Math.random): ChoiceIt
   return backup.flatMap((pool) => buildChoiceItems(room, pool, rng));
 }
 
-/** โจทย์ของด่านต่อสู้ไคจูจากชุดของห้องนั้น (GDD ข้อ 12) */
-export function buildBattleItems(room: number, rng: Rng = Math.random): ChoiceItem[] {
-  const pools = quests.battles.find((b) => b.room === room)?.pools ?? [];
-  return shuffled(pools.flatMap((pool) => buildChoiceItems(room, pool, rng)), rng);
+/** ชุดโจทย์ของด่านต่อสู้ของหัวข้อตามระดับความยาก: base = ชุดพื้นฐาน, mixed = พื้นฐานรวมชุดยาก, hard = ชุดยากอย่างเดียว */
+export function battlePools(room: number, mode: "base" | "mixed" | "hard"): BackupPool[] {
+  const battle = quests.battles.find((b) => b.room === room);
+  if (!battle) return [];
+  return mode === "base" ? battle.pools : mode === "hard" ? battle.hard : [...battle.pools, ...battle.hard];
+}
+
+/** โจทย์ของด่านต่อสู้ไคจูจากชุดของหัวข้อนั้น (GDD ข้อ 12) โจทย์ที่ซ้ำกันระหว่างชุดเหลือข้อเดียว */
+export function buildBattleItems(room: number, mode: "base" | "mixed" | "hard" = "base", rng: Rng = Math.random): ChoiceItem[] {
+  const seen = new Set<string>();
+  const items = battlePools(room, mode)
+    .flatMap((pool) => buildChoiceItems(room, pool, rng))
+    .filter((item) => {
+      const key = `${item.ask.type}|${item.card}|${[...item.options].sort().join("|")}`;
+      return !seen.has(key) && Boolean(seen.add(key));
+    });
+  return shuffled(items, rng);
 }
