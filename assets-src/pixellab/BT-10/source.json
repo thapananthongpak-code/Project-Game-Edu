@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "giant armored tortoise kaiju facing left, massive gray steel shell covered in spikes and rivets, thick scaly brown legs, small head with glowing orange eyes and a beak, two short cannon barrels on top of the shell, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 128,
+    "height": 128,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "1c857f6e-aade-4dc1-857f-87b057e8e33d",
+  "generatedAt": "2026-10-02T14:03:23.835Z"
+}

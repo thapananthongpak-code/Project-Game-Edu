@@ -15,8 +15,8 @@ export interface FieldProgress {
   steps: boolean[];
   /** ผลของแต่ละคลาส เรียงตาม finalQuest.resultTable.classes */
   results: FieldResult[];
-  /** คำตอบของบันทึกเพิ่มเติม เรียงตาม finalQuest.notes.prompts */
-  notes: string[];
+  /** ติ๊กว่าคิดทบทวนประเด็นของบันทึกเพิ่มเติมแล้ว เรียงตาม finalQuest.notes.prompts (เกมไม่เก็บข้อความที่ผู้เรียนเขียน ผู้เรียนบันทึกในสมุดของตัวเอง) */
+  reflected: boolean[];
   /**
    * ภาพหน้าจอ (data URL) หรือยืนยันว่าส่งให้ครูนอกเกม ภาพเก็บในเครื่องของผู้เรียนเท่านั้น
    * onDevice = สำเนาในฐานข้อมูลกลางบอกว่ามีภาพแนบอยู่ที่เครื่องของผู้เรียน
@@ -29,7 +29,7 @@ export function emptyField(quest: FinalQuest): FieldProgress {
     ready: false,
     steps: quest.steps.map(() => false),
     results: quest.resultTable.classes.map(() => ({ images: null, correct: null })),
-    notes: (quest.notes?.prompts ?? []).map(() => ""),
+    reflected: (quest.notes?.prompts ?? []).map(() => false),
     evidence: { image: null, outsideGame: false },
   };
 }
@@ -78,12 +78,12 @@ export interface FieldStatus {
 }
 
 /** เงื่อนไขจบภารกิจ (GDD ข้อ 6.5 ข้อ 2–5) ไม่มี Accuracy ขั้นต่ำ เพราะเอกสารไม่ได้กำหนด */
-export function fieldStatus(field: FieldProgress, quest: FinalQuest, minNoteChars: number): FieldStatus {
+export function fieldStatus(field: FieldProgress, quest: FinalQuest): FieldStatus {
   const status = {
     ready: field.ready,
     checklist: field.steps.length === quest.steps.length && field.steps.every(Boolean),
     results: field.results.length === quest.resultTable.classes.length && field.results.every((r) => validImages(r.images, quest) && validCorrect(r.correct, quest)),
-    notes: field.notes.length > 0 && field.notes.every((note) => note.trim().length >= minNoteChars),
+    notes: field.reflected.length === (quest.notes?.prompts.length ?? 0) && field.reflected.every(Boolean),
     evidence: field.evidence.image !== null || field.evidence.outsideGame || field.evidence.onDevice === true,
   };
   return { ...status, complete: Object.values(status).every(Boolean) };

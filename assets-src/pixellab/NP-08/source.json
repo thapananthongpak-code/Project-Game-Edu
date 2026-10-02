@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "young woman scout ranger with a green beret and a long braid, olive green field jacket, binoculars around the neck, confident smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "พี่ฟ้า หน่วยลาดตระเวน (แมพ 2 เควสเสริม)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "1eae1f39-fb0b-4f4c-9554-eb009b2e9598",
+  "generatedAt": "2026-10-02T14:17:43.891Z"
+}

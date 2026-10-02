@@ -1,5 +1,5 @@
 import type * as Phaser from "phaser";
-import { isFieldRoom, questTitle, stationsOf, stripNumber, topicOf } from "../../content";
+import { extrasOf, isFieldRoom, questTitle, stationsOf, stripNumber, topicOf } from "../../content";
 import { fmt, ui } from "../../content/ui-strings";
 import type { DifficultySpec } from "../../state/campaign";
 import { ARCHIVE, difficultyOf, fieldComplete, isTopicOpen, nextStepOf, planOf, roomProgress, useGameStore } from "../../state/gameStore";
@@ -166,14 +166,24 @@ export class RoomScene extends WorldScene {
       });
     }
 
-    // NPC ประจำห้อง: ร้านพิเศษเปิดร้านเลย บทบาทอื่นเปิดหน้าต่างคุย
+    // จอตัวอย่างและวิดีโอเสริม: โต้ตอบได้เฉพาะหัวข้อที่ครูกำหนดรายการไว้ (ไม่มีรายการ = เป็นของตกแต่งเฉย ๆ)
+    for (const object of this.objectsOf("extras")) {
+      const topic = object.topic ?? lesson;
+      if (extrasOf(topic).length === 0) continue;
+      this.addInteractable(object, idOf("extras", topic), () => ui.prompt.extras, () => {
+        store().focusTopic(topic);
+        store().openOverlay("extras");
+      });
+    }
+
+    // NPC ประจำห้อง: คุยครั้งแรกได้ฟังเรื่องราวก่อน ร้านพิเศษที่รู้จักกันแล้วเปิดร้านเลย บทบาทอื่นเปิดหน้าต่างคุย
     for (const object of this.objectsOf("npc")) {
       const id = object.npc as NpcId;
       this.npcs.push(id);
-      this.addInteractable(object, `npc-${id}`, () => fmt(ui.prompt.npc, { name: ui.npc[id].name, role: ui.npc.roles[NPCS[id].role] }), () => (NPCS[id].role === "shop" ? store().openShop(id) : store().openNpc(id)));
+      this.addInteractable(object, `npc-${id}`, () => fmt(ui.prompt.npc, { name: ui.npc[id].name, role: ui.npc.roles[NPCS[id].role] }), () => (NPCS[id].role === "shop" && store().npcs[id]?.met ? store().openShop(id) : store().openNpc(id)));
     }
     for (const object of this.objectsOf("pickup")) {
-      const id = object.npc as "mechanic" | "foreman";
+      const id = object.npc as "mechanic" | "foreman" | "ranger";
       const index = object.index as number;
       const image = this.placed.get(object) as Phaser.GameObjects.Image;
       const visible = () => {
@@ -210,6 +220,7 @@ export class RoomScene extends WorldScene {
   private npcLabel(id: NpcId, record: NpcRecord | undefined, unlocked: boolean): { text: string; tone: "default" | "done" | "locked" } | null {
     const spec = NPCS[id];
     if (spec.role === "shop") return { text: "$", tone: "default" };
+    if (spec.role === "gift") return record?.gifted ? { text: "✓", tone: "done" } : { text: "!", tone: "default" };
     if (spec.role === "quest") {
       if (record?.done) return { text: "✓", tone: "done" };
       if (!record?.accepted || questReady(spec, record)) return { text: "!", tone: "default" };
@@ -246,7 +257,7 @@ export class RoomScene extends WorldScene {
 
     const seen = roomProgress(state, this.topics[0]).stationsSeen;
     const cores = this.topics.map((topic) => (roomProgress(state, topic).core ? "1" : "0")).join("");
-    const labelKey = `${seen}|${cores}|${this.npcs.map((id) => JSON.stringify(state.npcs[id] ?? null) + (roomProgress(state, NPCS[id].topic).core ? "1" : "0")).join("")}`;
+    const labelKey = `${seen}|${cores}|${this.npcs.map((id) => JSON.stringify(state.npcs[id] ?? null)).join("")}`;
     if (labelKey === this.labelKey) return;
     this.labelKey = labelKey;
     const tone = (topic: number) => (roomProgress(state, topic).core ? ("done" as const) : topic === current ? ("default" as const) : ("locked" as const));
@@ -272,7 +283,7 @@ export class RoomScene extends WorldScene {
       .filter((i) => i.id.startsWith("npc-"))
       .flatMap((i) => {
         const id = i.id.slice(4) as NpcId;
-        const label = this.npcLabel(id, state.npcs[id], roomProgress(state, NPCS[id].topic).core);
+        const label = this.npcLabel(id, state.npcs[id], NPCS[id].quizTopics.every((topic) => roomProgress(state, topic).core));
         return label ? [{ id: i.id, x: i.x, y: i.top + 2, ...label }] : [];
       });
     state.setLabels([...stationLabels, ...topicLabels, ...npcLabels]);

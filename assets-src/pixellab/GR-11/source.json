@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "huge white and teal shoulder plasma cannon with a wide glowing magenta muzzle and cooling fins, side view pointing right, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "c6cfab06-6a65-45a0-9007-1549a67acea0",
+  "generatedAt": "2026-10-02T14:12:06.520Z"
+}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { playSfx } from "../audio/engine";
-import { buildBattleItems, type ChoiceItem } from "../content/choices";
+import { buildBattleItems, type ChoiceItem, shuffled } from "../content/choices";
 import { fmt, ui } from "../content/ui-strings";
 import { creditsOf, roomProgress, useGameStore } from "../state/gameStore";
 import { emptyNpc, type NpcId, NPCS, questReady } from "../state/npcs";
@@ -8,8 +8,9 @@ import { art } from "./art";
 import { ChoiceCard } from "./ChoiceCard";
 import { useDialog } from "./useDialog";
 
-type QuestNpc = "mechanic" | "foreman";
-type QuizNpc = "coach" | "director";
+type QuestNpc = "mechanic" | "foreman" | "ranger";
+type QuizNpc = "coach" | "director" | "sage" | "captain";
+type ShopNpc = "archivist" | "vendor" | "smith" | "keeper";
 
 /** เควสเสริมช่วยเหลือ NPC: รับเควส เก็บของที่หายในห้องให้ครบ แล้วกลับมาส่ง */
 function Quest({ id, onClose }: { id: QuestNpc; onClose: () => void }) {
@@ -76,7 +77,8 @@ function Quiz({ id, onClose }: { id: QuizNpc; onClose: () => void }) {
   const spec = NPCS[id];
   const text = ui.npc[id];
   const record = useGameStore((s) => s.npcs[id]) ?? emptyNpc();
-  const unlocked = useGameStore((s) => roomProgress(s, spec.topic).core);
+  // เล่นได้เมื่อได้แกน AI ของทุกหัวข้อที่ใช้โจทย์ ในแมพที่ NPC คนนี้อยู่
+  const unlocked = useGameStore((s) => spec.quizTopics.every((topic) => roomProgress(s, topic).core));
   const recordQuiz = useGameStore((s) => s.recordQuiz);
   const [items, setItems] = useState<ChoiceItem[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -85,7 +87,8 @@ function Quiz({ id, onClose }: { id: QuizNpc; onClose: () => void }) {
   const [result, setResult] = useState<{ correct: number; credits: number } | null>(null);
 
   const start = () => {
-    setItems(buildBattleItems(spec.topic, "mixed").slice(0, spec.questions));
+    // โจทย์จากทุกหัวข้อของ NPC คนนี้ สลับปนกัน
+    setItems(shuffled(spec.quizTopics.flatMap((topic) => buildBattleItems(topic, "mixed"))).slice(0, spec.questions));
     setIndex(0);
     setAnswered(undefined);
     setCorrect(0);
@@ -175,11 +178,67 @@ function Quiz({ id, onClose }: { id: QuizNpc; onClose: () => void }) {
   );
 }
 
-/** หน้าต่างคุยกับ NPC ประจำห้อง (GDD ข้อ 16): เควสเสริม หรือถามตอบพิเศษ (ร้านพิเศษเปิดหน้าร้านโดยตรง) */
+/** ช่วยเหลือ: NPC ให้ของใช้ครั้งเดียว (ลงกระเป๋าให้ถ้ามีที่ว่าง) */
+function Gift({ id, onClose }: { id: "medic"; onClose: () => void }) {
+  const spec = NPCS[id];
+  const text = ui.npc[id];
+  const record = useGameStore((s) => s.npcs[id]) ?? emptyNpc();
+  const claimGift = useGameStore((s) => s.claimGift);
+  const [given, setGiven] = useState(false);
+  const list = spec.gift.map((supply) => ui.shop.items[`supply-${supply}`].name).join(" · ");
+  return (
+    <div className="flex flex-col gap-3" data-testid="npc-gift" data-stage={record.gifted ? "done" : "intro"}>
+      <p className="font-semibold" data-testid="npc-line">
+        {record.gifted && !given ? text.done : text.intro}
+      </p>
+      {given && (
+        <p className="font-bold text-teal-dark" data-testid="npc-gift-result">
+          {fmt(text.gave, { list })}
+        </p>
+      )}
+      <div className="flex justify-end gap-2">
+        {!record.gifted && (
+          <button type="button" className="btn" data-testid="npc-gift-claim" onClick={() => (claimGift(id), setGiven(true), playSfx("quest"))}>
+            {text.claim}
+          </button>
+        )}
+        <button type="button" className={`btn ${record.gifted ? "" : "btn-ghost"}`} data-testid="npc-close" onClick={onClose}>
+          {ui.npc.close}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** เรื่องราวของ NPC: เล่าทีละช่วงเมื่อคุยครั้งแรก กดฟังซ้ำได้ */
+function Story({ id, onDone }: { id: NpcId; onDone: () => void }) {
+  const lines = ui.npc.stories[id];
+  const [index, setIndex] = useState(0);
+  const last = index + 1 >= lines.length;
+  return (
+    <div className="flex flex-col gap-3" data-testid="npc-story" data-line={index}>
+      <p className="rounded-md border-2 border-ink bg-teal-light px-3 py-2 font-semibold" data-testid="npc-story-line">
+        {lines[index]}
+      </p>
+      <button type="button" className="btn self-end" data-testid="npc-story-next" onClick={() => (last ? onDone() : setIndex(index + 1), playSfx("page"))}>
+        {last ? ui.npc.close : ui.npc.storyNext}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * หน้าต่างคุยกับ NPC (GDD ข้อ 16): คุยครั้งแรกได้ฟังเรื่องราวของคนนั้นก่อน แล้วจึงเป็นกิจกรรมตามบทบาท
+ * เควสเสริม ถามตอบพิเศษ ของช่วยเหลือ หรือปุ่มเปิดร้านพิเศษ
+ */
 export function Npc() {
   const id = useGameStore((s) => s.npcId) as NpcId;
+  const met = useGameStore((s) => s.npcs[id]?.met ?? false);
+  const meetNpc = useGameStore((s) => s.meetNpc);
+  const openShop = useGameStore((s) => s.openShop);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
+  const [telling, setTelling] = useState(!met);
   const spec = NPCS[id];
   const name = ui.npc[id].name;
 
@@ -194,9 +253,31 @@ export function Npc() {
             </h2>
             <span className="rounded border-2 border-ink bg-hint px-2 text-xs font-bold">{ui.npc.roles[spec.role]}</span>
           </div>
+          {!telling && (
+            <button type="button" className="btn btn-ghost ml-auto !min-h-9 !px-2 text-xs" data-testid="npc-story-again" onClick={() => setTelling(true)}>
+              {ui.npc.storyAgain}
+            </button>
+          )}
         </div>
-        {spec.role === "quest" && <Quest id={id as QuestNpc} onClose={closeOverlay} />}
-        {spec.role === "quiz" && <Quiz id={id as QuizNpc} onClose={closeOverlay} />}
+        {telling && <Story id={id} onDone={() => (meetNpc(id), setTelling(false))} />}
+        {!telling && spec.role === "quest" && <Quest id={id as QuestNpc} onClose={closeOverlay} />}
+        {!telling && spec.role === "quiz" && <Quiz id={id as QuizNpc} onClose={closeOverlay} />}
+        {!telling && spec.role === "gift" && <Gift id={id as "medic"} onClose={closeOverlay} />}
+        {!telling && spec.role === "shop" && (
+          <div className="flex flex-col gap-3" data-testid="npc-shop">
+            <p className="font-semibold" data-testid="npc-line">
+              {ui.npc[id as ShopNpc].greet}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button type="button" className="btn btn-ghost" data-testid="npc-close" onClick={closeOverlay}>
+                {ui.npc.close}
+              </button>
+              <button type="button" className="btn" data-testid="npc-open-shop" onClick={() => openShop(id)}>
+                {ui.npc.openShop}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

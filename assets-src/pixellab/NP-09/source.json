@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "gentle young field medic with round glasses, white coat with a mint green cross armband, carrying a first aid case, warm smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "หมอปลา หมอสนาม (แมพ 2 ช่วยเหลือ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "fad2f0df-8c2a-4f9e-a99a-096273069c05",
+  "generatedAt": "2026-10-02T14:18:31.910Z"
+}

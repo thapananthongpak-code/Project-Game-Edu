@@ -1,28 +1,39 @@
-// ระดับความยากของเกม (docs/GDD.md ข้อ 15): ง่าย กลาง ยาก ผู้เล่นเลือกตอนเริ่มเกม ค่าเริ่มต้นคือง่าย
-// ระดับกำหนดจำนวนห้อง สิ่งที่ต้องทำก่อนได้แกน AI ด่านต่อสู้ ตัวช่วยที่ใช้ได้ และรางวัล
-// ความคืบหน้ายังเก็บรายหัวข้อ (1–6) เหมือนกันทุกระดับ ระดับต่างกันที่ "ห้อง" ซึ่งรวมหลายหัวข้อได้
+// แมพของเกม (docs/GDD.md ข้อ 15): แมพ 1 → 2 → 3 เล่นต่อกันตามลำดับ ยิ่งไปไกลยิ่งยาก
+//   easy   = แมพ 1 Pixel AI Lab: 6 ห้องเรียน เรียนครบทุกสถานี ภารกิจภาคสนาม แบบทดสอบหลังเรียน และใบประกาศอยู่ที่นี่
+//   normal = แมพ 2 ศูนย์วิจัยภาคสนาม: 3 ห้อง ทบทวนหัวข้อ 1–5 ที่ระดับปกติขึ้นไป ไคจูชุดใหม่
+//   hard   = แมพ 3 ป้อมปราการ: ห้องเดียว เครื่องทดสอบรวมที่ระดับท้าทาย แล้วสู้บอสใหญ่ 3 ร่าง
+// แมพถัดไปเปิดเมื่อชนะด่านต่อสู้ครบทุกด่านของแมพก่อนหน้า (mapUnlocked ใน gameStore.ts) รหัส easy / normal / hard
+// คงไว้ตามรุ่นที่ผู้เล่นเลือก "ระดับความยาก" ตอนเริ่มเกม เพราะเป็นค่าที่บันทึกใน SaveData
+// แต่ละแมพกำหนดจำนวนห้อง สิ่งที่ต้องทำก่อนได้แกน AI ด่านต่อสู้ ตัวช่วยที่ใช้ได้ และรางวัล
+// ความคืบหน้าเก็บรายหัวข้อแยกตามแมพ แมพต่างกันที่ "ห้อง" ซึ่งรวมหลายหัวข้อได้
 // ไฟล์นี้เป็นข้อมูลและฟังก์ชันล้วน ไม่ import เนื้อหา
 import type { Tier } from "./adaptive.config";
 import type { Trait } from "./battle.config";
+import type { WeaponClass } from "./gear";
 
 export const DIFFICULTIES = ["easy", "normal", "hard"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-/** ภาพของคู่ต่อสู้: ไคจูของด่าน 1–6 หรือร่างที่ 2 และ 3 ของบอส (docs/ART_GUIDE.md ข้อ 5.6) */
-export type FoeArt = "kaiju_1" | "kaiju_2" | "kaiju_3" | "kaiju_4" | "kaiju_5" | "kaiju_6" | "boss_2" | "boss_3";
+/** ลำดับของแมพ นับจาก 0 */
+export const mapIndex = (map: Difficulty | undefined): number => Math.max(0, DIFFICULTIES.indexOf(map ?? "easy"));
 
-/** ร่างหนึ่งของคู่ต่อสู้ บอสของระดับกลางและยากมีหลายร่าง ต้องชนะทีละร่าง */
+/** ภาพของคู่ต่อสู้: ไคจูของแมพ 1 (1–6) ไคจูของแมพ 2 (7–9) และร่างที่ 2–4 ของบอส (docs/ART_GUIDE.md ข้อ 5.6) */
+export type FoeArt = "kaiju_1" | "kaiju_2" | "kaiju_3" | "kaiju_4" | "kaiju_5" | "kaiju_6" | "kaiju_7" | "kaiju_8" | "kaiju_9" | "boss_2" | "boss_3" | "boss_4";
+
+/** ร่างหนึ่งของคู่ต่อสู้ บอสของแมพ 2 และ 3 มีหลายร่าง ต้องชนะทีละร่าง */
 export interface FormSpec {
   art: FoeArt;
   hp: number;
   trait: Trait;
+  /** ประเภทของอาวุธที่ร่างนี้แพ้ทาง: อาวุธประเภทนี้โจมตีแรงขึ้น GEAR.advantage ทุกครั้ง */
+  weak: WeaponClass;
 }
 
 export interface BattleSpec {
   /** รหัสด่าน ใช้เป็นคีย์ของผลด่านใน SaveData.battles ห้ามเปลี่ยน */
   id: string;
   forms: readonly FormSpec[];
-  /** ฉากหลังของด่าน (1–6) */
+  /** ฉากหลังของด่าน (bg_battle_<n>) */
   backdrop: number;
   /** หัวข้อที่ใช้โจทย์ (ด่านลักษณะ boss ไล่ตามเฟส ด่านอื่นวนตามตา) */
   sources: readonly number[];
@@ -64,19 +75,20 @@ export interface DifficultySpec {
   formResetsOnRetry: boolean;
 }
 
-const roomKaiju = (n: number, hp: number, trait: Trait, power: number): BattleSpec => ({ id: `k${n}`, forms: [{ art: `kaiju_${n}` as FoeArt, hp, trait }], backdrop: n, sources: [n], requires: [n], unlocks: n + 1, boss: false, power });
+const roomKaiju = (n: number, hp: number, trait: Trait, weak: WeaponClass, power: number): BattleSpec => ({ id: `k${n}`, forms: [{ art: `kaiju_${n}` as FoeArt, hp, trait, weak }], backdrop: n, sources: [n], requires: [n], unlocks: n + 1, boss: false, power });
 
 export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
-  // ง่าย: 6 ห้อง ห้องละหัวข้อ เรียนครบทุกสถานี ไคจูประจำห้อง 5 ตัว และบอสโอเมก้า 6 เฟส
+  // แมพ 1: 6 ห้อง ห้องละหัวข้อ เรียนครบทุกสถานี ไคจูประจำห้อง 5 ตัว และบอสโอเมก้า 6 เฟส
   easy: {
     zones: [1, 2, 3, 4, 5, 6].map((topic) => ({ topics: [topic] })),
     battles: [
-      roomKaiju(1, 6, "basic", 60),
-      roomKaiju(2, 10, "charge", 80),
-      roomKaiju(3, 9, "regen", 90),
-      roomKaiju(4, 14, "combo", 110),
-      roomKaiju(5, 8, "swarm", 120),
-      { id: "omega", forms: [{ art: "kaiju_6", hp: 12, trait: "boss" }], backdrop: 6, sources: [1, 2, 3, 4, 5, 6], requires: [6], boss: true, power: 140 },
+      // กลิตช์แพ้ทางหมัด: ด่านแรกจึงได้เห็นคำว่า "ได้เปรียบ" ตั้งแต่ยังไม่ซื้ออะไร
+      roomKaiju(1, 8, "basic", "strike", 80),
+      roomKaiju(2, 14, "charge", "blade", 100),
+      roomKaiju(3, 10, "regen", "beam", 110),
+      roomKaiju(4, 18, "combo", "strike", 110),
+      roomKaiju(5, 12, "swarm", "beam", 140),
+      { id: "omega", forms: [{ art: "kaiju_6", hp: 18, trait: "boss", weak: "blade" }], backdrop: 6, sources: [1, 2, 3, 4, 5, 6], requires: [6], boss: true, power: 160 },
     ],
     stations: "required",
     review: true,
@@ -88,24 +100,24 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
     pools: "base",
     formResetsOnRetry: false,
   },
-  // กลาง: 3 ห้อง ห้องละ 2 หัวข้อ บทสอนอ่านได้จากคลังความรู้แต่ไม่บังคับ ไคจูประจำห้อง 3 ตัว และบอส 2 ร่าง
+  // แมพ 2: 3 ห้อง ทบทวนหัวข้อ 1–5 (บทสอนอ่านได้จากคลังความรู้แต่ไม่บังคับ) ไคจูชุดใหม่ 3 ตัว และโอเมก้าที่กลับมา 2 ร่าง
   normal: {
-    zones: [{ topics: [1, 2] }, { topics: [3, 4] }, { topics: [5, 6] }],
+    zones: [{ topics: [1, 2] }, { topics: [3, 4] }, { topics: [5] }],
     battles: [
-      { id: "n1", forms: [{ art: "kaiju_2", hp: 11, trait: "charge" }], backdrop: 2, sources: [1, 2], requires: [1, 2], unlocks: 2, boss: false, power: 80 },
-      { id: "n2", forms: [{ art: "kaiju_4", hp: 10, trait: "armor" }], backdrop: 4, sources: [3, 4], requires: [3, 4], unlocks: 3, boss: false, power: 120 },
-      { id: "n3", forms: [{ art: "kaiju_5", hp: 10, trait: "swarm" }], backdrop: 5, sources: [5], requires: [5], boss: false, power: 140 },
+      { id: "n1", forms: [{ art: "kaiju_7", hp: 16, trait: "charge", weak: "blade" }], backdrop: 7, sources: [1, 2], requires: [1, 2], unlocks: 2, boss: false, power: 160 },
+      { id: "n2", forms: [{ art: "kaiju_8", hp: 16, trait: "armor", weak: "strike" }], backdrop: 8, sources: [3, 4], requires: [3, 4], unlocks: 3, boss: false, power: 170 },
+      { id: "n3", forms: [{ art: "kaiju_9", hp: 13, trait: "swarm", weak: "beam" }], backdrop: 9, sources: [5], requires: [5], boss: false, power: 170 },
       {
         id: "omega-n",
         forms: [
-          { art: "kaiju_6", hp: 10, trait: "charge" },
-          { art: "boss_2", hp: 10, trait: "regen" },
+          { art: "kaiju_6", hp: 13, trait: "charge", weak: "blade" },
+          { art: "boss_2", hp: 13, trait: "regen", weak: "beam" },
         ],
         backdrop: 6,
         sources: [1, 2, 3, 4, 5, 6],
-        requires: [6],
+        requires: [5],
         boss: true,
-        power: 140,
+        power: 190,
       },
     ],
     stations: "optional",
@@ -118,22 +130,22 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
     pools: "mixed",
     formResetsOnRetry: false,
   },
-  // ยาก: ห้องเดียว ไม่มีบทสอน ทำเควสทุกหัวข้อที่ระดับท้าทาย แล้วสู้บอสที่กลายร่างได้ 3 ร่าง
+  // แมพ 3: ห้องเดียว ไม่มีบทสอน ทำเควสหัวข้อ 1–5 ที่ระดับท้าทาย แล้วสู้บอสใหญ่ที่กลายร่างได้ 3 ร่าง
   hard: {
-    zones: [{ topics: [1, 2, 3, 4, 5, 6] }],
+    zones: [{ topics: [1, 2, 3, 4, 5] }],
     battles: [
       {
         id: "end",
         forms: [
-          { art: "kaiju_6", hp: 10, trait: "charge" },
-          { art: "boss_2", hp: 9, trait: "armor" },
-          { art: "boss_3", hp: 12, trait: "enrage" },
+          { art: "boss_2", hp: 13, trait: "charge", weak: "beam" },
+          { art: "boss_3", hp: 12, trait: "armor", weak: "strike" },
+          { art: "boss_4", hp: 15, trait: "enrage", weak: "blade" },
         ],
-        backdrop: 6,
+        backdrop: 10,
         sources: [1, 2, 3, 4, 5, 6],
-        requires: [1, 2, 3, 4, 5, 6],
+        requires: [1, 2, 3, 4, 5],
         boss: true,
-        power: 120,
+        power: 170,
       },
     ],
     stations: "none",
@@ -157,3 +169,9 @@ export const zoneOfTopic = (difficulty: Difficulty | undefined, topic: number): 
 
 /** ด่านที่ต้องชนะก่อนเข้าห้องนี้ (ไม่มี = เข้าได้เลย) */
 export const gateOf = (difficulty: Difficulty | undefined, zone: number): BattleSpec | undefined => campaignOf(difficulty).battles.find((battle) => battle.unlocks === zone);
+
+/** หัวข้อทั้งหมดที่แมพนี้มีห้องให้ทำ (แมพ 2 และ 3 ไม่มีหัวข้อ 6: ภารกิจภาคสนามและแบบทดสอบหลังเรียนอยู่ที่แมพ 1 เท่านั้น) */
+export const topicsOf = (difficulty: Difficulty | undefined): number[] => campaignOf(difficulty).zones.flatMap((zone) => zone.topics);
+
+/** แมพที่ด่านต่อสู้นี้อยู่ */
+export const mapOfBattle = (id: string): Difficulty | undefined => DIFFICULTIES.find((map) => CAMPAIGN[map].battles.some((battle) => battle.id === id));

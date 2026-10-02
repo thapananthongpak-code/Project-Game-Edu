@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide rocky desert quarry canyon at noon with mining cranes and conveyor towers in the distance, orange cliffs, pale blue sky, flat dusty ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "c40c4686-94ee-4807-8a15-06ce9a535923",
+  "generatedAt": "2026-10-02T14:05:29.106Z"
+}

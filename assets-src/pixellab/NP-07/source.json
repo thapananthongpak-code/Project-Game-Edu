@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "burly old blacksmith with a gray beard and a bandana, leather apron over a dark red shirt, holding a glowing hammer, kind grin, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "ลุงเหล็ก ช่างตีอาวุธ (แมพ 2 ร้านอาวุธพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "4e5f849f-e566-4b1d-be97-3b70eb654e14",
+  "generatedAt": "2026-10-02T14:16:45.579Z"
+}

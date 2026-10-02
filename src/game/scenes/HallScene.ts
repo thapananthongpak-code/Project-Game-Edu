@@ -1,33 +1,45 @@
+import type * as Phaser from "phaser";
 import { topicOf } from "../../content";
 import { foeName } from "../../content/story";
 import { fmt, ui } from "../../content/ui-strings";
-import { type DifficultySpec, gateOf } from "../../state/campaign";
-import { difficultyOf, isRoomUnlocked, pendingBattle, planOf, roomProgress, useGameStore } from "../../state/gameStore";
+import { DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex } from "../../state/campaign";
+import { allBattlesWon, difficultyOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore } from "../../state/gameStore";
+import { DECOR } from "../../state/shop.config";
 import { SCENE } from "../constants";
-import { hallMapOf, type MapObject, objectBaseY, objectX } from "../maps";
+import { hallMapOf, type MapObject, objectBaseY, objectX, slotsOf } from "../maps";
 import { WorldScene } from "./WorldScene";
 
-/** โถงทางเดิน: ประตูห้องตามจำนวนห้องของระดับความยาก (6, 3 หรือ 1 บาน) เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น ร้านสหกรณ์แล็บ และกล่องเก็บไอเทม */
+/**
+ * โถงของแมพที่ผู้เล่นอยู่ (GDD ข้อ 3 และ 15): ประตูห้องตามจำนวนห้องของแมพ เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น ร้านสหกรณ์แล็บ
+ * กล่องเก็บไอเทม กระดานแผนที่การเดินทาง กระดานตกแต่ง และของตกแต่งที่ผู้เล่นเลือกวางในช่องตกแต่ง (GDD ข้อ 19)
+ */
 export class HallScene extends WorldScene {
-  private from: { room?: number; hangar?: boolean } = {};
+  private from: { room?: number; hangar?: boolean; travel?: boolean } = {};
   private doors: MapObject[] = [];
-  /** ห้องของระดับความยาก ณ ตอนสร้างฉาก (ฉากนี้เป็นฉากหลังของเมนูและหน้าลงทะเบียนด้วย ระดับที่ผู้เล่นเลือกอาจเปลี่ยนก่อนฉากถูกสร้างใหม่) */
+  private slots: { object: MapObject; image: Phaser.GameObjects.Image }[] = [];
+  private decorKey = "";
+  /** แมพและห้อง ณ ตอนสร้างฉาก (ฉากนี้เป็นฉากหลังของเมนูและหน้าลงทะเบียนด้วย แมพอาจเปลี่ยนก่อนฉากถูกสร้างใหม่) */
+  private world: Difficulty = "easy";
   private zones: DifficultySpec["zones"] = [];
 
   constructor() {
     super(SCENE.hall);
   }
 
-  init(data: { fromRoom?: number; fromHangar?: boolean }): void {
-    this.from = { room: data.fromRoom, hangar: data.fromHangar };
+  init(data: { fromRoom?: number; fromHangar?: boolean; fromTravel?: boolean }): void {
+    this.from = { room: data.fromRoom, hangar: data.fromHangar, travel: data.fromTravel };
+    this.decorKey = "";
   }
 
   create(): void {
     const store = () => useGameStore.getState();
     const zones = planOf(store()).zones;
     this.zones = zones;
-    this.buildMap(hallMapOf(zones.length));
+    this.world = difficultyOf(store());
+    const hall = hallMapOf(this.world);
+    this.buildMap(hall);
     this.doors = this.objectsOf("door");
+    this.slots = slotsOf(hall).map((object) => ({ object, image: this.placed.get(object) as Phaser.GameObjects.Image }));
 
     for (const door of this.doors) {
       const zone = door.index as number;
@@ -53,8 +65,12 @@ export class HallScene extends WorldScene {
     this.addInteractable(shop, "shop", () => ui.prompt.shop, () => store().openShop());
     const [storage] = this.objectsOf("storage");
     this.addInteractable(storage, "storage", () => ui.prompt.storage, () => store().openOverlay("storage"));
+    const [travel] = this.objectsOf("travel");
+    this.addInteractable(travel, "travel", () => ui.prompt.travel, () => store().openOverlay("travel"));
+    const [board] = this.objectsOf("decorboard");
+    this.addInteractable(board, "decorboard", () => ui.prompt.decorBoard, () => store().openOverlay("decor"));
 
-    const start = this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0]);
+    const start = this.from.travel ? travel : this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0]);
     const spot = this.spotBelow(start);
     this.createPlayer(spot.x, spot.y);
     this.syncWithProgress();
@@ -65,15 +81,30 @@ export class HallScene extends WorldScene {
     this.syncWithProgress();
   }
 
-  /** ประตู ป้ายเลขห้อง และลูกศรชี้เป้าหมายตามความคืบหน้า */
+  /** ประตู ป้ายเลขห้อง ลูกศรชี้เป้าหมาย และของตกแต่งตามความคืบหน้าและสิ่งที่ผู้เล่นเลือกวาง */
   private syncWithProgress(): void {
     const state = useGameStore.getState();
     const cleared = (zone: number) => this.zones[zone - 1].topics.every((topic) => roomProgress(state, topic).core);
     for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");
 
+    // ของตกแต่ง: ช่องที่มีของแสดงภาพของชิ้นนั้น ช่องว่างไม่แสดงอะไร
+    const placed = state.shop.decor[this.world] ?? {};
+    const decorKey = JSON.stringify(placed);
+    if (decorKey !== this.decorKey) {
+      this.decorKey = decorKey;
+      for (const { object, image } of this.slots) {
+        const decor = placed[object.slot?.id ?? ""];
+        image.setVisible(Boolean(decor));
+        if (decor) image.setTexture(DECOR[decor].prop);
+      }
+    }
+
     const battle = pendingBattle(state);
     const nextZone = this.doors.map((door) => door.index as number).find((zone) => !cleared(zone));
-    this.pointAt(battle !== null ? "gate" : nextZone ? `door-${nextZone}` : null);
+    // ชนะครบทุกด่านของแมพนี้และแมพถัดไปเปิดแล้ว: ชี้ไปที่กระดานแผนที่
+    const onward = DIFFICULTIES[mapIndex(this.world) + 1];
+    const travel = battle === null && nextZone === undefined && allBattlesWon(state) && onward !== undefined && mapUnlocked(state, onward) && difficultyOf(state) === this.world;
+    this.pointAt(battle !== null ? "gate" : nextZone ? `door-${nextZone}` : travel ? "travel" : null);
 
     const labels = this.doors.map((door) => {
       const zone = door.index as number;

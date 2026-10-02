@@ -1,7 +1,7 @@
 import type * as Phaser from "phaser";
 import { ROOM_COUNT } from "../../content";
 import { fmt, ui } from "../../content/ui-strings";
-import { coreCount, guardianPowerOf, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
+import { coreCount, coreTotal, guardianPowerOf, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
 import { SCENE } from "../constants";
 import { hangarMap, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
@@ -22,7 +22,7 @@ export class HangarScene extends WorldScene {
     this.addInteractable(door, "door-entry", () => ui.prompt.backToHall, () => store().exitToHall());
 
     const [robot] = this.objectsOf("robot");
-    this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().showToast(fmt(ui.toast.robotStatus, { n: coreCount(store()), total: ROOM_COUNT, power: guardianPowerOf(store()) })));
+    this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().showToast(fmt(ui.toast.robotStatus, { n: coreCount(store()), total: coreTotal(store()), power: guardianPowerOf(store()) })));
     // แกน AI ที่ติดตั้งแล้วเรียงเป็นแถวใต้หุ่น
     const baseY = objectBaseY(robot);
     this.cores = Array.from({ length: ROOM_COUNT }, (_, i) =>

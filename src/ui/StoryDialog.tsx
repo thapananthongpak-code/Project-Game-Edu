@@ -20,10 +20,9 @@ export function StoryDialog() {
   const name = useGameStore((s) => s.profile?.name ?? ui.questLog.name);
   const finishStory = useGameStore((s) => s.finishStory);
   const openOverlay = useGameStore((s) => s.openOverlay);
-  const difficulty = useGameStore((s) => s.profile?.difficulty);
   const setMusicCue = useGameStore((s) => s.setMusicCue);
   const bit = useBit();
-  const lines = storyLines(beat, difficulty);
+  const lines = storyLines(beat);
   const [page, setPage] = useState(0);
   const mood = lines[Math.min(page, lines.length - 1)]?.mood;
   useEffect(() => {

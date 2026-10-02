@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "cheerful stocky quartermaster with a thick mustache, gray armored vest over a yellow shirt, a ring of keys on the belt, carrying a metal crate, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "น้าคลัง นายคลังแสง (แมพ 3 ร้านพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "1f947666-7260-48c2-bc19-da398745d0d6",
+  "generatedAt": "2026-10-02T14:21:54.462Z"
+}

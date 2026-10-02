@@ -18,7 +18,8 @@ export function Missions() {
   const openBattle = useGameStore((s) => s.openBattle);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
-  const power = useGameStore(guardianPowerOf);
+  const shop = useGameStore((s) => s.shop);
+  const power = guardianPowerOf({ profile, shop });
   const run = { profile, progress, battles };
   const pending = pendingBattle(run);
 
@@ -43,6 +44,8 @@ export function Missions() {
             const missing = battle.requires.find((topic) => !roomProgress(run, topic).core);
             const replaysLeft = Math.max(0, BATTLE.replayRewards - Math.max(0, (record?.wins ?? 0) - 1));
             const status = won ? "won" : pending?.id === battle.id ? "ready" : "locked";
+            // ค่าพลังสำหรับด่านนี้: นับความได้เปรียบของอาวุธที่ใส่อยู่กับคู่ต่อสู้ของด่านด้วย
+            const mine = guardianPowerOf({ profile, shop }, battle);
             return (
               <li key={battle.id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${status === "ready" ? "bg-hint" : "bg-paper"}`} data-testid={`mission-${battle.id}`} data-status={status}>
                 <div className="flex shrink-0 items-end gap-0.5 rounded-md border-2 border-ink bg-teal-light p-1">
@@ -57,8 +60,10 @@ export function Missions() {
                   </div>
                   <div className="text-sm text-slate">{storyNames.place[battle.backdrop - 1]}</div>
                   {battle.forms.length > 1 && <div className="text-xs font-bold text-slate">{fmt(ui.battle.forms, { n: battle.forms.length })}</div>}
-                  <div className="text-xs font-bold" data-testid={`mission-power-${battle.id}`} data-recommended={battle.power} data-ok={power >= battle.power}>
-                    ⚡ {fmt(ui.missions.recommended, { n: battle.power })} · <span className={`rounded bg-paper px-1 ${power >= battle.power ? "text-correct-dark" : "text-wrong"}`}>{power >= battle.power ? ui.missions.powerOk : ui.missions.powerLow}</span>
+                  <div className="text-xs font-bold" data-testid={`mission-power-${battle.id}`} data-recommended={battle.power} data-power={mine} data-ok={mine >= battle.power}>
+                    ⚡ {fmt(ui.missions.recommended, { n: battle.power })} · <span className={`rounded bg-paper px-1 ${mine >= battle.power ? "text-correct-dark" : "text-wrong"}`}>{mine >= battle.power ? ui.missions.powerOk : ui.missions.powerLow}</span>
+                    {" · "}
+                    <span className="text-slate">{[...new Set(battle.forms.map((form) => fmt(ui.battle.weak, { class: ui.storage.weaponClasses[form.weak] })))].join(" / ")}</span>
                   </div>
                   <div className="text-xs font-bold text-slate">
                     {won

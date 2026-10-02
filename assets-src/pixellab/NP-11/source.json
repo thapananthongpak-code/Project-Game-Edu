@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "stern veteran captain with a scar on one eyebrow, dark navy long coat with red trim and silver shoulder plates, arms crossed, slight smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "กัปตันเรย์ ผู้บัญชาการป้อม (แมพ 3 ถามตอบพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "31d8af88-7fde-41d1-99ab-e52c530d5bd9",
+  "generatedAt": "2026-10-02T14:21:05.893Z"
+}

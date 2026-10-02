@@ -38,7 +38,9 @@ export function PhaserGame() {
     resizeObserver.observe(parent.current as HTMLDivElement);
 
     const unsubscribe = useGameStore.subscribe((state, previous) => {
-      if (!state.ready || (state.screen === previous.screen && state.zone === previous.zone)) return;
+      // เดินทางไปอีกแมพ: หน้าจอยังเป็นโถง แต่ต้องสร้างโถงของแมพใหม่
+      const traveled = state.profile?.difficulty !== previous.profile?.difficulty && state.screen === "hall" && previous.screen === "hall";
+      if (!state.ready || (state.screen === previous.screen && state.zone === previous.zone && !traveled)) return;
       resetTouchInput();
       // สลับฉากหลังจบเฟรมปัจจุบัน: การเปลี่ยนหน้าจออาจถูกสั่งจากใน update ของฉาก (เช่น กดประตู)
       // ถ้าหยุดฉากทันที วัตถุของฉากจะถูกทำลายขณะที่ update ยังทำงานไม่จบ
@@ -50,7 +52,7 @@ export function PhaserGame() {
         if (state.screen === "room" && state.zone !== null) start(SCENE.room, { zone: state.zone });
         else if (state.screen === "hangar") start(SCENE.hangar);
         // กลับเมนูจากห้องหรือโรงเก็บหุ่น: ใช้โถงเป็นฉากหลังของเมนู
-        else if (state.screen === "hall" || previous.screen === "room" || previous.screen === "hangar") start(SCENE.hall, { fromRoom: previous.zone ?? 1, fromHangar: previous.screen === "hangar" });
+        else if (state.screen === "hall" || previous.screen === "room" || previous.screen === "hangar") start(SCENE.hall, { fromRoom: previous.zone ?? 1, fromHangar: previous.screen === "hangar", fromTravel: traveled });
       });
     });
 

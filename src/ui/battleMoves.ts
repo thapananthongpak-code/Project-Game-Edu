@@ -55,6 +55,31 @@ export const GUARDIAN_MOVES: Record<GuardianMove, MoveSpec> = {
   },
   shot: { pose: "fire", sparks: [{ art: "bolt", motion: "shot", at: 0 }, hit(SHOT_MS)], sounds: [["laser", 0], ["boom", SHOT_MS]], hitAt: SHOT_MS, end: 600 },
   beam: { pose: "fire", sparks: [{ art: "beam", motion: "beam", at: 0 }, hit(220, true)], sounds: [["beam", 0], ["boom", 240]], hitAt: 220, end: 720 },
+  smash: { pose: "dash", sparks: [{ art: "hammer", motion: "pop", at: 180, impact: true }], sounds: [["punch", 200]], hitAt: 200, end: 520 },
+  quake: {
+    pose: "dash",
+    sparks: [{ art: "hammer", motion: "pop", at: 180, big: true }, hit(320, true), hit(440, true, -1)],
+    sounds: [["punch", 200], ["boom", 320], ["crack", 440]],
+    hitAt: 320,
+    end: 780,
+    shake: true,
+  },
+  thrust: { pose: "dash", sparks: [{ art: "lance", motion: "shot", at: 0 }, hit(SHOT_MS)], sounds: [["slash", 120], ["punch", SHOT_MS]], hitAt: SHOT_MS, end: 600 },
+  "thunder-thrust": {
+    pose: "dash",
+    sparks: [{ art: "lance", motion: "shot", at: 0, big: true }, { art: "zap", motion: "pop", at: SHOT_MS, big: true, flip: true }, hit(SHOT_MS + 140, true)],
+    sounds: [["slash", 120], ["crit", SHOT_MS], ["boom", SHOT_MS + 140]],
+    hitAt: SHOT_MS,
+    end: 820,
+  },
+  "plasma-shot": { pose: "fire", sparks: [{ art: "bolt", motion: "shot", at: 0, big: true, tint: "purple" }, hit(SHOT_MS, true)], sounds: [["laser", 0], ["boom", SHOT_MS]], hitAt: SHOT_MS, end: 620 },
+  "plasma-beam": {
+    pose: "fire",
+    sparks: [{ art: "beam", motion: "beam", at: 0, big: true, tint: "purple" }, hit(220, true), hit(380, true, 1)],
+    sounds: [["beam", 0], ["boom", 240], ["boom", 380]],
+    hitAt: 220,
+    end: 820,
+  },
   // ท่าปิดฉากร่างสุดท้าย: รวมพลังของแกน AI แล้วปล่อยลำแสงใหญ่ ใช้ได้กับทุกอาวุธ
   finisher: {
     pose: "charge",
@@ -132,15 +157,69 @@ export const FOE_SKILLS: Record<FoeSkill, MoveSpec> = {
     end: 1200,
     shake: true,
   },
+  zap: { pose: "fire", sparks: [{ art: "zap", motion: "shot", at: 0 }, hit(SHOT_MS)], sounds: [["laser", 0], ["hurt", SHOT_MS]], hitAt: SHOT_MS, end: 620, shake: true },
+  storm: {
+    pose: "charge",
+    sparks: [{ art: "zap", motion: "drop", at: 380 }, { art: "zap", motion: "drop", at: 500, row: 1, flip: true }, { art: "zap", motion: "drop", at: 620, row: -1 }, hit(700, true)],
+    sounds: [["charge", 0], ["crack", 480], ["crack", 600], ["boom", 700]],
+    hitAt: 700,
+    end: 1100,
+    shake: true,
+  },
+  ram: { pose: "dash", sparks: [hit(220, true)], sounds: [["punch", 220], ["hurt", 260]], hitAt: 220, end: 580, shake: true },
+  "shell-cannon": {
+    pose: "fire",
+    sparks: [{ art: "shell", motion: "shot", at: 0, big: true }, hit(SHOT_MS, true), hit(SHOT_MS + 160, true, 1)],
+    sounds: [["fire", 0], ["boom", SHOT_MS], ["boom", SHOT_MS + 160]],
+    hitAt: SHOT_MS,
+    end: 820,
+    shake: true,
+  },
+  sting: { pose: "hop", sparks: [{ art: "sting", motion: "shot", at: 0 }, hit(SHOT_MS)], sounds: [["slash", 0], ["hurt", SHOT_MS]], hitAt: SHOT_MS, end: 620, shake: true },
+  "sting-rain": {
+    pose: "hop",
+    sparks: [{ art: "sting", motion: "shot", at: 0, row: 1 }, { art: "sting", motion: "shot", at: 130 }, { art: "sting", motion: "shot", at: 260, row: -1 }, hit(SHOT_MS, false, 1), hit(SHOT_MS + 260, true, -1)],
+    sounds: [["slash", 0], ["slash", 130], ["slash", 260], ["boom", SHOT_MS + 260]],
+    hitAt: SHOT_MS,
+    end: 920,
+    shake: true,
+  },
+  halo: { pose: "charge", sparks: [{ art: "halo", motion: "pop", at: 380, big: true, impact: true }], sounds: [["charge", 0], ["boom", 400]], hitAt: 400, end: 900, shake: true },
+  judgement: {
+    pose: "charge",
+    sparks: [{ art: "halo", motion: "pop", at: 300, big: true, row: 1 }, { art: "ruin", motion: "beam", at: 480, big: true, flip: true }, hit(680, true), hit(860, true, 1)],
+    sounds: [["charge", 0], ["beam", 480], ["boom", 680], ["boom", 860]],
+    hitAt: 680,
+    end: 1280,
+    shake: true,
+  },
 };
 
-/** ท่าของการ์เดียน: อาวุธกำหนดแบบของท่า การโจมตีที่แรงตั้งแต่ 2 ขึ้นไปเป็นท่าแรง และการโจมตีที่ปิดฉากร่างสุดท้ายเป็นลำแสงแกน AI */
-export function guardianMove(weapon: Weapon, strike: { damage: number; final: boolean }): GuardianMove {
+/** สิ่งที่บอกว่าการโจมตีครั้งนี้เป็นท่าแรง: ผลพิเศษของอาวุธ การสวนกลับ ตัวคูณ หรือความเสียหายตั้งแต่ 3 ขึ้นไป (คอมโบ) */
+export interface StrikeShape {
+  damage: number;
+  final: boolean;
+  crit?: boolean;
+  quake?: boolean;
+  counter?: boolean;
+  boosted?: boolean;
+  opening?: boolean;
+}
+
+const MOVES: Record<Weapon, [normal: GuardianMove, strong: GuardianMove]> = {
+  fist: ["punch", "rocket-punch"],
+  hammer: ["smash", "quake"],
+  sword: ["slash", "cross-slash"],
+  lance: ["thrust", "thunder-thrust"],
+  blaster: ["shot", "beam"],
+  cannon: ["plasma-shot", "plasma-beam"],
+};
+
+/** ท่าของการ์เดียน: อาวุธกำหนดแบบของท่า การโจมตีที่มีผลพิเศษหรือแรงตั้งแต่ 3 ขึ้นไปเป็นท่าแรง และการโจมตีที่ปิดฉากร่างสุดท้ายเป็นลำแสงแกน AI */
+export function guardianMove(weapon: Weapon, strike: StrikeShape): GuardianMove {
   if (strike.final) return "finisher";
-  const strong = strike.damage >= 2;
-  if (weapon === "sword") return strong ? "cross-slash" : "slash";
-  if (weapon === "blaster") return strong ? "beam" : "shot";
-  return strong ? "rocket-punch" : "punch";
+  const strong = strike.crit || strike.quake || strike.counter || strike.boosted || strike.opening || strike.damage >= 3;
+  return MOVES[weapon][strong ? 1 : 0];
 }
 
 /** สกิลของคู่ต่อสู้แต่ละตัว: ท่าปกติ และท่าหนัก (ตอนชาร์จพลัง คลั่ง ฝูงยังเหลือเยอะ หรือเฟสท้ายของบอส) */
@@ -153,6 +232,10 @@ const SKILL_OF: Record<FoeArt, { normal: FoeSkill; heavy: FoeSkill }> = {
   kaiju_6: { normal: "dragon-claw", heavy: "flame" },
   boss_2: { normal: "energy-wave", heavy: "rage-wave" },
   boss_3: { normal: "flame-wing", heavy: "ruin-beam" },
+  kaiju_7: { normal: "zap", heavy: "storm" },
+  kaiju_8: { normal: "ram", heavy: "shell-cannon" },
+  kaiju_9: { normal: "sting", heavy: "sting-rain" },
+  boss_4: { normal: "halo", heavy: "judgement" },
 };
 
 export const foeSkill = (art: FoeArt, heavy: boolean): FoeSkill => SKILL_OF[art][heavy ? "heavy" : "normal"];

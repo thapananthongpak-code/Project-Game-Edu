@@ -3,7 +3,7 @@ import { course, quests } from "../content";
 import { scoreAssessment } from "../state/assessment";
 import { emptyField } from "../state/field";
 import { emptyRoom, emptySave, type AssessmentResult, type SaveData } from "../state/progressStore";
-import { answersCsv, itemsCsv, type Player, type PlayerRecord, studentsCsv, summarizeGain, summarizeRooms, summarizeStudent, toCsv, toPlayers, writtenAnswers } from "./analytics";
+import { itemsCsv, type Player, type PlayerRecord, reviewScores, studentsCsv, summarizeGain, summarizeRooms, summarizeStudent, toCsv, toPlayers } from "./analytics";
 import { t } from "./strings";
 
 const topics = course.topics.map((topic) => topic.id);
@@ -24,7 +24,7 @@ const kaew = player("แก้ว", {
   pretest: result("A", ["A1a", "A2a"]),
   posttest: result("B", ["B1a", "B1b", "B2a", "B2b", "B3a", "B6a"]),
   rooms: {
-    1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewDone: true, reviewAnswers: ["คำตอบข้อหนึ่งของแก้ว", "=SUM(A1) คำตอบข้อสอง"], core: true, timeMs: 600000, tutor: { ai: 2, hints: 1 }, missed: { Label: 2, Feature: 1 } },
+    1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewDone: true, review: { correct: 5, total: 6 }, core: true, timeMs: 600000, tutor: { ai: 2, hints: 1 }, missed: { Label: 2, Feature: 1 } },
     2: { ...emptyRoom(), minigameDone: true, stars: 1, outcome: { totalMisses: 5, requiredRepair: true }, core: true, timeMs: 300000 },
     6: { ...emptyRoom(), field, core: true, timeMs: 120000 },
   },
@@ -37,25 +37,33 @@ const ton = player("ต้น", {
 const mai = player("ใหม่", { pretest: result("A", []) });
 const win = { won: true, wins: 1, sorties: 1, asked: 6, correct: 5 };
 
-describe("ระดับความยากและด่านต่อสู้", () => {
-  it("นับด่านที่ชนะจากจำนวนด่านของระดับความยากที่ผู้เรียนเลือก รวมโจทย์ของการแพ้และการซ้อมรบ", () => {
+describe("แมพและด่านต่อสู้", () => {
+  it("นับด่านที่ชนะจากจำนวนด่านของทุกแมพที่ผู้เรียนไปถึง รวมโจทย์ของการแพ้และการซ้อมรบ คำถามทบทวนเป็นของแมพ 1 เสมอ", () => {
     const easy = player("ง่าย", { battles: { k1: { ...win, wins: 3, sorties: 4, asked: 20, correct: 15 }, k2: { won: false, wins: 0, sorties: 1, asked: 4, correct: 1 } } });
     expect(summarizeStudent(easy)).toMatchObject({ difficulty: "easy", battlesWon: 1, battlesTotal: 6, battleAsked: 24, battleCorrect: 16, reviewsTotal: 5 });
-    const normal = player("กลาง", { profile: { name: "กลาง", difficulty: "normal", classCode: "PVC1", avatar: "a" }, battles: { n1: win, n2: win } });
-    expect(summarizeStudent(normal)).toMatchObject({ difficulty: "normal", battlesWon: 2, battlesTotal: 4, reviewsTotal: 5 });
+    // แมพ 2: ด่านของแมพ 1 (6) + แมพ 2 (4)
+    const normal = player("กลาง", { profile: { name: "กลาง", difficulty: "normal", classCode: "PVC1", avatar: "a" }, battles: { k1: win, n1: win, n2: win } });
+    expect(summarizeStudent(normal)).toMatchObject({ difficulty: "normal", battlesWon: 3, battlesTotal: 10, reviewsTotal: 5 });
+    // แมพ 3: ทุกด่านของเกม (6 + 4 + 1) ด่านของแมพที่ยังไปไม่ถึงไม่ถูกนับเป็นตัวหาร
     const hard = player("ยาก", { profile: { name: "ยาก", difficulty: "hard", classCode: "PVC1", avatar: "a" }, battles: { end: win } });
-    // ระดับยากไม่มีคำถามทบทวน
-    expect(summarizeStudent(hard)).toMatchObject({ difficulty: "hard", battlesWon: 1, battlesTotal: 1, reviewsTotal: 0 });
+    expect(summarizeStudent(hard)).toMatchObject({ difficulty: "hard", battlesWon: 1, battlesTotal: 11, reviewsTotal: 5 });
+    // ความคืบหน้าของแมพ 2 และ 3 (save.maps) ไม่ปนกับบันทึกการเรียนของแมพ 1
+    const replay = player("ทวน", { profile: { name: "ทวน", difficulty: "normal", classCode: "PVC1", avatar: "a" }, maps: { normal: { 1: { ...emptyRoom(), minigameDone: true, stars: 3, core: true } }, hard: {} } });
+    expect(summarizeStudent(replay)).toMatchObject({ cores: 0, stars: 0, roomReached: 0 });
   });
 
   it("กิจกรรมเสริมกับ NPC: นับเควสที่ส่งแล้วและถามตอบพิเศษที่เล่นแล้ว ร้านพิเศษไม่นับ", () => {
-    const done = { accepted: true, found: [0, 1, 2], done: true, best: 0, tries: 0 };
-    const busy = player("ขยัน", { npcs: { mechanic: done, foreman: { ...done, found: [0], done: false }, coach: { accepted: false, found: [], done: false, best: 3, tries: 2 }, archivist: done } });
+    const done = { met: true, accepted: true, found: [0, 1, 2], done: true, best: 0, tries: 0, gifted: false };
+    const idle = { ...done, accepted: false, found: [], done: false };
+    const busy = player("ขยัน", { npcs: { mechanic: done, foreman: { ...done, found: [0], done: false }, coach: { ...idle, best: 3, tries: 2 }, archivist: done } });
     expect(summarizeStudent(busy).sideActivities).toBe(2);
+    // NPC ของแมพ 2: เควสที่ส่งแล้ว ถามตอบที่เล่นแล้ว และของที่รับแล้ว นับ ร้านพิเศษไม่นับ
+    const far = player("ไกล", { npcs: { ranger: { ...done, found: [0, 1, 2, 3] }, sage: { ...idle, best: 4, tries: 1 }, medic: { ...idle, gifted: true }, smith: idle } });
+    expect(summarizeStudent(far).sideActivities).toBe(3);
     expect(summarizeStudent(mai).sideActivities).toBe(0);
   });
 
-  it("ไฟล์ CSV มีคอลัมน์ระดับความยากและจำนวนด่านทั้งหมด", () => {
+  it("ไฟล์ CSV มีคอลัมน์แมพ (1–3) และจำนวนด่านทั้งหมด", () => {
     const hard = player("ยาก", { profile: { name: "ยาก", difficulty: "hard", classCode: "PVC1", avatar: "a" }, battles: { end: win } });
     const [header, row] = studentsCsv([hard], { fixed: t.csv.students, pre: t.csv.pre, post: t.csv.post, stars: t.csv.stars, minutes: t.csv.minutes })
       .replace("\uFEFF", "")
@@ -63,7 +71,7 @@ describe("ระดับความยากและด่านต่อส�
       .split(/\r?\n/)
       .map((line) => line.split(","));
     const cell = (name: string) => row[header.indexOf(name)];
-    expect([cell("difficulty"), cell("kaiju_defeated"), cell("kaiju_total"), cell("battle_answers"), cell("battle_correct")]).toEqual(["hard", "1", "1", "6", "5"]);
+    expect([cell("map"), cell("kaiju_defeated"), cell("kaiju_total"), cell("battle_answers"), cell("battle_correct")]).toEqual(["3", "1", "11", "6", "5"]);
   });
 });
 
@@ -169,16 +177,15 @@ describe("CSV", () => {
     expect(lines).toHaveLength(4);
     const width = t.csv.students.length + 6 + 6 + 5 + 6;
     for (const line of lines) expect(line.split(",")).toHaveLength(width);
-    expect(lines[1].startsWith("PVC1,แก้ว,false,2026-10-02T03:00:00.000Z,easy,6,3,4,1,90,true,A,2,6,4,0.4,2,1,1,17,")).toBe(true);
+    expect(lines[1].startsWith("PVC1,แก้ว,false,2026-10-02T03:00:00.000Z,1,6,3,4,1,90,true,A,2,6,4,0.4,2,1,1,17,")).toBe(true);
   });
 
-  it("คำตอบแบบพิมพ์: จับคู่กับคำถามจาก course.json และกันสูตรในคำตอบของผู้เรียน", () => {
-    const answers = writtenAnswers(kaew.save);
-    expect(answers.map((a) => a.room)).toEqual([1, 1]);
-    expect(answers[0].question).toBe(course.topics[0].reviewQuestions[0].question);
-    const csv = answersCsv([kaew, mai], t.csv.answers);
-    expect(csv).toContain("'=SUM(A1) คำตอบข้อสอง");
-    expect(csv.trim().split("\r\n")).toHaveLength(3);
+  it("คำถามทบทวนแบบเลือกตอบ: รายงานคะแนนรายหัวข้อ ไม่มีข้อความที่ผู้เรียนเขียน หัวข้อที่ไม่มีคะแนนไม่อยู่ในรายการ", () => {
+    expect(reviewScores(kaew.save)).toEqual([{ room: 1, correct: 5, total: 6 }]);
+    expect(reviewScores(mai.save)).toEqual([]);
+    // ส่งคำถามทบทวนในรุ่นที่ยังเป็นการเขียนตอบ: ผ่านแล้วแต่ไม่มีคะแนน
+    const old = player("เก่า", { rooms: { 1: { ...emptyRoom(), reviewDone: true } } });
+    expect([reviewScores(old.save), summarizeStudent(old).reviewsDone]).toEqual([[], 1]);
   });
 
   it("รายข้อ: 24 ข้อ", () => {

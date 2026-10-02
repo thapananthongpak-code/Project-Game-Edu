@@ -26,8 +26,9 @@ export function GearIcon({ value, className = "h-12 w-12" }: { value: Gear[Slot]
  */
 export function Storage() {
   const shop = useGameStore((s) => s.shop);
-  const power = useGameStore(guardianPowerOf);
   const upcoming = useGameStore(pendingBattle);
+  // ค่าพลังสำหรับด่านถัดไป: นับความได้เปรียบของอาวุธที่ใส่อยู่กับคู่ต่อสู้ของด่านนั้นด้วย
+  const power = useGameStore((s) => guardianPowerOf(s, pendingBattle(s) ?? undefined));
   const equip = useGameStore((s) => s.equip);
   const openShop = useGameStore((s) => s.openShop);
   const closeOverlay = useGameStore((s) => s.closeOverlay);

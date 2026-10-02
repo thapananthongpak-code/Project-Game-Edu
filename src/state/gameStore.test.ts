@@ -2,12 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { evaluateMinigame } from "./adaptive";
 import { BATTLE } from "./battle.config";
 import { CAMPAIGN, type Difficulty } from "./campaign";
-import { allBattlesWon, guardianPowerOf, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
+import { allBattlesWon, coreTotal, guardianPowerOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
 import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
-import { ADVICE, adviseBag, idealBag, missingAdvice, wishList } from "./loadout";
-import { bagOf, earnedCredits, gearOf } from "./shop";
+import { ADVICE, adviseBag, adviseWeapon, idealBag, missingAdvice, wishList } from "./loadout";
+import { bagOf, earnedCredits, gearOf, ownedDecor, stockLeft } from "./shop";
+import { CATALOG } from "./shop.config";
 import { REWARDS } from "./shop.config";
 
 const miss = { type: "check", correct: false, timeMs: 1000 } as const;
@@ -39,7 +40,7 @@ function grantCore(topic: number) {
 }
 
 beforeEach(() => {
-  useGameStore.setState({ progress: {}, battles: {}, npcs: {}, pretest: null, posttest: null, story: [], shop: emptyShop(), zone: null, room: null, screen: "hall", overlay: null, musicCue: null, npcId: null, shopVendor: null });
+  useGameStore.setState({ progress: {}, others: {}, battles: {}, npcs: {}, pretest: null, posttest: null, story: [], shop: emptyShop(), zone: null, room: null, screen: "hall", overlay: null, musicCue: null, npcId: null, shopVendor: null });
   setDifficulty("easy");
 });
 
@@ -116,7 +117,7 @@ describe("ระดับความยาก (GDD 15)", () => {
     useGameStore.getState().completeMinigame(perfect);
     expect(nextStepOf(useGameStore.getState(), 1)).toBe("review");
     expect(useGameStore.getState().progress[1].core).toBe(false);
-    useGameStore.getState().saveReview(["ก"]);
+    useGameStore.getState().saveReview({ correct: 4, total: 6 });
     expect(nextStepOf(useGameStore.getState(), 1)).toBe("core");
   });
 
@@ -128,7 +129,7 @@ describe("ระดับความยาก (GDD 15)", () => {
     expect([isTopicOpen(useGameStore.getState(), 1), isTopicOpen(useGameStore.getState(), 2)]).toEqual([true, false]);
     useGameStore.getState().completeMinigame(perfect);
     expect(nextStepOf(useGameStore.getState(), 1)).toBe("review");
-    useGameStore.getState().saveReview(["ก"]);
+    useGameStore.getState().saveReview({ correct: 4, total: 6 });
     useGameStore.getState().collectCore();
     expect(isTopicOpen(useGameStore.getState(), 2)).toBe(true);
     // ได้แกนชิ้นแรกแล้ว: ยังไม่มีด่านต่อสู้ เพราะไคจูของห้องนี้ต้องใช้แกนทั้งสองชิ้น
@@ -152,21 +153,18 @@ describe("ระดับความยาก (GDD 15)", () => {
     expect(nextStepOf(useGameStore.getState(), 1)).toBe("minigame");
   });
 
-  it("ยาก: ห้องเดียว ผ่านเควสแล้วได้แกน AI ทันที บอสออกปฏิบัติการได้เมื่อครบ 6 ชิ้น", () => {
+  it("แมพ 3: ห้องเดียว ผ่านเควสแล้วได้แกน AI ทันที บอสออกปฏิบัติการได้เมื่อครบ 5 ชิ้น (ไม่มีหัวข้อ 6 ภารกิจภาคสนามอยู่ที่แมพ 1)", () => {
     setDifficulty("hard");
     useGameStore.getState().enterRoom(1);
     for (let topic = 1; topic <= 5; topic++) {
       expect(useGameStore.getState().room).toBe(topic);
       expect(nextStepOf(useGameStore.getState(), topic)).toBe("minigame");
+      expect(pendingBattle(useGameStore.getState())).toBeNull();
       useGameStore.getState().completeMinigame(perfect);
       expect(useGameStore.getState().progress[topic].core).toBe(true);
       useGameStore.getState().closeOverlay();
     }
-    expect(useGameStore.getState().room).toBe(6);
-    // หัวข้อภาคสนามไม่ได้แกนอัตโนมัติ ต้องทำภารกิจและแบบทดสอบหลังเรียน
-    expect(nextStepOf(useGameStore.getState(), 6)).toBe("field");
-    expect(pendingBattle(useGameStore.getState())).toBeNull();
-    grantCore(6);
+    expect(coreTotal(useGameStore.getState())).toBe(5);
     expect(pendingBattle(useGameStore.getState())?.id).toBe("end");
     useGameStore.getState().recordBattle("end", win);
     expect(allBattlesWon(useGameStore.getState())).toBe(true);
@@ -182,7 +180,7 @@ describe("ระดับความยาก (GDD 15)", () => {
   });
 
   it("บรรยายสรุปของห้องใช้ฉากของระดับความยากนั้น", () => {
-    useGameStore.setState({ pretest: pretest({}), story: ["prologue"] });
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "map-normal", "map-hard"] });
     setDifficulty("normal");
     useGameStore.getState().enterRoom(1);
     expect(pendingStory(useGameStore.getState())).toBe("zone-n1");
@@ -381,6 +379,9 @@ describe("เครดิตวิจัยและร้านสหกรณ�
     expect(store().shop.weapon).toBe("fist");
     store().equip("weapon", "sword");
     expect(store().shop.weapon).toBe("sword");
+    // เกราะสะท้อนวางขายตั้งแต่แมพ 2: ยังซื้อไม่ได้จนกว่าจะชนะครบทุกด่านของแมพ 1
+    expect(store().buy("armor-guard")).toBe("locked");
+    for (let room = 5; room <= 6; room++) finishRoom(room);
     // ช่องหนึ่งใส่ได้ชิ้นเดียว: ซื้อเกราะอีกแบบแล้วสลับไปใช้แบบใหม่ แบบเดิมยังเป็นของเรา
     expect(store().buy("armor-guard")).toBeNull();
     expect(store().shop).toMatchObject({ armor: "guard", owned: ["weapon-sword", "armor-heavy", "armor-guard"] });
@@ -453,6 +454,22 @@ describe("เครดิตวิจัยและร้านสหกรณ�
     for (const difficulty of ["easy", "normal", "hard"] as const) for (const battle of CAMPAIGN[difficulty].battles) expect(new Set(wishList(battle)).size, battle.id).toBe(5);
   });
 
+  it("พี่บิตแนะนำอาวุธ: อาวุธที่ได้เปรียบคู่ต่อสู้ของด่าน ถ้าได้เปรียบเท่ากันแนะนำชิ้นที่แรงกว่า ไม่ได้เปรียบเลยไม่ชวนเปลี่ยน", () => {
+    const n2 = CAMPAIGN.normal.battles[1];
+    // ไอรอนเชลล์แพ้ทางแรงกระแทก: ถือดาบอยู่ มีค้อน = เปลี่ยนเป็นค้อน, ถือหมัดอยู่ มีค้อน = ค้อนแรงกว่า, ไม่มีค้อน = ชวนซื้อ
+    expect(adviseWeapon(n2, "sword", ["sword", "hammer"])).toMatchObject({ weak: ["strike"], advantaged: false, better: "hammer", stronger: false, wanted: [] });
+    expect(adviseWeapon(n2, "fist", ["hammer"])).toMatchObject({ advantaged: true, better: "hammer", stronger: true });
+    expect(adviseWeapon(n2, "hammer", ["hammer", "sword"])).toMatchObject({ advantaged: true, better: null, stronger: false });
+    expect(adviseWeapon(n2, "sword", ["sword"])).toMatchObject({ advantaged: false, better: "fist", wanted: ["hammer"] });
+    expect(adviseWeapon(n2, "fist", [])).toMatchObject({ advantaged: true, better: null, wanted: [] });
+    // บอสสองร่างแพ้ทางคนละแบบ: ดาบกับปืนได้เปรียบเท่ากัน (ร่างละ 13) ไม่ชวนสลับไปมา แต่หอกแรงกว่าดาบ
+    const boss = CAMPAIGN.normal.battles[3];
+    expect(adviseWeapon(boss, "sword", ["sword", "blaster"])).toMatchObject({ weak: ["blade", "beam"], advantaged: true, better: null });
+    expect(adviseWeapon(boss, "sword", ["sword", "blaster", "lance"])).toMatchObject({ better: "lance", stronger: true });
+    // ไม่มีอาวุธไหนได้เปรียบ: ไม่ชวนเปลี่ยน บอกอาวุธที่ควรหา
+    expect(adviseWeapon(CAMPAIGN.easy.battles[2], "sword", ["sword"])).toMatchObject({ advantaged: false, better: null, wanted: ["blaster", "cannon"] });
+  });
+
   it("เริ่มเกมใหม่: เนื้อเรื่องและร้านค้ากลับเป็นค่าเริ่มต้น", () => {
     finishRoom(1);
     useGameStore.getState().buy("supply-shield");
@@ -482,7 +499,7 @@ describe("NPC ประจำห้อง (GDD 16)", () => {
     expect(creditsOf(store())).toBe(NPC_REWARDS.quest);
   });
 
-  it("ถามตอบพิเศษ: เก็บรอบที่ดีที่สุด เครดิตคิดจากรอบนั้น เล่นซ้ำแล้วได้น้อยลงเครดิตไม่ลด และคูณตามระดับความยาก", () => {
+  it("ถามตอบพิเศษ: เก็บรอบที่ดีที่สุด เครดิตคิดจากรอบนั้น เล่นซ้ำแล้วได้น้อยลงเครดิตไม่ลด และคูณตามตัวคูณของแมพที่ NPC อยู่", () => {
     const store = () => useGameStore.getState();
     store().recordQuiz("coach", 2);
     expect(creditsOf(store())).toBe(2 * NPC_REWARDS.quizPerCorrect);
@@ -490,8 +507,11 @@ describe("NPC ประจำห้อง (GDD 16)", () => {
     store().recordQuiz("coach", 99);
     expect(store().npcs.coach).toMatchObject({ best: NPCS.coach.questions, tries: 3 });
     expect(creditsOf(store())).toBe(NPCS.coach.questions * NPC_REWARDS.quizPerCorrect);
+    // โค้ชต้นอยู่แมพ 1: เครดิตไม่เปลี่ยนตามแมพที่ผู้เล่นอยู่ ส่วน NPC ของแมพ 2 ได้ตัวคูณของแมพ 2
     setDifficulty("hard");
-    expect(creditsOf(store())).toBe(NPCS.coach.questions * NPC_REWARDS.quizPerCorrect * CAMPAIGN.hard.creditMultiplier);
+    expect(creditsOf(store())).toBe(NPCS.coach.questions * NPC_REWARDS.quizPerCorrect);
+    store().recordQuiz("sage", 2);
+    expect(creditsOf(store())).toBe(NPCS.coach.questions * NPC_REWARDS.quizPerCorrect + Math.round(2 * NPC_REWARDS.quizPerCorrect * CAMPAIGN.normal.creditMultiplier));
   });
 
   it("กิจกรรมเสริมไม่มีผลต่อการปลดล็อกห้อง ระดับความช่วยเหลือ หรือขั้นตอนของหัวข้อ", () => {
@@ -529,5 +549,143 @@ describe("NPC ประจำห้อง (GDD 16)", () => {
     useGameStore.getState().recordQuiz("coach", 3);
     useGameStore.getState().newGame();
     expect(useGameStore.getState().npcs).toEqual({});
+  });
+});
+
+describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
+  const store = () => useGameStore.getState();
+  const clearMap1 = () => {
+    for (let room = 1; room <= 6; room++) finishRoom(room);
+  };
+
+  it("เริ่มเกม: เปิดเฉพาะแมพ 1 เดินทางไปแมพที่ยังไม่เปิดไม่ได้", () => {
+    expect((["easy", "normal", "hard"] as const).map((map) => mapUnlocked(store(), map))).toEqual([true, false, false]);
+    expect(reachedMap(store())).toBe("easy");
+    expect(store().travel("normal")).toBe(false);
+    expect(store().profile?.difficulty).toBe("easy");
+  });
+
+  it("ชนะครบทุกด่านของแมพ 1 แล้วแมพ 2 เปิด เดินทางไปแล้วเริ่มความคืบหน้าของแมพ 2 ใหม่ ความคืบหน้าของแมพ 1 ยังอยู่", () => {
+    clearMap1();
+    expect((["easy", "normal", "hard"] as const).map((map) => mapUnlocked(store(), map))).toEqual([true, true, false]);
+    expect(store().travel("hard")).toBe(false);
+    expect(store().travel("normal")).toBe(true);
+    expect(store()).toMatchObject({ screen: "hall", zone: null, room: null, overlay: null, progress: {} });
+    expect(store().profile?.difficulty).toBe("normal");
+    expect(coreTotal(store())).toBe(5);
+    // บันทึกการเรียนของแมพ 1 ยังครบ (ใช้กับใบประกาศ) และห้องของแมพ 2 เริ่มจากห้องแรก
+    expect(Object.values(learningRooms(store())).filter((room) => room.core)).toHaveLength(6);
+    expect([1, 2, 3].map((zone) => isRoomUnlocked(store(), zone))).toEqual([true, false, false]);
+    expect(pendingBattle(store())).toBeNull();
+    // เรื่องมาถึงแมพ 2 แสดงครั้งแรกที่ไปถึง
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "ending"] });
+    expect(pendingStory(store())).toBe("map-normal");
+  });
+
+  it("ความคืบหน้าของแต่ละแมพเก็บแยกกัน เดินทางกลับไปกลับมาได้ และด่านของแมพก่อนหน้ายังซ้อมรบได้", () => {
+    clearMap1();
+    store().travel("normal");
+    store().enterRoom(1);
+    store().completeMinigame(perfect);
+    store().saveReview({ correct: 6, total: 6 });
+    store().collectCore();
+    expect(roomsOfMap(store(), "normal")[1].core).toBe(true);
+    expect(roomsOfMap(store(), "easy")[1].stars).toBe(3);
+    store().travel("easy");
+    expect(store().profile?.difficulty).toBe("easy");
+    expect(Object.keys(store().progress)).toHaveLength(6);
+    expect(roomsOfMap(store(), "normal")[1].core).toBe(true);
+    expect(allBattlesWon(store())).toBe(true);
+    store().travel("normal");
+    expect(store().progress[1].core).toBe(true);
+    expect(store().progress[2]).toBeUndefined();
+  });
+
+  it("แมพ 3 เปิดเมื่อชนะครบทุกด่านของแมพ 2 และบทส่งท้ายของแต่ละแมพแสดงแยกกัน", () => {
+    clearMap1();
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "room-6"] });
+    expect(pendingStory(store())).toBe("ending");
+    store().travel("normal");
+    for (const id of ["n1", "n2", "n3"]) store().recordBattle(id, win);
+    expect(mapUnlocked(store(), "hard")).toBe(false);
+    store().recordBattle("omega-n", win);
+    expect(mapUnlocked(store(), "hard")).toBe(true);
+    useGameStore.setState({ story: [...store().story, "ending", "map-normal", "win-n1", "win-n2", "win-n3"] });
+    expect(pendingStory(store())).toBe("ending-normal");
+    expect(store().travel("hard")).toBe(true);
+    useGameStore.setState({ story: [...store().story, "ending-normal"] });
+    expect(pendingStory(store())).toBe("map-hard");
+  });
+
+  it("เครดิตรวมจากทุกแมพ แต่ละแมพคูณด้วยตัวคูณของแมพนั้น", () => {
+    clearMap1();
+    const first = creditsOf(store());
+    store().travel("normal");
+    expect(creditsOf(store())).toBe(first);
+    store().enterRoom(1);
+    store().completeMinigame(perfect);
+    store().collectCore();
+    expect(creditsOf(store())).toBe(first + Math.round((REWARDS.star * 3 + REWARDS.core) * CAMPAIGN.normal.creditMultiplier));
+    // เครดิตของแมพ 2 ไม่หายเมื่อกลับไปแมพ 1
+    const both = creditsOf(store());
+    store().travel("easy");
+    expect(creditsOf(store())).toBe(both);
+  });
+
+  it("ของในร้านวางขายตามแมพที่ไปถึง และของใช้มีจำนวนจำกัดต่อแมพ", () => {
+    clearMap1();
+    // ของของแมพ 2 และ 3
+    expect(reachedMap(store())).toBe("normal");
+    expect(store().buy("weapon-cannon")).toBe("locked");
+    expect(store().buy("outfit-hero")).toBe("locked");
+    expect(CATALOG.filter((item) => item.tier === "normal").length).toBeGreaterThan(5);
+    expect(CATALOG.filter((item) => item.tier === "hard").length).toBeGreaterThan(2);
+    // ชุดซ่อมฉุกเฉิน: ร้านของแมพ 1 ขาย 3 ชิ้น ใช้แล้วซื้อเพิ่มที่แมพเดิมไม่ได้ ต้องไปซื้อที่ร้านของแมพอื่น
+    const kit = CATALOG.find((item) => item.id === "supply-repair-kit") as Extract<(typeof CATALOG)[number], { kind: "supply" }>;
+    for (let i = 0; i < kit.stock; i++) expect(store().buy("supply-repair-kit")).toBeNull();
+    expect(stockLeft(store().shop, kit, "easy")).toBe(0);
+    store().consumeSupply("repair-kit");
+    expect(store().buy("supply-repair-kit")).toBe("sold-out");
+    store().travel("normal");
+    expect(stockLeft(store().shop, kit, "normal")).toBe(kit.stock);
+    expect(store().buy("supply-repair-kit")).toBeNull();
+    expect(store().shop.bought).toEqual({ "easy:repair-kit": 3, "normal:repair-kit": 1 });
+  });
+
+  it("ของตกแต่งโถง: ซื้อแล้วเลือกวางในช่องของโถงแต่ละแมพ ขนาดต้องตรงกับช่อง ชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ", () => {
+    clearMap1();
+    expect(ownedDecor(store().shop)).toEqual(["window", "plant"]);
+    expect(store().shop.decor.easy).toEqual({ wall1: "window", small1: "plant" });
+    expect(store().buy("decor-sofa")).toBeNull();
+    store().placeDecor({ id: "big1", size: "big" }, "sofa");
+    expect(store().shop.decor.easy).toMatchObject({ big1: "sofa" });
+    // ขนาดไม่ตรงกับช่อง หรือของที่ยังไม่มี: วางไม่ได้
+    store().placeDecor({ id: "wall2", size: "wall" }, "sofa");
+    store().placeDecor({ id: "big2", size: "big" }, "aquarium");
+    expect(store().shop.decor.easy).toEqual({ wall1: "window", small1: "plant", big1: "sofa" });
+    // ย้ายไปช่องอื่นของแมพเดียวกัน และเอาออก
+    store().placeDecor({ id: "big2", size: "big" }, "sofa");
+    expect(store().shop.decor.easy).toEqual({ wall1: "window", small1: "plant", big2: "sofa" });
+    store().placeDecor({ id: "small1", size: "small" }, null);
+    expect(store().shop.decor.easy).toEqual({ wall1: "window", big2: "sofa" });
+    // โถงของแมพ 2 ตกแต่งแยกกัน ของชิ้นเดียวกันใช้ได้ทุกแมพ
+    store().travel("normal");
+    store().placeDecor({ id: "big1", size: "big" }, "sofa");
+    expect(store().shop.decor).toMatchObject({ easy: { big2: "sofa" }, normal: { big1: "sofa" } });
+  });
+
+  it("NPC ของแมพ 2: ฟังเรื่องราวแล้วจำไว้ หมอสนามให้ของใช้ครั้งเดียว และถามตอบของอาจารย์ซินใช้สองหัวข้อ", () => {
+    expect(NPCS.sage).toMatchObject({ map: "normal", role: "quiz", quizTopics: [1, 2] });
+    store().meetNpc("smith");
+    expect(store().npcs.smith.met).toBe(true);
+    store().claimGift("medic");
+    expect(store().shop.supplies).toMatchObject({ "repair-kit": 1, shield: 1 });
+    expect(store().shop.loadout).toEqual(["repair-kit", "shield"]);
+    expect(store().npcs.medic).toMatchObject({ gifted: true, met: true });
+    store().claimGift("medic");
+    expect(store().shop.supplies).toMatchObject({ "repair-kit": 1, shield: 1 });
+    // NPC ที่ไม่ใช่บทบาทช่วยเหลือให้ของไม่ได้
+    store().claimGift("smith");
+    expect(store().npcs.smith.gifted).toBe(false);
   });
 });

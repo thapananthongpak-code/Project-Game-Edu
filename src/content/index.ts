@@ -1,5 +1,6 @@
 // ทางเข้าเดียวของเนื้อหา: คอมโพเนนต์และฉากเกมอ่านข้อความบทเรียนผ่านไฟล์นี้เท่านั้น
 import courseJson from "./course.json";
+import extrasJson from "./extras.json";
 import questsJson from "./quests.json";
 import type { ContentRef, ContentTable, Course, Quests, RoomQuest, Topic } from "./schema";
 import { ui } from "./ui-strings";
@@ -13,6 +14,25 @@ export const ROOM_COUNT = course.topics.length;
 export const ASSESSMENT_ITEMS_PER_TOPIC = quests.assessment.A.length / course.topics.length;
 
 export const topicOf = (room: number): Topic => course.topics[room - 1];
+
+/** ตัวอย่างหรือวิดีโอเสริมหนึ่งรายการที่ครูกำหนด (ลิงก์เปิดในแท็บใหม่) */
+export interface ExtraLink {
+  title: string;
+  url: string;
+}
+
+/**
+ * ตัวอย่างและวิดีโอเสริมของหัวข้อ (src/content/extras.json) ไม่ใช่เนื้อหาจาก course.json: ครูเป็นผู้เลือกและรับผิดชอบเนื้อหาของลิงก์
+ * รับเฉพาะลิงก์ https และชื่อที่ไม่ว่าง รายการที่ผิดรูปถูกข้าม
+ */
+export function extrasOf(topic: number): ExtraLink[] {
+  const list = (extrasJson as { topics: Record<string, unknown> }).topics[String(topic)];
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((entry) => {
+    const { title, url } = (entry ?? {}) as { title?: unknown; url?: unknown };
+    return typeof title === "string" && title.trim() !== "" && typeof url === "string" && /^https:\/\/[^\s]+$/.test(url) ? [{ title: title.trim(), url }] : [];
+  });
+}
 
 export const questOf = (room: number): RoomQuest | undefined => quests.rooms.find((r) => r.room === room);
 

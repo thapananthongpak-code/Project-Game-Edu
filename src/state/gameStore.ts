@@ -5,7 +5,7 @@ import { storyBeats, zoneBeat } from "../content/story";
 import type { TrackName } from "../audio/tracks";
 import { type MinigameState, roomStartTier } from "./adaptive";
 import type { Tier } from "./adaptive.config";
-import { type BattleSpec, campaignOf, type Difficulty, type DifficultySpec, gateOf } from "./campaign";
+import { type BattleSpec, CAMPAIGN, campaignOf, DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex, topicsOf } from "./campaign";
 import { emptyField, type FieldProgress, fieldStatus } from "./field";
 import {
   type AccountInfo,
@@ -25,14 +25,13 @@ import {
   type SyncStatus,
 } from "./progressStore";
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
-import { MIN_ANSWER_CHARS } from "./rules";
-import { creditBalance, type Earning, equip, type EquipKind, packBag, powerOf, purchase, type PurchaseError } from "./shop";
-import type { Avatar, Supply } from "./shop.config";
+import { creditBalance, type Earning, equip, type EquipKind, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift } from "./shop";
+import type { Avatar, Decor, DecorSize, Supply } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
 export interface MusicCue {
@@ -90,7 +89,10 @@ interface GameState {
   profile: Profile | null;
   pretest: AssessmentResult | null;
   posttest: AssessmentResult | null;
+  /** ความคืบหน้ารายหัวข้อของแมพที่ผู้เล่นอยู่ตอนนี้ (profile.difficulty) */
   progress: Record<number, RoomProgress>;
+  /** ความคืบหน้าของแมพอื่นที่ไม่ได้อยู่ตอนนี้ (สลับกับ progress เมื่อเดินทาง) */
+  others: Partial<Record<Difficulty, Record<number, RoomProgress>>>;
   battles: Record<string, BattleRecord>;
   npcs: Record<string, NpcRecord>;
   story: string[];
@@ -107,7 +109,9 @@ interface GameState {
   setAvatar: (avatar: Avatar) => void;
   completePretest: (result: AssessmentResult) => void;
   completePosttest: (result: AssessmentResult) => void;
-  /** เข้าห้องลำดับที่ zone ของระดับความยากนี้ */
+  /** เดินทางไปอีกแมพที่เปิดแล้ว (ไปที่โถงของแมพนั้น) คืน false ถ้าแมพยังไม่เปิด */
+  travel: (map: Difficulty) => boolean;
+  /** เข้าห้องลำดับที่ zone ของแมพนี้ */
   enterRoom: (zone: number) => void;
   /** เลือกหัวข้อที่จะทำงานด้วย (ห้องที่มีหลายหัวข้อ) */
   focusTopic: (topic: number) => void;
@@ -134,6 +138,12 @@ interface GameState {
   completeQuest: (id: NpcId) => void;
   /** บันทึกผลถามตอบพิเศษหนึ่งรอบ */
   recordQuiz: (id: NpcId, correct: number) => void;
+  /** ฟังเรื่องราวของ NPC จบแล้ว */
+  meetNpc: (id: NpcId) => void;
+  /** รับของช่วยเหลือจาก NPC (ครั้งเดียว) */
+  claimGift: (id: NpcId) => void;
+  /** วางของตกแต่งในช่องของโถงของแมพนี้ (null = เอาออก) */
+  placeDecor: (slot: { id: string; size: DecorSize }, decor: Decor | null) => void;
   setMusicCue: (cue: MusicCue | null) => void;
   /** ใช้ของหนึ่งชิ้นในด่านต่อสู้ คืน false ถ้าไม่มีของ */
   consumeSupply: (supply: Supply) => boolean;
@@ -146,7 +156,8 @@ interface GameState {
   recordMisses: (labels: string[]) => void;
   recordTutor: (kind: "ai" | "hints") => void;
   addRoomTime: (room: number, ms: number) => void;
-  saveReview: (answers: string[]) => void;
+  /** บันทึกผลคำถามทบทวนแบบเลือกตอบ: จำนวนข้อที่ตอบถูกตั้งแต่ครั้งแรก (เก็บรอบที่ดีที่สุด) */
+  saveReview: (score: { correct: number; total: number }) => void;
   setField: (field: FieldProgress) => void;
   collectCore: () => void;
   setPrompt: (prompt: string | null) => void;
@@ -196,29 +207,35 @@ export const useGameStore = create<GameState>()((set, get) => {
     pretest: null,
     posttest: null,
     progress: {},
+    others: {},
     battles: {},
     npcs: {},
     story: [],
     shop: emptyShop(),
 
     setReady: () => set({ ready: true }),
-    hydrate: (data) =>
+    hydrate: (data) => {
+      const worlds: Record<Difficulty, Record<number, RoomProgress>> = { easy: data?.rooms ?? {}, normal: data?.maps.normal ?? {}, hard: data?.maps.hard ?? {} };
+      const current = data?.profile?.difficulty ?? "easy";
+      const { [current]: progress, ...others } = worlds;
       set({
         hydrated: true,
         profile: data?.profile ?? null,
         pretest: data?.pretest ?? null,
         posttest: data?.posttest ?? null,
-        progress: data?.rooms ?? {},
+        progress,
+        others,
         battles: data?.battles ?? {},
         npcs: data?.npcs ?? {},
         story: data?.story ?? [],
         shop: data?.shop ?? emptyShop(),
-      }),
+      });
+    },
     setSync: (sync, resumeCode) => set({ sync, resumeCode }),
     setAccount: (account) => set({ account }),
 
-    // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อ เลือกระดับความยาก และแบบทดสอบก่อนเรียน (GDD ข้อ 3)
-    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, battles: {}, npcs: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
+    // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อและแบบทดสอบก่อนเรียน เริ่มที่แมพ 1 เสมอ (GDD ข้อ 3)
+    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, others: {}, battles: {}, npcs: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
     continueGame: () => {
       const { profile, pretest } = get();
       set({ ...closed, screen: profile && pretest ? "hall" : "onboarding" });
@@ -232,6 +249,14 @@ export const useGameStore = create<GameState>()((set, get) => {
     completePretest: (result) => set({ pretest: result, screen: "hall" }),
     completePosttest: (result) => set({ posttest: result }),
 
+    travel: (map) => {
+      const state = get();
+      const current = difficultyOf(state);
+      if (!state.profile || !mapUnlocked(state, map)) return false;
+      if (map !== current) set({ ...closed, screen: "hall", profile: { ...state.profile, difficulty: map }, progress: state.others[map] ?? {}, others: { ...state.others, [current]: state.progress, [map]: undefined } });
+      else set({ ...closed, screen: "hall" });
+      return true;
+    },
     enterRoom: (zone) => {
       const state = get();
       const topics = planOf(state).zones[zone - 1]?.topics ?? [];
@@ -260,7 +285,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     },
     buy: (itemId) => {
       const state = get();
-      const result = purchase(state.shop, itemId, creditBalance(earningOf(state), state.shop));
+      const result = purchase(state.shop, itemId, creditBalance(earningOf(state), state.shop), { map: difficultyOf(state), reached: reachedMap(state) });
       if (typeof result === "string") return result;
       set({ shop: result });
       return null;
@@ -276,6 +301,14 @@ export const useGameStore = create<GameState>()((set, get) => {
     },
     completeQuest: (id) => updateNpc(id, (record) => (record.found.length >= NPCS[id].pickups ? { done: true } : {})),
     recordQuiz: (id, correct) => updateNpc(id, (record) => ({ best: Math.max(record.best, Math.min(NPCS[id].questions, Math.max(0, correct))), tries: record.tries + 1 })),
+    meetNpc: (id) => updateNpc(id, (record) => (record.met ? {} : { met: true })),
+    claimGift: (id) => {
+      const record = get().npcs[id] ?? emptyNpc();
+      if (NPCS[id].role !== "gift" || record.gifted) return;
+      set({ shop: receiveGift(get().shop, id) });
+      updateNpc(id, () => ({ gifted: true, met: true }));
+    },
+    placeDecor: (slot, decor) => set({ shop: placeDecor(get().shop, difficultyOf(get()), slot, decor) }),
     setMusicCue: (musicCue) => {
       const current = get().musicCue;
       if (current?.name !== musicCue?.name || (current?.variant ?? 0) !== (musicCue?.variant ?? 0)) set({ musicCue });
@@ -323,7 +356,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     recordTutor: (kind) => updateRoom((p) => ({ tutor: { ...p.tutor, [kind]: p.tutor[kind] + 1 } }), get().tutorRoom ?? get().room),
     // รับเลขหัวข้อตรง ๆ เพราะช่วงเวลาสุดท้ายถูกบันทึกหลังผู้เล่นออกจากห้องแล้ว
     addRoomTime: (room, ms) => updateRoom((p) => ({ timeMs: p.timeMs + ms }), room),
-    saveReview: (answers) => updateRoom(() => ({ reviewAnswers: answers, reviewDone: true })),
+    saveReview: (score) => updateRoom((p) => ({ review: p.review && p.review.correct >= score.correct ? p.review : score, reviewDone: true })),
     setField: (field) => updateRoom(() => ({ field })),
     collectCore: () => updateRoom((p) => (p.core ? {} : { core: true, coreAt: new Date().toISOString() })),
 
@@ -338,15 +371,36 @@ export const useGameStore = create<GameState>()((set, get) => {
   };
 });
 
-type Saved = Pick<GameState, "profile" | "pretest" | "posttest" | "progress" | "battles" | "npcs" | "story" | "shop">;
+type Saved = Pick<GameState, "profile" | "pretest" | "posttest" | "progress" | "others" | "battles" | "npcs" | "story" | "shop">;
+type Worlds = Pick<GameState, "profile" | "progress" | "others">;
 type Level = Pick<GameState, "profile">;
 type Run = Pick<GameState, "profile" | "progress" | "battles">;
 
 export const roomProgress = (state: Pick<GameState, "progress">, room: number): RoomProgress => state.progress[room] ?? emptyRoom();
 
+/** แมพที่ผู้เล่นอยู่ตอนนี้ (easy = แมพ 1, normal = แมพ 2, hard = แมพ 3) */
 export const difficultyOf = (state: Level): Difficulty => state.profile?.difficulty ?? "easy";
 
-/** โครงของระดับความยากที่ผู้เล่นเลือก: ห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
+/** ความคืบหน้ารายหัวข้อของแมพหนึ่ง (แมพที่อยู่ตอนนี้อ่านจาก progress แมพอื่นอ่านจาก others) */
+export const roomsOfMap = (state: Worlds, map: Difficulty): Record<number, RoomProgress> => (map === difficultyOf(state) ? state.progress : (state.others[map] ?? {}));
+
+/** บันทึกการเรียน: ความคืบหน้าของแมพ 1 ซึ่งมีบทสอน ภารกิจภาคสนาม และแบบทดสอบหลังเรียน (ใช้กับใบประกาศ) */
+export const learningRooms = (state: Worlds): Record<number, RoomProgress> => roomsOfMap(state, "easy");
+
+/** ชนะด่านต่อสู้ครบทุกด่านของแมพหนึ่งแล้ว */
+export const mapCleared = (state: Pick<GameState, "battles">, map: Difficulty): boolean => CAMPAIGN[map].battles.every((battle) => state.battles[battle.id]?.won);
+
+/**
+ * แมพนี้เปิดแล้วหรือยัง: แมพ 1 เปิดเสมอ แมพถัดไปเปิดเมื่อชนะครบทุกด่านของแมพก่อนหน้า
+ * แมพที่ผู้เล่นอยู่ (และแมพก่อนหน้านั้น) เปิดเสมอ เพราะข้อมูลรุ่นก่อนให้เลือกระดับความยากตอนเริ่มเกมได้
+ */
+export const mapUnlocked = (state: Pick<GameState, "profile" | "battles">, map: Difficulty): boolean =>
+  mapIndex(map) <= mapIndex(difficultyOf(state)) || DIFFICULTIES.slice(0, mapIndex(map)).every((previous) => mapCleared(state, previous));
+
+/** แมพไกลสุดที่เปิดแล้ว ใช้ตัดสินว่าของในร้านชิ้นใดวางขายแล้ว */
+export const reachedMap = (state: Pick<GameState, "profile" | "battles">): Difficulty => [...DIFFICULTIES].reverse().find((map) => mapUnlocked(state, map)) ?? "easy";
+
+/** โครงของแมพที่ผู้เล่นอยู่: ห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
 export const planOf = (state: Level): DifficultySpec => campaignOf(state.profile?.difficulty);
 
 /** หัวข้อที่ HUD ควรแสดงหลังปิดหน้าต่าง: ถ้าหัวข้อที่ทำอยู่ได้แกน AI แล้ว เลื่อนไปหัวข้อถัดไปของห้องที่ยังไม่ได้ */
@@ -363,7 +417,7 @@ const isFieldTopic = (topic: number): boolean => topic === ROOM_COUNT;
 export const autoCore = (level: DifficultySpec): boolean => level.stations === "none" && !level.review;
 
 /** ภารกิจภาคสนามครบตามเงื่อนไขหรือยัง (GDD ข้อ 6.5) */
-export const fieldComplete = (p: RoomProgress): boolean => fieldStatus(p.field ?? emptyField(course.finalQuest), course.finalQuest, MIN_ANSWER_CHARS).complete;
+export const fieldComplete = (p: RoomProgress): boolean => fieldStatus(p.field ?? emptyField(course.finalQuest), course.finalQuest).complete;
 
 export type TopicStep = "station" | "minigame" | "review" | "core" | "field" | "posttest" | "done";
 
@@ -407,21 +461,29 @@ export const allBattlesWon = (state: Run): boolean => planOf(state).battles.ever
 
 export const battlesWon = (state: Run): number => planOf(state).battles.filter((battle) => state.battles[battle.id]?.won).length;
 
-/** ค่าพลังรวมของการ์เดียนตอนนี้ (เทียบกับ BattleSpec.power ของด่าน เป็นคำแนะนำเท่านั้น) */
-export const guardianPowerOf = (state: Pick<GameState, "profile" | "shop">): number => powerOf(state.profile?.difficulty, state.shop);
+/** ค่าพลังรวมของการ์เดียนตอนนี้ (เทียบกับ BattleSpec.power ของด่าน เป็นคำแนะนำเท่านั้น) ระบุด่าน: นับความได้เปรียบของอาวุธกับคู่ต่อสู้ของด่านนั้นด้วย */
+export const guardianPowerOf = (state: Pick<GameState, "profile" | "shop">, spec?: BattleSpec): number => powerOf(state.profile?.difficulty, state.shop, spec);
+
+/** รหัสฉากเนื้อเรื่องตอนมาถึงแมพ (แมพ 1 ใช้บทนำ) และบทส่งท้ายของแมพ */
+export const arrivalBeat = (map: Difficulty): string | null => (map === "easy" ? null : `map-${map}`);
+export const endingBeat = (map: Difficulty): string => (map === "easy" ? "ending" : `ending-${map}`);
 
 /**
  * ฉากเนื้อเรื่องที่ควรแสดงตอนนี้ (ยังไม่เคยดู) ไม่มีคืน null
- * บทนำ: เมื่อเข้าแล็บครั้งแรก, ฉากหลังชนะไคจูประจำห้อง: ทันทีที่กลับจากด่านต่อสู้, บรรยายสรุปของห้อง: เมื่อเข้าห้องนั้นครั้งแรก, บทส่งท้าย: เมื่อชนะครบทุกด่าน
+ * บทนำ: เมื่อเข้าแล็บครั้งแรก, ฉากมาถึงแมพ: เมื่อเดินทางถึงแมพ 2 หรือ 3 ครั้งแรก, ฉากหลังชนะไคจูประจำห้อง: ทันทีที่กลับจากด่านต่อสู้,
+ * บรรยายสรุปของห้อง: เมื่อเข้าห้องนั้นครั้งแรก, บทส่งท้ายของแมพ: เมื่อชนะครบทุกด่านของแมพนั้น
  */
 export function pendingStory(state: Pick<GameState, "screen" | "zone" | "story" | "pretest" | "progress" | "battles" | "profile">): string | null {
   if (state.screen !== "hall" && state.screen !== "hangar" && state.screen !== "room") return null;
   const unseen = (beat: string) => !state.story.includes(beat);
   if (state.pretest && unseen("prologue")) return "prologue";
+  const map = difficultyOf(state);
+  const arrival = arrivalBeat(map);
+  if (arrival && arrival in storyBeats && unseen(arrival)) return arrival;
   const won = planOf(state).battles.find((battle) => state.battles[battle.id]?.won && winBeat(battle.id) in storyBeats && unseen(winBeat(battle.id)));
   if (won) return winBeat(won.id);
   if (state.screen === "room" && state.zone !== null && unseen(zoneBeat(difficultyOf(state), state.zone))) return zoneBeat(difficultyOf(state), state.zone);
-  if (allBattlesWon(state) && unseen("ending")) return "ending";
+  if (allBattlesWon(state) && unseen(endingBeat(map))) return endingBeat(map);
   return null;
 }
 
@@ -431,16 +493,24 @@ export const winBeat = (battleId: string): string => `win-${battleId}`;
 export const coreCount = (state: Pick<GameState, "progress">): number =>
   Object.values(state.progress).filter((p) => p.core).length;
 
+/** จำนวนแกน AI ทั้งหมดของแมพที่ผู้เล่นอยู่ (แมพ 1 มี 6 ชิ้น แมพ 2 และ 3 มี 5 ชิ้น) */
+export const coreTotal = (state: Level): number => topicsOf(difficultyOf(state)).length;
+
 /** ระดับเริ่มต้นของมินิเกมของหัวข้อ จากแบบทดสอบก่อนเรียน ผลของหัวข้อก่อนหน้า และระดับความยากของเกม (GDD ข้อ 7.1–7.2 และ 15) */
 export const startTierOf = (state: Pick<GameState, "pretest" | "progress" | "profile">, room: number): Tier =>
   roomStartTier(state.pretest?.correctByTopic[room] ?? 0, state.progress[room - 1]?.outcome ?? null, planOf(state).minTier);
 
 /** ข้อมูลที่ใช้คำนวณเครดิตวิจัย */
-export const earningOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "npcs" | "posttest">): Earning => ({ difficulty: state.profile?.difficulty, rooms: state.progress, battles: state.battles, npcs: state.npcs, posttest: state.posttest });
+export const earningOf = (state: Pick<GameState, "profile" | "progress" | "others" | "battles" | "npcs" | "posttest">): Earning => ({
+  maps: Object.fromEntries(DIFFICULTIES.map((map) => [map, roomsOfMap(state, map)])),
+  battles: state.battles,
+  npcs: state.npcs,
+  posttest: state.posttest,
+});
 
-export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "npcs" | "posttest" | "shop">): number => creditBalance(earningOf(state), state.shop);
+export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "others" | "battles" | "npcs" | "posttest" | "shop">): number => creditBalance(earningOf(state), state.shop);
 
-export const hasSave = (state: Saved): boolean => state.profile !== null || Object.keys(state.progress).length > 0;
+export const hasSave = (state: Saved): boolean => state.profile !== null || Object.keys(learningRooms(state)).length > 0;
 
 const toSaveData = (state: Saved): SaveData => ({
   version: SAVE_VERSION,
@@ -448,7 +518,8 @@ const toSaveData = (state: Saved): SaveData => ({
   profile: state.profile,
   pretest: state.pretest,
   posttest: state.posttest,
-  rooms: state.progress,
+  rooms: learningRooms(state),
+  maps: { normal: roomsOfMap(state, "normal"), hard: roomsOfMap(state, "hard") },
   battles: state.battles,
   npcs: state.npcs,
   story: state.story,
@@ -505,6 +576,7 @@ export async function connectProgressStore(store?: ProgressStore): Promise<() =>
       state.pretest === previous.pretest &&
       state.posttest === previous.posttest &&
       state.progress === previous.progress &&
+      state.others === previous.others &&
       state.battles === previous.battles &&
       state.npcs === previous.npcs &&
       state.story === previous.story &&

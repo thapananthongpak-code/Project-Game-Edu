@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "giant electric eel sea serpent kaiju facing left, long coiled dark teal body with a yellow belly, crackling cyan lightning arcs along its fins, glowing antennae, wide open jaws with sharp teeth, angry yellow eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 128,
+    "height": 128,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "5cebf1a5-c00f-4adc-a2cb-347d783819f8",
+  "generatedAt": "2026-10-02T14:02:46.537Z"
+}

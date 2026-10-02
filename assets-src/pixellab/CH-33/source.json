@@ -1,0 +1,32 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage girl lab intern with dark hair tied in a high ponytail, white and orange space suit with a clear bubble helmet pushed back on the shoulders, a small oxygen pack, thick gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงานแบบ ข ชุดนักบินอวกาศ 4 ทิศ + เดิน 6 เฟรม",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "animate": {
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk"
+  },
+  "id": "b1b54c65-e368-49de-9660-a44a0191f9a6",
+  "generatedAt": "2026-10-02T14:47:49.468Z",
+  "postprocess": {
+    "removeBackdrop": {
+      "color": "#b4b6bf",
+      "tolerance": 4,
+      "directions": [
+        "south"
+      ],
+      "reason": "เฟรมเดินทิศใต้ทั้ง 6 เฟรมเจนมาพร้อมพื้นหลังสีเทาทึบ จึงลบสีนั้นออกตอนประกอบแผ่นสไปรต์"
+    }
+  }
+}

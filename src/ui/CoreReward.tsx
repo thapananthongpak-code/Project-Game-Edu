@@ -1,7 +1,7 @@
 import { isFieldRoom, topicOf } from "../content";
 import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
-import { earningOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
+import { difficultyOf, earningOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
 import { earnedCredits } from "../state/shop";
 import { art } from "./art";
 import { Stars } from "./Stars";
@@ -20,8 +20,9 @@ export function CoreReward() {
   // เครดิตที่หัวข้อนี้ให้จนถึงตอนรับแกน = ส่วนต่างของเครดิตทั้งหมดเมื่อมีและไม่มีหัวข้อนี้ (รวมตัวคูณของระดับความยากแล้ว)
   const credits = useGameStore((s) => {
     const earning = earningOf(s);
+    const map = difficultyOf(s);
     const { [room]: _mine, ...others } = s.progress;
-    return earnedCredits(earning) - earnedCredits({ ...earning, rooms: others, posttest: field ? null : earning.posttest });
+    return earnedCredits(earning) - earnedCredits({ ...earning, maps: { ...earning.maps, [map]: others }, posttest: field ? null : earning.posttest });
   });
   const battle = useGameStore(pendingBattle);
   // หัวข้อถัดไปของห้องนี้ที่ยังไม่ได้แกน AI (ห้องที่มีหลายหัวข้อ)

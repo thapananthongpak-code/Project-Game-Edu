@@ -278,6 +278,38 @@ canvas {
 .battle-robot-guard {
   animation: battle-guard 0.5s ease-in-out;
 }
+/* ชุดไซเบอร์นินจา: ถอยหลบแล้วกลับมา */
+@keyframes battle-dodge {
+  30% {
+    transform: translate(-22%, -6%);
+    opacity: 0.45;
+  }
+  60% {
+    transform: translate(-22%, 0);
+    opacity: 0.45;
+  }
+}
+.battle-robot-dodge {
+  animation: battle-dodge 0.5s ease-out;
+}
+/* อาวุธของแมพ 2 และ 3 ที่การ์เดียนถือ */
+.battle-weapon-hammer {
+  left: 52%;
+  top: 4%;
+  width: 56%;
+  transform: rotate(18deg);
+}
+.battle-weapon-lance {
+  left: 50%;
+  top: 2%;
+  width: 62%;
+  transform: rotate(24deg);
+}
+.battle-weapon-cannon {
+  left: 46%;
+  top: 22%;
+  width: 60%;
+}
 .battle-kaiju-dash {
   animation: battle-dash-left 0.5s ease-out;
 }

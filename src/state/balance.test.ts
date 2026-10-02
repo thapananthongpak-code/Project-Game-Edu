@@ -7,7 +7,7 @@ import { idealBag } from "./loadout";
 import { CATALOG } from "./shop.config";
 
 const battles = DIFFICULTIES.flatMap((difficulty) => CAMPAIGN[difficulty].battles.map((spec) => ({ difficulty, spec })));
-const FULL = (spec: (typeof battles)[number]["spec"]): Build => ({ ...BARE, gear: { weapon: "sword", armor: "guard", chip: "retry" }, bag: idealBag(spec) });
+const FULL = (spec: (typeof battles)[number]["spec"]): Build => ({ ...BARE, gear: { weapon: "lance", armor: "titan", chip: "retry" }, bag: idealBag(spec) });
 
 describe("ความสมดุลของด่านต่อสู้ (GDD 18)", () => {
   it("ผลของแบบจำลองเหมือนเดิมทุกครั้งที่รัน (สุ่มด้วยเมล็ดคงที่)", () => {
@@ -26,11 +26,12 @@ describe("ความสมดุลของด่านต่อสู้ (GD
     }
   });
 
-  it("พลังที่แนะนำเพิ่มขึ้นตามลำดับด่าน และด่านแรกของระดับง่ายใช้อุปกรณ์เริ่มต้นได้", () => {
+  it("พลังที่แนะนำเพิ่มขึ้นตามลำดับด่าน และด่านแรกของแมพ 1 ใช้อุปกรณ์เริ่มต้นได้", () => {
     for (const difficulty of DIFFICULTIES) {
       const powers = CAMPAIGN[difficulty].battles.map((spec) => spec.power);
       expect(powers).toEqual([...powers].sort((a, b) => a - b));
     }
+    // ด่านแรกแพ้ทางหมัด: อุปกรณ์เริ่มต้นจึงมีพลังถึงที่แนะนำ
     const first = CAMPAIGN.easy.battles[0];
     expect(buildPower("easy", first, BARE)).toBeGreaterThanOrEqual(first.power);
   });
@@ -49,7 +50,7 @@ describe("ความสมดุลของด่านต่อสู้ (GD
     for (const { difficulty, spec } of battles) expect(simulateBattle(difficulty, spec, parBuild(spec), 0.7).firstTry, spec.id).toBeGreaterThanOrEqual(0.8);
   });
 
-  it("พลังไม่ถึงก็ยังสู้ได้: ผู้เล่นที่ตอบถูก 70% ใช้อุปกรณ์เริ่มต้นชนะระดับง่ายและกลางได้ภายในราว 2 รอบ และไม่มีใครติดค้าง", () => {
+  it("พลังไม่ถึงก็ยังสู้ได้: ผู้เล่นที่ตอบถูก 70% ใช้อุปกรณ์เริ่มต้นชนะแมพ 1 และ 2 ได้ภายในราว 2 รอบ และไม่มีใครติดค้าง", () => {
     for (const difficulty of ["easy", "normal"] as const) {
       for (const spec of CAMPAIGN[difficulty].battles) {
         const result = simulateBattle(difficulty, spec, BARE, 0.7);
@@ -59,7 +60,7 @@ describe("ความสมดุลของด่านต่อสู้ (GD
     }
   });
 
-  it("ผู้เล่นที่ตอบถูกครึ่งเดียวแต่มีพลังถึงที่แนะนำ ผ่านระดับง่ายและกลางได้ภายในราว 2 รอบต่อด่าน", () => {
+  it("ผู้เล่นที่ตอบถูกครึ่งเดียวแต่มีพลังถึงที่แนะนำ ผ่านแมพ 1 และ 2 ได้ภายในราว 2 รอบต่อด่าน", () => {
     for (const difficulty of ["easy", "normal"] as const) {
       for (const spec of CAMPAIGN[difficulty].battles) {
         const result = simulateBattle(difficulty, spec, parBuild(spec), 0.5);
@@ -69,7 +70,7 @@ describe("ความสมดุลของด่านต่อสู้ (GD
     }
   });
 
-  it("อุปกรณ์มีผลจริง: พลังถึงที่แนะนำแล้วชนะรอบแรกบ่อยกว่าอุปกรณ์เริ่มต้น และด่านสุดท้ายของทุกระดับต่างกันชัดเจน", () => {
+  it("อุปกรณ์มีผลจริง: พลังถึงที่แนะนำแล้วชนะรอบแรกบ่อยกว่าอุปกรณ์เริ่มต้น และด่านสุดท้ายของทุกแมพต่างกันชัดเจน", () => {
     for (const { difficulty, spec } of battles.filter(({ spec }) => PAR[spec.id].items > 0 || PAR[spec.id].gear.armor !== "plate")) {
       const bare = simulateBattle(difficulty, spec, BARE, 0.6).firstTry;
       const par = simulateBattle(difficulty, spec, parBuild(spec), 0.6).firstTry;

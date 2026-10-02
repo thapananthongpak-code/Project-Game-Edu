@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide stormy seaside harbor at dusk with a power plant, tall cooling towers and crackling power lines in the distance, dark waves, wet concrete pier in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "b5374d19-16eb-4c3d-b2e0-e9f9db6e75a4",
+  "generatedAt": "2026-10-02T14:05:00.251Z"
+}

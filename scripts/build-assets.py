@@ -313,8 +313,21 @@ def anchor_bottom(img, width, height):
     return out
 
 
-def character_sheet(folder):
+def remove_backdrop(frame, backdrop):
+    """เฟรมเดินที่เจนมาบางชุดมีพื้นหลังทึบสีเดียว (postprocess.removeBackdrop ใน source.json): ลบสีนั้นออกให้โปร่งใส"""
+    color = tuple(int(backdrop["color"][i:i + 2], 16) for i in (1, 3, 5))
+    tolerance = backdrop.get("tolerance", 0)
+    px = frame.load()
+    for y in range(frame.height):
+        for x in range(frame.width):
+            if px[x, y][3] and all(abs(px[x, y][c] - color[c]) <= tolerance for c in range(3)):
+                px[x, y] = (0, 0, 0, 0)
+    return frame
+
+
+def character_sheet(folder, postprocess=None):
     """แผ่นสไปรต์ 64×64 ต่อเฟรม: แถว = ทิศ คอลัมน์ 0 = ยืน คอลัมน์ 1.. = เดิน ทุกเฟรมของทิศเดียวกันเลื่อนเท่ากับท่ายืน เท้าจึงไม่กระตุก"""
+    backdrop = (postprocess or {}).get("removeBackdrop")
     sheet = Image.new("RGBA", (SPRITE_SIZE * (1 + WALK_FRAMES), SPRITE_SIZE * len(DIRECTIONS)), (0, 0, 0, 0))
     for row, direction in enumerate(DIRECTIONS):
         idle = Image.open(folder / f"{direction}.png").convert("RGBA")
@@ -324,6 +337,8 @@ def character_sheet(folder):
         dx, dy = FEET_X - (right - left) // 2 - left, FEET_Y - bottom
         frames = [idle] + [Image.open(folder / "walk" / f"{direction}_{i}.png").convert("RGBA") for i in range(WALK_FRAMES)]
         for col, frame in enumerate(frames):
+            if backdrop and col > 0 and direction in backdrop["directions"]:
+                frame = remove_backdrop(frame, backdrop)
             cell = Image.new("RGBA", (SPRITE_SIZE, SPRITE_SIZE), (0, 0, 0, 0))
             cell.paste(frame, (dx, dy), frame)
             sheet.alpha_composite(cell, (col * SPRITE_SIZE, row * SPRITE_SIZE))
@@ -352,7 +367,7 @@ def import_generated(asset, source):
         images[key] = sheet
     elif asset["kind"] == "character":
         key = next(iter(asset["files"]))
-        sheet = character_sheet(folder)
+        sheet = character_sheet(folder, source.get("postprocess"))
         images[key] = sheet
         # ภาพยืนหันหน้าสำหรับหน้าจอ HTML (โปรไฟล์ ร้านค้า หน้าเลือกตัวละคร)
         images[f"{key}_south"] = sheet.crop((0, 0, SPRITE_SIZE, SPRITE_SIZE))
@@ -406,24 +421,28 @@ def art_guide_prompts():
 
 
 # สีชุดของตัวละครชั่วคราว (ใช้เมื่อยังไม่มีภาพจริง)
-OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57", "researcher": "#C9B27C", "commander": "#FFF4DC"}
+OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57", "researcher": "#C9B27C", "commander": "#FFF4DC",
+                 "astronaut": "#F4F4F4", "ninja": "#1A1C2C", "hero": "#2FB8AC"}
 # ตัวละครผู้เล่น: (รหัส, แบบ, ชุด) แบบ a = ผมสั้น แบบ b = ผมหางม้า
 PLAYER_CHARACTERS = [
     ("CH-01", "a", "lab"), ("CH-07", "b", "lab"),
     ("CH-08", "a", "engineer"), ("CH-09", "a", "pilot"), ("CH-10", "a", "guardian"),
     ("CH-11", "b", "engineer"), ("CH-12", "b", "pilot"), ("CH-13", "b", "guardian"),
     ("CH-14", "a", "researcher"), ("CH-15", "a", "commander"), ("CH-16", "b", "researcher"), ("CH-17", "b", "commander"),
+    ("CH-30", "a", "astronaut"), ("CH-31", "a", "ninja"), ("CH-32", "a", "hero"), ("CH-33", "b", "astronaut"), ("CH-34", "b", "ninja"), ("CH-35", "b", "hero"),
 ]
 # ภาพประกอบเนื้อเรื่องที่เจนจาก Pixel Lab: (รหัส, ไฟล์)
 STORY_PANELS = [
     ("ST-01", "st_prologue_1"), ("ST-02", "st_prologue_2"), ("ST-03", "st_prologue_3"), ("ST-04", "st_corridor"), ("ST-05", "st_prologue_5"),
-    ("ST-06", "st_field"), ("ST-08", "st_ending_2"), ("ST-09", "st_ending_3"),
+    ("ST-06", "st_field"), ("ST-08", "st_ending_2"), ("ST-09", "st_ending_3"), ("ST-10", "st_map2"), ("ST-11", "st_map3"),
 ]
 # ภาพประกอบเนื้อเรื่องที่ประกอบจากฉากหลังกับไคจู: ไฟล์ -> (ฉากหลัง, ภาพไคจู)
 STORY_COMPOSITES = {
     **{f"st_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(1, 7)},
     "st_boss_2": ("bg_battle_6", "bt_boss_2"),
-    "st_boss_3": ("bg_battle_6", "bt_boss_3"),
+    "st_boss_3": ("bg_battle_10", "bt_boss_3"),
+    **{f"st_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(7, 10)},
+    "st_boss_4": ("bg_battle_10", "bt_boss_4"),
 }
 # บทนำช่องที่ 4: ทางเดินห้องวิจัย + แกน AI ทั้ง 6 ชิ้นของเกม (เจนภาพให้มีลูกแก้วครบ 6 ไม่ได้ จึงวางภาพแกนจริงทับ)
 STORY_CORES = ("st_prologue_4", "st_corridor")
@@ -434,7 +453,15 @@ STORY_WINS = {
     **{f"st_win_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(1, 6)},
     "st_win_boss_2": ("bg_battle_5", "bt_boss_2"),
     "st_win_boss_3": ("bg_battle_5", "bt_boss_3"),
+    **{f"st_win_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(7, 10)},
+    "st_win_boss_4": ("bg_battle_10", "bt_boss_4"),
 }
+# ไคจูของแมพ 2 และร่างสุดท้ายของบอส: (รหัส, ไฟล์, สีของภาพชั่วคราว) และฉากต่อสู้ของแมพ 2–3: (รหัส, เลขฉาก)
+EXTRA_FOES = [("BT-09", "bt_kaiju_7", "#F6C343"), ("BT-10", "bt_kaiju_8", "#8B9BB4"), ("BT-11", "bt_kaiju_9", "#F6C343"), ("BT-12", "bt_boss_4", "#FFF4DC")]
+EXTRA_BACKDROPS = [("BG-07", 7), ("BG-08", 8), ("BG-09", 9), ("BG-10", 10)]
+# ไอคอนของใช้และโมดูลของพี่บิต (แสดงใน HTML แทนอีโมจิ): (รหัส, ไฟล์)
+ITEM_ICONS = [("IT-01", "it_repair_kit"), ("IT-02", "it_shield"), ("IT-03", "it_overcharge"), ("IT-04", "it_analyzer"), ("IT-05", "it_reboot"),
+              ("IT-06", "it_module_scanner"), ("IT-07", "it_module_laser"), ("IT-08", "it_module_medic"), ("IT-09", "it_credit")]
 KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
 # วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
 ROOM_PROPS = [
@@ -456,18 +483,24 @@ ROOM_PROPS = [
 # คอสตูมของพี่บิต: (รหัส, ชื่อคอสตูม) ไฟล์คือ ch_mentor_<ชื่อ>_south
 BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-24", "gold"), ("CH-25", "explorer"), ("CH-26", "star")]
 # NPC ประจำห้อง: (รหัส, ไฟล์)
-NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director")]
+NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director"),
+        ("NP-07", "npc_smith"), ("NP-08", "npc_ranger"), ("NP-09", "npc_medic"), ("NP-10", "npc_sage"), ("NP-11", "npc_captain"), ("NP-12", "npc_keeper")]
 # เอฟเฟกต์ของฉากต่อสู้: (รหัส, ไฟล์, ทิศที่ภาพหัน)
 BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX-03", "fx_bolt", "east"), ("FX-04", "fx_fireball", "west"), ("FX-05", "fx_shield", "east"), ("FX-06", "fx_spark", "east"),
              ("FX-07", "fx_fist", "east"), ("FX-08", "fx_sword", "east"), ("FX-09", "fx_beam", "east"), ("FX-10", "fx_bite", "west"), ("FX-11", "fx_scrap", "west"),
-             ("FX-12", "fx_pincer", "west"), ("FX-13", "fx_swarm", "west"), ("FX-14", "fx_wave", "west"), ("FX-15", "fx_ruin", "west"), ("FX-16", "fx_stun", "east")]
+             ("FX-12", "fx_pincer", "west"), ("FX-13", "fx_swarm", "west"), ("FX-14", "fx_wave", "west"), ("FX-15", "fx_ruin", "west"), ("FX-16", "fx_stun", "east"),
+             ("FX-17", "fx_hammer", "east"), ("FX-18", "fx_lance", "east"), ("FX-19", "fx_zap", "west"), ("FX-20", "fx_shell", "west"), ("FX-21", "fx_sting", "west"), ("FX-22", "fx_halo", "west")]
 # ไอคอนอุปกรณ์ของการ์เดียน (ร้าน กล่องเก็บไอเทม ด่านต่อสู้): (รหัส, ไฟล์)
 GEAR_ICONS = [("GR-01", "gr_fist"), ("GR-02", "gr_sword"), ("GR-03", "gr_blaster"), ("GR-04", "gr_armor_plate"), ("GR-05", "gr_armor_heavy"), ("GR-06", "gr_armor_guard"),
-              ("GR-07", "gr_chip_retry"), ("GR-08", "gr_chip_charger")]
+              ("GR-07", "gr_chip_retry"), ("GR-08", "gr_chip_charger"), ("GR-09", "gr_hammer"), ("GR-10", "gr_lance"), ("GR-11", "gr_cannon"), ("GR-12", "gr_armor_titan")]
 GEAR_SETTINGS = {"no_background": True, "outline": "single color black outline", "shading": "basic shading", "detail": "medium detail"}
 # ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
 DECOR_PROPS = [
-    ("PR-Q01", "pr_pickup_bolt", (32, 32)), ("PR-Q02", "pr_pickup_gear", (32, 32)),
+    ("PR-Q01", "pr_pickup_bolt", (32, 32)), ("PR-Q02", "pr_pickup_gear", (32, 32)), ("PR-Q03", "pr_pickup_beacon", (32, 32)),
+    ("PR-D13", "pr_decor_neon", (64, 32)), ("PR-D14", "pr_decor_clock", (64, 32)), ("PR-D15", "pr_decor_banner", (64, 32)),
+    ("PR-D16", "pr_decor_aquarium", (64, 64)), ("PR-D17", "pr_decor_arcade", (64, 64)), ("PR-D18", "pr_decor_statue", (64, 64)), ("PR-D19", "pr_decor_sofa", (64, 64)), ("PR-D20", "pr_decor_fountain", (64, 64)),
+    ("PR-D21", "pr_decor_robot_pet", (32, 64)), ("PR-D22", "pr_decor_telescope", (32, 64)), ("PR-D23", "pr_decor_flag", (32, 64)),
+    ("PR-H06", "pr_travel_board", (64, 64)), ("PR-H07", "pr_decor_board", (32, 64)),
     ("PR-D01", "pr_decor_window", (64, 32)), ("PR-D02", "pr_decor_wall_screens", (64, 32)), ("PR-D03", "pr_decor_rug", (64, 64)),
     ("PR-D04", "pr_decor_crates", (32, 64)), ("PR-D05", "pr_decor_vending", (32, 64)), ("PR-D06", "pr_decor_lamp", (32, 64)),
     ("PR-D07", "pr_decor_tool_rack", (64, 32)), ("PR-D08", "pr_decor_energy_tanks", (64, 64)), ("PR-D09", "pr_decor_bookshelf", (64, 64)),
@@ -621,6 +654,10 @@ def main():
                 lambda: draw_floor("#C9D6E0", MIST), lambda: draw_wall(SLATE, INK, stripe=YELLOW)),
         tileset("TS-07", "ts_hangar", "ไทล์เซตโรงเก็บหุ่น", True,
                 lambda: draw_floor(STEEL, SLATE), lambda: draw_wall(SLATE, INK, stripe=YELLOW)),
+        tileset("TS-08", "ts_outpost", "ไทล์เซตโถงของแมพ 2 (ศูนย์วิจัยภาคสนาม)", True,
+                lambda: draw_floor("#C9B27C", "#8B6B3D"), lambda: draw_wall("#5B6B3A", INK, stripe="#F08C2E")),
+        tileset("TS-09", "ts_fortress", "ไทล์เซตโถงของแมพ 3 (ป้อมปราการ)", True,
+                lambda: draw_floor("#333C57", INK), lambda: draw_wall(INK, "#1A1C2C", stripe=RED)),
         prop("PR-C01", "pr_door_locked", (32, 64), lambda: draw_door(False)),
         prop("PR-C02", "pr_door_open", (32, 64), lambda: draw_door(True)),
         prop("PR-C03", "pr_core_pedestal", (32, 64), draw_pedestal),
@@ -645,6 +682,9 @@ def main():
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "gear", web=True) for asset_id, base in GEAR_ICONS],
         image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         image("BT-08", "bt_boss_3", (128, 128), lambda: draw_blob(128, INK, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
+        *[image(asset_id, base, (128, 128), (lambda color=color: draw_blob(128, color, INK)), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True) for asset_id, base, color in EXTRA_FOES],
+        *[image(asset_id, f"bg_battle_{n}", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "battle", web=True) for asset_id, n in EXTRA_BACKDROPS],
+        *[image(asset_id, base, (64, 64), lambda: draw_blob(64, YELLOW, PAPER), "icon", GEAR_SETTINGS, "items", web=True) for asset_id, base in ITEM_ICONS],
         *[image(asset_id, key, (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "story", web=True) for asset_id, key in STORY_PANELS],
         *[backdrop(n) for n in ROOM_COLORS],
         image("PT-01", "pt_professor", (64, 64), lambda: draw_block(64, 64, SKIN, PAPER), "portrait",

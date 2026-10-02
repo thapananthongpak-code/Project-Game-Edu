@@ -3,7 +3,7 @@ import { course } from "../content";
 import { buildAssessment, seededRng } from "../content/choices";
 import { fmt } from "../content/ui-strings";
 import { CLASS_CODE_PATTERN, LocalProgressStore, normalizeClassCode } from "../state/progressStore";
-import { answersCsv, itemsCsv, type Player, type PlayerRecord, studentsCsv, summarizeGain, summarizeRooms, summarizeStudent, type StudentSummary, toPlayers, writtenAnswers } from "./analytics";
+import { itemsCsv, type Player, type PlayerRecord, reviewScores, studentsCsv, summarizeGain, summarizeRooms, summarizeStudent, type StudentSummary, toPlayers } from "./analytics";
 import { t } from "./strings";
 
 type Tab = keyof typeof t.tabs;
@@ -172,7 +172,7 @@ function StudentsTable({ players }: { players: Player[] }) {
 }
 
 function StudentRow({ player, summary: s, open, onToggle }: { player: Player; summary: StudentSummary; open: boolean; onToggle: () => void }) {
-  const answers = open ? writtenAnswers(player.save) : [];
+  const reviews = open ? reviewScores(player.save) : [];
   return (
     <>
       <tr className={s.archived ? "bg-mist/40" : "bg-paper"} data-testid="teacher-student" data-name={s.name}>
@@ -226,20 +226,16 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
               </p>
             )}
             <h3 className="font-bold">{t.students.answers}</h3>
-            {answers.length === 0 ? (
+            {reviews.length === 0 ? (
               <p className="text-slate">{t.students.noAnswers}</p>
             ) : (
-              <dl className="mt-1 flex flex-col gap-2" data-testid="teacher-answers">
-                {answers.map((answer, i) => (
-                  <div key={i}>
-                    <dt className="font-semibold text-slate">
-                      {fmt(t.students.roomLabel, { n: answer.room })} · {answer.question}
-                      {answer.label && ` — ${answer.label}`}
-                    </dt>
-                    <dd className="whitespace-pre-wrap">{answer.answer}</dd>
-                  </div>
+              <ul className="mt-1 flex flex-wrap gap-2" data-testid="teacher-answers">
+                {reviews.map((review) => (
+                  <li key={review.room} className="rounded border-2 border-ink bg-paper px-2 py-0.5">
+                    {fmt(t.students.roomLabel, { n: review.room })}: <span className="font-bold">{review.correct}/{review.total}</span>
+                  </li>
                 ))}
-              </dl>
+              </ul>
             )}
           </td>
         </tr>
@@ -510,9 +506,6 @@ function Dashboard({ session, onSession }: { session: Session; onSession: (sessi
         </div>
         <button type="button" className="btn btn-ghost !min-h-10 text-sm" data-testid="teacher-export-students" onClick={() => downloadCsv(`students-${suffix}.csv`, studentsCsv(players, { fixed: t.csv.students, pre: t.csv.pre, post: t.csv.post, stars: t.csv.stars, minutes: t.csv.minutes }))}>
           {t.export.students}
-        </button>
-        <button type="button" className="btn btn-ghost !min-h-10 text-sm" data-testid="teacher-export-answers" onClick={() => downloadCsv(`answers-${suffix}.csv`, answersCsv(players, t.csv.answers))}>
-          {t.export.answers}
         </button>
         <button type="button" className="btn btn-ghost !min-h-10 text-sm" data-testid="teacher-export-items" onClick={() => downloadCsv(`items-${suffix}.csv`, itemsCsv(gain, t.csv.items))}>
           {t.export.items}

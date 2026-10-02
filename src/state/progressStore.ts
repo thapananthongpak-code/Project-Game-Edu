@@ -6,19 +6,19 @@
 // createProgressStore() เลือกตาม VITE_SUPABASE_URL และ VITE_SUPABASE_ANON_KEY (ดู docs/TEACHER_GUIDE.md และ supabase/schema.sql)
 import { course } from "../content";
 import type { FormId } from "../content/schema";
-import { DIFFICULTIES, type Difficulty } from "./campaign";
+import { DIFFICULTIES, type Difficulty, topicsOf } from "./campaign";
 import { emptyField, type FieldProgress } from "./field";
-import { type Armor, ARMORS, BAG_SIZE, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
-import { emptyNpc, isNpcId, type NpcRecord, NPCS } from "./npcs";
-import { MAX_ANSWER_CHARS, MAX_NAME_CHARS } from "./rules";
-import { AVATARS, type Avatar, BIT_SKINS, type BitSkin, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, SUPPLIES, type Supply } from "./shop.config";
+import { type Armor, ARMORS, bagSizeOf, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
+import { isNpcId, type NpcRecord, NPCS } from "./npcs";
+import { MAX_NAME_CHARS } from "./rules";
+import { AVATARS, type Avatar, BIT_SKINS, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply } from "./shop.config";
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 export interface Profile {
   /** ชื่อที่แสดง แนะนำให้ใช้ชื่อเล่นหรือเลขที่ ไม่ใช้ชื่อจริง */
   name: string;
-  /** ระดับความยากของเกม เลือกตอนเริ่มเกม กำหนดจำนวนห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
+  /** แมพที่ผู้เล่นอยู่ตอนนี้ (easy = แมพ 1, normal = แมพ 2, hard = แมพ 3) กำหนดจำนวนห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
   difficulty: Difficulty;
   /** รหัสห้องเรียนที่ครูกำหนด ว่าง = เล่นคนเดียว ไม่ส่งข้อมูลให้ครู */
   classCode: string;
@@ -53,8 +53,12 @@ export interface ShopState {
   weapon: Weapon;
   armor: Armor;
   chip: Chip;
-  /** ของใช้ที่เลือกพกเข้าด่านต่อสู้ ไม่เกิน BAG_SIZE ชิ้น ที่เหลืออยู่ในกล่องเก็บไอเทม (supplies) */
+  /** ของใช้ที่เลือกพกเข้าด่านต่อสู้ ไม่เกินขนาดกระเป๋า ที่เหลืออยู่ในกล่องเก็บไอเทม (supplies) */
   loadout: Supply[];
+  /** จำนวนของใช้ที่ซื้อจากร้านของแต่ละแมพไปแล้ว คีย์คือ "<แมพ>:<ของใช้>" (ร้านมีของจำกัดต่อแมพ) */
+  bought: Record<string, number>;
+  /** ของตกแต่งที่วางในโถงของแต่ละแมพ: รหัสช่อง -> ของตกแต่ง (GDD ข้อ 19) */
+  decor: Partial<Record<Difficulty, Record<string, Decor>>>;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -79,7 +83,8 @@ export interface RoomProgress {
   summary: { checks: number; correct: number; totalTimeMs: number; repairVisits: number } | null;
   /** ชิ้นที่ตอบผิดในมินิเกม (ข้อความบนการ์ด -> จำนวนครั้ง) สะสมทุกรอบ สำหรับครู */
   missed: Record<string, number>;
-  reviewAnswers: string[];
+  /** ผลของคำถามทบทวนแบบเลือกตอบ (จับคู่ เชื่อมโยง ถูกหรือผิด): จำนวนข้อที่ตอบถูกตั้งแต่ครั้งแรก (เกมไม่เก็บข้อความที่ผู้เรียนเขียน) */
+  review: { correct: number; total: number } | null;
   reviewDone: boolean;
   /** ภารกิจภาคสนาม (เฉพาะห้องสุดท้าย) */
   field: FieldProgress | null;
@@ -99,7 +104,10 @@ export interface SaveData {
   profile: Profile | null;
   pretest: AssessmentResult | null;
   posttest: AssessmentResult | null;
+  /** ความคืบหน้ารายหัวข้อของแมพ 1 (แมพเรียน): ใช้กับใบประกาศและแดชบอร์ดผู้สอน */
   rooms: Record<number, RoomProgress>;
+  /** ความคืบหน้ารายหัวข้อของแมพ 2 และ 3 (ทบทวนที่ระดับสูงขึ้น) */
+  maps: { normal: Record<number, RoomProgress>; hard: Record<number, RoomProgress> };
   /** ผลของด่านต่อสู้ คีย์คือรหัสด่านใน src/state/campaign.ts */
   battles: Record<string, BattleRecord>;
   /** กิจกรรมเสริมกับ NPC ประจำห้อง คีย์คือรหัส NPC ใน src/state/npcs.ts */
@@ -123,7 +131,7 @@ export const emptyRoom = (): RoomProgress => ({
   outcome: null,
   summary: null,
   missed: {},
-  reviewAnswers: [],
+  review: null,
   reviewDone: false,
   field: null,
   core: false,
@@ -134,9 +142,23 @@ export const emptyRoom = (): RoomProgress => ({
 
 export const emptyBattle = (): BattleRecord => ({ won: false, wins: 0, sorties: 0, asked: 0, correct: 0 });
 
-export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>, outfit: "lab", paint: "standard", bit: "classic", ...DEFAULT_GEAR, loadout: [] });
+/** ของตกแต่งที่วางไว้ให้ตั้งแต่เริ่มในโถงของแมพ 1 (ช่องตกแต่งอยู่ใน src/game/maps.ts) */
+export const STARTER_PLACEMENT: Record<string, Decor> = { wall1: "window", small1: "plant" };
 
-export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, battles: {}, npcs: {}, story: [], shop: emptyShop() });
+export const emptyShop = (): ShopState => ({
+  spent: 0,
+  owned: [],
+  supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>,
+  outfit: "lab",
+  paint: "standard",
+  bit: "classic",
+  ...DEFAULT_GEAR,
+  loadout: [],
+  bought: {},
+  decor: { easy: { ...STARTER_PLACEMENT } },
+});
+
+export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, maps: { normal: {}, hard: {} }, battles: {}, npcs: {}, story: [], shop: emptyShop() });
 
 // ---------------------------------------------------------------- อ่านข้อมูลที่บันทึกไว้
 // ข้อมูลที่อ่านกลับมาอาจไม่ครบหรือผิดรูป (รุ่นเก่า ไฟล์เสีย หรือถูกแก้จากนอกเกม) ทุกช่องจึงถูกตรวจชนิดและเติมค่าเริ่มต้น
@@ -158,7 +180,8 @@ function fieldOf(raw: unknown): FieldProgress | null {
     ready: data.ready === true,
     steps: base.steps.map((_, i) => list(data.steps)[i] === true),
     results: base.results.map((_, i) => ({ images: whole(object(list(data.results)[i]).images), correct: whole(object(list(data.results)[i]).correct) })),
-    notes: base.notes.map((_, i) => text(list(data.notes)[i], MAX_ANSWER_CHARS)),
+    // รุ่นก่อนเก็บข้อความที่ผู้เรียนเขียน: ข้อที่เคยเขียนแล้วถือว่าคิดทบทวนแล้ว ข้อความไม่ถูกเก็บต่อ
+    reflected: base.reflected.map((_, i) => list(data.reflected)[i] === true || (typeof list(data.notes)[i] === "string" && (list(data.notes)[i] as string).trim() !== "")),
     evidence: {
       image: typeof evidence.image === "string" && evidence.image.startsWith("data:image/") ? evidence.image : null,
       outsideGame: evidence.outsideGame === true,
@@ -180,7 +203,7 @@ function roomOf(raw: unknown): RoomProgress {
     outcome: outcome && { totalMisses: count(outcome.totalMisses), requiredRepair: outcome.requiredRepair === true },
     summary: summary && { checks: count(summary.checks), correct: count(summary.correct), totalTimeMs: count(summary.totalTimeMs), repairVisits: count(summary.repairVisits) },
     missed,
-    reviewAnswers: Array.isArray(data.reviewAnswers) ? data.reviewAnswers.map((answer) => text(answer, MAX_ANSWER_CHARS)) : [],
+    review: data.review === null || data.review === undefined ? null : { correct: Math.floor(count(object(data.review).correct)), total: Math.floor(count(object(data.review).total)) },
     reviewDone: data.reviewDone === true,
     field: fieldOf(data.field),
     core: data.core === true,
@@ -211,7 +234,7 @@ function shopOf(raw: unknown): ShopState {
   const base = emptyShop();
   const items = new Map(CATALOG.map((item) => [item.id, item]));
   const owned = [...new Set(Array.isArray(data.owned) ? data.owned.filter((id): id is string => typeof id === "string" && items.has(id) && items.get(id)?.kind !== "supply") : [])];
-  const has = (kind: "outfit" | "paint" | "bit" | "weapon" | "armor" | "chip", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
+  const has = (kind: "outfit" | "paint" | "bit" | "weapon" | "armor" | "chip" | "decor", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
   const supplies = { ...base.supplies };
   for (const item of CATALOG) if (item.kind === "supply") supplies[item.value] = Math.min(item.max, Math.floor(count(object(data.supplies)[item.value])));
   const outfit = OUTFITS.find((o) => o === data.outfit) ?? base.outfit;
@@ -223,19 +246,39 @@ function shopOf(raw: unknown): ShopState {
   // กระเป๋า: ของแต่ละชนิดพกได้ไม่เกินจำนวนที่มีในกล่อง ข้อมูลรุ่นที่ยังไม่มีกระเป๋าได้ของในกล่องเรียงตามรายการจนเต็ม
   const packed: Supply[] = [];
   const wanted = Array.isArray(data.loadout) ? data.loadout.filter((s): s is Supply => SUPPLIES.some((supply) => supply === s)) : SUPPLIES.flatMap((supply) => Array.from({ length: supplies[supply] }, () => supply));
-  for (const supply of wanted) if (packed.length < BAG_SIZE && packed.filter((s) => s === supply).length < supplies[supply]) packed.push(supply);
+  const worn = outfit === base.outfit || has("outfit", outfit) ? outfit : base.outfit;
+  for (const supply of wanted) if (packed.length < bagSizeOf(worn) && packed.filter((s) => s === supply).length < supplies[supply]) packed.push(supply);
+  // ของใช้ที่ซื้อจากร้านของแต่ละแมพ: ข้อมูลรุ่นก่อนไม่มี จึงเริ่มนับใหม่
+  const bought: Record<string, number> = {};
+  for (const [key, value] of Object.entries(object(data.bought))) {
+    const [map, supply] = key.split(":");
+    if (DIFFICULTIES.some((d) => d === map) && SUPPLIES.some((s) => s === supply) && count(value) > 0) bought[key] = Math.floor(count(value));
+  }
+  // ของตกแต่ง: วางได้เฉพาะของที่มี (ของเริ่มต้นหรือของที่ซื้อแล้ว) ชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ ข้อมูลรุ่นก่อนได้ของเริ่มต้นวางไว้ให้
+  const decor: ShopState["decor"] = {};
+  if (data.decor === undefined) decor.easy = { ...STARTER_PLACEMENT };
+  for (const map of DIFFICULTIES) {
+    const placed: Record<string, Decor> = {};
+    for (const [slot, value] of Object.entries(object(object(data.decor)[map])).slice(0, 12)) {
+      const item = DECORS.find((d) => d === value);
+      if (/^[a-z0-9]{1,12}$/.test(slot) && item && (STARTER_DECOR.includes(item) || has("decor", item)) && !Object.values(placed).includes(item)) placed[slot] = item;
+    }
+    if (data.decor !== undefined && Object.keys(placed).length > 0) decor[map] = placed;
+  }
   return {
     spent: Math.floor(count(data.spent)),
     owned,
     supplies,
     // สวมได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว
-    outfit: outfit === base.outfit || has("outfit", outfit) ? outfit : base.outfit,
+    outfit: worn,
     paint: paint === base.paint || has("paint", paint) ? paint : base.paint,
     bit: bit === base.bit || has("bit", bit) ? bit : base.bit,
     weapon: weapon === base.weapon || has("weapon", weapon) ? weapon : base.weapon,
     armor: armor === base.armor || has("armor", armor) ? armor : base.armor,
     chip: chip === base.chip || has("chip", chip) ? chip : base.chip,
     loadout: packed,
+    bought,
+    decor,
   };
 }
 
@@ -248,7 +291,16 @@ function npcsOf(raw: unknown): Record<string, NpcRecord> {
     const found = [...new Set(Array.isArray(data.found) ? data.found.filter((n): n is number => Number.isInteger(n) && n >= 0 && n < spec.pickups) : [])];
     // ส่งของได้เมื่อเก็บครบเท่านั้น
     const done = spec.role === "quest" && data.done === true && found.length >= spec.pickups;
-    npcs[id] = { ...emptyNpc(), accepted: data.accepted === true || found.length > 0 || done, found, done, best: Math.min(spec.questions, Math.floor(count(data.best))), tries: Math.floor(count(data.tries)) };
+    const tries = Math.floor(count(data.tries));
+    npcs[id] = {
+      met: data.met === true || data.accepted === true || found.length > 0 || done || tries > 0,
+      accepted: data.accepted === true || found.length > 0 || done,
+      found,
+      done,
+      best: Math.min(spec.questions, Math.floor(count(data.best))),
+      tries,
+      gifted: spec.role === "gift" && data.gifted === true,
+    };
   }
   return npcs;
 }
@@ -259,7 +311,7 @@ function npcsOf(raw: unknown): Record<string, NpcRecord> {
  */
 const withWinBeats = (story: string[], battles: Record<string, BattleRecord>): string[] => [...new Set([...story, ...Object.entries(battles).filter(([, record]) => record.won).map(([id]) => `win-${id}`)])];
 
-const MAX_STORY_BEATS = 40;
+const MAX_STORY_BEATS = 60;
 const storyOf = (raw: unknown): string[] => [...new Set(Array.isArray(raw) ? raw.filter((beat): beat is string => typeof beat === "string" && beat.length <= 40) : [])].slice(0, MAX_STORY_BEATS);
 
 const roomsOf = (raw: unknown): Record<number, RoomProgress> => {
@@ -298,25 +350,44 @@ function assessmentOf(raw: unknown): AssessmentResult | null {
   };
 }
 
+/**
+ * ข้อมูลรุ่น 5–7: ผู้เล่นเลือก "ระดับความยาก" ตอนเริ่มเกมและเล่นระดับเดียว ตอนนี้ระดับเป็นแมพที่เล่นต่อกัน
+ * ผู้เล่นที่เคยเลือกระดับกลางหรือยาก: ความคืบหน้าเดิมเก็บเป็นบันทึกการเรียน (rooms) และเป็นความคืบหน้าของแมพที่ตรงกับระดับนั้นด้วย
+ * (หัวข้อ 6 ไม่มีในแมพ 2 และ 3) ผู้เล่นอยู่ที่แมพนั้นต่อ และกลับไปเล่นแมพก่อนหน้าได้ บทส่งท้ายที่ดูแล้วเป็นของแมพนั้น
+ */
+function legacyMaps(profile: Profile | null, rooms: Record<number, RoomProgress>, story: string[]): Pick<SaveData, "maps" | "story"> {
+  const maps: SaveData["maps"] = { normal: {}, hard: {} };
+  const map = profile?.difficulty ?? "easy";
+  if (map === "easy") return { maps, story };
+  for (const topic of topicsOf(map)) if (rooms[topic]) maps[map][topic] = { ...rooms[topic], field: null };
+  return { maps, story: story.map((beat) => (beat === "ending" ? `ending-${map}` : beat)) };
+}
+
 /** แปลงข้อมูลที่อ่านได้ให้เป็น SaveData รุ่นปัจจุบัน คืน null ถ้าอ่านไม่ออก */
 export function migrateSave(raw: unknown): SaveData | null {
   if (!raw || typeof raw !== "object") return null;
   const data = raw as Raw;
   const hasRooms = typeof data.rooms === "object" && data.rooms !== null;
+  // รุ่น 7: ระดับความยากเป็นโหมดที่เลือกตอนเริ่มเกม ยังไม่มีแมพต่อเนื่อง ของตกแต่งโถง และคำถามทบทวนเป็นการเขียนตอบ (ข้อความที่เขียนไม่ถูกเก็บต่อ)
   // รุ่น 6: ยังไม่มีอุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (ของในกล่องถูกจัดลงกระเป๋าให้จนเต็ม)
   // รุ่น 5: ยังไม่มี NPC ประจำห้อง คอสตูมของพี่บิต และภาพเนื้อเรื่องหลังชนะด่าน ช่องอื่นเหมือนรุ่นปัจจุบัน
-  if ((data.version === SAVE_VERSION || data.version === 6 || data.version === 5) && hasRooms) {
+  if ((data.version === SAVE_VERSION || data.version === 7 || data.version === 6 || data.version === 5) && hasRooms) {
     const battles = battlesOf(data.battles);
+    const profile = profileOf(data.profile);
+    const rooms = roomsOf(data.rooms);
+    const seen = data.version === 5 ? withWinBeats(storyOf(data.story), battles) : storyOf(data.story);
+    const worlds = data.version === SAVE_VERSION ? { maps: { normal: roomsOf(object(data.maps).normal), hard: roomsOf(object(data.maps).hard) }, story: seen } : legacyMaps(profile, rooms, seen);
     return {
       version: SAVE_VERSION,
       updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : emptySave().updatedAt,
-      profile: profileOf(data.profile),
+      profile,
       pretest: assessmentOf(data.pretest),
       posttest: assessmentOf(data.posttest),
-      rooms: roomsOf(data.rooms),
+      rooms,
+      maps: worlds.maps,
       battles,
       npcs: npcsOf(data.npcs),
-      story: data.version === 5 ? withWinBeats(storyOf(data.story), battles) : storyOf(data.story),
+      story: worlds.story,
       shop: shopOf(data.shop),
     };
   }
@@ -334,6 +405,7 @@ export function migrateSave(raw: unknown): SaveData | null {
       pretest: assessmentOf(data.pretest),
       posttest: assessmentOf(data.posttest),
       rooms: roomsOf(data.rooms),
+      maps: { normal: {}, hard: {} },
       battles,
       npcs: {},
       story: withWinBeats(storyOf(data.story), battles),

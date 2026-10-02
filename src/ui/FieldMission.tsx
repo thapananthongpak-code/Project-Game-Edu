@@ -2,7 +2,6 @@ import { course, topicOf } from "../content";
 import { fmt, ui } from "../content/ui-strings";
 import { accuracyPercent, emptyField, type FieldProgress, fieldStatus, fieldTotals, validCorrect, validImages } from "../state/field";
 import { roomProgress, useGameStore } from "../state/gameStore";
-import { MAX_ANSWER_CHARS, MIN_ANSWER_CHARS } from "../state/rules";
 import { useDialog } from "./useDialog";
 
 const quest = course.finalQuest;
@@ -24,7 +23,7 @@ const toNumber = (text: string): number | null => (text.trim() === "" ? null : N
 const percent = (value: number | null): string => (value === null ? "—" : `${value}%`);
 
 /**
- * ภารกิจภาคสนามห้อง 6 (GDD ข้อ 6): เปิดเครื่องมือจริงในแท็บใหม่ ติ๊กขั้นตอน กรอกตารางผล บันทึก และแนบหลักฐาน
+ * ภารกิจภาคสนามห้อง 6 (GDD ข้อ 6): เปิดเครื่องมือจริงในแท็บใหม่ ติ๊กขั้นตอน กรอกตารางผล ติ๊กว่าคิดทบทวนประเด็นของบันทึกแล้ว (ไม่มีการเขียนตอบในเกม) และแนบหลักฐาน
  * ข้อความทั้งหมดมาจาก topics ของห้องนี้และ finalQuest ใน course.json เกมตรวจสิ่งที่เกิดบนเว็บภายนอกไม่ได้ ครูตรวจจากหลักฐาน
  */
 export function FieldMission() {
@@ -36,7 +35,7 @@ export function FieldMission() {
   const topic = topicOf(room);
   const table = topic.tables[0];
   const field: FieldProgress = saved ?? emptyField(quest);
-  const status = fieldStatus(field, quest, MIN_ANSWER_CHARS);
+  const status = fieldStatus(field, quest);
   const totals = fieldTotals(field.results, quest);
   const { classes, testsPerClass } = quest.resultTable;
   // แถวรวมใช้ชื่อตามตารางในเอกสาร: แถวที่ไม่ใช่ชื่อคลาส
@@ -180,12 +179,19 @@ export function FieldMission() {
               <h3 className="font-extrabold text-teal-dark">{quest.notes.label}</h3>
               <span className={done(status.notes)}>{quest.notes.label}</span>
             </div>
+            <p className="text-xs text-slate">{ui.field.reflectNote}</p>
             {quest.notes.prompts.map((prompt, i) => (
-              <label key={prompt} className="flex flex-col gap-1">
-                <span className="text-sm font-semibold">{prompt}</span>
-                <textarea rows={2} maxLength={MAX_ANSWER_CHARS} value={field.notes[i] ?? ""} placeholder={ui.review.placeholder} data-testid="field-note" onChange={(event) => update({ notes: field.notes.map((n, j) => (j === i ? event.target.value : n)) })} className="select-text rounded-md border-2 border-ink bg-cream p-2 text-base" />
-                <span className={`text-xs ${(field.notes[i] ?? "").trim().length >= MIN_ANSWER_CHARS ? "text-correct-dark" : "text-slate"}`}>
-                  {fmt(ui.review.minChars, { n: MIN_ANSWER_CHARS, count: (field.notes[i] ?? "").trim().length })}
+              <label key={prompt} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md border-2 border-ink bg-cream px-2 py-1">
+                <input
+                  type="checkbox"
+                  className="h-6 w-6 shrink-0"
+                  checked={field.reflected[i] ?? false}
+                  data-testid="field-note"
+                  onChange={(event) => update({ reflected: field.reflected.map((value, j) => (j === i ? event.target.checked : value)) })}
+                />
+                <span className="flex flex-col">
+                  <span className="font-semibold">{prompt}</span>
+                  <span className="text-xs text-slate">{ui.field.reflect}</span>
                 </span>
               </label>
             ))}

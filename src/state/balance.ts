@@ -3,7 +3,7 @@
 // balance.test.ts ใช้ไฟล์นี้ยืนยันว่าเกมไม่ยากหรือง่ายเกินไป และ npm run balance พิมพ์ตารางเต็ม
 import { type ActiveSupply, applySupply, type BattleSetup, type BattleState, battleSetup, resolveAnswer, retryCarry, startBattle, strikeOf, threatOf } from "./battle";
 import type { BattleSpec, Difficulty } from "./campaign";
-import { DEFAULT_GEAR, type Gear, guardianPower } from "./gear";
+import { DEFAULT_GEAR, type Gear, guardianPower, WEAPON } from "./gear";
 import { idealBag } from "./loadout";
 import type { BitModule, Outfit, Supply } from "./shop.config";
 
@@ -47,24 +47,34 @@ const gear = (weapon: Gear["weapon"], armor: Gear["armor"], chip: Gear["chip"]):
  * พลังที่แนะนำของด่าน (BattleSpec.power) ตั้งจากค่าพลังรวมของชุดนี้ items = จำนวนของใช้ที่พกตามคำแนะนำของพี่บิต
  */
 export const PAR: Record<string, { gear: Gear; items: number }> = {
+  // แมพ 1: หมัดได้เปรียบด่านแรกอยู่แล้ว จากนั้นซื้อดาบ เกราะหนัก ปืน และชิปเร่งพลังตามลำดับ สลับอาวุธตามจุดอ่อนของไคจู
   k1: { gear: DEFAULT_GEAR, items: 0 },
-  k2: { gear: gear("fist", "heavy", "none"), items: 0 },
-  k3: { gear: gear("fist", "heavy", "none"), items: 2 },
-  k4: { gear: gear("sword", "heavy", "none"), items: 1 },
-  k5: { gear: gear("sword", "heavy", "none"), items: 3 },
+  k2: { gear: gear("sword", "plate", "none"), items: 0 },
+  k3: { gear: gear("sword", "heavy", "none"), items: 2 },
+  k4: { gear: gear("fist", "heavy", "none"), items: 3 },
+  k5: { gear: gear("blaster", "heavy", "none"), items: 2 },
   omega: { gear: gear("sword", "heavy", "charger"), items: 3 },
-  n1: { gear: gear("fist", "heavy", "none"), items: 1 },
-  n2: { gear: gear("blaster", "heavy", "none"), items: 3 },
-  n3: { gear: gear("blaster", "heavy", "charger"), items: 2 },
-  "omega-n": { gear: gear("blaster", "heavy", "charger"), items: 3 },
-  end: { gear: gear("blaster", "guard", "none"), items: 3 },
+  // แมพ 2: ของจากแมพ 1 ติดตัวมา แล้วซื้อค้อน เกราะสะท้อน หอกของลุงเหล็ก และชิปคิดทบทวน
+  n1: { gear: gear("sword", "heavy", "charger"), items: 3 },
+  n2: { gear: gear("hammer", "heavy", "charger"), items: 3 },
+  n3: { gear: gear("blaster", "guard", "charger"), items: 3 },
+  "omega-n": { gear: gear("lance", "guard", "retry"), items: 3 },
+  // แมพ 3: ปืนใหญ่พลาสม่า (ได้เปรียบร่างแรก) กับของที่มีมาจากแมพ 2
+  end: { gear: gear("cannon", "guard", "retry"), items: 3 },
 };
 
 export const parBuild = (spec: BattleSpec): Build => ({ ...BARE, gear: PAR[spec.id].gear, bag: idealBag(spec).slice(0, PAR[spec.id].items) });
 
 /** ค่าพลังรวมของชุดอุปกรณ์หนึ่งในด่านหนึ่ง */
 export const buildPower = (difficulty: Difficulty, spec: BattleSpec, build: Build): number =>
-  guardianPower({ robotMax: battleSetup(difficulty, spec, build.outfit, build.modules, build.gear).robotMax, gear: build.gear, outfit: build.outfit, modules: build.modules, bag: build.bag.length });
+  guardianPower({
+    robotMax: battleSetup(difficulty, spec, build.outfit, build.modules, build.gear).robotMax,
+    gear: build.gear,
+    outfit: build.outfit,
+    modules: build.modules,
+    bag: build.bag.length,
+    advantage: spec.forms.filter((form) => form.weak === WEAPON[build.gear.weapon].class).length / spec.forms.length,
+  });
 
 const lift = (p: number, by: number) => p + (1 - p) * by;
 
@@ -89,16 +99,18 @@ export function simulateSortie(setup: BattleSetup, accuracy: number, bag: readon
   for (let guard = 0; guard < 400 && state.status === "fighting"; guard++) {
     const threat = threatOf(setup, state);
     const strike = strikeOf(setup, state);
-    // ซ่อมเมื่อพลังเหลือน้อยและไม่เสียของ เปิดโล่เมื่อการโจมตีถัดไปหนักหรือถึงตาย ใช้แบตเตอรี่เสริมกับการโจมตีที่แรงที่สุดที่เห็น
-    if (state.robotHp <= 3 && setup.robotMax - state.robotHp >= Math.min(setup.repairHeal, 3)) state = use(state, "repair-kit");
-    if (threat.saved === null && (threat.heavy || state.robotHp <= threat.damage)) state = use(state, "shield");
-    if (!strike.armorBreak && !strike.crit && !strike.opening && (strike.counter || state.kaijuHp >= 2)) state = use(state, "overcharge");
+    // ใช้ของได้ตาละ 1 ชิ้น ตามลำดับความจำเป็น: ซ่อมเมื่อพลังเหลือน้อยและไม่เสียของ เปิดโล่เมื่อการโจมตีถัดไปหนักหรือถึงตาย
+    // ใช้แบตเตอรี่เสริมกับการโจมตีที่แรงที่สุดที่เห็น ชิปวิเคราะห์ตอนคับขันและไม่มีสิทธิ์ขอข้อมูลแล้ว
+    const before = state;
     const tense = state.robotHp <= 2 || threat.heavy;
     let p = accuracy;
+    if (state.robotHp <= 3 && setup.robotMax - state.robotHp >= Math.min(setup.repairHeal, 3)) state = use(state, "repair-kit");
+    if (state === before && threat.saved === null && (threat.heavy || state.robotHp <= threat.damage)) state = use(state, "shield");
+    if (state === before && !strike.armorBreak && !strike.crit && !strike.opening && (strike.counter || state.kaijuHp >= 2)) state = use(state, "overcharge");
     if (tense && hints > 0) {
       hints -= 1;
       p = lift(p, SIM.hintLift);
-    } else if (tense && take("analyzer")) p = lift(p, SIM.analyzerLift);
+    } else if (state === before && tense && take("analyzer")) p = lift(p, SIM.analyzerLift);
     let correct = random() < p;
     let result = resolveAnswer(setup, state, correct);
     if (result.events.some((event) => event.type === "second-chance")) {

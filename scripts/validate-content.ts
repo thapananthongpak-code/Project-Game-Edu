@@ -344,6 +344,22 @@ battles.forEach((battle, i) => {
   check(hardItems >= MIN_BATTLE_ITEMS, `${at}.hard สร้างโจทย์ได้ ${hardItems} ข้อ ต้องมีอย่างน้อย ${MIN_BATTLE_ITEMS}`);
 });
 
+// ---------------------------------------------------------------- extras.json: ตัวอย่างและวิดีโอเสริมที่ครูกำหนด (ไม่ใช่เนื้อหาจาก course.json)
+// หัวข้อครบ 1..N แต่ละรายการมีชื่อที่ไม่ว่างและลิงก์ https เท่านั้น (เกมข้ามรายการที่ผิดรูป ตัวตรวจนี้จึงบอกครูว่ารายการใดจะไม่แสดง)
+const extras = readJson<{ topics?: Record<string, unknown> }>("extras.json").data;
+const extraTopics = extras.topics ?? {};
+check(JSON.stringify(Object.keys(extraTopics)) === JSON.stringify(topics.map((_, i) => String(i + 1))), `extras.topics ต้องมีหัวข้อ 1 ถึง ${topics.length} ครบและเรียงลำดับ`);
+let extraLinks = 0;
+for (const [topic, list] of Object.entries(extraTopics)) {
+  check(Array.isArray(list), `extras.topics[${topic}] ต้องเป็น array`);
+  (Array.isArray(list) ? list : []).forEach((entry, i) => {
+    const { title, url } = (entry ?? {}) as { title?: unknown; url?: unknown };
+    check(typeof title === "string" && title.trim() !== "", `extras.topics[${topic}][${i}].title ต้องเป็นข้อความที่ไม่ว่าง`);
+    check(typeof url === "string" && /^https:\/\/[^\s]+$/.test(url), `extras.topics[${topic}][${i}].url ต้องเป็นลิงก์ https`);
+    extraLinks += 1;
+  });
+}
+
 if (errors.length > 0) {
   console.error(`เนื้อหาไม่ผ่าน (${errors.length} ข้อ)`);
   for (const e of errors) console.error(`  - ${e}`);
@@ -355,3 +371,4 @@ console.log(
 console.log(
   `quests.json ผ่าน: ${rooms.length} ห้อง, มินิเกม ${rooms.reduce((n, r) => n + r.minigames.length, 0)} เกม, แบบทดสอบคู่ขนาน 2 ชุด ชุดละ ${forms.A.length} ข้อ, ด่านต่อสู้ ${battles.length} ด่าน`,
 );
+console.log(`extras.json ผ่าน: ลิงก์ตัวอย่างและวิดีโอเสริมที่ครูกำหนด ${extraLinks} รายการ`);

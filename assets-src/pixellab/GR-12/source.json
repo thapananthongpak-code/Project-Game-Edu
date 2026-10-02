@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "one massive golden and white chest plate armor piece only with thick layered shoulder plates and a glowing cyan core in the center, no head, no arms, no legs, front view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "0adb9ceb-92e9-4c62-b49d-45fb3eb78127",
+  "generatedAt": "2026-10-02T14:12:37.691Z"
+}

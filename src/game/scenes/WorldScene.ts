@@ -137,6 +137,8 @@ export abstract class WorldScene extends Phaser.Scene {
     // ของที่วางราบกับพื้นอยู่ใต้ตัวละครเสมอ
     const image = this.add.image(x, baseY, object.prop).setOrigin(0.5, 1).setDepth(object.flat ? 1 : baseY);
     this.placed.set(object, image);
+    // ช่องตกแต่งของโถง: ซ่อนไว้จนกว่าฉากจะรู้ว่าผู้เล่นวางอะไร (HallScene) ช่องตั้งพื้นยังกันทางเดินเสมอ
+    if (object.kind === "slot") image.setVisible(false);
     if (!object.mount && !object.flat) this.addObstacle(x, baseY - 6, Math.max(20, Math.min(image.width, (object.w ?? 1) * TILE) - 10), 12);
   }
 

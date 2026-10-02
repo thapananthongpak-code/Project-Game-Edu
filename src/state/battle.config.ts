@@ -1,5 +1,5 @@
 // ตัวเลขของด่านต่อสู้ไคจู (docs/GDD.md ข้อ 12) แก้กติกาแล้วต้องแก้ battle.test.ts ด้วย
-// รายการด่านของแต่ละระดับความยากอยู่ใน src/state/campaign.ts ไฟล์นี้ไม่ import อะไร
+// รายการด่านของแต่ละแมพอยู่ใน src/state/campaign.ts ไฟล์นี้ไม่ import อะไร
 
 /** ลักษณะเฉพาะของคู่ต่อสู้ ทำให้แต่ละด่านเล่นไม่เหมือนกัน */
 export type Trait =
@@ -37,11 +37,11 @@ export const BATTLE = {
   /** ฝูงเหลือตั้งแต่จำนวนนี้ขึ้นไป โจมตีหนัก */
   swarmHeavyFrom: 3,
   /** ลักษณะ boss: พลังต่อเฟส พลังที่หุ่นฟื้นเมื่อผ่านเฟส และเฟส (นับจาก 0) ที่เริ่มโจมตีหนัก */
-  boss: { phaseHp: 2, phaseHeal: 1, heavyFromPhase: 2 },
+  boss: { phaseHp: 3, phaseHeal: 1, heavyFromPhase: 3 },
   /** พลังที่หุ่นฟื้นเมื่อคู่ต่อสู้กลายร่าง */
   transformHeal: 2,
   /** สิทธิพิเศษของเครื่องแบบ (ชุดจากร้าน) */
-  perks: { engineerHeal: 1, guardianHp: 1, researcherHints: 1, commanderAssist: 2 },
+  perks: { engineerHeal: 1, guardianHp: 1, researcherHints: 1, commanderAssist: 2, heroHp: 2, ninjaDodges: 1 },
   /** โมดูลอัปเกรดของพี่บิต: ยิงเสริมแรงขึ้น พลังที่หุ่นฟื้นเมื่อพี่บิตยิงเสริม และจำนวนครั้งขอข้อมูลที่เพิ่ม */
   modules: { laserAssist: 1, medicHeal: 1, scannerHints: 1 },
   /** พลังของการ์เดียนเหลือไม่เกินจำนวนนี้: หน้าจอเตือนและเพลงเร่งขึ้น (ไม่มีผลต่อกติกา) */

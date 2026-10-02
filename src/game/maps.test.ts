@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ROOM_COUNT, stationsOf } from "../content";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
-import { NPC_IDS, NPCS } from "../state/npcs";
+import { NPCS, npcsOfMap } from "../state/npcs";
+import { DECOR } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMap, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMap, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, slotsOf, zoneMap } from "./maps";
 
 interface ManifestAsset {
   size: [number, number];
@@ -15,12 +16,12 @@ const manifest = JSON.parse(readFileSync(new URL("../../public/assets/assets-man
 const sizes = new Map(manifest.assets.flatMap((asset) => Object.keys(asset.files).map((key) => [key, asset.size] as const)));
 const tilesets = new Set(manifest.assets.flatMap((asset) => Object.keys(asset.files).map((key) => key.replace(/_(floor|wall)$/, ""))));
 
-const hallMap = hallMapOf(ROOM_COUNT);
+const hallMap = hallMapOf("easy");
 const named = (label: string, rooms: Record<number, GameMap>): [string, GameMap][] => Object.entries(rooms).map(([room, map]) => [`${label} ${room}`, map]);
 const maps: [string, GameMap][] = [
-  ["โถง 6 ประตู", hallMap],
-  ["โถง 3 ประตู", hallMapOf(3)],
-  ["โถง 1 ประตู", hallMapOf(1)],
+  ["โถงแมพ 1 (6 ประตู)", hallMap],
+  ["โถงแมพ 2 (3 ประตู)", hallMapOf("normal")],
+  ["โถงแมพ 3 (1 ประตู)", hallMapOf("hard")],
   ["โรงเก็บหุ่น", hangarMap],
   ...named("ห้อง", roomMaps),
   ...named("ระดับกลาง ห้อง", normalMaps),
@@ -99,43 +100,61 @@ describe("แผนที่ของทุกฉาก", () => {
     const doors = hallMap.objects.filter((o) => o.kind === "door");
     expect(doors.map((door) => door.index)).toEqual(Array.from({ length: ROOM_COUNT }, (_, i) => i + 1));
     expect(doors.map((door) => door.col)).toEqual([...doors.map((door) => door.col)].sort((a, b) => a - b));
-    expect([count(hallMap, "gate"), count(hallMap, "shop"), count(hallMap, "storage")]).toEqual([1, 1, 1]);
     expect(["console", "robot", "wardrobe", "hologram", "door", "storage"].map((kind) => count(hangarMap, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 1, 1]);
-    // โถงของทุกระดับความยากมีกล่องเก็บไอเทม
-    for (const zones of [6, 3, 1]) expect(count(hallMapOf(zones), "storage")).toBe(1);
+    // โถงของทุกแมพมีประตูโรงเก็บหุ่น ร้าน กล่องเก็บไอเทม กระดานแผนที่การเดินทาง และกระดานตกแต่ง อย่างละหนึ่ง
+    for (const difficulty of DIFFICULTIES) {
+      expect(["gate", "shop", "storage", "travel", "decorboard"].map((kind) => count(hallMapOf(difficulty), kind as MapObject["kind"])), difficulty).toEqual([1, 1, 1, 1, 1]);
+    }
   });
 
   it("ทุกระดับความยากมีแผนที่ครบทุกห้อง และโถงมีประตูเท่าจำนวนห้อง", () => {
     for (const difficulty of DIFFICULTIES) {
       const zones = CAMPAIGN[difficulty].zones;
       zones.forEach((_, i) => expect(zoneMap(difficulty, i + 1), `${difficulty} ห้อง ${i + 1}`).toBeDefined());
-      expect(hallMapOf(zones.length).objects.filter((o) => o.kind === "door").map((door) => door.index)).toEqual(zones.map((_, i) => i + 1));
+      expect(hallMapOf(difficulty).objects.filter((o) => o.kind === "door").map((door) => door.index)).toEqual(zones.map((_, i) => i + 1));
+    }
+    // โถงของแต่ละแมพมีผังและชุดไทล์ของตัวเอง
+    expect(new Set(DIFFICULTIES.map((difficulty) => hallMapOf(difficulty).tileset)).size).toBe(3);
+    expect(new Set(DIFFICULTIES.map((difficulty) => JSON.stringify(hallMapOf(difficulty).objects.map((o) => [o.kind, o.col, o.row])))).size).toBe(3);
+  });
+
+  it("ช่องตกแต่งของโถง: ทุกแมพมี 7 ช่อง รหัสไม่ซ้ำ ครบสามขนาด และของตกแต่งทุกชิ้นมีภาพขนาดตรงกับช่องของขนาดนั้น", () => {
+    for (const difficulty of DIFFICULTIES) {
+      const slots = slotsOf(hallMapOf(difficulty));
+      expect(slots.map((o) => o.slot?.id).sort(), difficulty).toEqual(["big1", "big2", "small1", "small2", "small3", "wall1", "wall2"]);
+      for (const object of slots) expect(object.mount ?? false, `${difficulty} ${object.slot?.id}`).toBe(object.slot?.size === "wall");
+    }
+    const width = { wall: 2, big: 2, small: 1 };
+    const height = { wall: 32, big: 64, small: 64 };
+    for (const [name, decor] of Object.entries(DECOR)) expect(sizes.get(decor.prop), name).toEqual([width[decor.size] * TILE, height[decor.size]]);
+  });
+
+  it("ห้องเรียนของแมพ 1 มีจอตัวอย่างและวิดีโอเสริมของหัวข้อนั้นห้องละหนึ่งจอ ติดผนัง", () => {
+    for (let room = 1; room <= ROOM_COUNT; room++) {
+      const screens = roomMaps[room].objects.filter((o) => o.kind === "extras");
+      expect(screens.map((o) => [o.topic, o.mount]), `ห้อง ${room}`).toEqual([[room, true]]);
     }
   });
 
-  it("ระดับกลาง: แต่ละหัวข้อของห้องมีคลังความรู้ เครื่องฝึก โต๊ะสมุดบันทึก และแท่นแกน AI ของตัวเอง หัวข้อภาคสนามมีจอภารกิจและแท่น", () => {
+  it("แมพ 2: แต่ละหัวข้อของห้องมีคลังความรู้ เครื่องฝึก โต๊ะทบทวน และแท่นแกน AI ของตัวเอง ไม่มีภารกิจภาคสนาม (อยู่ที่แมพ 1)", () => {
     CAMPAIGN.normal.zones.forEach((zone, i) => {
       const map = normalMaps[i + 1];
       const of = (kind: MapObject["kind"]) => map.objects.filter((o) => o.kind === kind).map((o) => o.topic).sort();
-      const lessons = zone.topics.filter((topic) => topic < ROOM_COUNT);
-      for (const kind of ["archive", "minigame", "review"] as const) expect(of(kind), `ห้อง ${i + 1} ${kind}`).toEqual(lessons);
-      expect(of("core"), `ห้อง ${i + 1} แท่น`).toEqual([...zone.topics]);
-      expect(of("field")).toEqual(zone.topics.filter((topic) => topic === ROOM_COUNT));
-      expect([count(map, "station"), count(map, "door")]).toEqual([0, 1]);
+      for (const kind of ["archive", "minigame", "review", "core"] as const) expect(of(kind), `ห้อง ${i + 1} ${kind}`).toEqual([...zone.topics]);
+      expect([count(map, "station"), count(map, "field"), count(map, "door")]).toEqual([0, 0, 1]);
     });
   });
 
-  it("ระดับยาก: ห้องเดียว มีเครื่องทดสอบรวมหนึ่งเครื่อง จอภารกิจ และแท่นของแกนชิ้นสุดท้าย ไม่มีสถานี คลังความรู้ หรือโต๊ะสมุดบันทึก", () => {
+  it("แมพ 3: ห้องเดียว มีเครื่องทดสอบรวมหนึ่งเครื่อง ไม่มีสถานี คลังความรู้ โต๊ะทบทวน แท่น หรือภารกิจภาคสนาม", () => {
     const map = hardMaps[1];
-    expect(["minigame", "field", "core", "door", "station", "archive", "review"].map((kind) => count(map, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 0, 0, 0]);
+    expect(["minigame", "field", "core", "door", "station", "archive", "review"].map((kind) => count(map, kind as MapObject["kind"]))).toEqual([1, 0, 0, 1, 0, 0, 0]);
     expect(map.objects.find((o) => o.kind === "minigame")?.topic).toBeUndefined();
-    expect(map.objects.find((o) => o.kind === "core")?.topic).toBe(ROOM_COUNT);
   });
 
-  it("NPC ประจำห้อง: ทุกระดับความยากมี NPC ครบทุกคน คนละหนึ่งที่ อยู่ในห้องของหัวข้อตัวเอง และของในเควสเสริมมีครบตามจำนวน", () => {
+  it("NPC ของแต่ละแมพ: อยู่ครบทุกคน คนละหนึ่งที่ ในห้องของหัวข้อตัวเอง และของในเควสเสริมมีครบตามจำนวน", () => {
     for (const difficulty of DIFFICULTIES) {
       const placed = CAMPAIGN[difficulty].zones.flatMap((zone, i) => zoneMap(difficulty, i + 1).objects.filter((o) => o.kind === "npc").map((o) => ({ npc: o.npc, zone })));
-      expect(placed.map((p) => p.npc).sort(), difficulty).toEqual([...NPC_IDS].sort());
+      expect(placed.map((p) => p.npc).sort(), difficulty).toEqual(npcsOfMap(difficulty).map((spec) => spec.id).sort());
       for (const { npc, zone } of placed) expect(zone.topics, `${difficulty} ${npc}`).toContain(NPCS[npc as keyof typeof NPCS].topic);
       CAMPAIGN[difficulty].zones.forEach((_, i) => {
         const map = zoneMap(difficulty, i + 1);
@@ -156,12 +175,12 @@ describe("แผนที่ของทุกฉาก", () => {
     }
   });
 
-  it("โถงและโรงเก็บหุ่นไม่มี NPC ประจำห้อง ของตกแต่งติดผนังของโถงไม่ชนประตูของทุกระดับ", () => {
-    for (const zones of [6, 3, 1]) {
+  it("โถงและโรงเก็บหุ่นไม่มี NPC ประจำห้อง ของติดผนังของโถงไม่ชนประตูของทุกแมพ", () => {
+    for (const zones of DIFFICULTIES) {
       const map = hallMapOf(zones);
       expect(count(map, "npc") + count(map, "pickup")).toBe(0);
       const mounted = map.objects.filter((o) => o.mount).flatMap((o) => Array.from({ length: o.w ?? 1 }, (_, n) => Math.floor(o.col) + n));
-      expect(new Set(mounted).size, `โถง ${zones} ประตู`).toBe(mounted.length);
+      expect(new Set(mounted).size, `โถงของ ${zones}`).toBe(mounted.length);
     }
     expect(count(hangarMap, "npc")).toBe(0);
   });

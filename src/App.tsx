@@ -12,9 +12,12 @@ import { MainMenu } from "./ui/MainMenu";
 import { Missions } from "./ui/Missions";
 import { Onboarding, Posttest } from "./ui/Onboarding";
 import { QuestLog } from "./ui/QuestLog";
-import { ReviewNotebook } from "./ui/ReviewNotebook";
+import { ReviewQuiz } from "./ui/ReviewQuiz";
 import { Shop } from "./ui/Shop";
 import { Storage } from "./ui/Storage";
+import { TravelMap } from "./ui/TravelMap";
+import { DecorBoard } from "./ui/DecorBoard";
+import { Extras } from "./ui/Extras";
 import { StageOverlay } from "./ui/StageOverlay";
 import { StoryDialog } from "./ui/StoryDialog";
 import { MinigameOverlay } from "./ui/minigames/MinigameOverlay";
@@ -69,13 +72,16 @@ export function App() {
       {overlay === "field" && <FieldMission />}
       {overlay === "posttest" && <Posttest />}
       {overlay === "certificate" && <Certificate />}
-      {overlay === "review" && <ReviewNotebook />}
+      {overlay === "review" && <ReviewQuiz />}
       {overlay === "reward" && <CoreReward />}
       {overlay === "questlog" && <QuestLog />}
       {overlay === "shop" && <Shop />}
       {overlay === "npc" && <Npc />}
       {overlay === "missions" && <Missions />}
       {overlay === "storage" && <Storage />}
+      {overlay === "travel" && <TravelMap />}
+      {overlay === "decor" && <DecorBoard />}
+      {overlay === "extras" && <Extras />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}
       {tutorOpen && tutorRoom !== null && <TutorPanel />}

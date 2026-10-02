@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { playSfx } from "../audio/engine";
 import type { SfxName } from "../audio/sfx";
 import { bossVariant } from "../audio/tracks";
@@ -10,11 +10,11 @@ import { type ActiveSupply, applySupply, type BattleEvent, battleSetup, type Bat
 import { BATTLE } from "../state/battle.config";
 import { type BattleSpec, battleOf, type FoeArt } from "../state/campaign";
 import { creditsOf, difficultyOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
-import { BAG_SIZE, type Weapon } from "../state/gear";
+import { bagSizeOf, GEAR, type Weapon, WEAPON } from "../state/gear";
 import { bagOf, gearOf, modulesOf, powerOf } from "../state/shop";
 import { PAINT_FILTER, REWARDS, type Supply } from "../state/shop.config";
 import { art, type FxArt } from "./art";
-import { BagPicker, SUPPLY_ICON } from "./BagPicker";
+import { BagPicker, ItemIcon } from "./BagPicker";
 import { FOE_SKILLS, foeSkill, GUARDIAN_MOVES, guardianMove, type MoveSpec, type Pose, SHOT_MS } from "./battleMoves";
 import { ChoiceCard } from "./ChoiceCard";
 import { PageView } from "./ContentView";
@@ -57,7 +57,7 @@ interface Act<P> {
 /** ท่าของตัวละครและเอฟเฟกต์ของตานี้ id เปลี่ยนทุกครั้งเพื่อให้แอนิเมชันเล่นใหม่ */
 interface Fx {
   id: number;
-  robot: Act<Pose | "hurt" | "guard"> | null;
+  robot: Act<Pose | "hurt" | "guard" | "dodge"> | null;
   kaiju: Act<Pose | "hurt" | "heal" | "transform" | "stunned"> | null;
   /** เวลาที่พี่บิตยิงเสริม (null = ไม่ยิง) */
   assistAt: number | null;
@@ -85,16 +85,18 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
   const sounds: [SfxName, number][] = [];
   let at = 0;
   /** เล่นท่าหนึ่งท่าใส่ target: blocked = การโจมตีถูกกันไว้ (เอฟเฟกต์ตอนโดนเป็นโล่ ไม่มีเสียงเจ็บ) */
-  const perform = (move: MoveSpec, target: Side, blocked = false) => {
+  const perform = (move: MoveSpec, target: Side, blocked = false, dodged = false) => {
     for (const spark of move.sparks) {
       const shielded = blocked && spark.impact;
+      // หลบได้: ไม่มีเอฟเฟกต์ตอนโดนเป้า
+      if (shielded && dodged) continue;
       fx.sparks.push({ art: shielded ? "shield" : spark.art, motion: spark.motion, side: target, at: at + spark.at, big: spark.big || shielded, row: spark.row, flip: spark.flip, tint: spark.tint });
     }
     for (const [name, when] of move.sounds) if (!blocked || (name !== "hurt" && name !== "boom")) sounds.push([name, at + when]);
-    if (blocked) sounds.push(["shield", at + move.hitAt]);
+    if (blocked) sounds.push([dodged ? "page" : "shield", at + move.hitAt]);
     else if (move.shake) fx.shakeAt ??= at + move.hitAt;
   };
-  for (const event of events) {
+  for (const [index, event] of events.entries()) {
     switch (event.type) {
       case "robot-hit": {
         const id = guardianMove(weapon, event);
@@ -112,6 +114,12 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         break;
       }
       case "armor-break": {
+        // ค้อนทุบทะลุเกราะ: เกราะแตกในจังหวะเดียวกับการโจมตีที่ตามมา ไม่มีท่าแยก
+        if (events[index + 1]?.type === "robot-hit") {
+          fx.sparks.push({ art: "shield", motion: "pop", side: "kaiju", at: at + 120, big: true });
+          sounds.push(["crack", at + 160]);
+          break;
+        }
         // ท่าปกติของอาวุธ แต่โดนเกราะ: เกราะแตกแทนการเสียพลัง
         const id = guardianMove(weapon, { damage: BATTLE.hit, final: false });
         const move = GUARDIAN_MOVES[id];
@@ -144,10 +152,10 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         const id = foeSkill(foe, event.heavy);
         const skill = FOE_SKILLS[id];
         fx.kaiju ??= { pose: skill.pose, at };
-        fx.robot ??= event.blocked ? { pose: "guard", at } : { pose: "hurt", at: at + skill.hitAt };
-        perform(skill, "robot", event.blocked);
+        fx.robot ??= event.blocked ? { pose: event.by === "dodge" ? "dodge" : "guard", at: event.by === "dodge" ? at + skill.hitAt - 120 : at } : { pose: "hurt", at: at + skill.hitAt };
+        perform(skill, "robot", event.blocked, event.by === "dodge");
         fx.banners.push({ text: fmt(ui.battle.banner.foe, { kaiju: foeName(foe), skill: ui.battle.skills[id] }), side: "kaiju", at });
-        fx.floaters.push(event.blocked ? { text: ui.battle.banner.guard, side: "robot", at: at + skill.hitAt, tone: "tag" } : { text: `-${event.damage}`, side: "robot", at: at + skill.hitAt, tone: "damage" });
+        fx.floaters.push(event.blocked ? { text: event.by === "dodge" ? ui.battle.banner.dodge : ui.battle.banner.guard, side: "robot", at: at + skill.hitAt, tone: "tag" } : { text: `-${event.damage}`, side: "robot", at: at + skill.hitAt, tone: "damage" });
         at += skill.end;
         break;
       }
@@ -232,11 +240,11 @@ function eventText(event: BattleEvent, kaiju: string, { spec, weapon, foe }: Sce
   switch (event.type) {
     case "robot-hit": {
       const hit = fmt(ui.battle.log.robotHit, { move: ui.battle.moves[guardianMove(weapon, event)], n: event.damage });
-      const extra = [event.crit && ui.battle.log.crit, event.counter && ui.battle.log.counter, (event.boosted || event.opening) && ui.battle.log.boostedHit].filter(Boolean);
+      const extra = [event.crit && ui.battle.log.crit, event.advantage && ui.battle.log.advantage, event.quake && ui.battle.log.quake, event.counter && ui.battle.log.counter, (event.boosted || event.opening) && ui.battle.log.boostedHit].filter(Boolean);
       return extra.length > 0 ? `${hit} (${extra.join(" ")})` : hit;
     }
     case "armor-break":
-      return ui.battle.log.armorBreak;
+      return event.pierced ? ui.battle.log.armorPierced : ui.battle.log.armorBreak;
     case "stun":
       return fmt(ui.battle.log.stun, { kaiju });
     case "bit-assist":
@@ -245,7 +253,7 @@ function eventText(event: BattleEvent, kaiju: string, { spec, weapon, foe }: Sce
       return fmt(ui.battle.log.bitHeal, { n: event.amount });
     case "kaiju-hit": {
       const skill = ui.battle.skills[foeSkill(foe, event.heavy)];
-      if (event.blocked) return fmt(event.by === "guard" ? ui.battle.log.guardBlocked : ui.battle.log.blocked, { skill });
+      if (event.blocked) return fmt(event.by === "guard" ? ui.battle.log.guardBlocked : event.by === "dodge" ? ui.battle.log.dodged : ui.battle.log.blocked, { skill });
       return fmt(event.heavy ? ui.battle.log.heavyHit : ui.battle.log.kaijuHit, { kaiju, skill, n: event.damage });
     }
     case "kaiju-stunned":
@@ -290,35 +298,44 @@ export function Battle() {
   const setMusicCue = useGameStore((s) => s.setMusicCue);
   const bit = useBit();
 
-  // ค่าของการออกปฏิบัติการคงที่ตลอดหน้าต่างนี้ (อุปกรณ์เปลี่ยนได้ที่กล่องเก็บไอเทมก่อนเข้าด่าน)
-  const [boot] = useState(() => {
+  // ค่าของด่านที่คงที่ตลอดหน้าต่างนี้
+  const [fixed] = useState(() => {
     const state = useGameStore.getState();
     const difficulty = difficultyOf(state);
-    const spec = battleOf(difficulty, battleId) as BattleSpec;
     const record = state.battles[battleId];
     return {
       difficulty,
-      setup: battleSetup(difficulty, spec, state.shop.outfit, modulesOf(state.shop), gearOf(state.shop)),
-      modules: modulesOf(state.shop),
-      outfit: state.shop.outfit,
+      spec: battleOf(difficulty, battleId) as BattleSpec,
       pools: planOf(state).pools,
       /** ด่านนี้ชนะแล้ว: รอบนี้เป็นการซ้อมรบ */
       training: record?.won ?? false,
       replaysLeft: Math.max(0, BATTLE.replayRewards - Math.max(0, (record?.wins ?? 0) - 1)),
     };
   });
-  const { setup, training } = boot;
-  const spec = setup.spec;
+  const { spec, training } = fixed;
+  const [stage, setStage] = useState<Stage>("intro");
+  // อุปกรณ์และเครื่องแบบ: เปลี่ยนได้จนกว่าจะกดออกปฏิบัติการ (พี่บิตแนะนำอาวุธที่ได้เปรียบในหน้าเตรียม) จากนั้นคงที่ตลอดด่าน
+  const [locked, setLocked] = useState<{ setup: ReturnType<typeof battleSetup>; modules: ReturnType<typeof modulesOf>; outfit: typeof shop.outfit } | null>(null);
+  const live = useMemo(
+    () => ({ setup: battleSetup(fixed.difficulty, spec, shop.outfit, modulesOf(shop), gearOf(shop)), modules: modulesOf(shop), outfit: shop.outfit }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ขึ้นกับอุปกรณ์ เครื่องแบบ และโมดูลเท่านั้น
+    [fixed.difficulty, spec, shop.outfit, shop.weapon, shop.armor, shop.chip, shop.owned],
+  );
+  const boot = { ...fixed, ...(locked ?? live) };
+  const { setup } = boot;
   const gear = setup.gear;
 
-  const [stage, setStage] = useState<Stage>("intro");
-  const [state, setState] = useState<BattleState>(() => startBattle(setup));
+  const [fought, setState] = useState<BattleState>(() => startBattle(live.setup));
+  // หน้าเตรียมออกปฏิบัติการแสดงสถานะเริ่มต้นของอุปกรณ์ที่ใส่อยู่ตอนนี้
+  const state = locked ? fought : startBattle(setup);
   /** ของใช้ที่ยังเหลือในกระเป๋าของการออกปฏิบัติการครั้งนี้ */
   const [bag, setBag] = useState<Supply[]>([]);
   const [item, setItem] = useState<ChoiceItem | null>(null);
   const [answered, setAnswered] = useState<number | undefined>(undefined);
   /** ตัวเลือกที่ชิปวิเคราะห์หรือชิปคิดทบทวนตัดออกจากโจทย์ข้อนี้ */
   const [removed, setRemoved] = useState<number[]>([]);
+  /** ใช้ของไปแล้วในตานี้ (ใช้ของได้ตาละ 1 ชิ้น) */
+  const [itemUsed, setItemUsed] = useState(false);
   const [events, setEvents] = useState<BattleEvent[]>([]);
   /** ร่างของคู่ต่อสู้ตอนที่เหตุการณ์ชุดล่าสุดเกิด (ชื่อสกิลในบันทึกต้องเป็นของร่างนั้น แม้กลายร่างไปแล้ว) */
   const [actor, setActor] = useState<FoeArt>(spec.forms[0].art);
@@ -357,6 +374,7 @@ export function Battle() {
     setItem(draw(from));
     setAnswered(undefined);
     setRemoved([]);
+    setItemUsed(false);
     setEvents([]);
     setNote(null);
     if (isCharging(setup, from)) playSfx("charge");
@@ -365,6 +383,7 @@ export function Battle() {
   const begin = (carry?: { form: number; kaijuHp: number }) => {
     // กระเป๋าของรอบนี้: ของที่เลือกไว้และยังมีในกล่อง แกนสำรองในกระเป๋าทำงานเอง
     const packed = bagOf(useGameStore.getState().shop);
+    if (!locked) setLocked(live);
     const from = startBattle(setup, { carry, reboot: packed.includes("reboot") });
     setBag(packed);
     setState(from);
@@ -418,7 +437,8 @@ export function Battle() {
 
   const useItem = (supply: ActiveSupply) => {
     const result = applySupply(setup, state, supply);
-    if (!result || !spend(supply)) return;
+    if (itemUsed || !result || !spend(supply)) return;
+    setItemUsed(true);
     setState(result.state);
     setEvents(result.events);
     setActor(form.art);
@@ -429,7 +449,8 @@ export function Battle() {
   // ชิปวิเคราะห์: ตัดตัวเลือกที่ผิดออก 1 ข้อ ต้องเหลือตัวเลือกที่ผิดอย่างน้อย 1 ข้อ
   const wrongLeft = item ? item.options.map((_, i) => i).filter((i) => i !== item.answer && !removed.includes(i)) : [];
   const analyze = () => {
-    if (wrongLeft.length < 2 || !spend("analyzer")) return;
+    if (itemUsed || wrongLeft.length < 2 || !spend("analyzer")) return;
+    setItemUsed(true);
     setRemoved([...removed, wrongLeft[Math.floor(Math.random() * wrongLeft.length)]]);
     setEvents([]);
     setNote(ui.battle.log.analyzer);
@@ -469,19 +490,20 @@ export function Battle() {
   const title = fmt(training ? ui.battle.trainingTitle : ui.battle.title, { kaiju: battleName });
   const lastCorrect = item !== null && answered === item.answer;
   const perk = ui.shop.perks[boot.outfit];
-  const power = powerOf(boot.difficulty, shop);
+  const power = powerOf(boot.difficulty, shop, spec);
+  const advantage = WEAPON[gear.weapon].class === form.weak;
   const gearNames = { weapon: ui.shop.items[`weapon-${gear.weapon}`].name, armor: ui.shop.items[`armor-${gear.armor}`].name, chip: ui.shop.items[`chip-${gear.chip}`].name };
   // แผงคำสั่ง: สิ่งที่จะเกิดในตานี้
   const strike = strikeOf(setup, state);
   const threat = threatOf(setup, state);
   const lastForm = state.form === spec.forms.length - 1;
-  const moveId = guardianMove(gear.weapon, { damage: strike.armorBreak ? BATTLE.hit : strike.damage, final: !strike.armorBreak && lastForm && state.kaijuHp - strike.damage <= 0 });
+  const moveId = guardianMove(gear.weapon, strike.armorBreak ? { damage: BATTLE.hit, final: false } : { ...strike, final: lastForm && state.kaijuHp - strike.damage <= 0 });
   const skillId = foeSkill(form.art, threat.heavy);
   const supplyButton = (supply: Supply, disabled: boolean, run: () => void) => {
     const count = bag.filter((s) => s === supply).length;
     return count > 0 ? (
-      <button key={supply} type="button" className="btn btn-ghost !min-h-9 !px-2 text-xs" data-testid={`battle-supply-${supply}`} disabled={disabled} onClick={run}>
-        <span aria-hidden="true">{SUPPLY_ICON[supply]} </span>
+      <button key={supply} type="button" className="btn btn-ghost flex !min-h-9 items-center gap-1 !px-2 text-xs" data-testid={`battle-supply-${supply}`} disabled={disabled || itemUsed} onClick={run}>
+        <ItemIcon value={supply} className="h-5 w-5" />
         {fmt(ui.battle.useSupply, { name: ui.shop.items[`supply-${supply}`].name, n: count })}
       </button>
     ) : null;
@@ -557,6 +579,9 @@ export function Battle() {
               style={fx.kaiju ? { animationDelay: `${fx.kaiju.at}ms` } : undefined}
             />
             <div className="absolute right-[4%] top-[26%] flex flex-col items-end gap-1">
+              <span className={`rounded border-2 border-ink px-2 text-xs font-extrabold ${advantage ? "bg-hint" : "bg-cream"}`} data-testid="battle-weak" data-weak={form.weak} data-advantage={advantage}>
+                {advantage ? `▲ ${ui.battle.advantageOn}` : fmt(ui.battle.weak, { class: ui.storage.weaponClasses[form.weak] })}
+              </span>
               {charging && (
                 <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-charging">
                   ⚡ {ui.battle.charging}
@@ -591,6 +616,11 @@ export function Battle() {
                 </span>
               )}
               {(state.boost || (fighting && state.opening)) && <span className="rounded border-2 border-ink bg-hint px-2 text-xs font-extrabold">🔋 {state.boost ? ui.battle.boostOn : ui.battle.openingOn}</span>}
+              {fighting && state.dodge > 0 && (
+                <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold" data-testid="battle-dodge">
+                  💨 {fmt(ui.battle.dodgeOn, { n: state.dodge })}
+                </span>
+              )}
               {fighting && state.retries > 0 && (
                 <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold" data-testid="battle-retries">
                   ↺ {fmt(ui.battle.retryOn, { n: state.retries })}
@@ -703,6 +733,9 @@ export function Battle() {
                 <li className="flex flex-wrap items-center gap-1">
                   <span className="font-extrabold text-correct-dark">✓ {ui.battle.command.correct}</span>
                   <span className="font-semibold">{strike.armorBreak ? ui.battle.command.armorBreak : `${fmt(ui.battle.command.robot, { move: ui.battle.moves[moveId] })} ${fmt(ui.battle.command.damage, { n: strike.damage })}`}</span>
+                  {strike.pierced && <Tag>{ui.battle.command.pierced}</Tag>}
+                  {strike.advantage && <Tag>{fmt(ui.battle.command.advantage, { n: GEAR.advantage })}</Tag>}
+                  {strike.quake && <Tag>{fmt(ui.battle.command.quake, { n: GEAR.quakeDamage })}</Tag>}
                   {strike.crit && <Tag>{ui.battle.command.crit}</Tag>}
                   {strike.opening && <Tag>{ui.battle.command.opening}</Tag>}
                   {strike.boosted && <Tag>{ui.battle.command.boosted}</Tag>}
@@ -719,6 +752,7 @@ export function Battle() {
                         ? fmt(ui.battle.command.stunned, { kaiju })
                         : `${fmt(ui.battle.command.foe, { kaiju, skill: ui.battle.skills[skillId] })} ${threat.saved ? "" : fmt(ui.battle.command.damage, { n: threat.damage })}`}
                   </span>
+                  {threat.saved === "dodge" && <Tag>{ui.battle.command.dodge}</Tag>}
                   {threat.saved === "guard" && <Tag>{ui.battle.command.guard}</Tag>}
                   {threat.saved === "shield" && <Tag>{ui.battle.command.shield}</Tag>}
                   {threat.regen > 0 && <Tag>{fmt(ui.battle.command.regen, { n: threat.regen })}</Tag>}
@@ -730,8 +764,9 @@ export function Battle() {
               <span className="rounded border-2 border-ink bg-paper px-2 text-xs font-bold" data-testid="battle-streak">
                 {fmt(ui.battle.streak, { n: state.streak })}
               </span>
-              <span className="rounded border-2 border-ink bg-paper px-2 text-xs font-bold" data-testid="battle-bag" data-bag={bag.join(",")}>
-                🎒 {fmt(ui.battle.bag, { n: bag.length, total: BAG_SIZE })}
+              <span className="rounded border-2 border-ink bg-paper px-2 text-xs font-bold" data-testid="battle-bag" data-bag={bag.join(",")} data-used={itemUsed} title={ui.battle.itemLimit}>
+                🎒 {fmt(ui.battle.bag, { n: bag.length, total: bagSizeOf(boot.outfit) })}
+                {itemUsed && ` · ${ui.battle.itemLimit}`}
               </span>
               <span className="flex-1" />
               {waiting && (
@@ -813,7 +848,7 @@ export function Battle() {
               </p>
             )}
             {/* จัดกระเป๋าสำหรับรอบถัดไปจากของที่ยังเหลือในกล่อง */}
-            <BagPicker spec={spec} />
+            <BagPicker spec={spec} canEquip={false} />
             <div className="flex flex-wrap justify-center gap-2">
               <button type="button" className="btn btn-ghost" onClick={closeOverlay}>
                 {ui.battle.finish}

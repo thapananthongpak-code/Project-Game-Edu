@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide volcanic crater fortress at night with rivers of glowing lava, black jagged rock spires and a dark red sky with ash, cracked obsidian ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "93d668c5-fe20-463b-b6d8-6e0feeb8e902",
+  "generatedAt": "2026-10-02T14:06:21.398Z"
+}

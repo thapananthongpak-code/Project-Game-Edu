@@ -164,8 +164,8 @@ try {
   assert.equal(db.signups, 1, "ล็อกอินแบบไม่ระบุตัวตนครั้งเดียว ตอนส่งข้อมูลครั้งแรก");
   assert.equal(db.players.length, 1);
   const row = db.players[0];
-  assert.deepEqual([row.class_code, row.display_name, row.data.version, row.data.pretest.items.length], ["PVC1-67", "แก้ว", 7, 12], "แถวในฐานข้อมูล: รหัสห้อง (ตัวพิมพ์ใหญ่) ชื่อที่แสดง และผลก่อนเรียนรายข้อ");
-  assert.deepEqual(Object.keys(row.data).sort(), ["battles", "npcs", "posttest", "pretest", "profile", "rooms", "shop", "story", "updatedAt", "version"], "ไม่มีข้อมูลอื่นนอกจากความคืบหน้าในเกม");
+  assert.deepEqual([row.class_code, row.display_name, row.data.version, row.data.pretest.items.length], ["PVC1-67", "แก้ว", 8, 12], "แถวในฐานข้อมูล: รหัสห้อง (ตัวพิมพ์ใหญ่) ชื่อที่แสดง และผลก่อนเรียนรายข้อ");
+  assert.deepEqual(Object.keys(row.data).sort(), ["battles", "maps", "npcs", "posttest", "pretest", "profile", "rooms", "shop", "story", "updatedAt", "version"], "ไม่มีข้อมูลอื่นนอกจากความคืบหน้าในเกม");
   const code = (await store(first)).resumeCode;
   assert.equal(code, row.resume_code);
   await first.getByRole("button", { name: "สมุดเควส" }).click();
@@ -175,7 +175,7 @@ try {
   await first.getByRole("button", { name: "ปิด", exact: true }).click();
   log(`เครื่องที่ 1: ลงทะเบียนด้วยรหัสห้อง PVC1-67 ข้อมูลขึ้นฐานข้อมูลกลาง สมุดเควสแสดงสถานะและรหัสเล่นต่อ ${code}`);
 
-  assert.deepEqual([row.data.profile.difficulty, Object.keys(row.data.profile).sort()], ["easy", ["avatar", "classCode", "difficulty", "name"]], "โปรไฟล์ในฐานข้อมูล: ระดับความยาก (ค่าเริ่มต้นง่าย) ไม่มีช่องอื่น");
+  assert.deepEqual([row.data.profile.difficulty, Object.keys(row.data.profile).sort()], ["easy", ["avatar", "classCode", "difficulty", "name"]], "โปรไฟล์ในฐานข้อมูล: แมพที่อยู่ (เริ่มที่แมพ 1) ไม่มีช่องอื่น");
 
   // --- เปลี่ยนตัวละครหลายครั้งติดกัน: ส่งขึ้นแบบหน่วง รวมหลายครั้งเป็นครั้งเดียว
   const savesBefore = db.saves;

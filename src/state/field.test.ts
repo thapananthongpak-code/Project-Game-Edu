@@ -11,7 +11,7 @@ const filled = () => ({
     { images: 35, correct: 10 },
     { images: 32, correct: 7 },
   ],
-  notes: ["ผิดเมื่อแสงน้อยและมืออยู่ไกลกล้อง", "ภาพฝึกส่วนใหญ่ถ่ายในที่สว่าง", "เก็บภาพเพิ่มในที่แสงน้อยแล้วฝึกใหม่"],
+  reflected: [true, true, true],
   evidence: { image: null, outsideGame: true },
 });
 
@@ -60,20 +60,20 @@ describe("การตรวจช่องกรอก", () => {
 
 describe("fieldStatus: เงื่อนไขจบภารกิจ (GDD 6.5)", () => {
   it("เริ่มต้น: ยังไม่ผ่านสักข้อ", () => {
-    expect(fieldStatus(emptyField(quest), quest, 20)).toEqual({ ready: false, checklist: false, results: false, notes: false, evidence: false, complete: false });
+    expect(fieldStatus(emptyField(quest), quest)).toEqual({ ready: false, checklist: false, results: false, notes: false, evidence: false, complete: false });
   });
   it("ครบทุกข้อ: จบภารกิจ แม้ Accuracy ต่ำ (เอกสารไม่ได้กำหนดขั้นต่ำ)", () => {
-    expect(fieldStatus(filled(), quest, 20).complete).toBe(true);
+    expect(fieldStatus(filled(), quest).complete).toBe(true);
     const low = { ...filled(), results: filled().results.map((r) => ({ ...r, correct: 0 })) };
-    expect(fieldStatus(low, quest, 20).complete).toBe(true);
+    expect(fieldStatus(low, quest).complete).toBe(true);
   });
   it.each([
     ["ติ๊กเช็คลิสต์ไม่ครบ", (f: ReturnType<typeof filled>) => ({ ...f, steps: f.steps.map((_, i) => i < 5) }), "checklist"],
     ["ภาพฝึกน้อยกว่า 30", (f: ReturnType<typeof filled>) => ({ ...f, results: [{ images: 29, correct: 8 }, ...f.results.slice(1)] }), "results"],
-    ["บันทึกสั้นเกินไป", (f: ReturnType<typeof filled>) => ({ ...f, notes: ["สั้น", ...f.notes.slice(1)] }), "notes"],
+    ["ยังไม่ติ๊กว่าคิดทบทวนประเด็นของบันทึกครบ", (f: ReturnType<typeof filled>) => ({ ...f, reflected: [false, ...f.reflected.slice(1)] }), "notes"],
     ["ไม่มีหลักฐาน", (f: ReturnType<typeof filled>) => ({ ...f, evidence: { image: null, outsideGame: false } }), "evidence"],
   ] as const)("%s: ยังไม่จบ", (_name, change, failing) => {
-    const status = fieldStatus(change(filled()), quest, 20);
+    const status = fieldStatus(change(filled()), quest);
     expect(status[failing]).toBe(false);
     expect(status.complete).toBe(false);
   });

@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { applySupply, type BattleEvent, type BattleSetup, type BattleState, battleSetup, formOf, isCharging, isEnraged, isFurious, phaseCount, phaseOf, questionSource, resolveAnswer, retryCarry, robotMaxOf, startBattle, strikeOf, threatOf } from "./battle";
 import { BATTLE } from "./battle.config";
-import { type BattleSpec, battleOf, CAMPAIGN, type Difficulty, DIFFICULTIES } from "./campaign";
+import { type BattleSpec, battleOf, CAMPAIGN, type Difficulty, DIFFICULTIES, topicsOf } from "./campaign";
 import { seeded } from "./balance";
-import { DEFAULT_GEAR, type Gear, GEAR } from "./gear";
+import { BAG_SIZE, bagSizeOf, DEFAULT_GEAR, type Gear, GEAR, WEAPON, WEAPON_CLASSES } from "./gear";
 import { OUTFITS } from "./shop.config";
 
 const setupOf = (difficulty: Difficulty, id: string, outfit: (typeof OUTFITS)[number] = "lab", gear: Partial<Gear> = {}): BattleSetup =>
   battleSetup(difficulty, battleOf(difficulty, id) as BattleSpec, outfit, [], { ...DEFAULT_GEAR, ...gear });
 /** เหตุการณ์การโจมตีธรรมดาของการ์เดียน */
-const hit = (damage: number, extra: Partial<Extract<BattleEvent, { type: "robot-hit" }>> = {}): BattleEvent => ({ type: "robot-hit", damage, counter: false, boosted: false, crit: false, opening: false, final: false, ...extra });
+const hit = (damage: number, extra: Partial<Extract<BattleEvent, { type: "robot-hit" }>> = {}): BattleEvent => ({ type: "robot-hit", damage, counter: false, boosted: false, crit: false, quake: false, advantage: false, opening: false, final: false, ...extra });
 
 const play = (setup: BattleSetup, answers: boolean[], from?: BattleState) => {
   let state = from ?? startBattle(setup);
@@ -34,7 +34,10 @@ const sweep = (setup: BattleSetup) => {
   return { state, events };
 };
 
-const easy = (room: number) => setupOf("easy", room === 6 ? "omega" : `k${room}`);
+/** ด่านพื้นฐานสำหรับทดสอบกติกากลาง: คู่ต่อสู้ลักษณะพื้นฐาน พลัง 6 ที่ไม่แพ้ทางหมัด (ไม่มีผลของความได้เปรียบมาปน) */
+const PLAIN: BattleSpec = { ...(battleOf("easy", "k1") as BattleSpec), forms: [{ art: "kaiju_1", hp: 6, trait: "basic", weak: "blade" }] };
+const plain = (outfit: (typeof OUTFITS)[number] = "lab", gear: Partial<Gear> = {}): BattleSetup => battleSetup("easy", PLAIN, outfit, [], { ...DEFAULT_GEAR, ...gear });
+const easy = (room: number) => (room === 1 ? plain() : setupOf("easy", room === 6 ? "omega" : `k${room}`));
 const ROBOT = CAMPAIGN.easy.robotHp;
 
 describe("โครงของระดับความยาก (GDD 15)", () => {
@@ -48,12 +51,15 @@ describe("โครงของระดับความยาก (GDD 15)", (
     expect(shape("hard")).toEqual([1, 0, [3]]);
   });
 
-  it("ทุกระดับสอนครบ 6 หัวข้อตามลำดับ บอสอยู่ท้ายสุด และรหัสด่านไม่ซ้ำกันข้ามระดับ", () => {
+  it("แมพ 1 สอนครบ 6 หัวข้อ แมพ 2 และ 3 ทบทวนหัวข้อ 1–5 ตามลำดับ บอสอยู่ท้ายสุด และรหัสด่านไม่ซ้ำกันข้ามแมพ", () => {
     const ids = DIFFICULTIES.flatMap((difficulty) => CAMPAIGN[difficulty].battles.map((battle) => battle.id));
     expect(new Set(ids).size).toBe(ids.length);
     for (const difficulty of DIFFICULTIES) {
       const level = CAMPAIGN[difficulty];
-      expect(level.zones.flatMap((zone) => zone.topics)).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(level.zones.flatMap((zone) => zone.topics)).toEqual(difficulty === "easy" ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5]);
+      expect(topicsOf(difficulty)).toEqual(level.zones.flatMap((zone) => zone.topics));
+      // แกน AI ที่ด่านต้องใช้เป็นหัวข้อที่แมพนั้นมีห้องให้ทำ
+      for (const battle of level.battles) expect(battle.requires.every((topic) => topicsOf(difficulty).includes(topic)), battle.id).toBe(true);
       expect(level.battles.map((battle) => battle.boss)).toEqual([...level.battles.slice(1).map(() => false), true]);
       for (const battle of level.battles) {
         expect(battle.forms.length).toBeGreaterThan(0);
@@ -135,14 +141,15 @@ describe("ด่านต่อสู้ไคจู (ระดับง่า�
   });
 
   it("คอมโบ (ห้อง 4): ถูกติดต่อกันยิ่งแรง ไม่เกินค่าสูงสุด", () => {
-    const { events } = play(easy(4), [true, true, true, true]);
+    // ใช้ดาบ (ไม่ได้เปรียบเกียร์แครบ และยังไม่ถึงข้อที่ติดคริติคอล) ดูผลของคอมโบล้วน ๆ สองข้อแรก แล้วใช้ปืนดูค่าสูงสุด
+    const { events } = play(setupOf("easy", "k4", "lab", { weapon: "blaster" }), [true, true, true, true]);
     expect(events.filter((e) => e.type === "robot-hit").map((e) => (e as { damage: number }).damage)).toEqual([1, 2, 3, 3]);
   });
 
   it("ฝูง (ห้อง 5): เหลือเยอะโจมตีแรง เหลือน้อยโจมตีเบา", () => {
     expect(play(easy(5), [false]).events[0]).toMatchObject({ damage: BATTLE.heavyDamage, heavy: true });
-    // ฝูง 8 ตัว: ตอบถูก 4 ข้อติดกัน พี่บิตยิงเสริม 2 ครั้ง เหลือ 2 ตัว
-    const few = play(easy(5), [true, true, true, true, false]);
+    // ฝูง 12 ตัว: ตอบถูก 7 ข้อติดกัน พี่บิตยิงเสริม 3 ครั้ง เหลือ 2 ตัว
+    const few = play(easy(5), [true, true, true, true, true, true, true, false]);
     expect(few.state.kaijuHp).toBe(2);
     expect(few.events.at(-1)).toMatchObject({ damage: BATTLE.wrongDamage, heavy: false });
   });
@@ -286,8 +293,12 @@ describe("ของจากร้านและเครื่องแบบ 
     expect(setupOf("hard", "end", "researcher").hints).toBe(BATTLE.perks.researcherHints);
     expect(setupOf("normal", "n1", "guardian").robotMax).toBe(CAMPAIGN.normal.robotHp + BATTLE.perks.guardianHp);
     expect(setupOf("normal", "n1", "commander").assistDamage).toBe(BATTLE.perks.commanderAssist);
-    // ทุกชุดในร้านให้อะไรบางอย่างที่ต่างจากชุดเริ่มต้น
-    for (const outfit of OUTFITS.filter((o) => o !== "lab")) expect(setupOf("normal", "n1", outfit), outfit).not.toEqual(base);
+    expect(setupOf("normal", "n1", "hero").robotMax).toBe(CAMPAIGN.normal.robotHp + BATTLE.perks.heroHp);
+    expect(setupOf("normal", "n1", "ninja").dodges).toBe(BATTLE.perks.ninjaDodges);
+    // ทุกชุดในร้านให้อะไรบางอย่างที่ต่างจากชุดเริ่มต้น (ชุดนักบินอวกาศให้ที่กระเป๋า ไม่ใช่ในการต่อสู้โดยตรง: bagSizeOf)
+    for (const outfit of OUTFITS.filter((o) => o !== "lab" && o !== "astronaut")) expect(setupOf("normal", "n1", outfit), outfit).not.toEqual(base);
+    expect(bagSizeOf("astronaut")).toBe(BAG_SIZE + 1);
+    expect(bagSizeOf("lab")).toBe(BAG_SIZE);
   });
 
   it("โมดูลอัปเกรดของพี่บิต: เลเซอร์ยิงเสริมแรงขึ้น สแกนเนอร์ขอข้อมูลได้เพิ่ม พยาบาลฟื้นพลังเมื่อยิงเสริม และใช้ร่วมกับเครื่องแบบได้", () => {
@@ -321,7 +332,7 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     const setup = setupOf("easy", "k4", "lab", { weapon: "sword" });
     // ด่านคอมโบ: แรง 1, 2 แล้วข้อที่สามแรง 3 × 2
     const hits = play(setup, [true, true, true, true]).events.filter((e) => e.type === "robot-hit");
-    expect(hits).toEqual([hit(1), hit(2), hit(3 * GEAR.sword.critMultiplier, { crit: true }), hit(3)]);
+    expect(hits).toEqual([hit(1), hit(2), hit(3 * GEAR.critMultiplier, { crit: true }), hit(3)]);
     const broken = play(setupOf("easy", "k1", "lab", { weapon: "sword" }), [true, true, false, true, true]).events.filter((e) => e.type === "robot-hit");
     expect(broken.every((e) => !(e as { crit: boolean }).crit)).toBe(true);
   });
@@ -331,10 +342,11 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     const two = play(setup, [true, true]).state;
     const boosted = applySupply(setup, two, "overcharge")!.state;
     const crit = resolveAnswer(setup, boosted, true);
-    // ตาที่สามของด่านชาร์จ: สวนกลับ 2 × คริติคอล 2
-    expect(crit.events[0]).toEqual(hit(BATTLE.charge.counterDamage * 2, { counter: true, crit: true }));
+    // ตาที่สามของด่านชาร์จ: (สวนกลับ 2 + ดาบได้เปรียบไตรฮอร์น 1) × คริติคอล 2
+    expect(crit.events[0]).toEqual(hit((BATTLE.charge.counterDamage + GEAR.advantage) * 2, { counter: true, crit: true, advantage: true }));
     expect(crit.state.boost).toBe(true);
-    expect(resolveAnswer(setup, crit.state, true).events[0]).toEqual(hit(BATTLE.hit * 2, { boosted: true }));
+    // การโจมตีนี้ปิดฉากไตรฮอร์นพอดี (พลัง 14: 1 + 2 + พี่บิต 1 + 6 + 4)
+    expect(resolveAnswer(setup, crit.state, true).events[0]).toEqual(hit((BATTLE.hit + GEAR.advantage) * 2, { boosted: true, advantage: true, final: true }));
   });
 
   it("ปืนเลเซอร์: ตอบถูกติดกันครบ 3 ข้อ ไคจูติดสตัน ตอบผิดครั้งถัดไปไคจูไม่ได้โจมตี ไม่ฟื้นพลัง แล้วสตันหมด", () => {
@@ -395,7 +407,8 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     const armored = setupOf("normal", "n2", "lab", { chip: "charger" });
     const opened = play(armored, [true, true]);
     expect(opened.events.map((e) => e.type)).toEqual(["armor-break", "robot-hit", "bit-assist"]);
-    expect(opened.events[1]).toEqual(hit(2, { opening: true }));
+    // ข้อที่สองที่ตอบถูกติดกัน หมัดได้เปรียบเกียร์แครบของแมพ 2: (1 + 1) × 2
+    expect(opened.events[1]).toEqual(hit((BATTLE.hit + GEAR.advantage) * 2, { opening: true, advantage: true }));
     // กลายร่างแล้วพร้อมใช้อีกครั้ง
     const boss = setupOf("normal", "omega-n", "lab", { chip: "charger" });
     let state = startBattle(boss);
@@ -458,5 +471,82 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
         }
       }
     }
+  });
+
+  it("อาวุธได้เปรียบ: ประเภทตรงกับจุดอ่อนของคู่ต่อสู้ แรงขึ้นเมื่อตอบถูกติดกันตั้งแต่ 2 ข้อ อาวุธประเภทอื่นไม่ได้", () => {
+    // ไตรฮอร์นแพ้ทางคมอาวุธ: ดาบได้เปรียบ หมัดและปืนไม่ได้
+    const sword = play(setupOf("easy", "k2", "lab", { weapon: "sword" }), [true, true]).events.filter((e) => e.type === "robot-hit");
+    expect(sword).toEqual([hit(1), hit(1 + GEAR.advantage, { advantage: true })]);
+    for (const weapon of ["fist", "blaster"] as const) {
+      const hits = play(setupOf("easy", "k2", "lab", { weapon }), [true, true]).events.filter((e) => e.type === "robot-hit");
+      expect(hits, weapon).toEqual([hit(1), hit(1)]);
+    }
+    // ตอบผิดแล้วต้องตอบถูกติดกันใหม่จึงได้เปรียบอีก
+    const broken = play(setupOf("easy", "k2", "lab", { weapon: "sword" }), [true, false, true]).events.filter((e) => e.type === "robot-hit");
+    expect(broken.every((e) => !(e as { advantage: boolean }).advantage)).toBe(true);
+    expect(strikeOf(setupOf("easy", "k2", "lab", { weapon: "sword" }), startBattle(setupOf("easy", "k2", "lab", { weapon: "sword" }))).advantage).toBe(false);
+    // ด่านแรกแพ้ทางหมัด: อุปกรณ์เริ่มต้นได้เปรียบตั้งแต่ยังไม่ซื้ออะไร
+    expect(play(setupOf("easy", "k1"), [true, true]).events.filter((e) => e.type === "robot-hit")).toEqual([hit(1), hit(2, { advantage: true })]);
+  });
+
+  it("คู่ต่อสู้ทุกร่างมีจุดอ่อน และอาวุธแต่ละประเภทได้เปรียบอย่างน้อยหนึ่งด่านในแมพ 1 และแมพ 2", () => {
+    for (const difficulty of DIFFICULTIES) for (const battle of CAMPAIGN[difficulty].battles) for (const form of battle.forms) expect(WEAPON_CLASSES, `${battle.id} ${form.art}`).toContain(form.weak);
+    for (const difficulty of ["easy", "normal"] as const) {
+      const weak = new Set(CAMPAIGN[difficulty].battles.flatMap((battle) => battle.forms.map((form) => form.weak)));
+      expect([...weak].sort(), difficulty).toEqual([...WEAPON_CLASSES].sort());
+    }
+    // บอสของแมพ 3 แต่ละร่างแพ้ทางอาวุธคนละประเภท: เลือกได้ร่างเดียว
+    expect(new Set(CAMPAIGN.hard.battles[0].forms.map((form) => form.weak)).size).toBe(3);
+    // อาวุธมีประเภทละ 2 แบบ
+    for (const kind of WEAPON_CLASSES) expect(Object.values(WEAPON).filter((spec) => spec.class === kind), kind).toHaveLength(2);
+  });
+
+  it("ค้อนพลังงาน: ทุบทะลุเกราะและโจมตีเข้าในครั้งเดียว และตอบถูกติดกันครบ 3 ข้อทุบสะเทือนแรงขึ้น", () => {
+    const setup = battleSetup("easy", { ...PLAIN, forms: [{ art: "kaiju_4", hp: 12, trait: "armor", weak: "beam" }] }, "lab", [], { ...DEFAULT_GEAR, weapon: "hammer" });
+    expect(startBattle(setup).armored).toBe(true);
+    const first = play(setup, [true]);
+    expect(first.events).toEqual([{ type: "armor-break", pierced: true }, hit(1)]);
+    expect(first.state).toMatchObject({ armored: false, kaijuHp: 11 });
+    expect(strikeOf(setup, startBattle(setup))).toMatchObject({ armorBreak: false, pierced: true, damage: 1 });
+    // ข้อที่สาม: ทุบสะเทือน +2
+    const third = play(setup, [true, true, true]).events.filter((e) => e.type === "robot-hit");
+    expect(third).toEqual([hit(1), hit(1), hit(1 + GEAR.quakeDamage, { quake: true })]);
+    // ตอบผิดแล้วเกราะกลับมา ค้อนก็ยังทุบทะลุได้อีก
+    const again = play(setup, [true, false, true]);
+    expect(again.events.map((e) => e.type)).toEqual(["armor-break", "robot-hit", "kaiju-hit", "kaiju-rearm", "armor-break", "robot-hit"]);
+  });
+
+  it("หอกสายฟ้าและปืนใหญ่พลาสม่า: ความสามารถเดียวกับดาบและปืนเลเซอร์ แต่ทำงานทุก 2 ข้อที่ตอบถูกติดกัน", () => {
+    const lance = play(plain("lab", { weapon: "lance" }), [true, true, true, true]).events.filter((e) => e.type === "robot-hit");
+    // คู่ต่อสู้ของด่านทดสอบแพ้ทางคมอาวุธ: หอกได้เปรียบด้วย
+    expect(lance.map((e) => [(e as { damage: number }).damage, (e as { crit: boolean }).crit])).toEqual([[1, false], [(1 + GEAR.advantage) * 2, true]].slice(0, lance.length));
+    const cannon = play(plain("lab", { weapon: "cannon" }), [true, true]);
+    expect(cannon.events.map((e) => e.type)).toEqual(["robot-hit", "robot-hit", "stun", "bit-assist"]);
+    expect(cannon.state.stunned).toBe(true);
+    expect([WEAPON.sword.critEvery, WEAPON.lance.critEvery, WEAPON.blaster.stunEvery, WEAPON.cannon.stunEvery]).toEqual([3, 2, 3, 2]);
+  });
+
+  it("เกราะไททันเพิ่มพลังสูงสุดมากกว่าเกราะหนัก", () => {
+    expect(plain("lab", { armor: "titan" }).robotMax).toBe(ROBOT + GEAR.titan.hp);
+    expect(GEAR.titan.hp).toBeGreaterThan(GEAR.heavy.hp);
+  });
+
+  it("ชุดไซเบอร์นินจา: หลบการโจมตีครั้งแรกของการออกปฏิบัติการ (ก่อนเกราะสะท้อนและโล่) ครั้งถัดไปโดนตามปกติ", () => {
+    const setup = plain("ninja");
+    expect(startBattle(setup).dodge).toBe(BATTLE.perks.ninjaDodges);
+    expect(threatOf(setup, startBattle(setup)).saved).toBe("dodge");
+    const first = resolveAnswer(setup, startBattle(setup), false);
+    expect(first.events).toEqual([{ type: "kaiju-hit", damage: 0, blocked: true, heavy: false, by: "dodge" }]);
+    expect(first.state).toMatchObject({ robotHp: setup.robotMax, dodge: 0 });
+    expect(resolveAnswer(setup, first.state, false).events[0]).toMatchObject({ blocked: false, damage: BATTLE.wrongDamage });
+    // ลำดับ: ชิปคิดทบทวน → สตัน → หลบ → เกราะสะท้อน → โล่
+    const all = battleSetup("easy", PLAIN, "ninja", [], { weapon: "blaster", armor: "guard", chip: "retry" });
+    let state: BattleState = { ...startBattle(all), stunned: true, shield: true };
+    const saved: (string | null)[] = [];
+    for (let i = 0; i < 6; i++) {
+      saved.push(threatOf(all, state).saved);
+      state = resolveAnswer(all, state, false).state;
+    }
+    expect(saved).toEqual(["retry", "stun", "dodge", "guard", "shield", null]);
   });
 });

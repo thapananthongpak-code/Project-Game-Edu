@@ -1,61 +1,13 @@
 import { ASSESSMENT_ITEMS_PER_TOPIC, course, ROOM_COUNT, topicOf } from "../content";
-import { reviewBlocks } from "../content/review";
 import { fmt, ui } from "../content/ui-strings";
 import { gainOf } from "../state/assessment";
+import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { accuracyPercent, emptyField, fieldTotals } from "../state/field";
-import { battlesWon, difficultyOf, planOf, roomProgress, useGameStore } from "../state/gameStore";
-import type { Profile, RoomProgress } from "../state/progressStore";
+import { learningRooms, mapUnlocked, roomProgress, useGameStore } from "../state/gameStore";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
 
 const quest = course.finalQuest;
-
-const escapeHtml = (text: string): string => text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
-
-/** สมุดบันทึกสำหรับส่งครู: คำตอบทบทวนทุกห้อง ตารางผล บันทึกเพิ่มเติม และภาพหน้าจอ เป็นไฟล์ HTML ไฟล์เดียว */
-function notebookHtml(profile: Profile, progress: Record<number, RoomProgress>): string {
-  const parts: string[] = [`<h1>${escapeHtml(ui.certificate.notebook)}: ${escapeHtml(profile.name)}</h1>`];
-  for (const topic of course.topics) {
-    const answers = roomProgress({ progress }, topic.id).reviewAnswers;
-    const blocks = reviewBlocks(topic.id);
-    if (blocks.length === 0) continue;
-    parts.push(`<h2>${topic.id}. ${escapeHtml(topic.title)}</h2>`);
-    let index = 0;
-    for (const block of blocks) {
-      parts.push(`<h3>${escapeHtml(block.question)}</h3>`);
-      for (const fact of block.facts) parts.push(`<p>${escapeHtml(fact.label)}: <b>${escapeHtml(fact.value)}</b></p>`);
-      for (const field of block.fields) parts.push(`<p>${field.label ? `<i>${escapeHtml(field.label)}</i><br>` : ""}${escapeHtml(answers[index++] ?? "")}</p>`);
-    }
-  }
-  const last = topicOf(ROOM_COUNT);
-  const field = roomProgress({ progress }, ROOM_COUNT).field ?? emptyField(quest);
-  const totals = fieldTotals(field.results, quest);
-  const table = last.tables[0];
-  const rows = quest.resultTable.classes.map((name, i) => {
-    const r = field.results[i];
-    return `<tr><td>${escapeHtml(name)}</td><td>${r.images ?? ""}</td><td>${quest.resultTable.testsPerClass}</td><td>${r.correct ?? ""}</td><td>${r.correct === null ? "" : `${accuracyPercent(r.correct, quest.resultTable.testsPerClass)}%`}</td></tr>`;
-  });
-  parts.push(
-    `<h2>${last.id}. ${escapeHtml(last.title)}</h2>`,
-    `<table border="1" cellpadding="6"><tr>${table.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr>${rows.join("")}<tr><th>${escapeHtml(table.rows[table.rows.length - 1][0])}</th><th>${totals.images ?? ""}</th><th>${totals.tests}</th><th>${totals.correct ?? ""}</th><th>${totals.accuracy ?? ""}%</th></tr></table>`,
-  );
-  quest.notes?.prompts.forEach((prompt, i) => parts.push(`<h3>${escapeHtml(prompt)}</h3><p>${escapeHtml(field.notes[i] ?? "")}</p>`));
-  if (field.evidence.image) parts.push(`<p><img src="${field.evidence.image}" style="max-width:100%"></p>`);
-  else if (field.evidence.outsideGame) parts.push(`<p>${escapeHtml(ui.field.outsideGame)}</p>`);
-  return `<!doctype html><html lang="th"><meta charset="utf-8"><title>${escapeHtml(ui.certificate.notebook)}</title><body style="font-family:sans-serif;max-width:800px;margin:auto;padding:16px">${parts.join("\n")}</body></html>`;
-}
-
-function download(name: string, html: string): void {
-  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  // เบราว์เซอร์บางตัวเริ่มดาวน์โหลดช้ากว่าการคลิก ถ้ายกเลิก URL ทันทีไฟล์จะว่าง
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
 
 /**
  * ใบประกาศนักฝึก AI (GDD ข้อ 8): ยืนยันว่าเล่นจบและส่งงานครบ ไม่ใช่คะแนน คะแนนเป็นของครูตามเกณฑ์ประเมิน
@@ -63,10 +15,11 @@ function download(name: string, html: string): void {
  */
 export function Certificate() {
   const profile = useGameStore((s) => s.profile);
-  const progress = useGameStore((s) => s.progress);
-  const won = useGameStore(battlesWon);
-  const battleTotal = useGameStore((s) => planOf(s).battles.length);
-  const difficulty = useGameStore(difficultyOf);
+  // ใบประกาศเป็นของแมพ 1 (แมพเรียน): สมรรถนะ ดาว และภารกิจภาคสนามอ่านจากความคืบหน้าของแมพ 1 เสมอ
+  const progress = useGameStore(learningRooms);
+  const battles = useGameStore((s) => s.battles);
+  const maps = useGameStore((s) => DIFFICULTIES.filter((map) => mapUnlocked(s, map)).join(","));
+  const journey = DIFFICULTIES.filter((map) => maps.split(",").includes(map)).map((map) => ({ map, total: CAMPAIGN[map].battles.length, won: CAMPAIGN[map].battles.filter((battle) => battles[battle.id]?.won).length }));
   const pretest = useGameStore((s) => s.pretest);
   const posttest = useGameStore((s) => s.posttest);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
@@ -108,7 +61,11 @@ export function Certificate() {
             {ui.certificate.date} {date}
           </p>
           <p className="mt-1 text-sm font-bold text-teal-dark" data-testid="certificate-guardian">
-            ⚔ {fmt(ui.certificate.guardian, { n: won, total: battleTotal })} · {fmt(ui.certificate.difficulty, { name: ui.difficulty[difficulty].name })}
+            {journey.map(({ map, won, total }) => (
+              <span key={map} className="mx-1 inline-block" data-map={map}>
+                ⚔ {ui.difficulty[map].name} {fmt(ui.certificate.guardian, { n: won, total })}
+              </span>
+            ))}
           </p>
         </header>
 
@@ -233,9 +190,6 @@ export function Certificate() {
         </section>
 
         <div className="no-print flex flex-wrap justify-end gap-2">
-          <button type="button" className="btn btn-ghost" data-testid="certificate-download" onClick={() => download(fmt(ui.certificate.notebookFile, { name: profile.name }), notebookHtml(profile, progress))}>
-            {ui.certificate.download}
-          </button>
           <button type="button" className="btn btn-ghost" onClick={() => window.print()}>
             {ui.certificate.print}
           </button>

@@ -22,8 +22,8 @@ describe("เนื้อเรื่องแบบช่องการ์ต�
     }
   });
 
-  it("บทนำ 5 ช่องและบทส่งท้าย 4 ช่อง ใช้ภาพไม่ซ้ำกัน", () => {
-    for (const [beat, count] of [["prologue", 5], ["ending", 4], ["ending-normal", 4], ["ending-hard", 4]] as const) {
+  it("บทนำ 5 ช่อง และบทส่งท้ายของแต่ละแมพ ใช้ภาพไม่ซ้ำกันในฉากเดียว", () => {
+    for (const [beat, count] of [["prologue", 5], ["ending", 4], ["ending-normal", 3], ["ending-hard", 4]] as const) {
       const art = storyBeats[beat].map((line) => line.art);
       expect(art).toHaveLength(count);
       expect(new Set(art).size).toBe(count);
@@ -58,20 +58,21 @@ describe("เนื้อเรื่องแบบช่องการ์ต�
     }
   });
 
-  it("บทส่งท้ายของแต่ละระดับใช้รหัสฉากเดียวกัน แต่ช่องแรกเป็นร่างสุดท้ายของบอสในระดับนั้น", () => {
-    expect(storyLines("ending", "easy")).toBe(storyBeats.ending);
-    expect(storyLines("ending", undefined)).toBe(storyBeats.ending);
-    expect(storyLines("ending", "normal")[0].art).toBe("st_win_boss_2");
-    expect(storyLines("ending", "hard")[0].art).toBe("st_win_boss_3");
-    expect(storyLines("prologue", "hard")).toBe(storyBeats.prologue);
-    expect(storyLines("no-such-beat", "easy")).toEqual([]);
-    // ช่องสุดท้ายของทุกระดับคือฉากจบเดียวกัน
-    for (const difficulty of DIFFICULTIES) expect(storyLines("ending", difficulty).at(-1)?.art).toBe("st_finale");
+  it("แมพ 2 และ 3 มีฉากตอนมาถึง บทส่งท้ายของแมพ 1 และ 2 ชวนไปแมพถัดไป และแมพ 3 จบที่ฉากจบของเกม", () => {
+    expect(storyBeats["map-normal"][0].art).toBe("st_map2");
+    expect(storyBeats["map-hard"][0].art).toBe("st_map3");
+    expect(storyLines("ending")).toBe(storyBeats.ending);
+    expect(storyLines("ending").at(-1)?.art).toBe("st_map2");
+    expect(storyLines("ending-normal")[0].art).toBe("st_win_boss_2");
+    expect(storyLines("ending-normal").at(-1)?.art).toBe("st_map3");
+    expect(storyLines("ending-hard")[0].art).toBe("st_win_boss_4");
+    expect(storyLines("ending-hard").at(-1)?.art).toBe("st_finale");
+    expect(storyLines("no-such-beat")).toEqual([]);
   });
 
   it("ทุกช่องมีอารมณ์สำหรับเลือกเพลง และบทนำเปลี่ยนจากตึงเครียดเป็นสงบและสดใส", () => {
     for (const lines of Object.values(storyBeats)) for (const line of lines) expect(["tense", "calm", "bright"]).toContain(line.mood);
     expect(storyBeats.prologue.map((line) => line.mood)).toEqual(["tense", "tense", "calm", "calm", "bright"]);
-    for (const difficulty of DIFFICULTIES) expect(storyLines("ending", difficulty).every((line) => line.mood === "bright")).toBe(true);
+    for (const beat of ["ending", "ending-normal", "ending-hard"]) expect(storyLines(beat).every((line) => line.mood === "bright")).toBe(true);
   });
 });

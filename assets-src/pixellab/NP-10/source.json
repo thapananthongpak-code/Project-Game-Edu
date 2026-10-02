@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "calm middle-aged data analyst woman with silver streaked hair in a bun, purple cardigan over a gray turtleneck, holding a glowing tablet, thoughtful smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "อาจารย์ซิน นักวิเคราะห์ข้อมูล (แมพ 2 ถามตอบพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "6e54b7b2-1bc4-4da3-a021-5743c79fc5e1",
+  "generatedAt": "2026-10-02T14:19:39.691Z"
+}

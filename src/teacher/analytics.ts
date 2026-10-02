@@ -1,9 +1,8 @@
 // สรุปข้อมูลสำหรับแดชบอร์ดผู้สอน (ฟังก์ชันล้วน ทดสอบได้) รับแถวจาก /api/teacher แล้วคำนวณฝั่งเบราว์เซอร์
 import { ASSESSMENT_ITEMS_PER_TOPIC, course, quests, ROOM_COUNT } from "../content";
-import { reviewBlocks } from "../content/review";
 import type { FormId } from "../content/schema";
 import { gainOf, totalCorrect } from "../state/assessment";
-import { campaignOf, type Difficulty } from "../state/campaign";
+import { CAMPAIGN, DIFFICULTIES, type Difficulty, mapIndex } from "../state/campaign";
 import { fieldTotals } from "../state/field";
 import { npcActivitiesDone } from "../state/npcs";
 import { emptyRoom, migrateSave, type RoomProgress, type SaveData } from "../state/progressStore";
@@ -52,7 +51,7 @@ export interface StudentSummary {
   archived: boolean;
   updatedAt: string;
   resumeCode: string | null;
-  /** ระดับความยากที่ผู้เรียนเลือกตอนเริ่มเกม (GDD ข้อ 15) */
+  /** แมพที่ผู้เรียนอยู่ตอนนี้ (easy = แมพ 1, normal = แมพ 2, hard = แมพ 3 เล่นต่อกันตามลำดับ GDD ข้อ 15) */
   difficulty: Difficulty;
   /** หัวข้อสูงสุดที่เริ่มทำแล้ว (0 = ยังไม่เริ่มหัวข้อใด) */
   roomReached: number;
@@ -60,7 +59,7 @@ export interface StudentSummary {
   /** ดาวรวมของมินิเกมห้อง 1–5 */
   stars: number;
   starsMax: number;
-  /** จำนวนหัวข้อที่ส่งคำตอบทบทวนแล้ว (ระดับยากไม่มีคำถามทบทวน reviewsTotal = 0) */
+  /** จำนวนหัวข้อของแมพ 1 ที่ผ่านคำถามทบทวนแล้ว */
   reviewsDone: number;
   reviewsTotal: number;
   /** ความแม่นยำรวมที่ผู้เรียนกรอกจากการทดสอบโมเดลจริง (%) */
@@ -76,7 +75,7 @@ export interface StudentSummary {
   timeMs: number;
   /** จำนวนห้องที่ถูกบังคับเข้าห้องซ่อม */
   forcedRepairs: number;
-  /** ด่านต่อสู้ไคจูที่ชนะแล้วจากจำนวนด่านของระดับความยาก และโจทย์ในด่านต่อสู้ที่ตอบทั้งหมดกับที่ตอบถูก (รวมการซ้อมรบ) */
+  /** ด่านต่อสู้ไคจูที่ชนะแล้วจากจำนวนด่านของทุกแมพที่ผู้เรียนไปถึง และโจทย์ในด่านต่อสู้ที่ตอบทั้งหมดกับที่ตอบถูก (รวมการซ้อมรบ) */
   battlesWon: number;
   battlesTotal: number;
   /** กิจกรรมเสริมกับ NPC ประจำห้องที่ทำแล้ว (เควสเสริมที่ส่งแล้ว และถามตอบพิเศษที่เล่นแล้ว) ไม่บังคับ ไม่ใช่คะแนน */
@@ -92,9 +91,9 @@ export function summarizeStudent(player: Player): StudentSummary {
   const final = roomOf(save, ROOM_COUNT);
   const growth = gainOf(save.pretest, save.posttest, ASSESSMENT_ITEMS_PER_TOPIC);
   const difficulty = save.profile?.difficulty ?? "easy";
-  const level = campaignOf(difficulty);
-  // นับเฉพาะด่านของระดับความยากที่เล่นอยู่ (ข้อมูลของระดับอื่นไม่มีอยู่แล้ว เพราะเปลี่ยนระดับได้เมื่อเริ่มเกมใหม่เท่านั้น)
-  const fought = level.battles.map((battle) => save.battles[battle.id]).filter((record) => record !== undefined);
+  // ด่านของทุกแมพที่ผู้เรียนไปถึงแล้ว (แมพเล่นต่อกันตามลำดับ) ความคืบหน้าของหัวข้อ (rooms) เป็นของแมพ 1 เสมอ
+  const reached = DIFFICULTIES.slice(0, mapIndex(difficulty) + 1).flatMap((map) => CAMPAIGN[map].battles);
+  const fought = reached.map((battle) => save.battles[battle.id]).filter((record) => record !== undefined);
   return {
     id: player.id,
     name: player.name,
@@ -108,7 +107,7 @@ export function summarizeStudent(player: Player): StudentSummary {
     stars: lessons.reduce((sum, room) => sum + room.stars, 0),
     starsMax: lessons.length * 3,
     reviewsDone: lessons.filter((room) => room.reviewDone).length,
-    reviewsTotal: level.review ? lessons.length : 0,
+    reviewsTotal: lessons.length,
     fieldAccuracy: final.field ? fieldTotals(final.field.results, course.finalQuest).accuracy : null,
     fieldDone: final.core,
     pre: save.pretest ? totalCorrect(save.pretest) : null,
@@ -121,7 +120,7 @@ export function summarizeStudent(player: Player): StudentSummary {
     timeMs: rooms.reduce((sum, room) => sum + room.timeMs, 0),
     forcedRepairs: rooms.filter((room) => room.outcome?.requiredRepair).length,
     battlesWon: fought.filter((record) => record.won).length,
-    battlesTotal: level.battles.length,
+    battlesTotal: reached.length,
     sideActivities: npcActivitiesDone(save.npcs),
     battleAsked: fought.reduce((sum, record) => sum + record.asked, 0),
     battleCorrect: fought.reduce((sum, record) => sum + record.correct, 0),
@@ -300,7 +299,7 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
       s.name,
       s.archived,
       s.updatedAt,
-      s.difficulty,
+      mapIndex(s.difficulty) + 1,
       s.roomReached,
       s.cores,
       s.stars,
@@ -330,37 +329,22 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
   return toCsv([head, ...rows]);
 }
 
-export interface WrittenAnswer {
+export interface ReviewScore {
   room: number;
-  question: string;
-  label: string;
-  answer: string;
+  /** จำนวนข้อที่ตอบถูกตั้งแต่ครั้งแรก และจำนวนข้อทั้งหมดของคำถามทบทวนแบบเลือกตอบ */
+  correct: number;
+  total: number;
 }
 
-/** คำตอบแบบพิมพ์ของผู้เรียนหนึ่งคน: คำถามทบทวนห้อง 1–5 และบันทึกเพิ่มเติมของภารกิจภาคสนาม ให้ครูอ่านและให้คะแนนเอง */
-export function writtenAnswers(save: SaveData): WrittenAnswer[] {
-  const answers: WrittenAnswer[] = [];
-  for (const room of lessonRooms()) {
-    const given = save.rooms[room]?.reviewAnswers ?? [];
-    let index = 0;
-    for (const block of reviewBlocks(room)) {
-      for (const field of block.fields) {
-        const answer = given[index++] ?? "";
-        if (answer) answers.push({ room, question: block.question, label: field.label, answer });
-      }
-    }
-  }
-  const field = save.rooms[ROOM_COUNT]?.field;
-  course.finalQuest.notes?.prompts.forEach((prompt, i) => {
-    const answer = field?.notes[i] ?? "";
-    if (answer) answers.push({ room: ROOM_COUNT, question: prompt, label: "", answer });
+/**
+ * ผลคำถามทบทวนแบบเลือกตอบของผู้เรียนหนึ่งคน (แมพ 1 หัวข้อ 1–5) เกมไม่เก็บข้อความที่ผู้เรียนเขียนอีกต่อไป
+ * หัวข้อที่ส่งคำตอบในรุ่นที่ยังเป็นการเขียนตอบไม่มีคะแนน จึงไม่อยู่ในรายการ
+ */
+export function reviewScores(save: SaveData): ReviewScore[] {
+  return lessonRooms().flatMap((room) => {
+    const review = save.rooms[room]?.review;
+    return review ? [{ room, correct: review.correct, total: review.total }] : [];
   });
-  return answers;
-}
-
-export function answersCsv(players: readonly Player[], head: readonly string[]): string {
-  const rows = players.flatMap((player) => writtenAnswers(player.save).map((a): Cell[] => [player.classCode, player.name, a.room, a.question, a.label, a.answer]));
-  return toCsv([head, ...rows]);
 }
 
 export function itemsCsv(gain: ClassGain, head: readonly string[]): string {

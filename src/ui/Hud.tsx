@@ -1,12 +1,13 @@
 import { setAudioSettings } from "../audio/engine";
 import { useAudioSettings } from "../audio/useAudio";
 import { isFieldRoom, questTitle, stationsOf, topicOf } from "../content";
-import { ROOM_COUNT } from "../content";
 import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
-import { allBattlesWon, coreCount, creditsOf, nextStepOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
+import { DIFFICULTIES, mapIndex } from "../state/campaign";
+import { allBattlesWon, coreCount, coreTotal, creditsOf, difficultyOf, nextStepOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
+import { art } from "./art";
 
-/** เป้าหมายถัดไปของผู้เล่น ตามลำดับการเล่นของระดับความยาก (GDD ข้อ 4.1 และ 15) และด่านต่อสู้ (GDD ข้อ 12) */
+/** เป้าหมายถัดไปของผู้เล่น ตามลำดับการเล่นของแมพที่อยู่ (GDD ข้อ 4.1 และ 15) และด่านต่อสู้ (GDD ข้อ 12) */
 function useObjective(): string {
   const zone = useGameStore((s) => s.zone);
   const screen = useGameStore((s) => s.screen);
@@ -27,7 +28,11 @@ function useObjective(): string {
     if (battle) return fmt(ui.objective.hallBattle, { kaiju });
     // ห้องถัดไปบนเส้นทาง คือห้องแรกที่ยังมีหัวข้อไม่ได้แกน AI
     const next = plan.zones.findIndex((z) => z.topics.some((topic) => !roomProgress(state, topic).core)) + 1;
-    return next > 0 ? fmt(ui.objective.hall, { n: next }) : fmt(ui.objective.hallDone, { n: plan.zones.length });
+    if (next > 0) return fmt(ui.objective.hall, { n: next });
+    // ชนะครบทุกด่านของแมพนี้แล้ว: เดินทางไปแมพถัดไป (แมพสุดท้าย: จบทุกแมพแล้ว)
+    const onward = DIFFICULTIES[mapIndex(profile?.difficulty) + 1];
+    if (!allBattlesWon(state)) return fmt(ui.objective.hallDone, { n: plan.zones.length });
+    return onward ? fmt(ui.objective.hallTravel, { map: ui.difficulty[onward].name }) : ui.objective.hallAllDone;
   }
 
   const topics = plan.zones[zone - 1]?.topics ?? [];
@@ -61,6 +66,8 @@ export function Hud() {
   const room = useGameStore((s) => s.room);
   const screen = useGameStore((s) => s.screen);
   const cores = useGameStore(coreCount);
+  const total = useGameStore(coreTotal);
+  const map = useGameStore(difficultyOf);
   const credits = useGameStore(creditsOf);
   // ห้องที่มีหลายหัวข้อ: บอกด้วยว่ากำลังทำเรื่องที่เท่าไร
   const multi = useGameStore((s) => s.zone !== null && (planOf(s).zones[s.zone - 1]?.topics.length ?? 1) > 1);
@@ -79,9 +86,12 @@ export function Hud() {
   };
 
   return (
-    <header className="z-10 flex shrink-0 items-center gap-2 border-b-[3px] border-ink bg-cream px-2 py-1 text-sm sm:gap-3 sm:px-3" data-zone={zone ?? undefined} data-topic={topic ? room : undefined}>
+    <header className="z-10 flex shrink-0 items-center gap-2 border-b-[3px] border-ink bg-cream px-2 py-1 text-sm sm:gap-3 sm:px-3" data-zone={zone ?? undefined} data-topic={topic ? room : undefined} data-map={map}>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
+          <span className="shrink-0 rounded border-2 border-ink bg-teal-light px-1 text-xs font-extrabold" data-testid="hud-map" title={ui.difficulty[map].name}>
+            {fmt(ui.hud.map, { n: mapIndex(map) + 1 })}
+          </span>
           <span className="shrink-0 font-extrabold text-teal-dark">{topic ? fmt(ui.hud.room, { n: zone as number }) : screen === "hangar" ? ui.hud.hangar : ui.hud.hall}</span>
           {topic && (
             <span className="truncate font-semibold" data-testid="hud-topic">
@@ -95,11 +105,12 @@ export function Hud() {
           ▸ {objective}
         </div>
       </div>
-      <span className="hidden shrink-0 rounded-md border-2 border-ink bg-hint px-2 py-0.5 text-xs font-bold min-[520px]:inline" data-testid="credits" data-credits={credits}>
+      <span className="hidden shrink-0 items-center gap-1 rounded-md border-2 border-ink bg-hint px-2 py-0.5 text-xs font-bold min-[520px]:flex" data-testid="credits" data-credits={credits}>
+        <img src={art.credit} alt="" className="pixelated h-4 w-4" />
         {fmt(ui.hud.credits, { n: credits })}
       </span>
       <span className="hidden shrink-0 rounded-md border-2 border-ink bg-teal-light px-2 py-0.5 text-xs font-bold min-[420px]:inline" data-testid="cores">
-        {fmt(ui.hud.cores, { n: cores, total: ROOM_COUNT })}
+        {fmt(ui.hud.cores, { n: cores, total })}
       </span>
       {topic && (
         <button type="button" className="btn !min-h-9 shrink-0 !px-2 text-xs" data-testid="hud-tutor" onClick={press(() => setTutorOpen(true))}>

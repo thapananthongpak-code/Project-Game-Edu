@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "colossal final boss kaiju ultimate form facing left, towering white and gold armored dragon emperor with six wings of golden light, a black core glowing violet in its chest, a tall crown of horns, a ring halo of energy behind its head, menacing glowing violet eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 128,
+    "height": 128,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "85044695-116d-428a-8ace-296c9e97e552",
+  "generatedAt": "2026-10-02T14:04:40.512Z"
+}

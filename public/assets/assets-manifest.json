@@ -607,6 +607,316 @@
       "status": "generated"
     },
     {
+      "id": "CH-30",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดนักบินอวกาศ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_astronaut": "characters/ch_a_astronaut.png"
+      },
+      "web": {
+        "ch_a_astronaut_south": "characters/ch_a_astronaut_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, white and orange space suit with a clear bubble helmet pushed back on the shoulders, a small oxygen pack, thick gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดนักบินอวกาศ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "164ef23a-6d9b-4179-8c63-82448ff74639",
+        "generatedAt": "2026-10-02T14:36:24.935Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-31",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดไซเบอร์นินจา 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_ninja": "characters/ch_a_ninja.png"
+      },
+      "web": {
+        "ch_a_ninja_south": "characters/ch_a_ninja_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, sleek black cyber ninja suit with glowing cyan lines, a short cyan scarf, a face mask pulled down under the chin, arm guards and split-toe boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดไซเบอร์นินจา 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "92c0bcab-d78a-4c8f-856a-690e800ee8dd",
+        "generatedAt": "2026-10-02T14:40:50.496Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-32",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดฮีโร่การ์เดียน 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_hero": "characters/ch_a_hero.png"
+      },
+      "web": {
+        "ch_a_hero_south": "characters/ch_a_hero_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, white and teal hero armor suit modeled after a guardian mech with a glowing cyan chest core, a short red cape, armored gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดฮีโร่การ์เดียน 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "0dc678a6-1a16-42fd-bd6d-882ea165aace",
+        "generatedAt": "2026-10-02T14:44:14.960Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-33",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดนักบินอวกาศ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_astronaut": "characters/ch_b_astronaut.png"
+      },
+      "web": {
+        "ch_b_astronaut_south": "characters/ch_b_astronaut_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, white and orange space suit with a clear bubble helmet pushed back on the shoulders, a small oxygen pack, thick gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดนักบินอวกาศ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "b1b54c65-e368-49de-9660-a44a0191f9a6",
+        "generatedAt": "2026-10-02T14:47:49.468Z"
+      },
+      "status": "generated",
+      "postprocess": {
+        "removeBackdrop": {
+          "color": "#b4b6bf",
+          "tolerance": 4,
+          "directions": [
+            "south"
+          ],
+          "reason": "เฟรมเดินทิศใต้ทั้ง 6 เฟรมเจนมาพร้อมพื้นหลังสีเทาทึบ จึงลบสีนั้นออกตอนประกอบแผ่นสไปรต์"
+        }
+      }
+    },
+    {
+      "id": "CH-34",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดไซเบอร์นินจา 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_ninja": "characters/ch_b_ninja.png"
+      },
+      "web": {
+        "ch_b_ninja_south": "characters/ch_b_ninja_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, sleek black cyber ninja suit with glowing cyan lines, a short cyan scarf, a face mask pulled down under the chin, arm guards and split-toe boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดไซเบอร์นินจา 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "24c2b709-d083-4b82-badd-cf46aee9bab1",
+        "generatedAt": "2026-10-02T14:50:44.234Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-35",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดฮีโร่การ์เดียน 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_hero": "characters/ch_b_hero.png"
+      },
+      "web": {
+        "ch_b_hero_south": "characters/ch_b_hero_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, white and teal hero armor suit modeled after a guardian mech with a glowing cyan chest core, a short red cape, armored gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดฮีโร่การ์เดียน 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "dbe27f1f-88f1-406c-b9b6-76fde426f042",
+        "generatedAt": "2026-10-02T14:53:21.186Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "CH-02",
       "kind": "sprite",
       "name": "พี่บิต พี่เลี้ยงหุ่นยนต์",
@@ -1039,6 +1349,198 @@
         "fetchTool": "get_character",
         "id": "886050e2-2bf0-4ce2-ad25-b0dc46630816",
         "generatedAt": "2026-10-02T08:40:45.383Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-07",
+      "kind": "npc",
+      "name": "ลุงเหล็ก ช่างตีอาวุธ (แมพ 2 ร้านอาวุธพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_smith": "characters/npc_smith.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "burly old blacksmith with a gray beard and a bandana, leather apron over a dark red shirt, holding a glowing hammer, kind grin, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "ลุงเหล็ก ช่างตีอาวุธ (แมพ 2 ร้านอาวุธพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "4e5f849f-e566-4b1d-be97-3b70eb654e14",
+        "generatedAt": "2026-10-02T14:16:45.579Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-08",
+      "kind": "npc",
+      "name": "พี่ฟ้า หน่วยลาดตระเวน (แมพ 2 เควสเสริม)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_ranger": "characters/npc_ranger.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "young woman scout ranger with a green beret and a long braid, olive green field jacket, binoculars around the neck, confident smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "พี่ฟ้า หน่วยลาดตระเวน (แมพ 2 เควสเสริม)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "1eae1f39-fb0b-4f4c-9554-eb009b2e9598",
+        "generatedAt": "2026-10-02T14:17:43.891Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-09",
+      "kind": "npc",
+      "name": "หมอปลา หมอสนาม (แมพ 2 ช่วยเหลือ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_medic": "characters/npc_medic.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "gentle young field medic with round glasses, white coat with a mint green cross armband, carrying a first aid case, warm smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "หมอปลา หมอสนาม (แมพ 2 ช่วยเหลือ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "fad2f0df-8c2a-4f9e-a99a-096273069c05",
+        "generatedAt": "2026-10-02T14:18:31.910Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-10",
+      "kind": "npc",
+      "name": "อาจารย์ซิน นักวิเคราะห์ข้อมูล (แมพ 2 ถามตอบพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_sage": "characters/npc_sage.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "calm middle-aged data analyst woman with silver streaked hair in a bun, purple cardigan over a gray turtleneck, holding a glowing tablet, thoughtful smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "อาจารย์ซิน นักวิเคราะห์ข้อมูล (แมพ 2 ถามตอบพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "6e54b7b2-1bc4-4da3-a021-5743c79fc5e1",
+        "generatedAt": "2026-10-02T14:19:39.691Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-11",
+      "kind": "npc",
+      "name": "กัปตันเรย์ ผู้บัญชาการป้อม (แมพ 3 ถามตอบพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_captain": "characters/npc_captain.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "stern veteran captain with a scar on one eyebrow, dark navy long coat with red trim and silver shoulder plates, arms crossed, slight smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "กัปตันเรย์ ผู้บัญชาการป้อม (แมพ 3 ถามตอบพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "31d8af88-7fde-41d1-99ab-e52c530d5bd9",
+        "generatedAt": "2026-10-02T14:21:05.893Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-12",
+      "kind": "npc",
+      "name": "น้าคลัง นายคลังแสง (แมพ 3 ร้านพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_keeper": "characters/npc_keeper.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "cheerful stocky quartermaster with a thick mustache, gray armored vest over a yellow shirt, a ring of keys on the belt, carrying a metal crate, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "น้าคลัง นายคลังแสง (แมพ 3 ร้านพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "1f947666-7260-48c2-bc19-da398745d0d6",
+        "generatedAt": "2026-10-02T14:21:54.462Z"
       },
       "status": "generated"
     },
@@ -1481,6 +1983,138 @@
         }
       },
       "status": "generated"
+    },
+    {
+      "id": "TS-08",
+      "kind": "tileset",
+      "name": "ไทล์เซตโถงของแมพ 2 (ศูนย์วิจัยภาคสนาม)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_outpost": "tiles/ts_outpost.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of warm sand beige concrete floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of dark slate blue-grey steel wall panels with an orange trim band and small round orange status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "54c0e0de-6881-447d-94c7-96df01048ec4",
+        "generatedAt": "2026-10-02T14:43:25.500Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_topdown_tileset",
+          "id": "8e48dfc1-1a99-47db-8db5-22965fb2cfd0",
+          "reason": "พื้นออกมาเป็นลายเส้นสีชมพูและผนังกลายเป็นสนามหญ้า ไม่เหมือนโถงในอาคาร จึงใช้คำแบบเดียวกับไทล์เซตที่ได้ผลดี (พื้นคอนกรีต ผนังแผ่นโลหะมีแถบสี) แล้วเจนใหม่",
+          "subject": "seamless floor tile of weathered light wooden deck planks with small metal bolts / seamless wall tile of olive green corrugated metal outpost wall panels with a thin orange stripe"
+        },
+        {
+          "tool": "create_topdown_tileset",
+          "id": "41740a51-cd1c-4d1e-8e3a-4a0a094820b3",
+          "reason": "พื้นใช้ได้แล้ว แต่ผนังสีเขียวมะกอกยังออกมาเป็นพุ่มไม้มีดอกสีส้ม จึงเปลี่ยนผนังเป็นแผ่นเหล็กสีเทาอมน้ำเงิน แล้วเจนใหม่",
+          "subject": "seamless wall tile of olive green painted metal wall panels with an orange trim band and small round status lights, indoor wall, no grass, no plants"
+        }
+      ]
+    },
+    {
+      "id": "TS-09",
+      "kind": "tileset",
+      "name": "ไทล์เซตโถงของแมพ 3 (ป้อมปราการ)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_fortress": "tiles/ts_fortress.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of plain dark charcoal grey stone floor slabs with subtle grid seams, calm and even, no symbols, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of black steel wall panels with a red trim band and small round red warning lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "43d21b6f-a7a5-4ca6-9e15-7157d115f1e6",
+        "generatedAt": "2026-10-02T14:41:30.227Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_topdown_tileset",
+          "id": "5f82eaf1-d0be-4a97-87b2-cf4ec4f6bc97",
+          "reason": "พื้นออกมาเป็นลายสัญลักษณ์สี่เหลี่ยมสีแดงถี่ทั้งพื้น ลายตาและอ่านวัตถุยาก จึงขอพื้นหินสีเทาเข้มเรียบ แล้วเจนใหม่",
+          "subject": "seamless floor tile of dark obsidian stone slabs with thin glowing red seams / seamless wall tile of black steel fortress wall plates with rivets and small red warning lights"
+        }
+      ]
     },
     {
       "id": "PR-C01",
@@ -2649,6 +3283,434 @@
         "fetchTool": "get_image",
         "id": "4d7dbf92-26e2-4ef0-bbdc-2418a834e116",
         "generatedAt": "2026-10-02T08:44:22.669Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-Q03",
+      "kind": "prop",
+      "name": "เครื่องส่งสัญญาณที่หล่นหาย (เควสของพี่ฟ้า)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_pickup_beacon": "props/pr_pickup_beacon.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small orange radio beacon device with a blinking green light and a short antenna lying on the floor with a small white sparkle, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "83604c7c-3b93-4c42-ba39-a0616a28d8e2",
+        "generatedAt": "2026-10-02T14:24:59.445Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D13",
+      "kind": "prop",
+      "name": "ป้ายนีออนรูปหุ่นยนต์ (ของตกแต่งผนัง)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_neon": "props/pr_decor_neon.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall-mounted neon sign in the shape of a cute robot head glowing cyan and pink, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b7157fac-1b18-4795-a012-190ea3634a45",
+        "generatedAt": "2026-10-02T14:26:19.362Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D14",
+      "kind": "prop",
+      "name": "นาฬิกาผนังวงแหวน (ของตกแต่งผนัง)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_clock": "props/pr_decor_clock.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide wall-mounted round clock with a glowing teal ring, two hands and small brass gears on both sides, no numbers, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "be9837a5-c543-4881-8d42-d6bf83ede5d2",
+        "generatedAt": "2026-10-02T14:26:48.507Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D15",
+      "kind": "prop",
+      "name": "ธงประดับตราการ์เดียน (ของตกแต่งผนัง)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_banner": "props/pr_decor_banner.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide hanging teal cloth banner with a white shield emblem and gold tassels, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "f0cf8e0a-c5b9-4c62-a234-d88ea976de03",
+        "generatedAt": "2026-10-02T14:27:18.883Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D16",
+      "kind": "prop",
+      "name": "ตู้ปลา (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_aquarium": "props/pr_decor_aquarium.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide glass aquarium tank on a metal stand with colorful fish, green water plants and bubbles, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9adb7532-0409-46f9-8669-c79c7b9fc71d",
+        "generatedAt": "2026-10-02T14:27:39.255Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D17",
+      "kind": "prop",
+      "name": "ตู้เกมอาร์เคด (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_arcade": "props/pr_decor_arcade.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "two retro arcade game cabinets side by side with glowing screens showing simple pixel shapes and colorful buttons, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ae70165f-875b-4bd3-8f51-22158a5a7217",
+        "generatedAt": "2026-10-02T14:28:16.509Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D18",
+      "kind": "prop",
+      "name": "รูปปั้นการ์เดียน (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_statue": "props/pr_decor_statue.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "golden statue of a heroic mech robot standing on a plain blank grey stone block pedestal, front view, no plaque, no sign, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1d3978cb-afe3-4d74-a662-17ddb7440b05",
+        "generatedAt": "2026-10-02T14:36:27.295Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "2c2b7acf-96ad-407f-8c6c-ba04eefdc7ea",
+          "reason": "ป้ายที่ฐานรูปปั้นมีตัวอักษร ขัดกับกติกาห้ามมีตัวอักษรในภาพ จึงเอาป้ายออกจาก prompt แล้วเจนใหม่",
+          "subject": "golden statue of a heroic mech robot standing on a stone pedestal with a small plaque, front view, no letters"
+        }
+      ]
+    },
+    {
+      "id": "PR-D19",
+      "kind": "prop",
+      "name": "โซฟา (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_sofa": "props/pr_decor_sofa.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "cozy teal two-seat sofa with yellow cushions and a small round side table with a mug, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4544df01-b21a-4f42-8894-83db16b3971b",
+        "generatedAt": "2026-10-02T14:29:22.241Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D20",
+      "kind": "prop",
+      "name": "น้ำพุโฮโลแกรม (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_fountain": "props/pr_decor_fountain.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round stone fountain with glowing cyan holographic water jets and floating light particles, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "99713de5-043b-46c5-8af7-24b0076ac205",
+        "generatedAt": "2026-10-02T14:29:59.246Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D21",
+      "kind": "prop",
+      "name": "หุ่นยนต์สุนัข (ของตกแต่งชิ้นเล็ก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_robot_pet": "props/pr_decor_robot_pet.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small cute white robot dog sitting upright with a cyan visor face and a wagging antenna tail, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c9812023-3a15-4bae-a225-26c01f90ac6a",
+        "generatedAt": "2026-10-02T14:30:39.595Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D22",
+      "kind": "prop",
+      "name": "กล้องโทรทรรศน์ (ของตกแต่งชิ้นเล็ก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_telescope": "props/pr_decor_telescope.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall brass telescope on a wooden tripod pointing up to the right, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5b89233f-b0d4-49cd-a6f6-fbafb23ce91f",
+        "generatedAt": "2026-10-02T14:31:16.632Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D23",
+      "kind": "prop",
+      "name": "ธงตั้งพื้น (ของตกแต่งชิ้นเล็ก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_flag": "props/pr_decor_flag.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall standing flag pole with a teal flag showing a white hexagon emblem, gold pole top, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "389ce77c-ed88-4c1e-9b46-986f29396d84",
+        "generatedAt": "2026-10-02T14:32:04.992Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-H06",
+      "kind": "prop",
+      "name": "กระดานแผนที่การเดินทาง (โถงของทุกแมพ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_travel_board": "props/pr_travel_board.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "large standing holographic map table projecting a glowing blue island map with three bright location pins, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5f4b0fec-85b4-4023-ad5d-cf67f3343811",
+        "generatedAt": "2026-10-02T14:25:19.375Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-H07",
+      "kind": "prop",
+      "name": "กระดานตกแต่งโถง (โถงของทุกแมพ)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_board": "props/pr_decor_board.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall standing easel board with colorful paint swatches, a pinned fabric sample and a paint roller leaning on it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "d0fbb1af-368d-4152-9dd1-c10b975cbac9",
+        "generatedAt": "2026-10-02T14:25:49.529Z"
       },
       "status": "generated"
     },
@@ -4582,6 +5644,206 @@
       "status": "generated"
     },
     {
+      "id": "FX-17",
+      "kind": "fx",
+      "name": "ค้อนพลังงานทุบ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_hammer": "battle/fx_hammer.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one single giant sledgehammer made of glowing cyan energy, big blocky rectangular hammer head on a short thick handle, tilted diagonally, bright star-shaped impact burst under the head, only the hammer, no buildings, no scenery, no sky, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "e6b871cb-48cc-4a17-89b8-c493d73a736d",
+        "generatedAt": "2026-10-02T14:36:06.214Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "18265fce-25b5-4fbe-8dd8-feedd01a8971",
+          "reason": "ได้ภาพหอคอยเหล็กกับท้องฟ้าแทนค้อนพลังงาน (ผิดเรื่อง มีพื้นหลัง) จึงระบุว่าเป็นค้อนชิ้นเดียว ไม่มีอาคารและฉาก แล้วเจนใหม่",
+          "subject": "huge glowing cyan energy war hammer head smashing down with a ring shockwave and flying rock chips, centered"
+        }
+      ]
+    },
+    {
+      "id": "FX-18",
+      "kind": "fx",
+      "name": "หอกสายฟ้าแทง (พุ่งไปทางขวา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_lance": "battle/fx_lance.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "long golden lance spear tip thrusting to the right wrapped in yellow lightning with a white streak trail, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "6c89a36d-af74-4a66-beb7-2f496a087c78",
+        "generatedAt": "2026-10-02T14:13:34.400Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-19",
+      "kind": "fx",
+      "name": "สายฟ้าของโวลต์อีล (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_zap": "battle/fx_zap.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "jagged cyan and white lightning bolt striking diagonally to the left with small electric sparks, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "542df4da-50e5-4fe2-8f51-796c4cfa2285",
+        "generatedAt": "2026-10-02T14:13:54.303Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-20",
+      "kind": "fx",
+      "name": "กระสุนปืนใหญ่ของไอรอนเชลล์ (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_shell": "battle/fx_shell.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "heavy gray cannon shell with an orange glowing tip flying to the left with a smoke trail, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "8bd5b691-b381-44ca-a34a-947675e6164a",
+        "generatedAt": "2026-10-02T14:14:31.496Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-21",
+      "kind": "fx",
+      "name": "เหล็กในของฝูงสติงเกอร์ (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_sting": "battle/fx_sting.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "three sharp yellow and black metal stinger darts flying to the left with red glowing tips and white motion lines, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "6ea27b5f-1b72-4110-ae87-8f2b9c686294",
+        "generatedAt": "2026-10-02T14:15:08.837Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-22",
+      "kind": "fx",
+      "name": "แสงจักรพรรดิ (ร่างจักรพรรดิ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_halo": "battle/fx_halo.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "blinding golden ring of light bursting outward with violet energy shards and white rays, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "76f615a3-3e42-4f9b-af43-351b02e87577",
+        "generatedAt": "2026-10-02T14:15:28.595Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "GR-01",
       "kind": "icon",
       "name": "หมัดการ์เดียน (อาวุธเริ่มต้น)",
@@ -4829,6 +6091,126 @@
       "status": "generated"
     },
     {
+      "id": "GR-09",
+      "kind": "icon",
+      "name": "ค้อนพลังงาน (แมพ 2)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_hammer": "gear/gr_hammer.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "big futuristic war hammer with a glowing cyan energy head and a white and teal handle, held diagonally, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "af3f9199-e40f-4d60-9567-2b58b46cdbf5",
+        "generatedAt": "2026-10-02T14:11:16.186Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-10",
+      "kind": "icon",
+      "name": "หอกสายฟ้า (ร้านของลุงเหล็ก แมพ 2)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_lance": "gear/gr_lance.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "long golden lance spear with a yellow lightning bolt blade and a white and teal grip, held diagonally, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ecbf5134-1bea-4560-a07a-ca6e05e045d3",
+        "generatedAt": "2026-10-02T14:11:45.875Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-11",
+      "kind": "icon",
+      "name": "ปืนใหญ่พลาสม่า (แมพ 3)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_cannon": "gear/gr_cannon.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "huge white and teal shoulder plasma cannon with a wide glowing magenta muzzle and cooling fins, side view pointing right, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c6cfab06-6a65-45a0-9007-1549a67acea0",
+        "generatedAt": "2026-10-02T14:12:06.520Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-12",
+      "kind": "icon",
+      "name": "เกราะไททัน (ร้านของน้าคลัง แมพ 3)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_armor_titan": "gear/gr_armor_titan.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one massive golden and white chest plate armor piece only with thick layered shoulder plates and a glowing cyan core in the center, no head, no arms, no legs, front view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "0adb9ceb-92e9-4c62-b49d-45fb3eb78127",
+        "generatedAt": "2026-10-02T14:12:37.691Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "BT-07",
       "kind": "battle",
       "name": "บอสร่างที่ 2 (หันซ้าย)",
@@ -4889,6 +6271,528 @@
         "fetchTool": "get_image",
         "id": "81c2e796-8bbe-43b1-9d98-ee38cb0048a9",
         "generatedAt": "2026-10-02T07:14:16.184Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-09",
+      "kind": "battle",
+      "name": "ไคจูแมพ 2 ด่าน 1 โวลต์อีล (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_7": "battle/bt_kaiju_7.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "giant electric eel sea serpent kaiju facing left, long coiled dark teal body with a yellow belly, crackling cyan lightning arcs along its fins, glowing antennae, wide open jaws with sharp teeth, angry yellow eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "5cebf1a5-c00f-4adc-a2cb-347d783819f8",
+        "generatedAt": "2026-10-02T14:02:46.537Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-10",
+      "kind": "battle",
+      "name": "ไคจูแมพ 2 ด่าน 2 ไอรอนเชลล์ (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_8": "battle/bt_kaiju_8.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "giant armored tortoise kaiju facing left, massive gray steel shell covered in spikes and rivets, thick scaly brown legs, small head with glowing orange eyes and a beak, two short cannon barrels on top of the shell, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "1c857f6e-aade-4dc1-857f-87b057e8e33d",
+        "generatedAt": "2026-10-02T14:03:23.835Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-11",
+      "kind": "battle",
+      "name": "ไคจูแมพ 2 ด่าน 3 ฝูงสติงเกอร์ (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_9": "battle/bt_kaiju_9.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "swarm of seven robotic wasp drones facing left, yellow and black striped metal bodies, glowing red eyes, thin wings, long sharp stingers, flying together in a tight cluster, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "3791bc2c-0f2c-47de-991e-508c50771138",
+        "generatedAt": "2026-10-02T14:03:54.029Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-12",
+      "kind": "battle",
+      "name": "บอสร่างที่ 4 ร่างจักรพรรดิ (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_boss_4": "battle/bt_boss_4.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "colossal final boss kaiju ultimate form facing left, towering white and gold armored dragon emperor with six wings of golden light, a black core glowing violet in its chest, a tall crown of horns, a ring halo of energy behind its head, menacing glowing violet eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "85044695-116d-428a-8ace-296c9e97e552",
+        "generatedAt": "2026-10-02T14:04:40.512Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BG-07",
+      "kind": "backdrop",
+      "name": "ฉากต่อสู้ 7 ท่าเรือโรงไฟฟ้า (แมพ 2)",
+      "requested": true,
+      "size": [
+        320,
+        156
+      ],
+      "files": {},
+      "web": {
+        "bg_battle_7": "battle/bg_battle_7.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide stormy seaside harbor at dusk with a power plant, tall cooling towers and crackling power lines in the distance, dark waves, wet concrete pier in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b5374d19-16eb-4c3d-b2e0-e9f9db6e75a4",
+        "generatedAt": "2026-10-02T14:05:00.251Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BG-08",
+      "kind": "backdrop",
+      "name": "ฉากต่อสู้ 8 เหมืองหิน (แมพ 2)",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "bg_battle_8": "battle/bg_battle_8.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide rocky desert quarry canyon at noon with mining cranes and conveyor towers in the distance, orange cliffs, pale blue sky, flat dusty ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c40c4686-94ee-4807-8a15-06ce9a535923",
+        "generatedAt": "2026-10-02T14:05:29.106Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BG-09",
+      "kind": "backdrop",
+      "name": "ฉากต่อสู้ 9 ทุ่งกังหันลม (แมพ 2)",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "bg_battle_9": "battle/bg_battle_9.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide green hills at sunset with tall white wind turbines and a small research dome in the distance, pink and orange sky, flat grassy field in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ebfbe986-7579-42af-88c4-284949180f45",
+        "generatedAt": "2026-10-02T14:06:01.288Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BG-10",
+      "kind": "backdrop",
+      "name": "ฉากต่อสู้ 10 ปล่องภูเขาไฟ (แมพ 3)",
+      "requested": true,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "bg_battle_10": "battle/bg_battle_10.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide volcanic crater fortress at night with rivers of glowing lava, black jagged rock spires and a dark red sky with ash, cracked obsidian ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "93d668c5-fe20-463b-b6d8-6e0feeb8e902",
+        "generatedAt": "2026-10-02T14:06:21.398Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-01",
+      "kind": "icon",
+      "name": "ชุดซ่อมฉุกเฉิน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_repair_kit": "items/it_repair_kit.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "red metal repair toolbox with a white wrench symbol on the front and a handle on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "7c8ad242-ab1d-4e19-97d6-135effd23298",
+        "generatedAt": "2026-10-02T14:07:07.961Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-02",
+      "kind": "icon",
+      "name": "โล่พลังงาน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_shield": "items/it_shield.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round handheld device projecting a glowing cyan hexagon energy shield, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4606ca57-ef0d-4fbc-8335-fe871c05abcf",
+        "generatedAt": "2026-10-02T14:07:36.237Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-03",
+      "kind": "icon",
+      "name": "แบตเตอรี่เสริม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_overcharge": "items/it_overcharge.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "chunky green battery cell with gold terminals and a glowing yellow lightning bolt mark, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "abcb840e-61d4-4f32-981d-6d052a85ada0",
+        "generatedAt": "2026-10-02T14:08:05.805Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-04",
+      "kind": "icon",
+      "name": "ชิปวิเคราะห์",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_analyzer": "items/it_analyzer.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "handheld scanner gadget with a round magnifying lens and a small glowing blue screen, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "0c6502ea-a296-4f2f-ad80-59463ca641f9",
+        "generatedAt": "2026-10-02T14:08:24.703Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-05",
+      "kind": "icon",
+      "name": "แกนสำรอง",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_reboot": "items/it_reboot.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "glowing blue crystal energy core orb held inside a small silver metal cradle, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e371d840-a3de-47bb-9449-98a13fc7c26b",
+        "generatedAt": "2026-10-02T14:08:43.774Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-06",
+      "kind": "icon",
+      "name": "โมดูลสแกนเนอร์ของพี่บิต",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_scanner": "items/it_module_scanner.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small white robot module with a spinning radar dish antenna and a green light, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4377eeb4-6d57-4417-8329-260de637fd60",
+        "generatedAt": "2026-10-02T14:09:03.714Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-07",
+      "kind": "icon",
+      "name": "โมดูลเลเซอร์ของพี่บิต",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_laser": "items/it_module_laser.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small white robot module with a short laser emitter barrel glowing red at the tip, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "92682d63-029f-4575-b17d-c7a563388b9e",
+        "generatedAt": "2026-10-02T14:09:32.235Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-08",
+      "kind": "icon",
+      "name": "โมดูลพยาบาลของพี่บิต",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_medic": "items/it_module_medic.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small white robot module with a mint green medical cross and two tiny repair arms, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c25ec9d7-4a4d-49ec-9323-2c332442d889",
+        "generatedAt": "2026-10-02T14:10:00.211Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-09",
+      "kind": "icon",
+      "name": "เหรียญเครดิตวิจัย",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_credit": "items/it_credit.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "shiny gold coin with an embossed hexagon and a small star in the middle, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "00ab0b34-3a50-4f9d-a15b-250783ba17bf",
+        "generatedAt": "2026-10-02T14:10:37.567Z"
       },
       "status": "generated"
     },
@@ -5158,6 +7062,68 @@
           "reason": "มีตัวอักษรปลอมบนลำตัวหุ่น จึงเพิ่ม plain smooth white body และ blank parchment ใน prompt แล้วเจนใหม่"
         }
       ]
+    },
+    {
+      "id": "ST-10",
+      "kind": "backdrop",
+      "name": "เดินทางถึงแมพ 2: ศูนย์วิจัยภาคสนาม",
+      "requested": true,
+      "size": [
+        320,
+        169
+      ],
+      "files": {},
+      "web": {
+        "st_map2": "story/st_map2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a small research outpost on a seaside cliff under a cloudy sky with a domed hangar, a radar dish and olive green cabins, a transport truck carrying a white and teal mech robot arriving on the road, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "2202264a-a1e8-4050-9b22-f37bfbf40a30",
+        "generatedAt": "2026-10-02T14:32:42.864Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "ST-11",
+      "kind": "backdrop",
+      "name": "เดินทางถึงแมพ 3: ป้อมปราการ",
+      "requested": true,
+      "size": [
+        320,
+        152
+      ],
+      "files": {},
+      "web": {
+        "st_map3": "story/st_map3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a black steel fortress built on the rim of a glowing volcano at night seen from the deck of an approaching airship, red lava light, ash clouds, searchlights, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no speech bubbles",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "47ba117e-3bb0-4b4f-9d94-516fa4721fa9",
+        "generatedAt": "2026-10-02T14:33:11.726Z"
+      },
+      "status": "generated"
     },
     {
       "id": "BG-01",
@@ -5519,11 +7485,11 @@
     {
       "id": "ST-BOSS-3",
       "kind": "composite",
-      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_6 + bt_boss_3)",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_boss_3)",
       "requested": false,
       "size": [
         320,
-        180
+        160
       ],
       "files": {},
       "web": {
@@ -5531,8 +7497,84 @@
       },
       "status": "composed",
       "composedFrom": [
-        "bg_battle_6",
+        "bg_battle_10",
         "bt_boss_3"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-7",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_7 + bt_kaiju_7)",
+      "requested": false,
+      "size": [
+        320,
+        156
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_7": "story/st_kaiju_7.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_7",
+        "bt_kaiju_7"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-8",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_8 + bt_kaiju_8)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_8": "story/st_kaiju_8.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_8",
+        "bt_kaiju_8"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-9",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_9 + bt_kaiju_9)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_9": "story/st_kaiju_9.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_9",
+        "bt_kaiju_9"
+      ]
+    },
+    {
+      "id": "ST-BOSS-4",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_boss_4)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_boss_4": "story/st_boss_4.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_10",
+        "bt_boss_4"
       ]
     },
     {
@@ -5717,6 +7759,86 @@
         "bg_battle_5",
         "bt_robot",
         "bt_boss_3"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-7",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_7 + bt_robot + bt_kaiju_7)",
+      "requested": false,
+      "size": [
+        320,
+        156
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_7": "story/st_win_kaiju_7.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_7",
+        "bt_robot",
+        "bt_kaiju_7"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-8",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_8 + bt_robot + bt_kaiju_8)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_8": "story/st_win_kaiju_8.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_8",
+        "bt_robot",
+        "bt_kaiju_8"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-9",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_9 + bt_robot + bt_kaiju_9)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_9": "story/st_win_kaiju_9.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_9",
+        "bt_robot",
+        "bt_kaiju_9"
+      ]
+    },
+    {
+      "id": "ST-WIN-BOSS-4",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_robot + bt_boss_4)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_win_boss_4": "story/st_win_boss_4.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_10",
+        "bt_robot",
+        "bt_boss_4"
       ]
     },
     {

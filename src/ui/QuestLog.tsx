@@ -1,11 +1,12 @@
 import { setAudioSettings } from "../audio/engine";
 import { useAudioSettings } from "../audio/useAudio";
 import { course, isFieldRoom, questTitle, ROOM_COUNT, stationsOf } from "../content";
+import { topicsOf } from "../state/campaign";
 import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
 import { zoneOfTopic } from "../state/campaign";
-import { cloudEnabled, guardianPowerOf, coreCount, creditsOf, difficultyOf, fieldComplete, isRoomUnlocked, isTopicOpen, planOf, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
-import { NPC_ACTIVITY_TOTAL, npcActivitiesDone, NPCS } from "../state/npcs";
+import { cloudEnabled, guardianPowerOf, coreCount, coreTotal, creditsOf, difficultyOf, fieldComplete, isRoomUnlocked, isTopicOpen, planOf, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
+import { npcActivitiesDone, npcActivityTotal, npcsOfMap } from "../state/npcs";
 import { art } from "./art";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
@@ -27,11 +28,13 @@ export function QuestLog() {
   const credits = useGameStore(creditsOf);
   const audio = useAudioSettings();
   const run = { profile, progress, battles };
-  const power = useGameStore(guardianPowerOf);
+  const power = useGameStore((s) => guardianPowerOf(s));
   const plan = planOf(run);
   const difficulty = difficultyOf(run);
   // หัวข้อที่แสดงขั้นตอน: หัวข้อที่กำลังทำ หรือหัวข้อแรกที่ยังไม่ได้แกน AI
-  const focus = room ?? course.topics.find((topic) => !roomProgress(run, topic.id).core)?.id ?? ROOM_COUNT;
+  // หัวข้อของแมพที่อยู่ (แมพ 2 และ 3 ไม่มีหัวข้อ 6)
+  const topics = course.topics.filter((topic) => topicsOf(difficulty).includes(topic.id));
+  const focus = room ?? topics.find((topic) => !roomProgress(run, topic.id).core)?.id ?? topics[topics.length - 1].id;
   const p = roomProgress(run, focus);
   const total = stationsOf(focus).length;
   // ด่านต่อสู้ที่ต้องใช้แกน AI ของหัวข้อนี้
@@ -118,10 +121,10 @@ export function QuestLog() {
 
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate" data-testid="profile-cores">
-            {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: ROOM_COUNT })} · <span data-testid="profile-power" data-power={power}>{fmt(ui.questLog.power, { n: power })}</span>
+            {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: coreTotal(run) })} · <span data-testid="profile-power" data-power={power}>{fmt(ui.questLog.power, { n: power })}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
-            {course.topics.map((topic) => {
+            {topics.map((topic) => {
               const collected = roomProgress({ progress }, topic.id).core;
               return (
                 <div
@@ -140,7 +143,7 @@ export function QuestLog() {
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate">{ui.questLog.competencies}</h3>
           <ul className="flex flex-col gap-1">
-            {course.topics.map((topic) => {
+            {topics.map((topic) => {
               const rp = roomProgress({ progress }, topic.id);
               const open = isRoomUnlocked(run, zoneOfTopic(difficulty, topic.id)) && isTopicOpen(run, topic.id);
               const status = rp.core ? ui.questLog.passed : open ? ui.questLog.statusOpen : ui.questLog.statusLocked;
@@ -179,19 +182,21 @@ export function QuestLog() {
         </section>
 
         <section data-testid="questlog-side">
-          <h3 className="mb-1 text-xs font-bold text-slate">{fmt(ui.questLog.side, { n: npcActivitiesDone(npcs), total: NPC_ACTIVITY_TOTAL })}</h3>
+          <h3 className="mb-1 text-xs font-bold text-slate">{fmt(ui.questLog.side, { n: npcActivitiesDone(npcs, difficulty), total: npcActivityTotal(difficulty) })}</h3>
           <ul className="flex flex-col gap-1">
-            {Object.values(NPCS)
+            {npcsOfMap(difficulty)
               .filter((spec) => spec.role !== "shop")
               .map((spec) => {
                 const record = npcs[spec.id];
-                const id = spec.id as "mechanic" | "foreman" | "coach" | "director";
-                const done = spec.role === "quest" ? Boolean(record?.done) : (record?.tries ?? 0) > 0;
+                const id = spec.id;
+                const done = spec.role === "quest" ? Boolean(record?.done) : spec.role === "gift" ? Boolean(record?.gifted) : (record?.tries ?? 0) > 0;
                 const started = done || Boolean(record?.accepted);
                 const text =
                   spec.role === "quest"
-                    ? fmt(ui.questLog.sideQuest, { name: ui.npc[id].name, item: ui.npc[id as "mechanic" | "foreman"].item, n: record?.found.length ?? 0, total: spec.pickups })
-                    : fmt(ui.questLog.sideQuiz, { name: ui.npc[id].name, n: record?.best ?? 0, total: spec.questions });
+                    ? fmt(ui.questLog.sideQuest, { name: ui.npc[id].name, item: ui.npc[id as "mechanic" | "foreman" | "ranger"].item, n: record?.found.length ?? 0, total: spec.pickups })
+                    : spec.role === "gift"
+                      ? fmt(ui.questLog.sideGift, { name: ui.npc[id].name })
+                      : fmt(ui.questLog.sideQuiz, { name: ui.npc[id].name, n: record?.best ?? 0, total: spec.questions });
                 return (
                   <li key={spec.id} className="flex items-center gap-2 text-sm" data-done={done}>
                     <img src={art.npc(spec.id)} alt="" className="pixelated h-8 w-8 shrink-0" />

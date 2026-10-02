@@ -32,14 +32,19 @@ function fakeStorage(initial: Record<string, string> = {}) {
 const won = { won: true, wins: 1, sorties: 1, asked: 5, correct: 4 };
 
 const sample: SaveData = {
-  version: 7,
+  version: 8,
   updatedAt: "2026-10-02T01:00:00.000Z",
   profile: { name: "ทดสอบ", difficulty: "normal", classCode: "PVC1-67", avatar: "b" },
   pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
   posttest: null,
-  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false } } },
+  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, review: { correct: 4, total: 6 }, reviewDone: true, outcome: { totalMisses: 1, requiredRepair: false } } },
+  maps: { normal: { 1: { ...emptyRoom(), minigameDone: true, stars: 3, core: true } }, hard: {} },
   battles: { n1: won },
-  npcs: { mechanic: { accepted: true, found: [0, 2], done: false, best: 0, tries: 0 }, coach: { accepted: false, found: [], done: false, best: 3, tries: 2 } },
+  npcs: {
+    mechanic: { met: true, accepted: true, found: [0, 2], done: false, best: 0, tries: 0, gifted: false },
+    coach: { met: true, accepted: false, found: [], done: false, best: 3, tries: 2, gifted: false },
+    medic: { met: true, accepted: false, found: [], done: false, best: 0, tries: 0, gifted: true },
+  },
   story: ["prologue", "zone-n1", "win-n1"],
   shop: {
     spent: 445,
@@ -52,6 +57,8 @@ const sample: SaveData = {
     armor: "plate",
     chip: "none",
     loadout: ["repair-kit", "reboot", "repair-kit"],
+    bought: { "easy:repair-kit": 2, "normal:reboot": 1 },
+    decor: { easy: { wall1: "window" }, normal: { small1: "plant" } },
   },
 };
 
@@ -101,10 +108,11 @@ describe("LocalProgressStore", () => {
 
 describe("migrateSave", () => {
   it("รุ่น 1 ของต้นแบบห้อง 1: เก็บความคืบหน้าของห้องไว้ โปรไฟล์และแบบทดสอบก่อนเรียนว่าง", () => {
+    // คำตอบที่ผู้เรียนเคยเขียน (reviewAnswers) ไม่ถูกเก็บต่อ เหลือเพียงว่าส่งคำถามทบทวนแล้ว
     const v1 = { state: { progress: { 1: { stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } } }, version: 1 };
     expect(migrateSave(v1)).toEqual({
       ...emptySave(),
-      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } },
+      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewDone: true, core: true } },
       battles: { k1: { ...emptyBattle(), won: true, wins: 1 } },
       story: ["win-k1"],
     });
@@ -135,7 +143,7 @@ describe("migrateSave", () => {
       rooms: { 1: { ...emptyRoom(), core: true }, 2: { ...emptyRoom(), stationsSeen: 2 } },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v3))) as SaveData;
-    expect(save.version).toBe(7);
+    expect(save.version).toBe(8);
     expect(save.updatedAt).toBe(v3.updatedAt);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1", avatar: "a" });
     expect(save.pretest).toEqual(sample.pretest);
@@ -162,7 +170,7 @@ describe("migrateSave", () => {
       shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v4))) as SaveData;
-    expect(save.version).toBe(7);
+    expect(save.version).toBe(8);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1-67", avatar: "b" });
     expect(save.battles).toEqual({
       k1: { won: true, wins: 1, sorties: 2, asked: 9, correct: 6 },
@@ -192,7 +200,7 @@ describe("migrateSave", () => {
       shop: { spent: 100, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, shield: 2 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v5))) as SaveData;
-    expect(save.version).toBe(7);
+    expect(save.version).toBe(8);
     expect([save.profile, save.rooms, save.battles]).toEqual([v5.profile, v5.rooms, v5.battles]);
     expect(save.story).toEqual(["prologue", "zone-n1", "win-n1"]);
     expect(save.npcs).toEqual({});
@@ -217,11 +225,11 @@ describe("migrateSave", () => {
     }) as SaveData;
     expect(Object.keys(save.npcs).sort()).toEqual(["archivist", "coach", "director", "foreman", "mechanic"]);
     // เก็บได้ 2 จาก 3 ชิ้น: ยังส่งไม่ได้ แต่ถือว่ารับเควสแล้ว
-    expect(save.npcs.mechanic).toEqual({ accepted: true, found: [0, 1], done: false, best: 0, tries: 0 });
+    expect(save.npcs.mechanic).toEqual({ met: true, accepted: true, found: [0, 1], done: false, best: 0, tries: 0, gifted: false });
     expect(save.npcs.foreman).toMatchObject({ accepted: true, found: [0, 1, 2, 3], done: true });
-    expect(save.npcs.coach).toEqual({ accepted: false, found: [], done: false, best: 4, tries: 2 });
+    expect(save.npcs.coach).toEqual({ met: true, accepted: false, found: [], done: false, best: 4, tries: 2, gifted: false });
     expect(save.npcs.archivist).toMatchObject({ done: false });
-    expect(save.npcs.director).toEqual({ accepted: false, found: [], done: false, best: 0, tries: 0 });
+    expect(save.npcs.director).toEqual({ met: false, accepted: false, found: [], done: false, best: 0, tries: 0, gifted: false });
   });
 
   it("คอสตูมและโมดูลของพี่บิต: ใช้คอสตูมได้เฉพาะที่ซื้อแล้ว", () => {
@@ -260,7 +268,7 @@ describe("migrateSave", () => {
     void [weapon, armor, chip, loadout];
     const v6 = { ...JSON.parse(JSON.stringify(sample)), version: 6, shop: { ...oldShop, owned: ["outfit-engineer", "bit-ninja"], supplies: { ...emptyShop().supplies, "repair-kit": 2, shield: 3, reboot: 1 } } };
     const save = migrateSave(v6) as SaveData;
-    expect(save.version).toBe(7);
+    expect(save.version).toBe(8);
     expect([save.profile, save.rooms, save.battles, save.npcs, save.story]).toEqual([sample.profile, sample.rooms, sample.battles, sample.npcs, sample.story]);
     expect(save.shop).toMatchObject({ weapon: "fist", armor: "plate", chip: "none", outfit: "engineer", bit: "ninja", loadout: ["repair-kit", "repair-kit", "shield"] });
     expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
@@ -301,12 +309,66 @@ describe("migrateSave", () => {
     expect(save.posttest).toBeNull();
     expect(Object.keys(save.rooms)).toEqual(["1", "2"]);
     expect(save.rooms[2]).toEqual(emptyRoom());
-    expect(save.rooms[1]).toEqual({ ...emptyRoom(), stars: 3, missed: { ข: 2 }, reviewAnswers: ["ดี", "", ""], outcome: { totalMisses: 0, requiredRepair: false }, field: emptyField(course.finalQuest) });
+    expect(save.rooms[1]).toEqual({ ...emptyRoom(), stars: 3, missed: { ข: 2 }, outcome: { totalMisses: 0, requiredRepair: false }, field: emptyField(course.finalQuest) });
+    expect("reviewAnswers" in save.rooms[1]).toBe(false);
+    expect(save.maps).toEqual({ normal: {}, hard: {} });
   });
 
   it("ข้อมูลที่ถูกต้องอ่านกลับได้เหมือนเดิมทุกช่อง", () => {
     const full: SaveData = { ...withImage(sample, "data:image/jpeg;base64,AAAA"), posttest: sample.pretest };
     expect(migrateSave(JSON.parse(JSON.stringify(full)))).toEqual(full);
+  });
+
+  it("รุ่น 7 ระดับง่าย (ก่อนมีแมพต่อเนื่อง): ความคืบหน้าเป็นของแมพ 1 แมพอื่นว่าง ของตกแต่งเริ่มต้นวางให้ คำตอบที่เขียนและบันทึกภาคสนามไม่ถูกเก็บต่อ", () => {
+    const v7 = {
+      version: 7,
+      updatedAt: "2026-10-02T03:00:00.000Z",
+      profile: { name: "ทดสอบ", difficulty: "easy", classCode: "PVC1-67", avatar: "a" },
+      pretest: sample.pretest,
+      posttest: null,
+      rooms: {
+        1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, reviewAnswers: ["คำตอบที่เขียนไว้ยาว ๆ"], reviewDone: true },
+        6: { ...emptyRoom(), field: { ready: true, steps: [true, true, true, true, true, true], results: [], notes: ["ผิดตอนแสงน้อย", "", "เก็บภาพเพิ่ม"], evidence: { image: null, outsideGame: true } } },
+      },
+      battles: { k1: won },
+      npcs: { mechanic: { accepted: true, found: [0], done: false, best: 0, tries: 0 } },
+      story: ["prologue", "room-1", "win-k1"],
+      shop: { spent: 120, owned: ["weapon-sword"], supplies: emptyShop().supplies, outfit: "lab", paint: "standard", bit: "classic", weapon: "sword", armor: "plate", chip: "none", loadout: [] },
+    };
+    const save = migrateSave(JSON.parse(JSON.stringify(v7))) as SaveData;
+    expect(save.version).toBe(8);
+    expect(save.profile?.difficulty).toBe("easy");
+    expect(save.maps).toEqual({ normal: {}, hard: {} });
+    expect(save.rooms[1]).toMatchObject({ core: true, stars: 2, reviewDone: true, review: null });
+    expect(JSON.stringify(save)).not.toContain("คำตอบที่เขียนไว้");
+    expect(JSON.stringify(save)).not.toContain("ผิดตอนแสงน้อย");
+    // บันทึกภาคสนามที่เคยเขียนแล้วถือว่าคิดทบทวนข้อนั้นแล้ว ข้อที่เว้นว่างยังไม่ติ๊ก
+    expect(save.rooms[6].field?.reflected).toEqual([true, false, true]);
+    expect(save.npcs.mechanic).toMatchObject({ met: true, accepted: true, gifted: false });
+    expect(save.shop).toMatchObject({ weapon: "sword", bought: {}, decor: { easy: { wall1: "window", small1: "plant" } } });
+    expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
+  });
+
+  it("รุ่น 7 ที่เคยเลือกระดับกลางหรือยาก: อยู่ที่แมพนั้นต่อ ความคืบหน้าเดิมเป็นทั้งบันทึกการเรียนและความคืบหน้าของแมพนั้น (ไม่มีหัวข้อ 6) บทส่งท้ายเป็นของแมพนั้น", () => {
+    const rooms = Object.fromEntries([1, 2, 3, 4, 5, 6].map((topic) => [topic, { ...emptyRoom(), minigameDone: topic < 6, stars: topic < 6 ? 3 : 0, core: true }]));
+    const v7 = { ...JSON.parse(JSON.stringify(sample)), version: 7, maps: undefined, profile: { name: "กลาง", difficulty: "normal", classCode: "", avatar: "a" }, rooms, battles: { n1: won, n2: won, n3: won, "omega-n": won }, story: ["prologue", "zone-n1", "ending"] };
+    const save = migrateSave(v7) as SaveData;
+    expect(save.profile?.difficulty).toBe("normal");
+    expect(Object.keys(save.rooms)).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect(Object.keys(save.maps.normal)).toEqual(["1", "2", "3", "4", "5"]);
+    expect(save.maps.hard).toEqual({});
+    expect(save.story).toEqual(["prologue", "zone-n1", "ending-normal"]);
+    const hard = migrateSave({ ...v7, profile: { ...v7.profile, difficulty: "hard" }, battles: { end: won } }) as SaveData;
+    expect([Object.keys(hard.maps.hard), hard.maps.normal, hard.story.at(-1)]).toEqual([["1", "2", "3", "4", "5"], {}, "ending-hard"]);
+  });
+
+  it("ของตกแต่งและของที่ซื้อจากร้านที่ผิดรูป: วางได้เฉพาะของที่มี ขนาดช่องตรวจตอนวาง ชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ", () => {
+    const save = migrateSave({
+      ...JSON.parse(JSON.stringify(sample)),
+      shop: { ...sample.shop, owned: ["decor-sofa"], decor: { easy: { big1: "sofa", big2: "sofa", wall1: "statue", "bad slot!": "plant", small1: "plant" }, moon: { big1: "sofa" } }, bought: { "easy:shield": 2, "mars:shield": 9, "easy:cheat": 1, "normal:reboot": -3 } },
+    }) as SaveData;
+    expect(save.shop.decor).toEqual({ easy: { big1: "sofa", small1: "plant" } });
+    expect(save.shop.bought).toEqual({ "easy:shield": 2 });
   });
 
   it("รูปแบบที่ไม่รู้จัก: คืน null", () => {

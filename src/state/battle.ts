@@ -3,7 +3,7 @@
 // ด่านหนึ่งมีได้หลายร่าง (บอสของระดับกลางและยาก) ต้องชนะทีละร่าง
 import { BATTLE } from "./battle.config";
 import { type BattleSpec, campaignOf, type Difficulty, type FormSpec } from "./campaign";
-import { DEFAULT_GEAR, type Gear, GEAR } from "./gear";
+import { armorHp, DEFAULT_GEAR, type Gear, GEAR, WEAPON } from "./gear";
 import type { BitModule, Outfit, Supply } from "./shop.config";
 
 /** ค่าที่ใช้ตลอดการออกปฏิบัติการหนึ่งครั้ง: ด่าน ระดับความยาก อุปกรณ์ของการ์เดียน และสิทธิพิเศษของเครื่องแบบ */
@@ -25,11 +25,13 @@ export interface BattleSetup {
   guards: number;
   /** ชิปคิดทบทวน: จำนวนครั้งที่ตอบผิดแล้วได้ตอบข้อเดิมใหม่ ต่อการออกปฏิบัติการ */
   retries: number;
+  /** ชุดไซเบอร์นินจา: จำนวนการโจมตีที่หลบได้เองต่อการออกปฏิบัติการ */
+  dodges: number;
 }
 
-/** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของระดับความยาก บวกเกราะหนักและชุดเกราะผู้พิทักษ์ */
+/** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของแมพ บวกเกราะ (หนัก ไททัน) และเครื่องแบบ (ชุดเกราะผู้พิทักษ์ ชุดฮีโร่การ์เดียน) */
 export const robotMaxOf = (difficulty: Difficulty | undefined, outfit: Outfit, gear: Gear): number =>
-  campaignOf(difficulty).robotHp + (gear.armor === "heavy" ? GEAR.heavy.hp : 0) + (outfit === "guardian" ? BATTLE.perks.guardianHp : 0);
+  campaignOf(difficulty).robotHp + armorHp(gear.armor) + (outfit === "guardian" ? BATTLE.perks.guardianHp : outfit === "hero" ? BATTLE.perks.heroHp : 0);
 
 /** modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว gear = อุปกรณ์ของการ์เดียนที่ใส่อยู่ */
 export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, modules: readonly BitModule[] = [], gear: Gear = DEFAULT_GEAR): BattleSetup {
@@ -47,6 +49,7 @@ export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec
     gear,
     guards: gear.armor === "guard" ? GEAR.guard.blocksPerForm : 0,
     retries: gear.chip === "retry" ? GEAR.retry.chances : 0,
+    dodges: outfit === "ninja" ? BATTLE.perks.ninjaDodges : 0,
   };
 }
 
@@ -74,20 +77,23 @@ export interface BattleState {
   guard: number;
   /** สิทธิ์ตอบใหม่ที่เหลือ (ชิปคิดทบทวน) */
   retries: number;
+  /** การหลบที่เหลือ (ชุดไซเบอร์นินจา) */
+  dodge: number;
   /** ชิปเร่งพลังพร้อมใช้: การโจมตีครั้งแรกใส่ร่างปัจจุบันแรง 2 เท่า */
   opening: boolean;
   status: "fighting" | "won" | "lost";
 }
 
 export type BattleEvent =
-  /** crit = คริติคอลของดาบ, opening = ชิปเร่งพลัง, final = การโจมตีที่ปิดฉากร่างสุดท้าย */
-  | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean; crit: boolean; opening: boolean; final: boolean }
-  | { type: "armor-break" }
+  /** crit = คริติคอลของดาบและหอก, quake = ค้อนทุบสะเทือน, advantage = อาวุธได้เปรียบร่างนี้, opening = ชิปเร่งพลัง, final = การโจมตีที่ปิดฉากร่างสุดท้าย */
+  | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean; crit: boolean; quake: boolean; advantage: boolean; opening: boolean; final: boolean }
+  /** pierced = ค้อนทุบทะลุเกราะ: เกราะแตกและโจมตีเข้าในการตอบถูกครั้งเดียวกัน */
+  | { type: "armor-break"; pierced?: true }
   | { type: "stun" }
   | { type: "bit-assist"; damage: number }
   | { type: "bit-heal"; amount: number }
   /** by = สิ่งที่กันการโจมตีไว้ (เมื่อ blocked) */
-  | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean; by?: "guard" | "shield" }
+  | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean; by?: "guard" | "shield" | "dodge" }
   | { type: "kaiju-stunned" }
   | { type: "second-chance"; left: number }
   | { type: "kaiju-regen"; amount: number }
@@ -123,6 +129,7 @@ export function startBattle(setup: BattleSetup, options: { carry?: { form: numbe
     stunned: false,
     guard: setup.guards,
     retries: setup.retries,
+    dodge: setup.dodges,
     opening: setup.gear.chip === "charger",
     status: "fighting",
   };
@@ -160,14 +167,20 @@ export function questionSource(setup: BattleSetup, state: Pick<BattleState, "for
 export interface Strike {
   /** ทำได้แค่ทุบเกราะของคู่ต่อสู้ (ไม่มีความเสียหาย) */
   armorBreak: boolean;
+  /** ค้อนทุบทะลุเกราะ: เกราะแตกและโจมตีเข้าในครั้งเดียว */
+  pierced: boolean;
+  /** อาวุธได้เปรียบคู่ต่อสู้ร่างนี้ (ประเภทตรงกับจุดอ่อน): แรงขึ้น GEAR.advantage */
+  advantage: boolean;
+  /** ค้อนทุบสะเทือน: แรงขึ้น GEAR.quakeDamage */
+  quake: boolean;
   damage: number;
   /** สวนกลับตอนคู่ต่อสู้ชาร์จพลัง */
   counter: boolean;
-  /** ตัวคูณ 2 เท่ามาจากอย่างใดอย่างหนึ่ง: คริติคอลของดาบ ชิปเร่งพลัง หรือแบตเตอรี่เสริม (ไม่ซ้อนกัน อันที่ไม่ได้ใช้เก็บไว้ครั้งถัดไป) */
+  /** ตัวคูณ 2 เท่ามาจากอย่างใดอย่างหนึ่ง: คริติคอลของดาบและหอก ชิปเร่งพลัง หรือแบตเตอรี่เสริม (ไม่ซ้อนกัน อันที่ไม่ได้ใช้เก็บไว้ครั้งถัดไป) */
   crit: boolean;
   opening: boolean;
   boosted: boolean;
-  /** ปืนเลเซอร์ทำให้คู่ต่อสู้ติดสตัน */
+  /** ปืนเลเซอร์และปืนใหญ่ทำให้คู่ต่อสู้ติดสตัน */
   stuns: boolean;
   /** พี่บิตยิงเสริมหลังการโจมตีนี้ (0 = ไม่ยิง) */
   assist: number;
@@ -176,21 +189,29 @@ export interface Strike {
 export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
   const form = formOf(setup, state);
   const streak = state.streak + 1;
+  const weapon = WEAPON[setup.gear.weapon];
+  const every = (n: number | undefined) => n !== undefined && streak % n === 0;
   const counter = isCharging(setup, state);
-  const armorBreak = form.trait === "armor" && state.armored;
-  const base = counter ? BATTLE.charge.counterDamage : form.trait === "combo" ? Math.min(BATTLE.comboMax, streak) : BATTLE.hit;
-  const crit = !armorBreak && setup.gear.weapon === "sword" && streak % GEAR.sword.critEvery === 0;
+  const armored = form.trait === "armor" && state.armored;
+  const armorBreak = armored && !weapon.pierce;
+  const advantage = !armorBreak && weapon.class === form.weak && streak >= GEAR.advantageFromStreak;
+  const quake = !armorBreak && every(weapon.quakeEvery);
+  const base = (counter ? BATTLE.charge.counterDamage : form.trait === "combo" ? Math.min(BATTLE.comboMax, streak) : BATTLE.hit) + (advantage ? GEAR.advantage : 0) + (quake ? GEAR.quakeDamage : 0);
+  const crit = !armorBreak && every(weapon.critEvery);
   const opening = !armorBreak && !crit && state.opening;
   const boosted = !armorBreak && !crit && !opening && state.boost;
-  const damage = armorBreak ? 0 : base * (crit ? GEAR.sword.critMultiplier : opening || boosted ? 2 : 1);
+  const damage = armorBreak ? 0 : base * (crit ? GEAR.critMultiplier : opening || boosted ? 2 : 1);
   return {
     armorBreak,
+    pierced: armored && !armorBreak,
+    advantage,
+    quake,
     damage,
     counter: counter && !armorBreak,
     crit,
     opening,
     boosted,
-    stuns: setup.gear.weapon === "blaster" && streak % GEAR.blaster.stunEvery === 0 && !state.stunned,
+    stuns: every(weapon.stunEvery) && !state.stunned,
     assist: state.kaijuHp - damage > 0 && streak % BATTLE.assistStreak === 0 ? setup.assistDamage : 0,
   };
 }
@@ -199,8 +220,8 @@ export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
 export interface Threat {
   damage: number;
   heavy: boolean;
-  /** สิ่งที่ช่วยไว้ ตามลำดับที่ใช้: ชิปคิดทบทวน (ได้ตอบใหม่) สตัน เกราะสะท้อน โล่พลังงาน */
-  saved: "retry" | "stun" | "guard" | "shield" | null;
+  /** สิ่งที่ช่วยไว้ ตามลำดับที่ใช้: ชิปคิดทบทวน (ได้ตอบใหม่) สตัน การหลบของชุดนินจา เกราะสะท้อน โล่พลังงาน */
+  saved: "retry" | "stun" | "dodge" | "guard" | "shield" | null;
   /** พลังที่คู่ต่อสู้ลักษณะ regen ฟื้น */
   regen: number;
   /** เกราะของคู่ต่อสู้ลักษณะ armor กลับมา */
@@ -210,7 +231,7 @@ export interface Threat {
 export function threatOf(setup: BattleSetup, state: BattleState): Threat {
   const form = formOf(setup, state);
   const heavy = isCharging(setup, state) || (form.trait === "swarm" && state.kaijuHp >= BATTLE.swarmHeavyFrom) || isEnraged(setup, state) || isFurious(setup, state);
-  const saved = state.retries > 0 ? "retry" : state.stunned ? "stun" : state.guard > 0 ? "guard" : state.shield ? "shield" : null;
+  const saved = state.retries > 0 ? "retry" : state.stunned ? "stun" : state.dodge > 0 ? "dodge" : state.guard > 0 ? "guard" : state.shield ? "shield" : null;
   // ได้ตอบใหม่หรือคู่ต่อสู้ติดสตัน: คู่ต่อสู้ไม่ได้ทำอะไรเลยในตานี้
   const acts = saved !== "retry" && saved !== "stun";
   return {
@@ -226,7 +247,7 @@ export function threatOf(setup: BattleSetup, state: BattleState): Threat {
 export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: boolean): { state: BattleState; events: BattleEvent[] } {
   if (state.status !== "fighting") return { state, events: [] };
   const events: BattleEvent[] = [];
-  let { robotHp, kaijuHp, shield, armored, boost, reboot, streak, stunned, guard, opening } = state;
+  let { robotHp, kaijuHp, shield, armored, boost, reboot, streak, stunned, guard, opening, dodge } = state;
   let formIndex = state.form;
 
   if (correct) {
@@ -238,8 +259,12 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
       armored = false;
       events.push({ type: "armor-break" });
     } else {
+      if (strike.pierced) {
+        armored = false;
+        events.push({ type: "armor-break", pierced: true });
+      }
       kaijuHp -= strike.damage;
-      events.push({ type: "robot-hit", damage: strike.damage, counter: strike.counter, boosted: strike.boosted, crit: strike.crit, opening: strike.opening, final: lastForm && kaijuHp <= 0 });
+      events.push({ type: "robot-hit", damage: strike.damage, counter: strike.counter, boosted: strike.boosted, crit: strike.crit, quake: strike.quake, advantage: strike.advantage, opening: strike.opening, final: lastForm && kaijuHp <= 0 });
       if (strike.opening) opening = false;
       if (strike.boosted) boost = false;
     }
@@ -288,8 +313,9 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
       stunned = false;
       events.push({ type: "kaiju-stunned" });
     } else {
-      if (threat.saved === "guard" || threat.saved === "shield") {
-        if (threat.saved === "guard") guard -= 1;
+      if (threat.saved === "dodge" || threat.saved === "guard" || threat.saved === "shield") {
+        if (threat.saved === "dodge") dodge -= 1;
+        else if (threat.saved === "guard") guard -= 1;
         else shield = false;
         events.push({ type: "kaiju-hit", damage: 0, blocked: true, heavy: threat.heavy, by: threat.saved });
       } else {
@@ -314,7 +340,7 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
 
   const status = kaijuHp <= 0 ? "won" : robotHp <= 0 ? "lost" : "fighting";
   return {
-    state: { robotHp, form: formIndex, kaijuHp, streak, turn: state.turn + 1, correct: state.correct + (correct ? 1 : 0), shield, armored, boost, reboot, stunned, guard, retries: state.retries, opening, status },
+    state: { robotHp, form: formIndex, kaijuHp, streak, turn: state.turn + 1, correct: state.correct + (correct ? 1 : 0), shield, armored, boost, reboot, stunned, guard, retries: state.retries, dodge, opening, status },
     events,
   };
 }

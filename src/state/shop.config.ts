@@ -1,5 +1,6 @@
 // ร้านสหกรณ์แล็บและรางวัลเครดิตวิจัย (docs/GDD.md ข้อ 13)
 // ตัวเลขและรายการสินค้าทั้งหมดอยู่ที่นี่ ชื่อสินค้าอยู่ใน src/content/ui-strings.ts
+import type { Difficulty } from "./campaign";
 import type { Armor, Chip, Weapon } from "./gear";
 import type { NpcId } from "./npcs";
 
@@ -8,7 +9,7 @@ export const AVATARS = ["a", "b"] as const;
 export type Avatar = (typeof AVATARS)[number];
 
 /** ชุดของผู้เล่น ชุดแรกเป็นชุดเริ่มต้นที่ทุกคนมี ชุดอื่นเป็นเครื่องแบบที่ให้สิทธิพิเศษในด่านต่อสู้ (ตัวเลขใน battle.config.ts) */
-export const OUTFITS = ["lab", "engineer", "pilot", "researcher", "guardian", "commander"] as const;
+export const OUTFITS = ["lab", "engineer", "pilot", "researcher", "guardian", "commander", "astronaut", "ninja", "hero"] as const;
 export type Outfit = (typeof OUTFITS)[number];
 
 /** สีของหุ่นการ์เดียนในฉากต่อสู้ สีแรกเป็นสีเริ่มต้น ค่าคือ CSS filter ที่ย้อมภาพหุ่นทั้งตัว (ตัวหุ่นเป็นสีขาว หมุนสีอย่างเดียวจึงแทบไม่เห็น) */
@@ -42,11 +43,49 @@ export type BitModule = (typeof BIT_MODULES)[number];
 export const SUPPLIES = ["repair-kit", "shield", "overcharge", "analyzer", "reboot"] as const;
 export type Supply = (typeof SUPPLIES)[number];
 
-/** vendor = ขายเฉพาะที่ร้านพิเศษของ NPC คนนั้น (ไม่ระบุ = ร้านสหกรณ์แล็บและตู้เสื้อผ้า) */
+/**
+ * ของตกแต่งโถง (GDD ข้อ 19): ซื้อแล้วเลือกวางในช่องตกแต่งของโถงแต่ละแมพได้ ไม่มีผลต่อการเล่น
+ * size = ขนาดของช่องที่วางได้: wall = ติดผนัง (64×32), big = ตั้งพื้นชิ้นใหญ่ (64×64), small = ตั้งพื้นชิ้นเล็ก (32×64) prop = คีย์ภาพใน manifest
+ */
+export const DECOR = {
+  window: { prop: "pr_decor_window", size: "wall" },
+  screens: { prop: "pr_decor_wall_screens", size: "wall" },
+  toolrack: { prop: "pr_decor_tool_rack", size: "wall" },
+  neon: { prop: "pr_decor_neon", size: "wall" },
+  clock: { prop: "pr_decor_clock", size: "wall" },
+  banner: { prop: "pr_decor_banner", size: "wall" },
+  trophy: { prop: "pr_decor_trophy_case", size: "big" },
+  bookshelf: { prop: "pr_decor_bookshelf", size: "big" },
+  tanks: { prop: "pr_decor_energy_tanks", size: "big" },
+  aquarium: { prop: "pr_decor_aquarium", size: "big" },
+  arcade: { prop: "pr_decor_arcade", size: "big" },
+  sofa: { prop: "pr_decor_sofa", size: "big" },
+  statue: { prop: "pr_decor_statue", size: "big" },
+  fountain: { prop: "pr_decor_fountain", size: "big" },
+  plant: { prop: "pr_hall_plant", size: "small" },
+  lamp: { prop: "pr_decor_lamp", size: "small" },
+  vending: { prop: "pr_decor_vending", size: "small" },
+  cooler: { prop: "pr_decor_water_cooler", size: "small" },
+  crates: { prop: "pr_decor_crates", size: "small" },
+  pet: { prop: "pr_decor_robot_pet", size: "small" },
+  telescope: { prop: "pr_decor_telescope", size: "small" },
+  flag: { prop: "pr_decor_flag", size: "small" },
+} as const satisfies Record<string, { prop: string; size: DecorSize }>;
+export type DecorSize = "wall" | "big" | "small";
+export type Decor = keyof typeof DECOR;
+export const DECORS = Object.keys(DECOR) as Decor[];
+/** ของตกแต่งที่ทุกคนมีตั้งแต่เริ่ม (ไม่ต้องซื้อ) */
+export const STARTER_DECOR: readonly Decor[] = ["window", "plant"];
+
+/**
+ * vendor = ขายเฉพาะที่ร้านพิเศษของ NPC คนนั้น (ไม่ระบุ = ร้านสหกรณ์แล็บและตู้เสื้อผ้า)
+ * tier = แมพแรกที่ของชิ้นนี้วางขาย (ไม่ระบุ = แมพ 1) ผู้เล่นซื้อได้เมื่อไปถึงแมพนั้นแล้ว (GDD ข้อ 15)
+ */
 interface Sold {
   id: string;
   price: number;
   vendor?: NpcId;
+  tier?: Difficulty;
 }
 export type ShopItem =
   | (Sold & { kind: "outfit"; value: Outfit })
@@ -57,20 +96,29 @@ export type ShopItem =
   | (Sold & { kind: "weapon"; value: Weapon })
   | (Sold & { kind: "armor"; value: Armor })
   | (Sold & { kind: "chip"; value: Chip })
-  | (Sold & { kind: "supply"; value: Supply; max: number });
+  | (Sold & { kind: "decor"; value: Decor })
+  /** max = จำนวนที่ถือได้พร้อมกัน, stock = จำนวนที่ร้านขายต่อแมพ (ของใช้มีจำกัด ต้องเลือกว่าจะใช้กับด่านไหน) */
+  | (Sold & { kind: "supply"; value: Supply; max: number; stock: number });
 
 export const CATALOG: readonly ShopItem[] = [
   { id: "outfit-engineer", kind: "outfit", value: "engineer", price: 100 },
   { id: "outfit-pilot", kind: "outfit", value: "pilot", price: 150 },
   { id: "outfit-researcher", kind: "outfit", value: "researcher", price: 180 },
   { id: "outfit-guardian", kind: "outfit", value: "guardian", price: 250 },
-  { id: "outfit-commander", kind: "outfit", value: "commander", price: 300 },
+  { id: "outfit-astronaut", kind: "outfit", value: "astronaut", price: 220, tier: "normal" },
+  { id: "outfit-ninja", kind: "outfit", value: "ninja", price: 260, tier: "normal" },
+  { id: "outfit-commander", kind: "outfit", value: "commander", price: 300, tier: "normal" },
+  { id: "outfit-hero", kind: "outfit", value: "hero", price: 350, tier: "hard" },
   { id: "weapon-sword", kind: "weapon", value: "sword", price: 120 },
   { id: "weapon-blaster", kind: "weapon", value: "blaster", price: 120 },
+  { id: "weapon-hammer", kind: "weapon", value: "hammer", price: 160, tier: "normal" },
+  { id: "weapon-lance", kind: "weapon", value: "lance", price: 200, tier: "normal", vendor: "smith" },
+  { id: "weapon-cannon", kind: "weapon", value: "cannon", price: 240, tier: "hard" },
   { id: "armor-heavy", kind: "armor", value: "heavy", price: 100 },
-  { id: "armor-guard", kind: "armor", value: "guard", price: 140 },
+  { id: "armor-guard", kind: "armor", value: "guard", price: 140, tier: "normal" },
+  { id: "armor-titan", kind: "armor", value: "titan", price: 260, tier: "hard", vendor: "keeper" },
   { id: "chip-charger", kind: "chip", value: "charger", price: 80 },
-  { id: "chip-retry", kind: "chip", value: "retry", price: 140 },
+  { id: "chip-retry", kind: "chip", value: "retry", price: 140, tier: "normal" },
   { id: "paint-crimson", kind: "paint", value: "crimson", price: 60 },
   { id: "paint-violet", kind: "paint", value: "violet", price: 60 },
   { id: "paint-gold", kind: "paint", value: "gold", price: 90 },
@@ -84,12 +132,32 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "bit-star", kind: "bit", value: "star", price: 100, vendor: "vendor" },
   { id: "module-scanner", kind: "module", value: "scanner", price: 120 },
   { id: "module-laser", kind: "module", value: "laser", price: 150 },
-  { id: "module-medic", kind: "module", value: "medic", price: 180 },
-  { id: "supply-repair-kit", kind: "supply", value: "repair-kit", price: 25, max: 3 },
-  { id: "supply-shield", kind: "supply", value: "shield", price: 20, max: 3 },
-  { id: "supply-overcharge", kind: "supply", value: "overcharge", price: 30, max: 3 },
-  { id: "supply-analyzer", kind: "supply", value: "analyzer", price: 30, max: 3 },
-  { id: "supply-reboot", kind: "supply", value: "reboot", price: 60, max: 1 },
+  { id: "module-medic", kind: "module", value: "medic", price: 180, tier: "normal" },
+  { id: "decor-screens", kind: "decor", value: "screens", price: 30 },
+  { id: "decor-lamp", kind: "decor", value: "lamp", price: 30 },
+  { id: "decor-cooler", kind: "decor", value: "cooler", price: 30 },
+  { id: "decor-vending", kind: "decor", value: "vending", price: 40 },
+  { id: "decor-bookshelf", kind: "decor", value: "bookshelf", price: 50 },
+  { id: "decor-trophy", kind: "decor", value: "trophy", price: 50 },
+  { id: "decor-neon", kind: "decor", value: "neon", price: 60 },
+  { id: "decor-sofa", kind: "decor", value: "sofa", price: 60 },
+  { id: "decor-pet", kind: "decor", value: "pet", price: 70 },
+  { id: "decor-aquarium", kind: "decor", value: "aquarium", price: 80 },
+  { id: "decor-crates", kind: "decor", value: "crates", price: 30, tier: "normal" },
+  { id: "decor-toolrack", kind: "decor", value: "toolrack", price: 40, tier: "normal" },
+  { id: "decor-tanks", kind: "decor", value: "tanks", price: 50, tier: "normal" },
+  { id: "decor-flag", kind: "decor", value: "flag", price: 50, tier: "normal" },
+  { id: "decor-clock", kind: "decor", value: "clock", price: 60, tier: "normal" },
+  { id: "decor-banner", kind: "decor", value: "banner", price: 60, tier: "normal" },
+  { id: "decor-telescope", kind: "decor", value: "telescope", price: 70, tier: "normal" },
+  { id: "decor-arcade", kind: "decor", value: "arcade", price: 90, tier: "normal" },
+  { id: "decor-fountain", kind: "decor", value: "fountain", price: 100, tier: "hard" },
+  { id: "decor-statue", kind: "decor", value: "statue", price: 120, tier: "hard" },
+  { id: "supply-repair-kit", kind: "supply", value: "repair-kit", price: 25, max: 3, stock: 3 },
+  { id: "supply-shield", kind: "supply", value: "shield", price: 20, max: 3, stock: 3 },
+  { id: "supply-overcharge", kind: "supply", value: "overcharge", price: 30, max: 3, stock: 2 },
+  { id: "supply-analyzer", kind: "supply", value: "analyzer", price: 30, max: 3, stock: 2 },
+  { id: "supply-reboot", kind: "supply", value: "reboot", price: 60, max: 1, stock: 1 },
 ];
 
 /** เครดิตวิจัยที่ได้จากความคืบหน้าแต่ละอย่าง */
