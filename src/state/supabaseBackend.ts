@@ -15,12 +15,17 @@ export const SOLO_CLASS_CODE = "SOLO";
 
 const toRecord = (row: Row | null | undefined): RemoteRecord | null => (row ? { data: row.data, resumeCode: row.resume_code } : null);
 
-/** ข้อผิดพลาดที่ Supabase ส่งกลับมาใน URL หลังพาไปล็อกอินกับ Google อ่านแล้วลบออกจาก URL */
-function consumeAuthError(): string | null {
+/**
+ * ข้อผิดพลาดที่ Supabase ส่งกลับมาใน URL หลังพาไปล็อกอินกับ Google อ่านแล้วลบออกจาก URL
+ * detail = คำอธิบายสั้น ๆ สำหรับผู้ดูแลระบบ (ตัดส่วนหลังเครื่องหมาย : ออก เพราะอาจมีรหัสใช้ครั้งเดียวของ Google ต่อท้าย)
+ */
+function consumeAuthError(): { code: string; detail: string } | null {
   const params = new URLSearchParams(`${window.location.search.slice(1)}&${window.location.hash.slice(1)}`);
   const code = params.get("error_code") ?? params.get("error");
-  if (code) window.history.replaceState(null, "", window.location.pathname);
-  return code;
+  if (!code) return null;
+  window.history.replaceState(null, "", window.location.pathname);
+  const description = (params.get("error_description") ?? "").split(":")[0].trim().slice(0, 80);
+  return { code, detail: description ? `${code}: ${description}` : code };
 }
 
 export function createSupabaseBackend(url: string, anonKey: string): RemoteBackend {
@@ -41,7 +46,8 @@ export function createSupabaseBackend(url: string, anonKey: string): RemoteBacke
   };
 
   return {
-    authError,
+    authError: authError?.code ?? null,
+    authErrorDetail: authError?.detail ?? null,
     async account(): Promise<AccountInfo | null> {
       const user = (await session())?.user;
       if (!user) return null;

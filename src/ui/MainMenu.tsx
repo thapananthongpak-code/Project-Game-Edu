@@ -3,7 +3,7 @@ import { setAudioSettings } from "../audio/engine";
 import { useAudioSettings } from "../audio/useAudio";
 import { course } from "../content";
 import { fmt, ui } from "../content/ui-strings";
-import { claimProgress, cloudEnabled, googleLoginEnabled, googleNotice, hasSave as hasSaveData, signInWithGoogle, signOutAccount, startNewGame, useGameStore } from "../state/gameStore";
+import { claimProgress, cloudEnabled, googleErrorDetail, googleLoginEnabled, googleNotice, hasSave as hasSaveData, signInWithGoogle, signOutAccount, startNewGame, useGameStore } from "../state/gameStore";
 import { art } from "./art";
 
 /** เล่นต่อจากเครื่องอื่น: ใส่รหัสเล่นต่อที่แสดงในสมุดเควสของเครื่องเดิม */
@@ -128,6 +128,11 @@ function GoogleAccount() {
       {(inUse || failed) && (
         <p className="mt-2 font-semibold text-wrong" role="alert" data-testid="google-notice">
           {inUse ? ui.menu.googleInUse : ui.menu.googleFailed}
+          {!inUse && googleErrorDetail() && (
+            <span className="mt-1 block select-text break-words text-xs font-normal text-slate" data-testid="google-error-detail">
+              {googleErrorDetail()}
+            </span>
+          )}
         </p>
       )}
     </div>

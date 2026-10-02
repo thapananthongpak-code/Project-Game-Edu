@@ -336,8 +336,9 @@ export interface AccountInfo {
 
 /** สิ่งที่ SyncedProgressStore ต้องการจากฐานข้อมูลกลาง ตัวจริงคือ Supabase (src/state/supabaseBackend.ts) */
 export interface RemoteBackend {
-  /** รหัสข้อผิดพลาดจากการล็อกอินกับ Google ครั้งล่าสุด (ถ้ามี) */
+  /** รหัสข้อผิดพลาดจากการล็อกอินกับ Google ครั้งล่าสุด (ถ้ามี) และคำอธิบายสั้น ๆ สำหรับผู้ดูแลระบบ */
   authError?: string | null;
+  authErrorDetail?: string | null;
   account?(): Promise<AccountInfo | null>;
   /** พาไปหน้าล็อกอินของ Google link = ผูกกับบัญชีไม่ระบุตัวตนที่มีอยู่ (ความคืบหน้าตามมาด้วย) */
   signInWithGoogle?(link: boolean): Promise<void>;
@@ -420,6 +421,11 @@ export class SyncedProgressStore implements ProgressStore {
 
   get googleFailed(): boolean {
     return Boolean(this.remote.authError) && !this.googleInUse;
+  }
+
+  /** รหัสและคำอธิบายของข้อผิดพลาดล่าสุด ให้ผู้ดูแลระบบใช้หาสาเหตุ */
+  get googleErrorDetail(): string | null {
+    return this.remote.authErrorDetail ?? this.remote.authError ?? null;
   }
 
   /**

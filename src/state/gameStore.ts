@@ -402,6 +402,9 @@ export const googleLoginEnabled = (): boolean => activeStore instanceof SyncedPr
 export const googleNotice = (): "in-use" | "failed" | null =>
   !(activeStore instanceof SyncedProgressStore) ? null : activeStore.googleInUse ? "in-use" : activeStore.googleFailed ? "failed" : null;
 
+/** รหัสและคำอธิบายของข้อผิดพลาดจากการล็อกอินกับ Google ครั้งล่าสุด (สำหรับผู้ดูแลระบบ) */
+export const googleErrorDetail = (): string | null => (activeStore instanceof SyncedProgressStore ? activeStore.googleErrorDetail : null);
+
 /** พาไปหน้าล็อกอินของ Google (หน้าเกมถูกเปิดใหม่เมื่อกลับมา) */
 export async function signInWithGoogle(): Promise<void> {
   if (activeStore instanceof SyncedProgressStore) await activeStore.signInWithGoogle();
