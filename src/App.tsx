@@ -14,6 +14,7 @@ import { Onboarding, Posttest } from "./ui/Onboarding";
 import { QuestLog } from "./ui/QuestLog";
 import { ReviewNotebook } from "./ui/ReviewNotebook";
 import { Shop } from "./ui/Shop";
+import { Storage } from "./ui/Storage";
 import { StageOverlay } from "./ui/StageOverlay";
 import { StoryDialog } from "./ui/StoryDialog";
 import { MinigameOverlay } from "./ui/minigames/MinigameOverlay";
@@ -74,6 +75,7 @@ export function App() {
       {overlay === "shop" && <Shop />}
       {overlay === "npc" && <Npc />}
       {overlay === "missions" && <Missions />}
+      {overlay === "storage" && <Storage />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}
       {tutorOpen && tutorRoom !== null && <TutorPanel />}

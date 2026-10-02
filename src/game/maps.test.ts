@@ -95,12 +95,14 @@ describe("แผนที่ของทุกฉาก", () => {
     expect([count(map, "field"), count(map, "core"), count(map, "door"), count(map, "station")]).toEqual([1, 1, 1, 0]);
   });
 
-  it("โถงมีประตูครบทุกห้องเรียงตามลำดับ ประตูโรงเก็บหุ่น และร้าน ส่วนโรงเก็บหุ่นมีแผงสั่งปฏิบัติการ", () => {
+  it("โถงมีประตูครบทุกห้องเรียงตามลำดับ ประตูโรงเก็บหุ่น ร้าน และกล่องเก็บไอเทม ส่วนโรงเก็บหุ่นมีแผงสั่งปฏิบัติการและกล่องเก็บไอเทม", () => {
     const doors = hallMap.objects.filter((o) => o.kind === "door");
     expect(doors.map((door) => door.index)).toEqual(Array.from({ length: ROOM_COUNT }, (_, i) => i + 1));
     expect(doors.map((door) => door.col)).toEqual([...doors.map((door) => door.col)].sort((a, b) => a - b));
-    expect([count(hallMap, "gate"), count(hallMap, "shop")]).toEqual([1, 1]);
-    expect(["console", "robot", "wardrobe", "hologram", "door"].map((kind) => count(hangarMap, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 1]);
+    expect([count(hallMap, "gate"), count(hallMap, "shop"), count(hallMap, "storage")]).toEqual([1, 1, 1]);
+    expect(["console", "robot", "wardrobe", "hologram", "door", "storage"].map((kind) => count(hangarMap, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 1, 1]);
+    // โถงของทุกระดับความยากมีกล่องเก็บไอเทม
+    for (const zones of [6, 3, 1]) expect(count(hallMapOf(zones), "storage")).toBe(1);
   });
 
   it("ทุกระดับความยากมีแผนที่ครบทุกห้อง และโถงมีประตูเท่าจำนวนห้อง", () => {

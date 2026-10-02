@@ -3372,6 +3372,36 @@
       "status": "generated"
     },
     {
+      "id": "PR-H05",
+      "kind": "prop",
+      "name": "กล่องเก็บไอเทม (โถงและโรงเก็บหุ่น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_storage_box": "props/pr_storage_box.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide steel storage chest with a teal lid, yellow latches and a small glowing green screen on the front, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "150fd668-051e-44e2-8599-18d51b1a9740",
+        "generatedAt": "2026-10-02T11:42:39.672Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "PR-H02",
       "kind": "prop",
       "name": "ประตูโรงเก็บหุ่น (โถง)",
@@ -4204,6 +4234,599 @@
           "reason": "ได้ต้นคริสตัลสีเขียวบนก้อนหิน ไม่ใช่ประกายฟื้นพลัง"
         }
       ]
+    },
+    {
+      "id": "FX-07",
+      "kind": "fx",
+      "name": "หมัดจรวดของการ์เดียน (พุ่งไปทางขวา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_fist": "battle/fx_fist.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "large white and teal armored robot fist flying to the right with an orange rocket flame trail behind it, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "9ac26a19-32d2-4cb9-b76c-8ed1842b972b",
+        "generatedAt": "2026-10-02T11:43:11.934Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-08",
+      "kind": "fx",
+      "name": "รอยฟันดาบพลังงานของการ์เดียน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_sword": "battle/fx_sword.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide crescent-shaped cyan energy sword slash arc with a bright white edge, curving to the right, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "d76b2b3a-4c1a-42ce-ba3f-58d036c72580",
+        "generatedAt": "2026-10-02T11:43:48.927Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-09",
+      "kind": "fx",
+      "name": "ลำแสงของการ์เดียน (ยืดตามแนวนอน)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_beam": "battle/fx_beam.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "very thick horizontal energy beam filling one third of the image height, bright white core with wide cyan glowing bands above and below and small sparks, spanning the full width from the left edge to the right edge, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "843e2109-4597-40a5-912a-6113fb7fab4d",
+        "generatedAt": "2026-10-02T11:53:38.877Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "8bffa537-8ac5-4966-a223-5838bbc8a00e",
+          "reason": "prompt \"thick horizontal cyan laser beam with a bright white core spanning the full width from the…\": ได้เส้นสีขาวบางเส้นเดียว มองไม่ออกว่าเป็นลำแสง"
+        }
+      ]
+    },
+    {
+      "id": "FX-10",
+      "kind": "fx",
+      "name": "เขี้ยวงับ (ไตรฮอร์น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_bite": "battle/fx_bite.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "open monster jaws with two rows of sharp white fangs snapping shut, purple gums, no head, no eyes, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "b97d921b-2c72-4279-ad0c-d4c488f898f9",
+        "generatedAt": "2026-10-02T11:44:36.182Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-11",
+      "kind": "fx",
+      "name": "เศษเหล็กที่สแครปขว้าง (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_scrap": "battle/fx_scrap.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "jagged chunk of rusty green scrap metal with bolts and a broken gear tumbling through the air to the left with white motion lines, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "598d7e09-05b5-42b7-b412-4c3dfdb087ac",
+        "generatedAt": "2026-10-02T11:44:55.247Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-12",
+      "kind": "fx",
+      "name": "ก้ามหนีบ (เกียร์แครบ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_pincer": "battle/fx_pincer.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "big orange lobster claw, an open crab pincer with serrated inner edges pointing to the left, a single severed claw only, small white sparks between the two jaws, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "d2392b16-2fae-4fe0-b14f-fdb52c2bd2f9",
+        "generatedAt": "2026-10-02T11:57:07.467Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "d861b712-562f-4b15-96d9-b8e13d0fc35d",
+          "reason": "prompt \"big orange mechanical crab claw pincer snapping shut with small white sparks, centered, tr…\": ได้ปูทั้งตัว ไม่ใช่ก้ามอย่างเดียว"
+        },
+        {
+          "tool": "create_image_pixflux",
+          "id": "9a94a9ca-89ff-42c4-ad9f-6283f7b04269",
+          "reason": "prompt \"one single giant orange mechanical claw pincer only, two jagged jaws closing like pliers, …\": ได้หุ่นยนต์สีส้มทั้งตัว ไม่ใช่ก้าม"
+        }
+      ]
+    },
+    {
+      "id": "FX-13",
+      "kind": "fx",
+      "name": "ฝูงมิมิกพุ่งชน (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_swarm": "battle/fx_swarm.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "five big round coral pink blob monsters with angry white eyes and open mouths leaping to the left, filling the frame, white motion lines behind them, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "99107500-15de-49ea-bbe6-157309def7a3",
+        "generatedAt": "2026-10-02T11:54:55.784Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "b3633d16-377b-4b7e-8030-1f5f045e23a0",
+          "reason": "prompt \"cluster of five tiny round pink blob creatures with angry eyes leaping to the left with wh…\": ตัวเล็กและสีม่วงหม่น ไม่เหมือนฝูงมิมิกสีชมพู"
+        }
+      ]
+    },
+    {
+      "id": "FX-14",
+      "kind": "fx",
+      "name": "คลื่นพลังของโอเมก้า ร่างคลั่ง (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_wave": "battle/fx_wave.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "crescent-shaped shockwave of purple and magenta energy flying to the left with a bright pink leading edge, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "1ab4f4bd-c2f6-4dda-b9bf-66fcf939aed8",
+        "generatedAt": "2026-10-02T11:46:20.239Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-15",
+      "kind": "fx",
+      "name": "ลำแสงทำลายล้างของโอเมก้า ร่างสมบูรณ์ (ยืดตามแนวนอน)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_ruin": "battle/fx_ruin.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "thick horizontal dark red laser beam with a black core and orange crackling edges spanning the full width from the left edge to the right edge, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "5f7b8c4d-8c29-4c17-844b-882fae866d40",
+        "generatedAt": "2026-10-02T11:46:48.908Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-16",
+      "kind": "fx",
+      "name": "ดาวมึนงง (ติดสตัน)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_stun": "battle/fx_stun.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "ring of five bright yellow five-point stars with small white sparkles circling in an oval, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "84b93719-c8a3-49bb-b39b-17bffad2c3e4",
+        "generatedAt": "2026-10-02T11:47:44.020Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-01",
+      "kind": "icon",
+      "name": "หมัดการ์เดียน (อาวุธเริ่มต้น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_fist": "gear/gr_fist.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "white and teal armored robot gauntlet fist, three-quarter view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "10997270-e414-4649-a3cb-bb65bee4dd05",
+        "generatedAt": "2026-10-02T11:48:12.276Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-02",
+      "kind": "icon",
+      "name": "ดาบพลังงาน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_sword": "gear/gr_sword.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "futuristic energy sword with a glowing cyan blade and a white and teal hilt, held diagonally, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "36953eaa-dd39-4e14-87e4-74df8740e651",
+        "generatedAt": "2026-10-02T11:48:32.013Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-03",
+      "kind": "icon",
+      "name": "ปืนเลเซอร์",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_blaster": "gear/gr_blaster.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "chunky white and teal sci-fi laser arm cannon with a glowing cyan muzzle, side view pointing right, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "416418b4-06ee-4c49-a3db-d49f0e30a5ed",
+        "generatedAt": "2026-10-02T11:48:59.801Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-04",
+      "kind": "icon",
+      "name": "เกราะมาตรฐาน (เกราะเริ่มต้น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_armor_plate": "gear/gr_armor_plate.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "simple white robot chest armor plate with a small teal core in the center, front view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "7cbd6418-4dc1-48e4-961e-90b8be3ac6f8",
+        "generatedAt": "2026-10-02T11:49:28.792Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-05",
+      "kind": "icon",
+      "name": "เกราะหนัก",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_armor_heavy": "gear/gr_armor_heavy.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one thick heavy dark steel chest plate armor piece only with two large shoulder plates, rivets and a teal core in the center, no head, no arms, no legs, front view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b3322a19-2b67-41f9-a841-882693e3b7a2",
+        "generatedAt": "2026-10-02T11:55:23.981Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "58833239-73b4-4758-8f30-012e6240e42d",
+          "reason": "prompt \"thick heavy dark steel robot chest armor with large shoulder plates, rivets and a teal cor…\": ได้หุ่นทั้งตัว ไม่ใช่เกราะอก"
+        }
+      ]
+    },
+    {
+      "id": "GR-06",
+      "kind": "icon",
+      "name": "เกราะสะท้อน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_armor_guard": "gear/gr_armor_guard.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "sleek white robot chest armor with a glowing cyan hexagon energy barrier in front of it, front view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "662210d3-6eff-480c-be34-1cc40945bb27",
+        "generatedAt": "2026-10-02T11:50:34.160Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-07",
+      "kind": "icon",
+      "name": "ชิปคิดทบทวน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_chip_retry": "gear/gr_chip_retry.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "green computer microchip with gold pins and a glowing white circular arrow symbol on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c8b86c3e-749b-450c-8b6c-9405fb8b76d6",
+        "generatedAt": "2026-10-02T11:50:53.034Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-08",
+      "kind": "icon",
+      "name": "ชิปเร่งพลัง",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_chip_charger": "gear/gr_chip_charger.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "orange computer microchip with gold pins and a glowing yellow lightning bolt symbol on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "a98852af-08f5-45a8-bb47-7b4f32d9e408",
+        "generatedAt": "2026-10-02T11:51:56.739Z"
+      },
+      "status": "generated"
     },
     {
       "id": "BT-07",

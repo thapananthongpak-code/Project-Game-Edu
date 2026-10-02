@@ -26,13 +26,13 @@ import {
 } from "./progressStore";
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
 import { MIN_ANSWER_CHARS } from "./rules";
-import { creditBalance, type Earning, equip, purchase, type PurchaseError } from "./shop";
+import { creditBalance, type Earning, equip, type EquipKind, packBag, powerOf, purchase, type PurchaseError } from "./shop";
 import type { Avatar, Supply } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
 export interface MusicCue {
@@ -120,7 +120,9 @@ interface GameState {
   /** บันทึกผลการออกปฏิบัติการหนึ่งครั้ง */
   recordBattle: (id: string, result: { won: boolean; asked: number; correct: number }) => void;
   buy: (itemId: string) => PurchaseError | null;
-  equip: (kind: "outfit" | "paint" | "bit", value: string) => void;
+  equip: (kind: EquipKind, value: string) => void;
+  /** จัดของใช้ลงกระเป๋า (ไม่เกิน BAG_SIZE ชิ้น ที่เหลืออยู่ในกล่องเก็บไอเทม) */
+  packBag: (wanted: readonly Supply[]) => void;
   /** เปิดร้าน: ไม่ระบุ = ร้านสหกรณ์แล็บ ระบุ NPC = ร้านพิเศษของคนนั้น */
   openShop: (vendor?: NpcId) => void;
   openNpc: (id: NpcId) => void;
@@ -264,6 +266,7 @@ export const useGameStore = create<GameState>()((set, get) => {
       return null;
     },
     equip: (kind, value) => set({ shop: equip(get().shop, kind, value) }),
+    packBag: (wanted) => set({ shop: packBag(get().shop, wanted) }),
     openShop: (vendor) => set({ overlay: "shop", shopVendor: vendor ?? null, npcId: null, prompt: null }),
     openNpc: (id) => set({ overlay: "npc", npcId: id, prompt: null }),
     acceptQuest: (id) => updateNpc(id, () => ({ accepted: true })),
@@ -404,8 +407,8 @@ export const allBattlesWon = (state: Run): boolean => planOf(state).battles.ever
 
 export const battlesWon = (state: Run): number => planOf(state).battles.filter((battle) => state.battles[battle.id]?.won).length;
 
-/** ชิ้นส่วนอัปเกรดการ์เดียน = จำนวนไคจูประจำห้องที่ชนะแล้ว (ไม่นับบอส) */
-export const armorParts = (state: Run): number => planOf(state).battles.filter((battle) => !battle.boss && state.battles[battle.id]?.won).length;
+/** ค่าพลังรวมของการ์เดียนตอนนี้ (เทียบกับ BattleSpec.power ของด่าน เป็นคำแนะนำเท่านั้น) */
+export const guardianPowerOf = (state: Pick<GameState, "profile" | "shop">): number => powerOf(state.profile?.difficulty, state.shop);
 
 /**
  * ฉากเนื้อเรื่องที่ควรแสดงตอนนี้ (ยังไม่เคยดู) ไม่มีคืน null

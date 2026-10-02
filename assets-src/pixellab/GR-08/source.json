@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "orange computer microchip with gold pins and a glowing yellow lightning bolt symbol on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "a98852af-08f5-45a8-bb47-7b4f32d9e408",
+  "generatedAt": "2026-10-02T11:51:56.739Z"
+}

@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "chunky white and teal sci-fi laser arm cannon with a glowing cyan muzzle, side view pointing right, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "416418b4-06ee-4c49-a3db-d49f0e30a5ed",
+  "generatedAt": "2026-10-02T11:48:59.801Z"
+}

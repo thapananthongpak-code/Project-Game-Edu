@@ -1,0 +1,24 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "very thick horizontal energy beam filling one third of the image height, bright white core with wide cyan glowing bands above and below and small sparks, spanning the full width from the left edge to the right edge, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "east"
+  },
+  "fetchTool": "get_image",
+  "id": "843e2109-4597-40a5-912a-6113fb7fab4d",
+  "generatedAt": "2026-10-02T11:53:38.877Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "8bffa537-8ac5-4966-a223-5838bbc8a00e",
+      "reason": "prompt \"thick horizontal cyan laser beam with a bright white core spanning the full width from the…\": ได้เส้นสีขาวบางเส้นเดียว มองไม่ออกว่าเป็นลำแสง"
+    }
+  ]
+}

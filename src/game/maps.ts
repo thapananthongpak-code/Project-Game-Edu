@@ -15,6 +15,8 @@ export type ObjectKind =
   | "core"
   | "field"
   | "shop"
+  /** กล่องเก็บไอเทม: อุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (โถงและโรงเก็บหุ่น) */
+  | "storage"
   | "gate"
   | "console"
   | "wardrobe"
@@ -112,12 +114,13 @@ export function hallMapOf(zones: number): GameMap {
       ...doors.map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
       { kind: "shop", prop: "pr_shop", col: 2, row: 8, w: 2 },
+      { kind: "storage", prop: "pr_storage_box", col: 5, row: 8, w: 2 },
       ...walls,
       floor("pr_decor_rug", 9, 4),
       decor(PLANT, 1, 5, 1),
       decor(PLANT, 18, 5, 1),
       decor("pr_decor_water_cooler", 1, 8, 1),
-      decor("pr_decor_trophy_case", 5, 8),
+      decor("pr_decor_trophy_case", 15, 6),
       decor("pr_hall_bench", 8, 9),
       decor("pr_hall_bench", 12, 9),
       decor("pr_decor_vending", 15, 9, 1),
@@ -138,6 +141,7 @@ export const hangarMap: GameMap = {
     { kind: "console", prop: "pr_mission_console", col: 9, row: 7, w: 2 },
     { kind: "hologram", prop: "pr_hologram", col: 5, row: 2 },
     { kind: "wardrobe", prop: "pr_wardrobe", col: 16, row: 2 },
+    { kind: "storage", prop: "pr_storage_box", col: 13, row: 7, w: 2 },
     wall("pr_decor_tool_rack", 7),
     wall("pr_decor_tool_rack", 12),
     wall(SCREENS, 17),

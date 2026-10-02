@@ -3,9 +3,8 @@ import { useAudioSettings } from "../audio/useAudio";
 import { course, isFieldRoom, questTitle, ROOM_COUNT, stationsOf } from "../content";
 import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
-import { BATTLE } from "../state/battle.config";
 import { zoneOfTopic } from "../state/campaign";
-import { armorParts, cloudEnabled, coreCount, creditsOf, difficultyOf, fieldComplete, isRoomUnlocked, isTopicOpen, planOf, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
+import { cloudEnabled, guardianPowerOf, coreCount, creditsOf, difficultyOf, fieldComplete, isRoomUnlocked, isTopicOpen, planOf, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
 import { NPC_ACTIVITY_TOTAL, npcActivitiesDone, NPCS } from "../state/npcs";
 import { art } from "./art";
 import { Stars } from "./Stars";
@@ -28,6 +27,7 @@ export function QuestLog() {
   const credits = useGameStore(creditsOf);
   const audio = useAudioSettings();
   const run = { profile, progress, battles };
+  const power = useGameStore(guardianPowerOf);
   const plan = planOf(run);
   const difficulty = difficultyOf(run);
   // หัวข้อที่แสดงขั้นตอน: หัวข้อที่กำลังทำ หรือหัวข้อแรกที่ยังไม่ได้แกน AI
@@ -118,7 +118,7 @@ export function QuestLog() {
 
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate" data-testid="profile-cores">
-            {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: ROOM_COUNT })} · {fmt(ui.questLog.armor, { n: Math.min(BATTLE.armorMax, armorParts(run)), total: BATTLE.armorMax })}
+            {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: ROOM_COUNT })} · <span data-testid="profile-power" data-power={power}>{fmt(ui.questLog.power, { n: power })}</span>
           </h3>
           <div className="flex flex-wrap gap-2">
             {course.topics.map((topic) => {

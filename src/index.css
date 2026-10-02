@@ -114,20 +114,99 @@ canvas {
   animation: slide-in 0.25s ease-out;
 }
 
-/* ฉากต่อสู้ไคจู (src/ui/Battle.tsx): ท่าโจมตี โดนโจมตี และฟื้นพลังของตัวละครในฉาก */
+/* ฉากต่อสู้ไคจู (src/ui/Battle.tsx): ท่าของตัวละครตามท่าโจมตี (src/ui/battleMoves.ts) เวลาเริ่มของแต่ละท่าตั้งด้วย animation-delay จากโค้ด */
 @keyframes battle-idle {
   50% {
     transform: translateY(-2%);
   }
 }
-@keyframes battle-lunge-right {
-  40% {
-    transform: translateX(60%) rotate(4deg);
+/* dash: พุ่งเข้าประชิดคู่ต่อสู้ (หมัด ดาบ กรงเล็บ เขี้ยว ก้าม) */
+@keyframes battle-dash-right {
+  35% {
+    transform: translateX(62%) rotate(5deg);
+  }
+  55% {
+    transform: translateX(62%) rotate(-3deg);
   }
 }
-@keyframes battle-lunge-left {
+@keyframes battle-dash-left {
+  35% {
+    transform: translateX(-62%) rotate(-5deg);
+  }
+  55% {
+    transform: translateX(-62%) rotate(3deg);
+  }
+}
+/* fire: ยิงจากที่ยืน ตัวถอยตามแรงสะท้อนและสว่างวาบ */
+@keyframes battle-fire-right {
+  20% {
+    transform: translateX(-9%) rotate(-4deg);
+    filter: brightness(1.7);
+  }
+  45% {
+    transform: translateX(3%);
+  }
+}
+@keyframes battle-fire-left {
+  20% {
+    transform: translateX(9%) rotate(4deg);
+    filter: brightness(1.7);
+  }
+  45% {
+    transform: translateX(-3%);
+  }
+}
+/* charge: รวมพลังก่อนปล่อยท่าใหญ่ */
+@keyframes battle-charge {
+  0%,
+  100% {
+    transform: none;
+    filter: none;
+  }
+  15%,
+  45% {
+    transform: scale(1.05);
+    filter: brightness(1.9) drop-shadow(0 0 8px #fff);
+  }
+  30% {
+    transform: scale(0.97);
+    filter: brightness(1.3);
+  }
+  60% {
+    transform: scale(1.1) translateY(-2%);
+    filter: brightness(2.2) drop-shadow(0 0 12px #fff);
+  }
+}
+/* spin: หมุนตัวฟาดเข้าใส่ */
+@keyframes battle-spin-left {
+  45% {
+    transform: translateX(-55%) rotate(-360deg);
+  }
+  60% {
+    transform: translateX(-55%) rotate(-360deg);
+  }
+  100% {
+    transform: translateX(0) rotate(-360deg);
+  }
+}
+/* hop: กระโดดเข้าใส่เป็นจังหวะ (ฝูงตัวเล็ก) */
+@keyframes battle-hop-left {
+  20% {
+    transform: translate(-12%, -16%);
+  }
   40% {
-    transform: translateX(-60%) rotate(-4deg);
+    transform: translate(-24%, 0);
+  }
+  60% {
+    transform: translate(-36%, -16%);
+  }
+  80% {
+    transform: translate(-24%, 0);
+  }
+}
+@keyframes battle-recoil-left {
+  40% {
+    transform: translateX(-14%) rotate(-5deg);
   }
 }
 @keyframes battle-hurt {
@@ -151,6 +230,29 @@ canvas {
     filter: brightness(1.6) drop-shadow(0 0 6px #a8ede0);
   }
 }
+@keyframes battle-guard {
+  40% {
+    transform: translateY(-3%) scale(1.03);
+  }
+}
+/* ติดสตัน: โงนเงนและสีซีด */
+@keyframes battle-stunned {
+  0%,
+  100% {
+    transform: none;
+    filter: none;
+  }
+  20%,
+  60% {
+    transform: rotate(6deg);
+    filter: grayscale(0.8);
+  }
+  40%,
+  80% {
+    transform: rotate(-6deg);
+    filter: grayscale(0.8);
+  }
+}
 @keyframes battle-assist {
   30% {
     transform: translate(120%, 40%) scale(1.3);
@@ -159,52 +261,149 @@ canvas {
 .battle-idle {
   animation: battle-idle 1.6s ease-in-out infinite;
 }
-.battle-robot-attack {
-  animation: battle-lunge-right 0.45s ease-out;
+.battle-robot-dash {
+  animation: battle-dash-right 0.5s ease-out;
 }
-.battle-kaiju-attack {
-  animation: battle-lunge-left 0.45s ease-out;
+.battle-robot-fire {
+  animation: battle-fire-right 0.45s ease-out;
 }
-/* ภาพหุ่นใช้ filter หมุนสี (สีที่ซื้อจากร้าน) จึงสั่นอย่างเดียว ไม่กะพริบ */
+.battle-robot-charge,
+.battle-kaiju-charge {
+  animation: battle-charge 0.6s ease-in-out;
+}
+/* ภาพหุ่นใช้ filter หมุนสี (สีที่ซื้อจากร้าน) จึงถอยอย่างเดียว ไม่กะพริบ */
 .battle-robot-hurt {
-  animation: battle-lunge-left 0.3s ease-out 0.25s;
+  animation: battle-recoil-left 0.3s ease-out;
+}
+.battle-robot-guard {
+  animation: battle-guard 0.5s ease-in-out;
+}
+.battle-kaiju-dash {
+  animation: battle-dash-left 0.5s ease-out;
+}
+.battle-kaiju-fire {
+  animation: battle-fire-left 0.45s ease-out;
+}
+.battle-kaiju-spin {
+  animation: battle-spin-left 0.6s ease-in-out;
+}
+.battle-kaiju-hop {
+  animation: battle-hop-left 0.6s ease-in-out;
 }
 .battle-kaiju-hurt {
-  animation: battle-hurt 0.5s linear 0.2s;
-}
-.battle-robot-guard,
-.battle-kaiju-heal {
-  animation: battle-idle 0.5s ease-in-out;
+  animation: battle-hurt 0.5s linear;
 }
 .battle-kaiju-heal {
   animation: battle-glow 0.7s ease-in-out;
 }
+.battle-kaiju-stunned {
+  animation: battle-stunned 0.7s ease-in-out;
+}
 .battle-bit-assist {
-  animation: battle-assist 0.5s ease-out 0.15s;
+  animation: battle-assist 0.5s ease-out;
+}
+/* อาวุธที่การ์เดียนถืออยู่ วางที่มือด้านหน้าของหุ่น */
+.battle-weapon-sword {
+  left: 58%;
+  top: 8%;
+  width: 52%;
+  transform: rotate(14deg);
+}
+.battle-weapon-blaster {
+  left: 56%;
+  top: 34%;
+  width: 44%;
 }
 .battle-shielded {
   outline: 3px solid var(--color-teal-light);
   outline-offset: -6px;
   border-radius: 50%;
 }
-/* เอฟเฟกต์การโจมตี: ซ่อนอยู่ (opacity 0) แล้วแสดงด้วยแอนิเมชันครั้งเดียว เมื่อปิดแอนิเมชันจึงไม่ค้างบนจอ */
+/* เอฟเฟกต์การโจมตี: ซ่อนอยู่ (opacity 0) แล้วแสดงด้วยแอนิเมชันครั้งเดียว เมื่อปิดแอนิเมชันจึงไม่ค้างบนจอ --fx-row = แนวสูงต่ำของเอฟเฟกต์ (-1, 0, 1) */
 .battle-fx {
   position: absolute;
-  bottom: 24%;
+  bottom: calc(24% + var(--fx-row, 0) * 14%);
   width: 20%;
+  aspect-ratio: 1;
   opacity: 0;
   animation-fill-mode: both;
   animation-timing-function: ease-out;
 }
 .battle-fx-big {
   width: 30%;
-  bottom: 18%;
+  bottom: calc(18% + var(--fx-row, 0) * 14%);
 }
 .battle-fx-to-kaiju {
   right: 10%;
 }
 .battle-fx-to-robot {
   left: 10%;
+}
+.battle-fx-flip {
+  transform: scaleX(-1);
+}
+.battle-fx-tint-purple img {
+  filter: hue-rotate(75deg) saturate(1.4);
+}
+/* ลำแสง: ยืดจากผู้โจมตีไปถึงเป้า */
+@keyframes battle-fx-beam {
+  0% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  35% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1) scaleY(0.3);
+  }
+}
+.battle-fx-beam {
+  left: 30%;
+  right: auto;
+  width: 46%;
+  height: 16%;
+  aspect-ratio: auto;
+  bottom: calc(34% + var(--fx-row, 0) * 12%);
+  animation-name: battle-fx-beam;
+  animation-duration: 0.5s;
+}
+.battle-fx-beam.battle-fx-big {
+  width: 46%;
+  height: 26%;
+  bottom: calc(29% + var(--fx-row, 0) * 12%);
+}
+.battle-fx-beam.battle-fx-to-kaiju {
+  transform-origin: left center;
+}
+.battle-fx-beam.battle-fx-to-robot {
+  left: 24%;
+  transform-origin: right center;
+}
+/* ของที่ตกจากด้านบนใส่เป้า */
+@keyframes battle-fx-drop {
+  0% {
+    opacity: 1;
+    transform: translateY(-260%) rotate(-30deg);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0) rotate(20deg);
+  }
+}
+.battle-fx-drop {
+  animation-name: battle-fx-drop;
+  animation-duration: 0.3s;
+  animation-timing-function: ease-in;
 }
 @keyframes battle-fx-pop {
   0% {
@@ -321,7 +520,7 @@ canvas {
 }
 .battle-float {
   position: absolute;
-  top: 34%;
+  top: 20%;
   opacity: 0;
   font-size: 1.6rem;
   font-weight: 800;
@@ -340,6 +539,57 @@ canvas {
 }
 .battle-float-heal {
   color: #a7f070;
+}
+/* คำบอกผลพิเศษ (คริติคอล สตัน กันได้ ตอบใหม่) ลอยเหนือตัวเลข */
+.battle-float-tag {
+  top: 36%;
+  font-size: 1.05rem;
+  color: #fff;
+  -webkit-text-stroke: 3px var(--color-ink);
+}
+/* ชื่อท่าที่ขึ้นกลางฉากตอนออกท่า */
+@keyframes battle-banner {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
+  25%,
+  80% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1);
+  }
+}
+.battle-banner {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  max-width: 90%;
+  transform: translateX(-50%);
+  opacity: 0;
+  white-space: nowrap;
+  border: 3px solid var(--color-ink);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.6;
+  animation: battle-banner 0.9s ease-out both;
+}
+.battle-banner-robot {
+  background: var(--color-hint);
+  color: var(--color-ink);
+}
+.battle-banner-kaiju {
+  background: var(--color-wrong);
+  color: var(--color-paper);
 }
 /* ฉากสั่นเมื่อการ์เดียนโดนโจมตีหรือบอสกลายร่าง */
 @keyframes battle-shake {
@@ -364,7 +614,7 @@ canvas {
   }
 }
 .battle-shake {
-  animation: battle-shake 0.42s linear 0.18s;
+  animation: battle-shake 0.42s linear;
 }
 /* ภาพเนื้อเรื่องของร่างใหม่ตัดเข้ามาตอนบอสกลายร่าง */
 @keyframes battle-cutin {

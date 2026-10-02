@@ -458,7 +458,13 @@ BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-
 # NPC ประจำห้อง: (รหัส, ไฟล์)
 NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director")]
 # เอฟเฟกต์ของฉากต่อสู้: (รหัส, ไฟล์, ทิศที่ภาพหัน)
-BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX-03", "fx_bolt", "east"), ("FX-04", "fx_fireball", "west"), ("FX-05", "fx_shield", "east"), ("FX-06", "fx_spark", "east")]
+BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX-03", "fx_bolt", "east"), ("FX-04", "fx_fireball", "west"), ("FX-05", "fx_shield", "east"), ("FX-06", "fx_spark", "east"),
+             ("FX-07", "fx_fist", "east"), ("FX-08", "fx_sword", "east"), ("FX-09", "fx_beam", "east"), ("FX-10", "fx_bite", "west"), ("FX-11", "fx_scrap", "west"),
+             ("FX-12", "fx_pincer", "west"), ("FX-13", "fx_swarm", "west"), ("FX-14", "fx_wave", "west"), ("FX-15", "fx_ruin", "west"), ("FX-16", "fx_stun", "east")]
+# ไอคอนอุปกรณ์ของการ์เดียน (ร้าน กล่องเก็บไอเทม ด่านต่อสู้): (รหัส, ไฟล์)
+GEAR_ICONS = [("GR-01", "gr_fist"), ("GR-02", "gr_sword"), ("GR-03", "gr_blaster"), ("GR-04", "gr_armor_plate"), ("GR-05", "gr_armor_heavy"), ("GR-06", "gr_armor_guard"),
+              ("GR-07", "gr_chip_retry"), ("GR-08", "gr_chip_charger")]
+GEAR_SETTINGS = {"no_background": True, "outline": "single color black outline", "shading": "basic shading", "detail": "medium detail"}
 # ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
 DECOR_PROPS = [
     ("PR-Q01", "pr_pickup_bolt", (32, 32)), ("PR-Q02", "pr_pickup_gear", (32, 32)),
@@ -624,6 +630,7 @@ def main():
         *[prop(asset_id, base, size) for asset_id, base, size in ROOM_PROPS],
         *[prop(asset_id, base, size) for asset_id, base, size in DECOR_PROPS],
         prop("PR-H01", "pr_shop", (64, 64), lambda: draw_block(64, 64, YELLOW, SLATE)),
+        prop("PR-H05", "pr_storage_box", (64, 64), lambda: draw_block(64, 64, TEAL, SLATE)),
         prop("PR-H02", "pr_hangar_gate", (64, 64), lambda: draw_block(64, 64, STEEL, YELLOW)),
         prop("PR-H03", "pr_hall_plant", (32, 64), lambda: draw_block(32, 64, GREEN, PAPER)),
         prop("PR-H04", "pr_hall_bench", (64, 32), lambda: draw_block(64, 32, TEAL, SLATE)),
@@ -635,6 +642,7 @@ def main():
         image("BT-00", "bt_robot", (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "battle", {**BATTLE_SETTINGS, "direction": "east"}, "battle", web=True),
         *[kaiju(n) for n in KAIJU_COLORS],
         *[battle_fx(*spec) for spec in BATTLE_FX],
+        *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "gear", web=True) for asset_id, base in GEAR_ICONS],
         image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         image("BT-08", "bt_boss_3", (128, 128), lambda: draw_blob(128, INK, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         *[image(asset_id, key, (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "story", web=True) for asset_id, key in STORY_PANELS],

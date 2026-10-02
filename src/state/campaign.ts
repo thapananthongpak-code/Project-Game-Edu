@@ -32,6 +32,11 @@ export interface BattleSpec {
   unlocks?: number;
   /** ด่านสุดท้ายของระดับ */
   boss: boolean;
+  /**
+   * ค่าพลังรวมของการ์เดียนที่แนะนำสำหรับด่านนี้ (เทียบกับ guardianPower ใน gear.ts) เป็นคำแนะนำเท่านั้น ไม่ใช่เงื่อนไข
+   * ตั้งจากชุดอุปกรณ์ที่ผู้เล่นทั่วไปซื้อได้ก่อนถึงด่าน (PAR ใน balance.ts) และตรวจด้วยแบบจำลองใน balance.test.ts
+   */
+  power: number;
 }
 
 export interface DifficultySpec {
@@ -59,19 +64,19 @@ export interface DifficultySpec {
   formResetsOnRetry: boolean;
 }
 
-const roomKaiju = (n: number, hp: number, trait: Trait): BattleSpec => ({ id: `k${n}`, forms: [{ art: `kaiju_${n}` as FoeArt, hp, trait }], backdrop: n, sources: [n], requires: [n], unlocks: n + 1, boss: false });
+const roomKaiju = (n: number, hp: number, trait: Trait, power: number): BattleSpec => ({ id: `k${n}`, forms: [{ art: `kaiju_${n}` as FoeArt, hp, trait }], backdrop: n, sources: [n], requires: [n], unlocks: n + 1, boss: false, power });
 
 export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
   // ง่าย: 6 ห้อง ห้องละหัวข้อ เรียนครบทุกสถานี ไคจูประจำห้อง 5 ตัว และบอสโอเมก้า 6 เฟส
   easy: {
     zones: [1, 2, 3, 4, 5, 6].map((topic) => ({ topics: [topic] })),
     battles: [
-      roomKaiju(1, 6, "basic"),
-      roomKaiju(2, 8, "charge"),
-      roomKaiju(3, 8, "regen"),
-      roomKaiju(4, 10, "combo"),
-      roomKaiju(5, 5, "swarm"),
-      { id: "omega", forms: [{ art: "kaiju_6", hp: 12, trait: "boss" }], backdrop: 6, sources: [1, 2, 3, 4, 5, 6], requires: [6], boss: true },
+      roomKaiju(1, 6, "basic", 60),
+      roomKaiju(2, 10, "charge", 80),
+      roomKaiju(3, 9, "regen", 90),
+      roomKaiju(4, 14, "combo", 110),
+      roomKaiju(5, 8, "swarm", 120),
+      { id: "omega", forms: [{ art: "kaiju_6", hp: 12, trait: "boss" }], backdrop: 6, sources: [1, 2, 3, 4, 5, 6], requires: [6], boss: true, power: 140 },
     ],
     stations: "required",
     review: true,
@@ -87,19 +92,20 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
   normal: {
     zones: [{ topics: [1, 2] }, { topics: [3, 4] }, { topics: [5, 6] }],
     battles: [
-      { id: "n1", forms: [{ art: "kaiju_2", hp: 9, trait: "charge" }], backdrop: 2, sources: [1, 2], requires: [1, 2], unlocks: 2, boss: false },
-      { id: "n2", forms: [{ art: "kaiju_4", hp: 8, trait: "armor" }], backdrop: 4, sources: [3, 4], requires: [3, 4], unlocks: 3, boss: false },
-      { id: "n3", forms: [{ art: "kaiju_5", hp: 7, trait: "swarm" }], backdrop: 5, sources: [5], requires: [5], boss: false },
+      { id: "n1", forms: [{ art: "kaiju_2", hp: 11, trait: "charge" }], backdrop: 2, sources: [1, 2], requires: [1, 2], unlocks: 2, boss: false, power: 80 },
+      { id: "n2", forms: [{ art: "kaiju_4", hp: 10, trait: "armor" }], backdrop: 4, sources: [3, 4], requires: [3, 4], unlocks: 3, boss: false, power: 120 },
+      { id: "n3", forms: [{ art: "kaiju_5", hp: 10, trait: "swarm" }], backdrop: 5, sources: [5], requires: [5], boss: false, power: 140 },
       {
         id: "omega-n",
         forms: [
-          { art: "kaiju_6", hp: 8, trait: "charge" },
-          { art: "boss_2", hp: 8, trait: "regen" },
+          { art: "kaiju_6", hp: 10, trait: "charge" },
+          { art: "boss_2", hp: 10, trait: "regen" },
         ],
         backdrop: 6,
         sources: [1, 2, 3, 4, 5, 6],
         requires: [6],
         boss: true,
+        power: 140,
       },
     ],
     stations: "optional",
@@ -119,14 +125,15 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
       {
         id: "end",
         forms: [
-          { art: "kaiju_6", hp: 8, trait: "charge" },
-          { art: "boss_2", hp: 8, trait: "armor" },
-          { art: "boss_3", hp: 10, trait: "enrage" },
+          { art: "kaiju_6", hp: 10, trait: "charge" },
+          { art: "boss_2", hp: 9, trait: "armor" },
+          { art: "boss_3", hp: 12, trait: "enrage" },
         ],
         backdrop: 6,
         sources: [1, 2, 3, 4, 5, 6],
         requires: [1, 2, 3, 4, 5, 6],
         boss: true,
+        power: 120,
       },
     ],
     stations: "none",

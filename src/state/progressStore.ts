@@ -8,11 +8,12 @@ import { course } from "../content";
 import type { FormId } from "../content/schema";
 import { DIFFICULTIES, type Difficulty } from "./campaign";
 import { emptyField, type FieldProgress } from "./field";
+import { type Armor, ARMORS, BAG_SIZE, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
 import { emptyNpc, isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_ANSWER_CHARS, MAX_NAME_CHARS } from "./rules";
 import { AVATARS, type Avatar, BIT_SKINS, type BitSkin, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, SUPPLIES, type Supply } from "./shop.config";
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export interface Profile {
   /** ชื่อที่แสดง แนะนำให้ใช้ชื่อเล่นหรือเลขที่ ไม่ใช้ชื่อจริง */
@@ -48,6 +49,12 @@ export interface ShopState {
   paint: Paint;
   /** คอสตูมของพี่บิตที่ใช้อยู่ */
   bit: BitSkin;
+  /** อุปกรณ์ของการ์เดียนที่ใส่อยู่ (src/state/gear.ts) */
+  weapon: Weapon;
+  armor: Armor;
+  chip: Chip;
+  /** ของใช้ที่เลือกพกเข้าด่านต่อสู้ ไม่เกิน BAG_SIZE ชิ้น ที่เหลืออยู่ในกล่องเก็บไอเทม (supplies) */
+  loadout: Supply[];
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -127,7 +134,7 @@ export const emptyRoom = (): RoomProgress => ({
 
 export const emptyBattle = (): BattleRecord => ({ won: false, wins: 0, sorties: 0, asked: 0, correct: 0 });
 
-export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>, outfit: "lab", paint: "standard", bit: "classic" });
+export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>, outfit: "lab", paint: "standard", bit: "classic", ...DEFAULT_GEAR, loadout: [] });
 
 export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, battles: {}, npcs: {}, story: [], shop: emptyShop() });
 
@@ -204,12 +211,19 @@ function shopOf(raw: unknown): ShopState {
   const base = emptyShop();
   const items = new Map(CATALOG.map((item) => [item.id, item]));
   const owned = [...new Set(Array.isArray(data.owned) ? data.owned.filter((id): id is string => typeof id === "string" && items.has(id) && items.get(id)?.kind !== "supply") : [])];
-  const has = (kind: "outfit" | "paint" | "bit", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
+  const has = (kind: "outfit" | "paint" | "bit" | "weapon" | "armor" | "chip", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
   const supplies = { ...base.supplies };
   for (const item of CATALOG) if (item.kind === "supply") supplies[item.value] = Math.min(item.max, Math.floor(count(object(data.supplies)[item.value])));
   const outfit = OUTFITS.find((o) => o === data.outfit) ?? base.outfit;
   const paint = PAINTS.find((c) => c === data.paint) ?? base.paint;
   const bit = BIT_SKINS.find((skin) => skin === data.bit) ?? base.bit;
+  const weapon = WEAPONS.find((w) => w === data.weapon) ?? base.weapon;
+  const armor = ARMORS.find((a) => a === data.armor) ?? base.armor;
+  const chip = CHIPS.find((c) => c === data.chip) ?? base.chip;
+  // กระเป๋า: ของแต่ละชนิดพกได้ไม่เกินจำนวนที่มีในกล่อง ข้อมูลรุ่นที่ยังไม่มีกระเป๋าได้ของในกล่องเรียงตามรายการจนเต็ม
+  const packed: Supply[] = [];
+  const wanted = Array.isArray(data.loadout) ? data.loadout.filter((s): s is Supply => SUPPLIES.some((supply) => supply === s)) : SUPPLIES.flatMap((supply) => Array.from({ length: supplies[supply] }, () => supply));
+  for (const supply of wanted) if (packed.length < BAG_SIZE && packed.filter((s) => s === supply).length < supplies[supply]) packed.push(supply);
   return {
     spent: Math.floor(count(data.spent)),
     owned,
@@ -218,6 +232,10 @@ function shopOf(raw: unknown): ShopState {
     outfit: outfit === base.outfit || has("outfit", outfit) ? outfit : base.outfit,
     paint: paint === base.paint || has("paint", paint) ? paint : base.paint,
     bit: bit === base.bit || has("bit", bit) ? bit : base.bit,
+    weapon: weapon === base.weapon || has("weapon", weapon) ? weapon : base.weapon,
+    armor: armor === base.armor || has("armor", armor) ? armor : base.armor,
+    chip: chip === base.chip || has("chip", chip) ? chip : base.chip,
+    loadout: packed,
   };
 }
 
@@ -285,8 +303,9 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (!raw || typeof raw !== "object") return null;
   const data = raw as Raw;
   const hasRooms = typeof data.rooms === "object" && data.rooms !== null;
+  // รุ่น 6: ยังไม่มีอุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (ของในกล่องถูกจัดลงกระเป๋าให้จนเต็ม)
   // รุ่น 5: ยังไม่มี NPC ประจำห้อง คอสตูมของพี่บิต และภาพเนื้อเรื่องหลังชนะด่าน ช่องอื่นเหมือนรุ่นปัจจุบัน
-  if ((data.version === SAVE_VERSION || data.version === 5) && hasRooms) {
+  if ((data.version === SAVE_VERSION || data.version === 6 || data.version === 5) && hasRooms) {
     const battles = battlesOf(data.battles);
     return {
       version: SAVE_VERSION,

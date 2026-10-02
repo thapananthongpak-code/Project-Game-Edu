@@ -1,7 +1,7 @@
 import { foeName, storyNames } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
 import { BATTLE } from "../state/battle.config";
-import { pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
+import { guardianPowerOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
 import { REWARDS } from "../state/shop.config";
 import { art } from "./art";
 import { useDialog } from "./useDialog";
@@ -9,6 +9,7 @@ import { useDialog } from "./useDialog";
 /**
  * แผงสั่งปฏิบัติการในโรงเก็บหุ่น (GDD ข้อ 12): รายการด่านต่อสู้ของระดับความยากนี้ตามลำดับ
  * ออกปฏิบัติการกับด่านถัดไป หรือซ้อมรบซ้ำกับด่านที่ชนะแล้วเพื่อเก็บเครดิตวิจัย
+ * แต่ละด่านบอกพลังที่แนะนำเทียบกับค่าพลังรวมของการ์เดียนตอนนี้ (คำแนะนำ ไม่ใช่เงื่อนไข)
  */
 export function Missions() {
   const profile = useGameStore((s) => s.profile);
@@ -17,6 +18,7 @@ export function Missions() {
   const openBattle = useGameStore((s) => s.openBattle);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
+  const power = useGameStore(guardianPowerOf);
   const run = { profile, progress, battles };
   const pending = pendingBattle(run);
 
@@ -30,6 +32,10 @@ export function Missions() {
           </button>
         </div>
         <p className="text-sm text-slate">{ui.missions.intro}</p>
+        <div className="rounded-md border-2 border-ink bg-teal-light px-2 py-1.5" data-testid="missions-power" data-power={power}>
+          <p className="font-extrabold">⚡ {fmt(ui.missions.power, { n: power })}</p>
+          <p className="text-sm">{ui.missions.powerNote}</p>
+        </div>
         <ul className="flex flex-col gap-2">
           {planOf(run).battles.map((battle) => {
             const record = battles[battle.id];
@@ -51,6 +57,9 @@ export function Missions() {
                   </div>
                   <div className="text-sm text-slate">{storyNames.place[battle.backdrop - 1]}</div>
                   {battle.forms.length > 1 && <div className="text-xs font-bold text-slate">{fmt(ui.battle.forms, { n: battle.forms.length })}</div>}
+                  <div className="text-xs font-bold" data-testid={`mission-power-${battle.id}`} data-recommended={battle.power} data-ok={power >= battle.power}>
+                    ⚡ {fmt(ui.missions.recommended, { n: battle.power })} · <span className={`rounded bg-paper px-1 ${power >= battle.power ? "text-correct-dark" : "text-wrong"}`}>{power >= battle.power ? ui.missions.powerOk : ui.missions.powerLow}</span>
+                  </div>
                   <div className="text-xs font-bold text-slate">
                     {won
                       ? `${fmt(ui.missions.won, { n: record?.wins ?? 0 })} · ${fmt(ui.missions.replayLeft, { n: replaysLeft })} (+${REWARDS.replay})`

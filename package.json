@@ -21,7 +21,8 @@
     "test:e2e:cloud": "node scripts/e2e-cloud.mjs",
     "test:perf": "node scripts/perf.mjs",
     "test": "vitest run",
-    "check:coverage": "node scripts/check-coverage.ts"
+    "check:coverage": "node scripts/check-coverage.ts",
+    "balance": "BALANCE_REPORT=1 vitest run src/state/balance.test.ts --silent=false"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

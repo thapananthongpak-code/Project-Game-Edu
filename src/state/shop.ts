@@ -1,13 +1,15 @@
 // เครดิตวิจัยและการซื้อของในร้านสหกรณ์แล็บ (ฟังก์ชันล้วน, docs/GDD.md ข้อ 13)
 // เครดิตที่ได้คำนวณจากความคืบหน้าทุกครั้ง ไม่เก็บยอดสะสม ระดับความยากที่สูงกว่าได้เครดิตมากกว่า (ตัวคูณใน campaign.ts)
 import { course } from "../content";
+import { robotMaxOf } from "./battle";
 import { BATTLE } from "./battle.config";
 import { campaignOf, type Difficulty } from "./campaign";
 import { emptyField, fieldStatus } from "./field";
+import { BAG_SIZE, type Gear, guardianPower } from "./gear";
 import { type NpcRecord, npcCredits } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
 import { MIN_ANSWER_CHARS } from "./rules";
-import { BIT_MODULES, type BitModule, CATALOG, REWARDS, type ShopItem } from "./shop.config";
+import { BIT_MODULES, type BitModule, CATALOG, REWARDS, type ShopItem, type Supply } from "./shop.config";
 
 export interface Earning {
   difficulty: Difficulty | undefined;
@@ -59,8 +61,14 @@ export function purchase(shop: ShopState, id: string, balance: number): ShopStat
   if (ownsItem(shop, item)) return "owned";
   if (balance < item.price) return "credits";
   const spent = shop.spent + item.price;
-  if (item.kind === "supply") return { ...shop, spent, supplies: { ...shop.supplies, [item.value]: shop.supplies[item.value] + 1 } };
+  if (item.kind === "supply") {
+    // ของใช้ที่ซื้อใหม่ลงกระเป๋าให้เลยถ้ายังมีที่ว่าง ไม่เช่นนั้นเก็บไว้ในกล่อง (นับเฉพาะของที่ยังมีจริง ช่องของของที่ใช้หมดแล้วถือว่าว่าง)
+    const bag = bagOf(shop);
+    const loadout = bag.length < BAG_SIZE && !(item.value === "reboot" && bag.includes("reboot")) ? [...bag, item.value] : bag;
+    return { ...shop, spent, loadout, supplies: { ...shop.supplies, [item.value]: shop.supplies[item.value] + 1 } };
+  }
   const owned = [...shop.owned, item.id];
+  if (item.kind === "weapon" || item.kind === "armor" || item.kind === "chip") return { ...shop, spent, owned, [item.kind]: item.value } as ShopState;
   if (item.kind === "outfit") return { ...shop, spent, owned, outfit: item.value };
   if (item.kind === "paint") return { ...shop, spent, owned, paint: item.value };
   if (item.kind === "bit") return { ...shop, spent, owned, bit: item.value };
@@ -70,9 +78,34 @@ export function purchase(shop: ShopState, id: string, balance: number): ShopStat
 /** โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว */
 export const modulesOf = (shop: ShopState): BitModule[] => BIT_MODULES.filter((module) => shop.owned.includes(`module-${module}`));
 
-/** สวมชุด เปลี่ยนสีหุ่น หรือเปลี่ยนคอสตูมของพี่บิต ได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว */
-export function equip(shop: ShopState, kind: "outfit" | "paint" | "bit", value: string): ShopState {
-  const fallback = kind === "outfit" ? "lab" : kind === "paint" ? "standard" : "classic";
+export type EquipKind = "outfit" | "paint" | "bit" | "weapon" | "armor" | "chip";
+const EQUIP_DEFAULT: Record<EquipKind, string> = { outfit: "lab", paint: "standard", bit: "classic", weapon: "fist", armor: "plate", chip: "none" };
+
+/** อุปกรณ์ของการ์เดียนที่ใส่อยู่ */
+export const gearOf = (shop: ShopState): Gear => ({ weapon: shop.weapon, armor: shop.armor, chip: shop.chip });
+
+/**
+ * ของใช้ที่จะพกเข้าด่านจริง: ตามที่เลือกไว้ในกระเป๋า ตัดชิ้นที่ในกล่องไม่มีแล้ว
+ * (ใช้ของในด่านแล้วของในกล่องลดลง กระเป๋าของด่านถัดไปจึงมีเฉพาะชิ้นที่ยังเหลือ)
+ */
+export function bagOf(shop: ShopState): Supply[] {
+  const bag: Supply[] = [];
+  for (const supply of shop.loadout) if (bag.length < BAG_SIZE && bag.filter((s) => s === supply).length < shop.supplies[supply]) bag.push(supply);
+  return bag;
+}
+
+/** ค่าพลังรวมของการ์เดียนตอนนี้: พลังสูงสุด อุปกรณ์ เครื่องแบบ โมดูลของพี่บิต และของใช้ในกระเป๋า */
+export const powerOf = (difficulty: Difficulty | undefined, shop: ShopState): number =>
+  guardianPower({ robotMax: robotMaxOf(difficulty, shop.outfit, gearOf(shop)), gear: gearOf(shop), outfit: shop.outfit, modules: modulesOf(shop), bag: bagOf(shop).length });
+
+/** จัดกระเป๋าใหม่: ไม่เกิน BAG_SIZE ชิ้น และของแต่ละชนิดไม่เกินจำนวนที่มีในกล่อง */
+export function packBag(shop: ShopState, wanted: readonly Supply[]): ShopState {
+  return { ...shop, loadout: bagOf({ ...shop, loadout: [...wanted] }) };
+}
+
+/** สวมชุด เปลี่ยนสีหุ่น เปลี่ยนคอสตูมของพี่บิต หรือเปลี่ยนอุปกรณ์ของการ์เดียน ได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว */
+export function equip(shop: ShopState, kind: EquipKind, value: string): ShopState {
+  const fallback = EQUIP_DEFAULT[kind];
   const item = CATALOG.find((candidate) => candidate.kind === kind && candidate.value === value);
   if (value !== fallback && !(item && shop.owned.includes(item.id))) return shop;
   return { ...shop, [kind]: value } as ShopState;

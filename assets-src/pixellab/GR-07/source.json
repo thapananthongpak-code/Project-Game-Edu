@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "green computer microchip with gold pins and a glowing white circular arrow symbol on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "c8b86c3e-749b-450c-8b6c-9405fb8b76d6",
+  "generatedAt": "2026-10-02T11:50:53.034Z"
+}

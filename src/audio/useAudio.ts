@@ -19,6 +19,7 @@ export function useAudioDirector(): void {
       if (musicCue) return setMusic(musicCue.name, musicCue.variant ?? 0);
       // ก่อนที่หน้าต่างจะบอกเพลงของตัวเอง: หน้าเตรียมออกปฏิบัติการใช้เพลงตึงเครียด ฉากเนื้อเรื่องใช้เพลงเนื้อเรื่อง
       if (overlay === "battle" || overlay === "missions") return setMusic("tension");
+      if (overlay === "storage") return setMusic("shop");
       if (overlay === "story") return setMusic("story");
       if (overlay === "certificate") return setMusic("victory");
       if (overlay === "shop") return setMusic("shop");

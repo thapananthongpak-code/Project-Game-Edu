@@ -3,9 +3,10 @@
 // ด่านหนึ่งมีได้หลายร่าง (บอสของระดับกลางและยาก) ต้องชนะทีละร่าง
 import { BATTLE } from "./battle.config";
 import { type BattleSpec, campaignOf, type Difficulty, type FormSpec } from "./campaign";
+import { DEFAULT_GEAR, type Gear, GEAR } from "./gear";
 import type { BitModule, Outfit, Supply } from "./shop.config";
 
-/** ค่าที่ใช้ตลอดการออกปฏิบัติการหนึ่งครั้ง: ด่าน ระดับความยาก ชิ้นส่วนอัปเกรด และสิทธิพิเศษของเครื่องแบบ */
+/** ค่าที่ใช้ตลอดการออกปฏิบัติการหนึ่งครั้ง: ด่าน ระดับความยาก อุปกรณ์ของการ์เดียน และสิทธิพิเศษของเครื่องแบบ */
 export interface BattleSetup {
   spec: BattleSpec;
   robotMax: number;
@@ -18,21 +19,34 @@ export interface BattleSetup {
   /** เริ่มพร้อมโล่ 1 ชั้น */
   startShield: boolean;
   formResetsOnRetry: boolean;
+  /** อุปกรณ์ที่ใส่อยู่: อาวุธกำหนดท่าโจมตี เกราะและชิปกำหนดค่าด้านล่าง */
+  gear: Gear;
+  /** เกราะสะท้อน: จำนวนการโจมตีที่กันให้เองต่อคู่ต่อสู้หนึ่งร่าง */
+  guards: number;
+  /** ชิปคิดทบทวน: จำนวนครั้งที่ตอบผิดแล้วได้ตอบข้อเดิมใหม่ ต่อการออกปฏิบัติการ */
+  retries: number;
 }
 
-/** armorParts = จำนวนไคจูประจำห้องที่ชนะแล้ว (ชิ้นส่วนอัปเกรดการ์เดียน) modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว */
-export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, armorParts: number, modules: readonly BitModule[] = []): BattleSetup {
+/** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของระดับความยาก บวกเกราะหนักและชุดเกราะผู้พิทักษ์ */
+export const robotMaxOf = (difficulty: Difficulty | undefined, outfit: Outfit, gear: Gear): number =>
+  campaignOf(difficulty).robotHp + (gear.armor === "heavy" ? GEAR.heavy.hp : 0) + (outfit === "guardian" ? BATTLE.perks.guardianHp : 0);
+
+/** modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว gear = อุปกรณ์ของการ์เดียนที่ใส่อยู่ */
+export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, modules: readonly BitModule[] = [], gear: Gear = DEFAULT_GEAR): BattleSetup {
   const level = campaignOf(difficulty);
   const has = (module: BitModule) => modules.includes(module);
   return {
     spec,
-    robotMax: level.robotHp + Math.min(BATTLE.armorMax, Math.max(0, armorParts)) * BATTLE.armorPerWin + (outfit === "guardian" ? BATTLE.perks.guardianHp : 0),
+    robotMax: robotMaxOf(difficulty, outfit, gear),
     hints: level.battleHints + (outfit === "researcher" ? BATTLE.perks.researcherHints : 0) + (has("scanner") ? BATTLE.modules.scannerHints : 0),
     assistDamage: (outfit === "commander" ? BATTLE.perks.commanderAssist : BATTLE.assistDamage) + (has("laser") ? BATTLE.modules.laserAssist : 0),
     assistHeal: has("medic") ? BATTLE.modules.medicHeal : 0,
     repairHeal: BATTLE.repairKitHeal + (outfit === "engineer" ? BATTLE.perks.engineerHeal : 0),
     startShield: outfit === "pilot",
     formResetsOnRetry: level.formResetsOnRetry,
+    gear,
+    guards: gear.armor === "guard" ? GEAR.guard.blocksPerForm : 0,
+    retries: gear.chip === "retry" ? GEAR.retry.chances : 0,
   };
 }
 
@@ -43,7 +57,7 @@ export interface BattleState {
   kaijuHp: number;
   /** จำนวนข้อที่ตอบถูกติดต่อกัน */
   streak: number;
-  /** จำนวนข้อที่ตอบไปแล้วในการออกปฏิบัติการครั้งนี้ */
+  /** จำนวนข้อที่ตอบไปแล้วในการออกปฏิบัติการครั้งนี้ (ตาที่ได้ตอบใหม่ไม่นับซ้ำ) */
   turn: number;
   correct: number;
   /** โล่พลังงานที่เปิดไว้ กันการโจมตีครั้งถัดไป */
@@ -54,16 +68,30 @@ export interface BattleState {
   boost: boolean;
   /** แกนสำรองพร้อมใช้: พลังหมดแล้วฟื้นหนึ่งครั้ง */
   reboot: boolean;
+  /** คู่ต่อสู้ติดสตัน (ปืนเลเซอร์): ตอบผิดครั้งถัดไป คู่ต่อสู้ไม่ได้ทำอะไร */
+  stunned: boolean;
+  /** เกราะสะท้อนที่ยังกันได้กับร่างปัจจุบัน */
+  guard: number;
+  /** สิทธิ์ตอบใหม่ที่เหลือ (ชิปคิดทบทวน) */
+  retries: number;
+  /** ชิปเร่งพลังพร้อมใช้: การโจมตีครั้งแรกใส่ร่างปัจจุบันแรง 2 เท่า */
+  opening: boolean;
   status: "fighting" | "won" | "lost";
 }
 
 export type BattleEvent =
-  | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean }
+  /** crit = คริติคอลของดาบ, opening = ชิปเร่งพลัง, final = การโจมตีที่ปิดฉากร่างสุดท้าย */
+  | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean; crit: boolean; opening: boolean; final: boolean }
   | { type: "armor-break" }
+  | { type: "stun" }
   | { type: "bit-assist"; damage: number }
   | { type: "bit-heal"; amount: number }
-  | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean }
+  /** by = สิ่งที่กันการโจมตีไว้ (เมื่อ blocked) */
+  | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean; by?: "guard" | "shield" }
+  | { type: "kaiju-stunned" }
+  | { type: "second-chance"; left: number }
   | { type: "kaiju-regen"; amount: number }
+  | { type: "kaiju-rearm" }
   | { type: "phase"; phase: number; heal: number }
   | { type: "transform"; form: number; heal: number }
   | { type: "repair"; amount: number }
@@ -75,13 +103,29 @@ export const formOf = (setup: BattleSetup, state: Pick<BattleState, "form">): Fo
 
 /**
  * เริ่มออกปฏิบัติการ carry = ร่างและพลังของคู่ต่อสู้ที่เหลือจากครั้งก่อน (ถอยกลับมาซ่อมแล้วออกใหม่)
- * reboot = ผู้เล่นมีแกนสำรองติดตัว
+ * reboot = ผู้เล่นพกแกนสำรองมาในกระเป๋า
  */
 export function startBattle(setup: BattleSetup, options: { carry?: { form: number; kaijuHp: number }; reboot?: boolean } = {}): BattleState {
   const form = Math.min(setup.spec.forms.length - 1, Math.max(0, options.carry?.form ?? 0));
   const full = setup.spec.forms[form].hp;
   const kaijuHp = options.carry ? Math.min(full, Math.max(1, options.carry.kaijuHp)) : full;
-  return { robotHp: setup.robotMax, form, kaijuHp, streak: 0, turn: 0, correct: 0, shield: setup.startShield, armored: setup.spec.forms[form].trait === "armor", boost: false, reboot: options.reboot ?? false, status: "fighting" };
+  return {
+    robotHp: setup.robotMax,
+    form,
+    kaijuHp,
+    streak: 0,
+    turn: 0,
+    correct: 0,
+    shield: setup.startShield,
+    armored: setup.spec.forms[form].trait === "armor",
+    boost: false,
+    reboot: options.reboot ?? false,
+    stunned: false,
+    guard: setup.guards,
+    retries: setup.retries,
+    opening: setup.gear.chip === "charger",
+    status: "fighting",
+  };
 }
 
 /** สิ่งที่ต้องส่งให้ startBattle เมื่อออกปฏิบัติการใหม่หลังแพ้ */
@@ -92,6 +136,9 @@ export const isCharging = (setup: BattleSetup, state: BattleState): boolean => f
 
 /** คู่ต่อสู้ลักษณะ enrage กำลังคลั่งหรือไม่ */
 export const isEnraged = (setup: BattleSetup, state: BattleState): boolean => formOf(setup, state).trait === "enrage" && state.kaijuHp <= Math.ceil(formOf(setup, state).hp / 2);
+
+/** คู่ต่อสู้ลักษณะ boss เข้าเฟสครึ่งหลังแล้ว: โจมตีหนักทุกครั้ง */
+export const isFurious = (setup: BattleSetup, state: Pick<BattleState, "form" | "kaijuHp">): boolean => formOf(setup, state).trait === "boss" && phaseOf(setup, state) >= BATTLE.boss.heavyFromPhase;
 
 /** จำนวนเฟสของร่างปัจจุบัน (เฉพาะลักษณะ boss ลักษณะอื่นมีเฟสเดียว) */
 export const phaseCount = (setup: BattleSetup, state: Pick<BattleState, "form">): number => (formOf(setup, state).trait === "boss" ? Math.ceil(formOf(setup, state).hp / BATTLE.boss.phaseHp) : 1);
@@ -109,31 +156,100 @@ export function questionSource(setup: BattleSetup, state: Pick<BattleState, "for
   return sources[(state.turn + state.form) % sources.length];
 }
 
+/** สิ่งที่การ์เดียนจะทำถ้าตอบข้อถัดไปถูก (ใช้ทั้งคำนวณผลและแสดงล่วงหน้าบนแผงคำสั่ง) */
+export interface Strike {
+  /** ทำได้แค่ทุบเกราะของคู่ต่อสู้ (ไม่มีความเสียหาย) */
+  armorBreak: boolean;
+  damage: number;
+  /** สวนกลับตอนคู่ต่อสู้ชาร์จพลัง */
+  counter: boolean;
+  /** ตัวคูณ 2 เท่ามาจากอย่างใดอย่างหนึ่ง: คริติคอลของดาบ ชิปเร่งพลัง หรือแบตเตอรี่เสริม (ไม่ซ้อนกัน อันที่ไม่ได้ใช้เก็บไว้ครั้งถัดไป) */
+  crit: boolean;
+  opening: boolean;
+  boosted: boolean;
+  /** ปืนเลเซอร์ทำให้คู่ต่อสู้ติดสตัน */
+  stuns: boolean;
+  /** พี่บิตยิงเสริมหลังการโจมตีนี้ (0 = ไม่ยิง) */
+  assist: number;
+}
+
+export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
+  const form = formOf(setup, state);
+  const streak = state.streak + 1;
+  const counter = isCharging(setup, state);
+  const armorBreak = form.trait === "armor" && state.armored;
+  const base = counter ? BATTLE.charge.counterDamage : form.trait === "combo" ? Math.min(BATTLE.comboMax, streak) : BATTLE.hit;
+  const crit = !armorBreak && setup.gear.weapon === "sword" && streak % GEAR.sword.critEvery === 0;
+  const opening = !armorBreak && !crit && state.opening;
+  const boosted = !armorBreak && !crit && !opening && state.boost;
+  const damage = armorBreak ? 0 : base * (crit ? GEAR.sword.critMultiplier : opening || boosted ? 2 : 1);
+  return {
+    armorBreak,
+    damage,
+    counter: counter && !armorBreak,
+    crit,
+    opening,
+    boosted,
+    stuns: setup.gear.weapon === "blaster" && streak % GEAR.blaster.stunEvery === 0 && !state.stunned,
+    assist: state.kaijuHp - damage > 0 && streak % BATTLE.assistStreak === 0 ? setup.assistDamage : 0,
+  };
+}
+
+/** สิ่งที่คู่ต่อสู้จะทำถ้าตอบข้อถัดไปผิด */
+export interface Threat {
+  damage: number;
+  heavy: boolean;
+  /** สิ่งที่ช่วยไว้ ตามลำดับที่ใช้: ชิปคิดทบทวน (ได้ตอบใหม่) สตัน เกราะสะท้อน โล่พลังงาน */
+  saved: "retry" | "stun" | "guard" | "shield" | null;
+  /** พลังที่คู่ต่อสู้ลักษณะ regen ฟื้น */
+  regen: number;
+  /** เกราะของคู่ต่อสู้ลักษณะ armor กลับมา */
+  rearm: boolean;
+}
+
+export function threatOf(setup: BattleSetup, state: BattleState): Threat {
+  const form = formOf(setup, state);
+  const heavy = isCharging(setup, state) || (form.trait === "swarm" && state.kaijuHp >= BATTLE.swarmHeavyFrom) || isEnraged(setup, state) || isFurious(setup, state);
+  const saved = state.retries > 0 ? "retry" : state.stunned ? "stun" : state.guard > 0 ? "guard" : state.shield ? "shield" : null;
+  // ได้ตอบใหม่หรือคู่ต่อสู้ติดสตัน: คู่ต่อสู้ไม่ได้ทำอะไรเลยในตานี้
+  const acts = saved !== "retry" && saved !== "stun";
+  return {
+    damage: heavy ? BATTLE.heavyDamage : BATTLE.wrongDamage,
+    heavy,
+    saved,
+    regen: acts && form.trait === "regen" ? Math.min(BATTLE.regen, form.hp - state.kaijuHp) : 0,
+    rearm: acts && form.trait === "armor" && !state.armored,
+  };
+}
+
 /** ผลของการตอบหนึ่งข้อ */
 export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: boolean): { state: BattleState; events: BattleEvent[] } {
   if (state.status !== "fighting") return { state, events: [] };
   const events: BattleEvent[] = [];
-  const form = formOf(setup, state);
-  const charging = isCharging(setup, state);
-  let { robotHp, kaijuHp, shield, armored, boost, reboot, streak } = state;
+  let { robotHp, kaijuHp, shield, armored, boost, reboot, streak, stunned, guard, opening } = state;
   let formIndex = state.form;
 
   if (correct) {
+    const strike = strikeOf(setup, state);
+    const lastForm = formIndex === setup.spec.forms.length - 1;
     streak += 1;
     const phaseBefore = phaseOf(setup, state);
-    if (form.trait === "armor" && armored) {
+    if (strike.armorBreak) {
       armored = false;
       events.push({ type: "armor-break" });
     } else {
-      const base = charging ? BATTLE.charge.counterDamage : form.trait === "combo" ? Math.min(BATTLE.comboMax, streak) : BATTLE.hit;
-      const damage = boost ? base * 2 : base;
-      kaijuHp -= damage;
-      events.push({ type: "robot-hit", damage, counter: charging, boosted: boost });
-      boost = false;
+      kaijuHp -= strike.damage;
+      events.push({ type: "robot-hit", damage: strike.damage, counter: strike.counter, boosted: strike.boosted, crit: strike.crit, opening: strike.opening, final: lastForm && kaijuHp <= 0 });
+      if (strike.opening) opening = false;
+      if (strike.boosted) boost = false;
     }
-    if (kaijuHp > 0 && streak % BATTLE.assistStreak === 0) {
-      kaijuHp -= setup.assistDamage;
-      events.push({ type: "bit-assist", damage: setup.assistDamage });
+    if (strike.stuns && kaijuHp > 0) {
+      stunned = true;
+      events.push({ type: "stun" });
+    }
+    if (strike.assist > 0) {
+      kaijuHp -= strike.assist;
+      events.push({ type: "bit-assist", damage: strike.assist });
       const heal = Math.min(setup.assistHeal, setup.robotMax - robotHp);
       if (heal > 0) {
         robotHp += heal;
@@ -147,42 +263,60 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
       robotHp += heal;
       events.push({ type: "phase", phase, heal });
     }
-    if (kaijuHp <= 0 && formIndex < setup.spec.forms.length - 1) {
-      // ชนะร่างนี้แล้ว คู่ต่อสู้กลายร่าง หุ่นได้พักฟื้นเล็กน้อย
+    if (kaijuHp <= 0 && !lastForm) {
+      // ชนะร่างนี้แล้ว คู่ต่อสู้กลายร่าง หุ่นได้พักฟื้นเล็กน้อย เกราะสะท้อนและชิปเร่งพลังพร้อมใช้กับร่างใหม่
       formIndex += 1;
       const next = setup.spec.forms[formIndex];
       kaijuHp = next.hp;
       armored = next.trait === "armor";
+      stunned = false;
+      guard = setup.guards;
+      opening = setup.gear.chip === "charger";
       const heal = Math.min(BATTLE.transformHeal, setup.robotMax - robotHp);
       robotHp += heal;
       events.push({ type: "transform", form: formIndex, heal });
     }
   } else {
+    const threat = threatOf(setup, state);
+    if (threat.saved === "retry") {
+      // ชิปคิดทบทวน: ตานี้ยังไม่จบ ผู้เล่นได้ตอบข้อเดิมอีกครั้ง
+      const left = state.retries - 1;
+      return { state: { ...state, retries: left }, events: [{ type: "second-chance", left }] };
+    }
     streak = 0;
-    const heavy = charging || (form.trait === "swarm" && kaijuHp >= BATTLE.swarmHeavyFrom) || isEnraged(setup, state);
-    const damage = heavy ? BATTLE.heavyDamage : BATTLE.wrongDamage;
-    if (shield) {
-      shield = false;
-      events.push({ type: "kaiju-hit", damage: 0, blocked: true, heavy });
+    if (threat.saved === "stun") {
+      stunned = false;
+      events.push({ type: "kaiju-stunned" });
     } else {
-      robotHp = Math.max(0, robotHp - damage);
-      events.push({ type: "kaiju-hit", damage, blocked: false, heavy });
-    }
-    if (form.trait === "regen" && kaijuHp < form.hp) {
-      const amount = Math.min(BATTLE.regen, form.hp - kaijuHp);
-      kaijuHp += amount;
-      events.push({ type: "kaiju-regen", amount });
-    }
-    if (form.trait === "armor") armored = true;
-    if (robotHp <= 0 && reboot) {
-      reboot = false;
-      robotHp = Math.min(setup.robotMax, BATTLE.rebootHeal);
-      events.push({ type: "reboot", amount: robotHp });
+      if (threat.saved === "guard" || threat.saved === "shield") {
+        if (threat.saved === "guard") guard -= 1;
+        else shield = false;
+        events.push({ type: "kaiju-hit", damage: 0, blocked: true, heavy: threat.heavy, by: threat.saved });
+      } else {
+        robotHp = Math.max(0, robotHp - threat.damage);
+        events.push({ type: "kaiju-hit", damage: threat.damage, blocked: false, heavy: threat.heavy });
+      }
+      if (threat.regen > 0) {
+        kaijuHp += threat.regen;
+        events.push({ type: "kaiju-regen", amount: threat.regen });
+      }
+      if (threat.rearm) {
+        armored = true;
+        events.push({ type: "kaiju-rearm" });
+      }
+      if (robotHp <= 0 && reboot) {
+        reboot = false;
+        robotHp = Math.min(setup.robotMax, BATTLE.rebootHeal);
+        events.push({ type: "reboot", amount: robotHp });
+      }
     }
   }
 
   const status = kaijuHp <= 0 ? "won" : robotHp <= 0 ? "lost" : "fighting";
-  return { state: { robotHp, form: formIndex, kaijuHp, streak, turn: state.turn + 1, correct: state.correct + (correct ? 1 : 0), shield, armored, boost, reboot, status }, events };
+  return {
+    state: { robotHp, form: formIndex, kaijuHp, streak, turn: state.turn + 1, correct: state.correct + (correct ? 1 : 0), shield, armored, boost, reboot, stunned, guard, retries: state.retries, opening, status },
+    events,
+  };
 }
 
 /** ของที่ผู้เล่นกดใช้เองระหว่างสู้ (แกนสำรองทำงานเอง และชิปวิเคราะห์ทำงานกับโจทย์ จึงไม่ผ่านฟังก์ชันนี้) */

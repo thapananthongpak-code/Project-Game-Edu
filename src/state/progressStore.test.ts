@@ -32,7 +32,7 @@ function fakeStorage(initial: Record<string, string> = {}) {
 const won = { won: true, wins: 1, sorties: 1, asked: 5, correct: 4 };
 
 const sample: SaveData = {
-  version: 6,
+  version: 7,
   updatedAt: "2026-10-02T01:00:00.000Z",
   profile: { name: "ทดสอบ", difficulty: "normal", classCode: "PVC1-67", avatar: "b" },
   pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
@@ -41,7 +41,18 @@ const sample: SaveData = {
   battles: { n1: won },
   npcs: { mechanic: { accepted: true, found: [0, 2], done: false, best: 0, tries: 0 }, coach: { accepted: false, found: [], done: false, best: 3, tries: 2 } },
   story: ["prologue", "zone-n1", "win-n1"],
-  shop: { spent: 325, owned: ["outfit-engineer", "bit-ninja", "module-scanner"], supplies: { ...emptyShop().supplies, "repair-kit": 1, reboot: 1 }, outfit: "engineer", paint: "standard", bit: "ninja" },
+  shop: {
+    spent: 445,
+    owned: ["outfit-engineer", "bit-ninja", "module-scanner", "weapon-sword"],
+    supplies: { ...emptyShop().supplies, "repair-kit": 2, reboot: 1 },
+    outfit: "engineer",
+    paint: "standard",
+    bit: "ninja",
+    weapon: "sword",
+    armor: "plate",
+    chip: "none",
+    loadout: ["repair-kit", "reboot", "repair-kit"],
+  },
 };
 
 const withImage = (data: SaveData, image: string | null): SaveData => ({
@@ -124,7 +135,7 @@ describe("migrateSave", () => {
       rooms: { 1: { ...emptyRoom(), core: true }, 2: { ...emptyRoom(), stationsSeen: 2 } },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v3))) as SaveData;
-    expect(save.version).toBe(6);
+    expect(save.version).toBe(7);
     expect(save.updatedAt).toBe(v3.updatedAt);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1", avatar: "a" });
     expect(save.pretest).toEqual(sample.pretest);
@@ -151,7 +162,7 @@ describe("migrateSave", () => {
       shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v4))) as SaveData;
-    expect(save.version).toBe(6);
+    expect(save.version).toBe(7);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1-67", avatar: "b" });
     expect(save.battles).toEqual({
       k1: { won: true, wins: 1, sorties: 2, asked: 9, correct: 6 },
@@ -163,7 +174,7 @@ describe("migrateSave", () => {
     // ด่านที่ชนะไปแล้วถือว่าดูฉากหลังชนะแล้ว ผู้เล่นเดิมจึงไม่เห็นฉากย้อนหลังต่อกันรวดเดียว
     expect(save.story).toEqual(["prologue", "room-1", "win-k1", "win-omega"]);
     expect(save.npcs).toEqual({});
-    expect(save.shop).toEqual({ spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1 }, outfit: "engineer", paint: "standard", bit: "classic" });
+    expect(save.shop).toEqual({ ...emptyShop(), spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1 }, outfit: "engineer", loadout: ["repair-kit"] });
     // ย้ายซ้ำได้ผลเดิม
     expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
   });
@@ -181,11 +192,12 @@ describe("migrateSave", () => {
       shop: { spent: 100, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, shield: 2 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v5))) as SaveData;
-    expect(save.version).toBe(6);
+    expect(save.version).toBe(7);
     expect([save.profile, save.rooms, save.battles]).toEqual([v5.profile, v5.rooms, v5.battles]);
     expect(save.story).toEqual(["prologue", "zone-n1", "win-n1"]);
     expect(save.npcs).toEqual({});
-    expect(save.shop).toEqual({ ...v5.shop, bit: "classic" });
+    // ของใช้ที่มีอยู่ถูกจัดลงกระเป๋าให้ และการ์เดียนใช้อุปกรณ์เริ่มต้น
+    expect(save.shop).toEqual({ ...emptyShop(), ...v5.shop, loadout: ["shield", "shield"] });
     // ข้อมูลรุ่นปัจจุบันไม่ถูกเติมฉากให้เอง: ผู้เล่นที่เพิ่งชนะด่านต้องได้เห็นฉากหลังชนะ
     const fresh = migrateSave({ ...JSON.parse(JSON.stringify(save)), battles: { ...save.battles, n2: won } }) as SaveData;
     expect(fresh.story).toEqual(save.story);
@@ -240,7 +252,29 @@ describe("migrateSave", () => {
       shop: { spent: -5, owned: ["outfit-pilot", "outfit-pilot", "free-everything", "supply-shield", 7], supplies: { "repair-kit": 99, shield: "x" }, outfit: "guardian", paint: "gold" },
     }) as SaveData;
     expect(save.story).toEqual(["prologue"]);
-    expect(save.shop).toEqual({ spent: 0, owned: ["outfit-pilot"], supplies: { ...emptyShop().supplies, "repair-kit": 3 }, outfit: "lab", paint: "standard", bit: "classic" });
+    expect(save.shop).toEqual({ ...emptyShop(), owned: ["outfit-pilot"], supplies: { ...emptyShop().supplies, "repair-kit": 3 }, loadout: ["repair-kit", "repair-kit", "repair-kit"] });
+  });
+
+  it("รุ่น 6 (ก่อนมีอุปกรณ์ของการ์เดียนและกระเป๋า): ความคืบหน้าคงเดิม ใช้อุปกรณ์เริ่มต้น ของใช้ในกล่องถูกจัดลงกระเป๋าจนเต็ม", () => {
+    const { weapon, armor, chip, loadout, ...oldShop } = sample.shop;
+    void [weapon, armor, chip, loadout];
+    const v6 = { ...JSON.parse(JSON.stringify(sample)), version: 6, shop: { ...oldShop, owned: ["outfit-engineer", "bit-ninja"], supplies: { ...emptyShop().supplies, "repair-kit": 2, shield: 3, reboot: 1 } } };
+    const save = migrateSave(v6) as SaveData;
+    expect(save.version).toBe(7);
+    expect([save.profile, save.rooms, save.battles, save.npcs, save.story]).toEqual([sample.profile, sample.rooms, sample.battles, sample.npcs, sample.story]);
+    expect(save.shop).toMatchObject({ weapon: "fist", armor: "plate", chip: "none", outfit: "engineer", bit: "ninja", loadout: ["repair-kit", "repair-kit", "shield"] });
+    expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
+  });
+
+  it("อุปกรณ์และกระเป๋าที่ผิดรูป: ใส่ได้เฉพาะอุปกรณ์ที่ซื้อแล้ว กระเป๋าไม่เกิน 3 ชิ้นและไม่เกินของที่มีในกล่อง", () => {
+    const save = migrateSave({
+      ...JSON.parse(JSON.stringify(sample)),
+      shop: { ...sample.shop, owned: ["armor-heavy"], supplies: { ...emptyShop().supplies, shield: 1, analyzer: 2 }, weapon: "blaster", armor: "heavy", chip: "godmode", loadout: ["shield", "shield", "cheat", 7, "analyzer", "analyzer", "analyzer"] },
+    }) as SaveData;
+    expect(save.shop).toMatchObject({ weapon: "fist", armor: "heavy", chip: "none", loadout: ["shield", "analyzer", "analyzer"] });
+    // กระเป๋าว่างที่ผู้เล่นตั้งใจเว้นไว้ไม่ถูกเติมให้เอง
+    const empty = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop: { ...sample.shop, loadout: [] } }) as SaveData;
+    expect(empty.shop.loadout).toEqual([]);
   });
 
   it("ข้อมูลผิดรูป (ไฟล์เสีย หรือถูกแก้จากนอกเกม): เติมค่าเริ่มต้นทีละช่อง ไม่ปล่อยค่าผิดชนิดเข้าเกมหรือแดชบอร์ดครู", () => {

@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "crescent-shaped shockwave of purple and magenta energy flying to the left with a bright pink leading edge, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "1ab4f4bd-c2f6-4dda-b9bf-66fcf939aed8",
+  "generatedAt": "2026-10-02T11:46:20.239Z"
+}

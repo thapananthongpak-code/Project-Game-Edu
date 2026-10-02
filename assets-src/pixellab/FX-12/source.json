@@ -1,0 +1,29 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "big orange lobster claw, an open crab pincer with serrated inner edges pointing to the left, a single severed claw only, small white sparks between the two jaws, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "d2392b16-2fae-4fe0-b14f-fdb52c2bd2f9",
+  "generatedAt": "2026-10-02T11:57:07.467Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "d861b712-562f-4b15-96d9-b8e13d0fc35d",
+      "reason": "prompt \"big orange mechanical crab claw pincer snapping shut with small white sparks, centered, tr…\": ได้ปูทั้งตัว ไม่ใช่ก้ามอย่างเดียว"
+    },
+    {
+      "tool": "create_image_pixflux",
+      "id": "9a94a9ca-89ff-42c4-ad9f-6283f7b04269",
+      "reason": "prompt \"one single giant orange mechanical claw pincer only, two jagged jaws closing like pliers, …\": ได้หุ่นยนต์สีส้มทั้งตัว ไม่ใช่ก้าม"
+    }
+  ]
+}

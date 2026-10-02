@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "large white and teal armored robot fist flying to the right with an orange rocket flame trail behind it, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "east"
+  },
+  "fetchTool": "get_image",
+  "id": "9ac26a19-32d2-4cb9-b76c-8ed1842b972b",
+  "generatedAt": "2026-10-02T11:43:11.934Z"
+}

@@ -43,6 +43,14 @@ export const SFX = {
   boom: [{ wave: "noise", from: 900, to: 90, at: 0, length: 0.4, gain: 0.6 }, blip(110, 0, 0.36, 0.5, "sine", 38)],
   crack: [{ wave: "noise", from: 6000, to: 1500, at: 0, length: 0.09, gain: 0.5 }, blip(1250, 0.03, 0.08, 0.3, "square", 500), blip(820, 0.1, 0.1, 0.25, "square", 300)],
   transform: [blip(90, 0, 0.7, 0.4, "sawtooth", 900), { wave: "noise", from: 300, to: 4000, at: 0.1, length: 0.6, gain: 0.35 }, blip(1320, 0.7, 0.2, 0.4, "square", 1760)],
+  // ท่าโจมตีตามอาวุธและสกิลของไคจู: หมัด ลำแสง เขี้ยวงับ คริติคอล สตัน และชิปคิดทบทวน
+  punch: [{ wave: "noise", from: 1600, to: 200, at: 0, length: 0.12, gain: 0.55 }, blip(180, 0, 0.12, 0.5, "square", 70)],
+  beam: [blip(300, 0, 0.42, 0.35, "sawtooth", 1500), blip(2200, 0.03, 0.38, 0.2, "square", 1100), { wave: "noise", from: 3000, to: 6000, at: 0.05, length: 0.36, gain: 0.25 }],
+  bite: [{ wave: "noise", from: 3000, to: 600, at: 0, length: 0.07, gain: 0.5 }, blip(240, 0.05, 0.08, 0.45, "square", 110)],
+  crit: [blip(1568, 0, 0.06, 0.4, "square"), blip(2093, 0.05, 0.06, 0.4, "square"), blip(2637, 0.1, 0.16, 0.4, "square", 3136)],
+  stun: [blip(1319, 0, 0.07, 0.3, "triangle", 988), blip(1175, 0.08, 0.07, 0.3, "triangle", 880), blip(1047, 0.16, 0.12, 0.3, "triangle", 784)],
+  retry: [blip(523, 0, 0.08, 0.35, "triangle", 784), blip(784, 0.09, 0.14, 0.35, "triangle", 1047)],
+  equip: [blip(330, 0, 0.05, 0.35, "square"), blip(494, 0.05, 0.05, 0.35, "square"), { wave: "noise", from: 2500, to: 900, at: 0.09, length: 0.06, gain: 0.3 }],
   // กิจกรรมเสริมกับ NPC
   npc: [blip(620, 0, 0.06, 0.3, "triangle"), blip(830, 0.07, 0.08, 0.3, "triangle")],
   pickup: run([1047, 1568], 0.05, 0.08, "square", 0.35),

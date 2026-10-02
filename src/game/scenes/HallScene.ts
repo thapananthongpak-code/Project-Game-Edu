@@ -7,7 +7,7 @@ import { SCENE } from "../constants";
 import { hallMapOf, type MapObject, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
-/** โถงทางเดิน: ประตูห้องตามจำนวนห้องของระดับความยาก (6, 3 หรือ 1 บาน) เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น และร้านสหกรณ์แล็บ */
+/** โถงทางเดิน: ประตูห้องตามจำนวนห้องของระดับความยาก (6, 3 หรือ 1 บาน) เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น ร้านสหกรณ์แล็บ และกล่องเก็บไอเทม */
 export class HallScene extends WorldScene {
   private from: { room?: number; hangar?: boolean } = {};
   private doors: MapObject[] = [];
@@ -51,6 +51,8 @@ export class HallScene extends WorldScene {
     this.addInteractable(gate, "gate", () => ui.prompt.hangarGate, () => store().enterHangar());
     const [shop] = this.objectsOf("shop");
     this.addInteractable(shop, "shop", () => ui.prompt.shop, () => store().openShop());
+    const [storage] = this.objectsOf("storage");
+    this.addInteractable(storage, "storage", () => ui.prompt.storage, () => store().openOverlay("storage"));
 
     const start = this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0]);
     const spot = this.spotBelow(start);

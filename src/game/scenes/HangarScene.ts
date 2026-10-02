@@ -1,13 +1,12 @@
 import type * as Phaser from "phaser";
 import { ROOM_COUNT } from "../../content";
 import { fmt, ui } from "../../content/ui-strings";
-import { BATTLE } from "../../state/battle.config";
-import { armorParts, coreCount, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
+import { coreCount, guardianPowerOf, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
 import { SCENE } from "../constants";
 import { hangarMap, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
-/** โรงเก็บหุ่น: หุ่นการ์เดียนที่ติดตั้งแกน AI ตามที่เก็บได้ แผงสั่งปฏิบัติการ (รายการด่านต่อสู้และการซ้อมรบ) ตู้เสื้อผ้า และข้อความของอาจารย์ */
+/** โรงเก็บหุ่น: หุ่นการ์เดียนกับแกน AI ที่เก็บได้ แผงสั่งปฏิบัติการ (รายการด่านต่อสู้และการซ้อมรบ) ตู้เสื้อผ้า กล่องเก็บไอเทม และข้อความของอาจารย์ */
 export class HangarScene extends WorldScene {
   private cores: Phaser.GameObjects.Image[] = [];
 
@@ -23,7 +22,7 @@ export class HangarScene extends WorldScene {
     this.addInteractable(door, "door-entry", () => ui.prompt.backToHall, () => store().exitToHall());
 
     const [robot] = this.objectsOf("robot");
-    this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().showToast(fmt(ui.toast.robotStatus, { n: coreCount(store()), total: ROOM_COUNT, parts: Math.min(BATTLE.armorMax, armorParts(store())), maxParts: BATTLE.armorMax })));
+    this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().showToast(fmt(ui.toast.robotStatus, { n: coreCount(store()), total: ROOM_COUNT, power: guardianPowerOf(store()) })));
     // แกน AI ที่ติดตั้งแล้วเรียงเป็นแถวใต้หุ่น
     const baseY = objectBaseY(robot);
     this.cores = Array.from({ length: ROOM_COUNT }, (_, i) =>
@@ -40,6 +39,8 @@ export class HangarScene extends WorldScene {
     this.addInteractable(hologram, "hologram", () => ui.prompt.hologram, () => store().openStory("prologue"));
     const [wardrobe] = this.objectsOf("wardrobe");
     this.addInteractable(wardrobe, "wardrobe", () => ui.prompt.wardrobe, () => store().openShop());
+    const [storage] = this.objectsOf("storage");
+    this.addInteractable(storage, "storage", () => ui.prompt.storage, () => store().openOverlay("storage"));
 
     const spot = this.spotBelow(door);
     this.createPlayer(spot.x, spot.y);

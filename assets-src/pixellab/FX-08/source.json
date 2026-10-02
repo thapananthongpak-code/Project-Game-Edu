@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide crescent-shaped cyan energy sword slash arc with a bright white edge, curving to the right, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "east"
+  },
+  "fetchTool": "get_image",
+  "id": "d76b2b3a-4c1a-42ce-ba3f-58d036c72580",
+  "generatedAt": "2026-10-02T11:43:48.927Z"
+}

@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { evaluateMinigame } from "./adaptive";
 import { BATTLE } from "./battle.config";
 import { CAMPAIGN, type Difficulty } from "./campaign";
-import { allBattlesWon, armorParts, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
+import { allBattlesWon, guardianPowerOf, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
 import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyShop } from "./progressStore";
-import { earnedCredits } from "./shop";
+import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
+import { ADVICE, adviseBag, idealBag, missingAdvice, wishList } from "./loadout";
+import { bagOf, earnedCredits, gearOf } from "./shop";
 import { REWARDS } from "./shop.config";
 
 const miss = { type: "check", correct: false, timeMs: 1000 } as const;
@@ -187,15 +189,6 @@ describe("ระดับความยาก (GDD 15)", () => {
     setDifficulty("hard");
     expect(pendingStory(useGameStore.getState())).toBe("zone-h1");
   });
-
-  it("ชิ้นส่วนอัปเกรดการ์เดียน: ได้จากไคจูประจำห้องที่ชนะแล้ว ไม่นับบอส", () => {
-    expect(armorParts(useGameStore.getState())).toBe(0);
-    for (let room = 1; room <= 6; room++) finishRoom(room);
-    expect(armorParts(useGameStore.getState())).toBe(5);
-    setDifficulty("hard");
-    useGameStore.setState({ battles: { end: { won: true, wins: 1, sorties: 1, asked: 9, correct: 9 } } });
-    expect(armorParts(useGameStore.getState())).toBe(0);
-  });
 });
 
 describe("แกน AI", () => {
@@ -372,6 +365,92 @@ describe("เครดิตวิจัยและร้านสหกรณ�
     for (const id of ["supply-overcharge", "supply-analyzer", "supply-reboot"]) expect(useGameStore.getState().buy(id), id).toBeNull();
     expect(useGameStore.getState().shop.supplies).toMatchObject({ overcharge: 1, analyzer: 1, reboot: 1 });
     expect(useGameStore.getState().buy("supply-reboot")).toBe("owned");
+  });
+
+  it("อุปกรณ์ของการ์เดียน: ซื้อแล้วใส่ให้ทันที ใส่ได้ช่องละชิ้น สลับกลับอุปกรณ์เริ่มต้นได้ อุปกรณ์ที่ยังไม่ซื้อใส่ไม่ได้", () => {
+    const store = () => useGameStore.getState();
+    for (let room = 1; room <= 4; room++) finishRoom(room);
+    expect(gearOf(store().shop)).toEqual(DEFAULT_GEAR);
+    expect(store().buy("weapon-sword")).toBeNull();
+    expect(store().buy("armor-heavy")).toBeNull();
+    expect(gearOf(store().shop)).toEqual({ weapon: "sword", armor: "heavy", chip: "none" });
+    expect(store().buy("weapon-sword")).toBe("owned");
+    store().equip("weapon", "blaster");
+    expect(store().shop.weapon).toBe("sword");
+    store().equip("weapon", "fist");
+    expect(store().shop.weapon).toBe("fist");
+    store().equip("weapon", "sword");
+    expect(store().shop.weapon).toBe("sword");
+    // ช่องหนึ่งใส่ได้ชิ้นเดียว: ซื้อเกราะอีกแบบแล้วสลับไปใช้แบบใหม่ แบบเดิมยังเป็นของเรา
+    expect(store().buy("armor-guard")).toBeNull();
+    expect(store().shop).toMatchObject({ armor: "guard", owned: ["weapon-sword", "armor-heavy", "armor-guard"] });
+  });
+
+  it("ค่าพลังรวมของการ์เดียน: เริ่มที่พลังสูงสุดคูณสิบ เพิ่มตามอุปกรณ์ เครื่องแบบ โมดูลของพี่บิต และของใช้ในกระเป๋า", () => {
+    const store = () => useGameStore.getState();
+    const base = CAMPAIGN.easy.robotHp * POWER.perHp;
+    expect(guardianPowerOf(store())).toBe(base);
+    for (let room = 1; room <= 6; room++) finishRoom(room);
+    store().buy("armor-heavy");
+    expect(guardianPowerOf(store())).toBe(base + itemPower("armor", "heavy"));
+    store().buy("weapon-sword");
+    store().buy("chip-charger");
+    store().buy("supply-shield");
+    const geared = base + itemPower("armor", "heavy") + POWER.weapon.sword + POWER.chip.charger + POWER.perItem;
+    expect(guardianPowerOf(store())).toBe(geared);
+    store().buy("module-laser");
+    store().buy("outfit-engineer");
+    expect(guardianPowerOf(store())).toBe(geared + POWER.module.laser + POWER.outfit.engineer);
+    // เอาของออกจากกระเป๋าหรือถอดอุปกรณ์ ค่าพลังลดตาม
+    store().packBag([]);
+    store().equip("weapon", "fist");
+    expect(guardianPowerOf(store())).toBe(geared + POWER.module.laser + POWER.outfit.engineer - POWER.perItem - POWER.weapon.sword);
+    // ระดับยากเริ่มที่พลังสูงสุดน้อยกว่า
+    setDifficulty("hard");
+    expect(guardianPowerOf({ profile: store().profile, shop: emptyShop() })).toBe(CAMPAIGN.hard.robotHp * POWER.perHp);
+  });
+
+  it("กระเป๋า: ของที่ซื้อลงกระเป๋าให้จนเต็ม 3 ชิ้น ที่เหลืออยู่ในกล่อง ใช้ไปแล้วกระเป๋ารอบถัดไปมีเฉพาะของที่ยังเหลือ", () => {
+    const store = () => useGameStore.getState();
+    for (let room = 1; room <= 5; room++) finishRoom(room);
+    for (const id of ["supply-shield", "supply-shield", "supply-repair-kit", "supply-analyzer"]) expect(store().buy(id), id).toBeNull();
+    expect(store().shop.loadout).toEqual(["shield", "shield", "repair-kit"]);
+    expect(store().shop.supplies).toMatchObject({ shield: 2, "repair-kit": 1, analyzer: 1 });
+    expect(bagOf(store().shop)).toHaveLength(BAG_SIZE);
+    // จัดใหม่: เกิน 3 ชิ้นถูกตัด ของที่ไม่มีในกล่องหรือเกินจำนวนที่มีไม่ถูกใส่
+    store().packBag(["analyzer", "analyzer", "reboot", "shield", "repair-kit", "shield"]);
+    expect(bagOf(store().shop)).toEqual(["analyzer", "shield", "repair-kit"]);
+    // ใช้โล่ไป 2 ชิ้นจนหมดกล่อง: กระเป๋ารอบถัดไปไม่มีโล่ ของที่เลือกไว้อย่างอื่นยังอยู่
+    store().packBag(["shield", "shield", "analyzer"]);
+    store().consumeSupply("shield");
+    expect(bagOf(store().shop)).toEqual(["shield", "analyzer"]);
+    store().consumeSupply("shield");
+    expect(bagOf(store().shop)).toEqual(["analyzer"]);
+    // ช่องของของที่ใช้หมดแล้วถือว่าว่าง: ของที่ซื้อใหม่ลงกระเป๋าได้
+    expect(store().buy("supply-overcharge")).toBeNull();
+    expect(store().buy("supply-overcharge")).toBeNull();
+    expect(store().shop.loadout).toEqual(["analyzer", "overcharge", "overcharge"]);
+  });
+
+  it("คำแนะนำของพี่บิต: แนะนำของตามลักษณะของคู่ต่อสู้จากของที่มีในกล่อง และบอกของที่ยังขาด", () => {
+    const spec = (id: string) => CAMPAIGN.easy.battles.find((battle) => battle.id === id)!;
+    const none = emptyShop().supplies;
+    // ด่านชาร์จพลัง: โล่มาก่อน
+    expect(idealBag(spec("k2"))).toEqual(["shield", "overcharge", "repair-kit"]);
+    expect(adviseBag(spec("k2"), none)).toEqual([]);
+    expect(missingAdvice(spec("k2"), none)).toEqual(["shield", "overcharge", "repair-kit"]);
+    // มีแค่ชุดซ่อม 3 ชิ้น: พกชุดซ่อมทั้งหมด
+    expect(adviseBag(spec("k2"), { ...none, "repair-kit": 3 })).toEqual(["repair-kit", "repair-kit", "repair-kit"]);
+    // มีครบ: ได้กระเป๋าตามลำดับที่ควรพก ไม่เกิน 3 ชิ้น
+    const all = { "repair-kit": 3, shield: 3, overcharge: 3, analyzer: 3, reboot: 1 };
+    expect(adviseBag(spec("k2"), all)).toEqual(idealBag(spec("k2")));
+    expect(missingAdvice(spec("k2"), all)).toEqual([]);
+    // แกนสำรองใช้ได้ครั้งเดียวต่อรอบ: ไม่ถูกแนะนำซ้ำ
+    expect(adviseBag(spec("omega"), { ...none, reboot: 1 })).toEqual(["reboot"]);
+    // บอสหลายร่าง: สลับของสำคัญของแต่ละร่าง
+    const end = CAMPAIGN.hard.battles[0];
+    expect(idealBag(end)).toEqual([ADVICE.charge[0], ADVICE.armor[0], ADVICE.enrage[0]]);
+    for (const difficulty of ["easy", "normal", "hard"] as const) for (const battle of CAMPAIGN[difficulty].battles) expect(new Set(wishList(battle)).size, battle.id).toBe(5);
   });
 
   it("เริ่มเกมใหม่: เนื้อเรื่องและร้านค้ากลับเป็นค่าเริ่มต้น", () => {

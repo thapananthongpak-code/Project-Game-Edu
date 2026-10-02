@@ -1,20 +1,26 @@
 import { useState } from "react";
 import { playSfx } from "../audio/engine";
 import { fmt, ui } from "../content/ui-strings";
-import { creditsOf, useGameStore } from "../state/gameStore";
-import { ownsItem } from "../state/shop";
+import { creditsOf, guardianPowerOf, useGameStore } from "../state/gameStore";
+import { type Gear, itemPower } from "../state/gear";
+import { bagOf, type EquipKind, ownsItem } from "../state/shop";
 import { AVATARS, type BitModule, type BitSkin, CATALOG, PAINT_FILTER, type Outfit, type Paint, type ShopItem, type Supply } from "../state/shop.config";
 import { art } from "./art";
+import { SUPPLY_ICON } from "./BagPicker";
+import { GearIcon } from "./Storage";
 import { useDialog } from "./useDialog";
 
 type ItemId = keyof typeof ui.shop.items;
 type Kind = ShopItem["kind"];
-const KINDS = ["outfit", "bit", "module", "paint", "supply"] as const;
-const SUPPLY_ICON: Record<Supply, string> = { "repair-kit": "🧰", shield: "🛡", overcharge: "🔋", analyzer: "🔍", reboot: "💠" };
+const KINDS = ["weapon", "armor", "chip", "outfit", "bit", "module", "paint", "supply"] as const;
+const GEAR_KINDS: readonly Kind[] = ["weapon", "armor", "chip"];
 const MODULE_ICON: Record<BitModule, string> = { scanner: "📡", laser: "🔫", medic: "🩹" };
 
 /** ของเริ่มต้นที่ทุกคนมี แสดงคู่กับของในร้านเพื่อให้สลับกลับได้ */
 const DEFAULTS: Partial<Record<Kind, { id: string; value: string }>> = {
+  weapon: { id: "weapon-fist", value: "fist" },
+  armor: { id: "armor-plate", value: "plate" },
+  chip: { id: "chip-none", value: "none" },
   outfit: { id: "outfit-lab", value: "lab" },
   bit: { id: "bit-classic", value: "classic" },
   paint: { id: "paint-standard", value: "standard" },
@@ -22,7 +28,7 @@ const DEFAULTS: Partial<Record<Kind, { id: string; value: string }>> = {
 
 /**
  * ร้านสหกรณ์แล็บ ตู้เสื้อผ้า และร้านพิเศษของ NPC (GDD ข้อ 13 และ 16)
- * ซื้อชุด คอสตูมและโมดูลอัปเกรดของพี่บิต สีการ์เดียน และของใช้ในการต่อสู้ด้วยเครดิตวิจัย
+ * ซื้ออุปกรณ์ของการ์เดียน (อาวุธ เกราะ ชิป) ชุด คอสตูมและโมดูลอัปเกรดของพี่บิต สีการ์เดียน และของใช้ในการต่อสู้ด้วยเครดิตวิจัย
  * ร้านพิเศษขายเฉพาะของของ NPC คนนั้น ของที่ซื้อจากร้านพิเศษแล้วกลับมาสลับใช้ได้ที่ร้านสหกรณ์และตู้เสื้อผ้า
  */
 export function Shop() {
@@ -30,6 +36,8 @@ export function Shop() {
   const shop = useGameStore((s) => s.shop);
   const vendor = useGameStore((s) => s.shopVendor);
   const balance = useGameStore(creditsOf);
+  const power = useGameStore(guardianPowerOf);
+  const bag = bagOf(shop);
   const buy = useGameStore((s) => s.buy);
   const equip = useGameStore((s) => s.equip);
   const setAvatar = useGameStore((s) => s.setAvatar);
@@ -55,6 +63,8 @@ export function Shop() {
       <img src={art.player(avatar, value as Outfit)} alt="" className="pixelated h-16 w-16" />
     ) : kind === "bit" ? (
       <img src={art.bit(value as BitSkin)} alt="" className="pixelated h-16 w-16" />
+    ) : GEAR_KINDS.includes(kind) ? (
+      <GearIcon value={value as Gear[keyof Gear]} className="h-16 w-16" />
     ) : kind === "paint" ? (
       <img src={art.robot} alt="" className="pixelated h-16 w-16" style={{ filter: PAINT_FILTER[value as Paint] }} />
     ) : (
@@ -66,7 +76,8 @@ export function Shop() {
   const card = (id: string, kind: Kind, value: string, item: ShopItem | null) => {
     const strings = ui.shop.items[id as ItemId];
     const owned = item === null || ownsItem(shop, item);
-    const using = kind === "outfit" ? shop.outfit === value : kind === "paint" ? shop.paint === value : kind === "bit" ? shop.bit === value : kind === "module" && owned;
+    const using = kind === "module" ? owned : kind !== "supply" && shop[kind] === value;
+    const gain = kind === "supply" ? 0 : itemPower(kind, value);
     return (
       <li key={id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${using ? "bg-hint" : "bg-paper"}`} data-testid={`shop-item-${id}`} data-owned={owned} data-using={using}>
         <div className="shrink-0 rounded-md border-2 border-ink bg-teal-light">{picture(kind, value)}</div>
@@ -74,7 +85,16 @@ export function Shop() {
           <div className="font-extrabold">{strings.name}</div>
           <div className="text-sm text-slate">{strings.detail}</div>
           {kind === "outfit" && ui.shop.perks[value as Outfit] && <div className="text-sm font-bold text-teal-dark">⚔ {fmt(ui.shop.perkLabel, { perk: ui.shop.perks[value as Outfit] })}</div>}
-          {item && item.kind === "supply" && <div className="text-xs font-bold text-slate">{fmt(ui.shop.holding, { n: shop.supplies[item.value], max: item.max })}</div>}
+          {gain > 0 && (
+            <div className="text-sm font-bold text-teal-dark" data-testid={`shop-power-${id}`}>
+              ⚡ {fmt(ui.shop.powerGain, { n: gain })}
+            </div>
+          )}
+          {item && item.kind === "supply" && (
+            <div className="text-xs font-bold text-slate">
+              {fmt(ui.shop.holding, { n: shop.supplies[item.value], max: item.max })} · {fmt(ui.shop.inBag, { n: bag.filter((supply) => supply === item.value).length })}
+            </div>
+          )}
           {item && !owned && <div className="text-sm font-bold text-teal-dark">{fmt(ui.shop.price, { n: item.price })}</div>}
         </div>
         {kind === "supply" || !owned ? (
@@ -84,7 +104,7 @@ export function Shop() {
         ) : kind === "module" ? (
           <span className="shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-sm font-bold">{ui.shop.installed}</span>
         ) : (
-          <button type="button" className="btn btn-ghost !min-h-10 shrink-0 text-sm" disabled={using} data-testid={`shop-wear-${id}`} onClick={() => (playSfx("click"), equip(kind as "outfit" | "paint" | "bit", value))}>
+          <button type="button" className="btn btn-ghost !min-h-10 shrink-0 text-sm" disabled={using} data-testid={`shop-wear-${id}`} onClick={() => (playSfx(GEAR_KINDS.includes(kind) ? "equip" : "click"), equip(kind as EquipKind, value))}>
             {using ? ui.shop.wearing : ui.shop.wear}
           </button>
         )}
@@ -98,6 +118,9 @@ export function Shop() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-extrabold text-teal-dark">🛒 {title}</h2>
           <div className="flex items-center gap-2">
+            <span className="rounded-md border-2 border-ink bg-teal-light px-2 py-0.5 text-sm font-extrabold" data-testid="shop-power" data-power={power}>
+              ⚡ {fmt(ui.shop.power, { n: power })}
+            </span>
             <span className="rounded-md border-2 border-ink bg-hint px-2 py-0.5 font-extrabold" data-testid="shop-balance" data-balance={balance}>
               {fmt(ui.shop.balance, { n: balance })}
             </span>
@@ -150,6 +173,7 @@ export function Shop() {
           return (
             <section key={kind} data-testid={`shop-section-${kind}`}>
               <h3 className="mb-1 text-xs font-bold text-slate">{ui.shop.tabs[kind]}</h3>
+              {kind === "weapon" && <p className="mb-1 text-sm text-slate">{ui.shop.gearNote}</p>}
               <ul className="flex flex-col gap-2">
                 {fallback && card(fallback.id, kind, fallback.value, null)}
                 {listed.map((item) => card(item.id, item.kind, item.value, item))}

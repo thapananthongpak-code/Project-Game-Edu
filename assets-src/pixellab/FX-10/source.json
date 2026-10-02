@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "open monster jaws with two rows of sharp white fangs snapping shut, purple gums, no head, no eyes, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "b97d921b-2c72-4279-ad0c-d4c488f898f9",
+  "generatedAt": "2026-10-02T11:44:36.182Z"
+}

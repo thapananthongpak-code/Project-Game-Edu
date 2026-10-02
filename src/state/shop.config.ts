@@ -1,5 +1,6 @@
 // ร้านสหกรณ์แล็บและรางวัลเครดิตวิจัย (docs/GDD.md ข้อ 13)
 // ตัวเลขและรายการสินค้าทั้งหมดอยู่ที่นี่ ชื่อสินค้าอยู่ใน src/content/ui-strings.ts
+import type { Armor, Chip, Weapon } from "./gear";
 import type { NpcId } from "./npcs";
 
 /** ตัวละครผู้เล่น: a = ผมสั้น, b = ผมหางม้า (ภาพ CH-01 และ CH-07 ใน docs/ART_GUIDE.md) */
@@ -52,6 +53,10 @@ export type ShopItem =
   | (Sold & { kind: "paint"; value: Paint })
   | (Sold & { kind: "bit"; value: BitSkin })
   | (Sold & { kind: "module"; value: BitModule })
+  /** อุปกรณ์ของการ์เดียน (src/state/gear.ts) ใส่ได้ช่องละหนึ่งชิ้น */
+  | (Sold & { kind: "weapon"; value: Weapon })
+  | (Sold & { kind: "armor"; value: Armor })
+  | (Sold & { kind: "chip"; value: Chip })
   | (Sold & { kind: "supply"; value: Supply; max: number });
 
 export const CATALOG: readonly ShopItem[] = [
@@ -60,6 +65,12 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "outfit-researcher", kind: "outfit", value: "researcher", price: 180 },
   { id: "outfit-guardian", kind: "outfit", value: "guardian", price: 250 },
   { id: "outfit-commander", kind: "outfit", value: "commander", price: 300 },
+  { id: "weapon-sword", kind: "weapon", value: "sword", price: 120 },
+  { id: "weapon-blaster", kind: "weapon", value: "blaster", price: 120 },
+  { id: "armor-heavy", kind: "armor", value: "heavy", price: 100 },
+  { id: "armor-guard", kind: "armor", value: "guard", price: 140 },
+  { id: "chip-charger", kind: "chip", value: "charger", price: 80 },
+  { id: "chip-retry", kind: "chip", value: "retry", price: 140 },
   { id: "paint-crimson", kind: "paint", value: "crimson", price: 60 },
   { id: "paint-violet", kind: "paint", value: "violet", price: 60 },
   { id: "paint-gold", kind: "paint", value: "gold", price: 90 },
