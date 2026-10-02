@@ -5,7 +5,7 @@ import { planOf, roomProgress, useGameStore } from "../state/gameStore";
 import { askTutor, recordTutorUse, type TutorTurn, tutorUsed } from "../tutor/client";
 import { TUTOR } from "../tutor/config";
 import { fallbackHint } from "../tutor/fallback";
-import { art } from "./art";
+import { useBit } from "./useBit";
 import { PageView } from "./ContentView";
 import { useDialog } from "./useDialog";
 
@@ -43,6 +43,7 @@ export function TutorPanel() {
   const setTutorOpen = useGameStore((s) => s.setTutorOpen);
   const recordTutor = useGameStore((s) => s.recordTutor);
   const dialog = useDialog<HTMLDivElement>();
+  const bit = useBit();
   const [entries, setEntries] = useState<Entry[]>(() => threads.get(room) ?? []);
   const [question, setQuestion] = useState("");
   const [waiting, setWaiting] = useState(false);
@@ -94,7 +95,7 @@ export function TutorPanel() {
       <div ref={dialog} role="dialog" aria-modal="true" aria-label={ui.tutor.title} tabIndex={-1} className="panel flex max-h-[90dvh] w-full max-w-xl flex-col gap-2 p-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-lg font-extrabold text-teal-dark">
-            <img src={art.mentor} alt="" className="pixelated h-9 w-9" />
+            <img src={bit} alt="" className="pixelated h-9 w-9" />
             {ui.tutor.title}
           </h2>
           <div className="flex items-center gap-2">

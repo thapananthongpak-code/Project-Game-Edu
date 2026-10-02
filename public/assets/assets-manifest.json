@@ -658,6 +658,391 @@
       "note": "ยังมีขาสั้น ไม่ตรงสเปก 'ไม่มีขา ลอยได้' ทั้งหมด เลือกเพราะหันหน้าตรงและมีหน้าจอตาสองจุด ภาพทางเลือกที่ลอยได้อยู่ที่ assets-src/pixellab/CH-02/alt-hovering.png"
     },
     {
+      "id": "CH-21",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมนินจา",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_ninja_south": "characters/ch_mentor_ninja_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a dark navy ninja headband with long trailing ribbons and a short red scarf, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "23a00d92-ca97-422b-a50a-0a7e1fecd333",
+        "generatedAt": "2026-10-02T08:33:23.103Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-22",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมอัศวิน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_knight_south": "characters/ch_mentor_knight_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a small silver knight helmet with a red plume and holding a tiny round shield, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e92e84c9-161d-4284-83d4-a9340b39ab9b",
+        "generatedAt": "2026-10-02T08:33:52.918Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-23",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมจอมเวท",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_wizard_south": "characters/ch_mentor_wizard_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a tall purple wizard hat with a gold star and holding a tiny glowing wand, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "0126e09f-cf49-46ad-ba4e-ae28e1c531ac",
+        "generatedAt": "2026-10-02T08:34:22.701Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-24",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมทองคำ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_gold_south": "characters/ch_mentor_gold_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, shiny gold plated body with white trim, cyan screen face with two simple dot eyes, short antenna with a yellow light, a tiny gold crown, two tiny floating hands, no legs, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "af94e16c-68e9-46f6-8863-5e242d53a3a4",
+        "generatedAt": "2026-10-02T08:34:54.752Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-25",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมนักสำรวจ (ร้านพิเศษของป้าดา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_explorer_south": "characters/ch_mentor_explorer_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a khaki safari explorer hat and a tiny brown backpack, holding a small magnifying glass, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "36a8f578-a67d-4d4b-9190-964b31136deb",
+        "generatedAt": "2026-10-02T08:55:36.771Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "e7b41123-ba12-4bad-9e86-776da4007875",
+          "reason": "ไม่มีหมวกนักสำรวจ รูปร่างไม่เหมือนพี่บิต"
+        }
+      ]
+    },
+    {
+      "id": "CH-26",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมป๊อปสตาร์ (ร้านพิเศษของน้องมิว)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_star_south": "characters/ch_mentor_star_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing big coral pink headphones and holding a tiny microphone, small sparkles around, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ac70e908-e560-4dd4-99c2-9d0159d13ed4",
+        "generatedAt": "2026-10-02T08:35:55.235Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-01",
+      "kind": "npc",
+      "name": "ช่างเมย์ ช่างซ่อมหุ่น (ห้อง 1 เควสเสริม)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_mechanic": "characters/npc_mechanic.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "young woman mechanic with short brown hair under a yellow cap, orange jumpsuit with rolled sleeves, holding a big wrench, cheerful face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "ช่างเมย์ ช่างซ่อมหุ่น (ห้อง 1 เควสเสริม)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "6d588656-eee9-408b-8514-6820ca7ba1e3",
+        "generatedAt": "2026-10-02T08:36:41.608Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-02",
+      "kind": "npc",
+      "name": "โค้ชต้น ครูฝึก (ห้อง 2 ถามตอบพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_coach": "characters/npc_coach.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "energetic male sports coach with a short flat-top haircut, violet track suit with white stripes, a whistle around the neck, a clipboard under one arm, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "โค้ชต้น ครูฝึก (ห้อง 2 ถามตอบพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "8150f9ad-46fc-43bd-9299-de95263367d1",
+        "generatedAt": "2026-10-02T08:37:23.755Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-03",
+      "kind": "npc",
+      "name": "ป้าดา ผู้ดูแลคลัง (ห้อง 3 ร้านพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_archivist": "characters/npc_archivist.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "elderly woman archivist with gray hair in a bun, round glasses, green cardigan and a long apron, holding a stack of folders, gentle smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "ป้าดา ผู้ดูแลคลัง (ห้อง 3 ร้านพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "9587718a-3f11-4cfa-bce9-834803f57b39",
+        "generatedAt": "2026-10-02T08:38:30.274Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-04",
+      "kind": "npc",
+      "name": "หัวหน้าชัย หัวหน้าสายพาน (ห้อง 4 เควสเสริม)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_foreman": "characters/npc_foreman.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "stout middle-aged factory foreman with a mustache, orange hard hat, gray work shirt with a yellow high-visibility vest, proud face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "หัวหน้าชัย หัวหน้าสายพาน (ห้อง 4 เควสเสริม)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "367e8a9b-15fd-46db-8dfd-8101f8546872",
+        "generatedAt": "2026-10-02T08:39:21.086Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-05",
+      "kind": "npc",
+      "name": "น้องมิว แม่ค้าลาน (ห้อง 5 ร้านพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_vendor": "characters/npc_vendor.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "cheerful young street vendor girl with a coral pink bandana and a pink apron over a striped shirt, carrying a tray of small gadgets, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "น้องมิว แม่ค้าลาน (ห้อง 5 ร้านพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "56090143-2b97-41fd-90cd-6f51456b5e95",
+        "generatedAt": "2026-10-02T08:40:02.341Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-06",
+      "kind": "npc",
+      "name": "พี่โฟกัส ผู้กำกับ (ห้อง 6 ถามตอบพิเศษ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_director": "characters/npc_director.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "stylish young film director with a blue beret and a scarf, azure blue jacket, holding a small video camera, friendly face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "พี่โฟกัส ผู้กำกับ (ห้อง 6 ถามตอบพิเศษ)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "886050e2-2bf0-4ce2-ad25-b0dc46630816",
+        "generatedAt": "2026-10-02T08:40:45.383Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "TS-01",
       "kind": "tileset",
       "name": "ไทล์เซตห้อง 1 ห้องปฐมนิเทศ",
@@ -2208,6 +2593,755 @@
       "status": "generated"
     },
     {
+      "id": "PR-Q01",
+      "kind": "prop",
+      "name": "น็อตที่หล่นหาย (เควสของช่างเมย์)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_pickup_bolt": "props/pr_pickup_bolt.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "large shiny steel hex bolt lying on the floor with a small white sparkle, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "df504d99-1636-4a6c-804e-46789a9e3319",
+        "generatedAt": "2026-10-02T08:44:02.563Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-Q02",
+      "kind": "prop",
+      "name": "เฟืองที่หลุด (เควสของหัวหน้าชัย)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_pickup_gear": "props/pr_pickup_gear.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small brass gear cog lying on the floor with a small white sparkle, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4d7dbf92-26e2-4ef0-bbdc-2418a834e116",
+        "generatedAt": "2026-10-02T08:44:22.669Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D01",
+      "kind": "prop",
+      "name": "หน้าต่างผนัง",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_window": "props/pr_decor_window.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide laboratory wall window with a metal frame showing a city skyline at dusk, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1947c95d-aebc-404d-82bf-7e82d329a14f",
+        "generatedAt": "2026-10-02T08:44:43.502Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D02",
+      "kind": "prop",
+      "name": "จอผนังสามจอ",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_wall_screens": "props/pr_decor_wall_screens.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall-mounted bank of three small monitors showing colorful bar charts and line graphs, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "529a8f1f-bb7e-4388-b61a-4075b6286df8",
+        "generatedAt": "2026-10-02T08:45:04.014Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D03",
+      "kind": "prop",
+      "name": "พรมกลม (ลายบนพื้น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_rug": "props/pr_decor_rug.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "round teal floor rug with a simple hexagon pattern seen from directly above, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "06085259-523c-4142-958b-0b0c93243b8b",
+        "generatedAt": "2026-10-02T08:45:24.681Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D04",
+      "kind": "prop",
+      "name": "ลังอุปกรณ์ซ้อนกัน",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_crates": "props/pr_decor_crates.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "stack of two metal supply crates with a small potted cactus on top, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1de9d48e-3411-453f-89d0-8eda8f757f2b",
+        "generatedAt": "2026-10-02T08:45:44.832Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D05",
+      "kind": "prop",
+      "name": "ตู้ขายของอัตโนมัติ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_vending": "props/pr_decor_vending.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall vending machine with glowing shelves of snacks and drinks and a blank panel, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "14e05aea-42d7-4de8-951d-433136bf2bd1",
+        "generatedAt": "2026-10-02T08:46:14.329Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D06",
+      "kind": "prop",
+      "name": "โคมไฟตั้งพื้น",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_lamp": "props/pr_decor_lamp.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall floor lamp with a warm glowing yellow shade, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "bf010197-4c31-4d25-ac94-36e47a1f6498",
+        "generatedAt": "2026-10-02T08:46:34.956Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D07",
+      "kind": "prop",
+      "name": "แผงเครื่องมือบนผนัง",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_tool_rack": "props/pr_decor_tool_rack.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall pegboard tool rack with wrenches, a hammer and a drill hanging on it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "f89233a1-154b-47e5-8f13-30dd3ff46916",
+        "generatedAt": "2026-10-02T08:46:55.618Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D08",
+      "kind": "prop",
+      "name": "ถังพลังงาน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_energy_tanks": "props/pr_decor_energy_tanks.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "two large blue energy tanks with glowing gauges and hoses, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1cae3e63-24d2-4936-978b-b9656d7bbca7",
+        "generatedAt": "2026-10-02T08:47:25.638Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D09",
+      "kind": "prop",
+      "name": "ชั้นหนังสือ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_bookshelf": "props/pr_decor_bookshelf.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide bookshelf filled with colorful binders and a small globe, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "a0a49ab1-7380-4315-9604-f5df8bb4ec8e",
+        "generatedAt": "2026-10-02T08:47:46.495Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D10",
+      "kind": "prop",
+      "name": "ตู้น้ำดื่ม",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_water_cooler": "props/pr_decor_water_cooler.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "water cooler dispenser with a blue bottle and a stack of paper cups, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "40b42d0e-660a-4872-be17-30eb6ec6ce5b",
+        "generatedAt": "2026-10-02T08:48:16.249Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D11",
+      "kind": "prop",
+      "name": "ตู้โชว์",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_trophy_case": "props/pr_decor_trophy_case.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "glass display case with small robot models and a gold trophy inside, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c3ff82ad-9667-4996-be35-d629273197ed",
+        "generatedAt": "2026-10-02T08:49:05.213Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D12",
+      "kind": "prop",
+      "name": "ลายเตือนบนพื้น (ลายบนพื้น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_hazard_floor": "props/pr_decor_hazard_floor.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "yellow and black hazard stripe landing pad marking painted on a steel floor seen from directly above, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4be4c32a-fbac-40ac-bee3-998531e0fdb3",
+        "generatedAt": "2026-10-02T08:49:44.111Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-105",
+      "kind": "prop",
+      "name": "ตราวงแหวนซ้อนบนพื้น (AI ครอบ ML)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_r1_ring_emblem": "props/pr_r1_ring_emblem.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "flat floor emblem of one large teal ring containing a smaller glowing ring inside it, seen from above, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4c9e79e8-6fba-42b1-a4d4-386a9e9d669d",
+        "generatedAt": "2026-10-02T08:50:14.221Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-205",
+      "kind": "prop",
+      "name": "โต๊ะบล็อกจัดกลุ่ม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_r2_cluster_table": "props/pr_r2_cluster_table.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "round table with untagged colored blocks gathered into three loose groups, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ac0f2f7e-7ac3-446d-a64a-08914c642cae",
+        "generatedAt": "2026-10-02T08:50:54.156Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-207",
+      "kind": "prop",
+      "name": "กระดานตารางเปรียบเทียบ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_r2_compare_board": "props/pr_r2_compare_board.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "standing whiteboard with an empty table grid of three columns and four rows, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "0500c367-d705-4c49-9674-6b0884d1a642",
+        "generatedAt": "2026-10-02T08:57:12.351Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "50b44463-e3f2-4387-b38e-ab4c482cea28",
+          "reason": "ได้ภาพคนสองคนบนพื้นขาว ไม่ใช่กระดาน"
+        }
+      ]
+    },
+    {
+      "id": "PR-304",
+      "kind": "prop",
+      "name": "เครื่องพิมพ์ป้ายกำกับ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_r3_label_printer": "props/pr_r3_label_printer.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small label printer printing a strip of blank tags, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "98a1d5e2-ab3a-45a9-b23d-973bb8770dc0",
+        "generatedAt": "2026-10-02T08:51:32.657Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-306",
+      "kind": "prop",
+      "name": "กระดานตารางเปรียบเทียบ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_r3_compare_board": "props/pr_r3_compare_board.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "standing green-framed board with an empty table grid of three columns and four rows, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "d99a6967-9372-4062-a85d-e81d2d272754",
+        "generatedAt": "2026-10-02T08:52:04.141Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-307",
+      "kind": "prop",
+      "name": "โต๊ะรับของ (ถาดไอเทมมินิเกม)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_r3_intake_table": "props/pr_r3_intake_table.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "low steel intake table with a short roller tray, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9e5d5bf0-5249-4e3e-87f2-a23594e527f6",
+        "generatedAt": "2026-10-02T08:52:35.376Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-507",
+      "kind": "prop",
+      "name": "สวิตช์ไฟธรรมดาบนผนัง",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_r5_light_switch": "props/pr_r5_light_switch.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "plain wall light switch with a small ceiling lamp above it, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5234f1ff-e6b5-4e0c-9bb6-35ba13e5b33d",
+        "generatedAt": "2026-10-02T08:52:55.798Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-603",
+      "kind": "prop",
+      "name": "โปสเตอร์ท่าค้อน",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_r6_poster_rock": "props/pr_r6_poster_rock.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall poster showing a hand making a closed fist, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "daee3246-f9e6-4af8-abd0-9585ef4618c2",
+        "generatedAt": "2026-10-02T08:57:33.806Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "e2fc97e7-678f-41e5-8967-a7937f46cce3",
+          "reason": "ได้กำปั้นสีม่วงไม่มีกรอบโปสเตอร์ เจนใหม่ได้กำปั้นสีผิวปกติ (ยังไม่มีกรอบ จึงวางบนกรอบโปสเตอร์ตอน build)"
+        }
+      ]
+    },
+    {
+      "id": "PR-604",
+      "kind": "prop",
+      "name": "โปสเตอร์ท่ากระดาษ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_r6_poster_paper": "props/pr_r6_poster_paper.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall poster showing an open flat hand, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "889cfb8c-45a7-434a-9ac2-631a4bdfa075",
+        "generatedAt": "2026-10-02T08:58:23.855Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "0f737a1a-7400-4921-b241-236004b868d2",
+          "reason": "ได้มือกำวัตถุทรงกลม ไม่ใช่มือแบ"
+        }
+      ]
+    },
+    {
+      "id": "PR-605",
+      "kind": "prop",
+      "name": "โปสเตอร์ท่ากรรไกร",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_r6_poster_scissors": "props/pr_r6_poster_scissors.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall poster showing a hand with two fingers extended like scissors, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "32a0348f-7ab2-4ba0-93ee-cb28b3ed323e",
+        "generatedAt": "2026-10-02T08:59:11.808Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "2224e8a3-ed71-47ae-b289-a0e0f8ce3df3",
+          "reason": "สั่งมือชูสองนิ้ว ได้มือแบห้านิ้ว จึงใช้ภาพจากการเจนครั้งแรก (prompt เดิม: wall poster showing a hand with two fingers extended like scissors)"
+        }
+      ],
+      "note": "ภาพที่ใช้มาจาก prompt ชุดแรก ไม่ใช่ prompt ใน arguments ตอน build วางบนกรอบโปสเตอร์"
+    },
+    {
       "id": "PR-H01",
       "kind": "prop",
       "name": "ร้านสหกรณ์แล็บ (โถง)",
@@ -2871,6 +4005,205 @@
         "generatedAt": "2026-10-02T04:31:47.577Z"
       },
       "status": "generated"
+    },
+    {
+      "id": "FX-01",
+      "kind": "fx",
+      "name": "เอฟเฟกต์ระเบิดตอนโจมตีโดน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_impact": "battle/fx_impact.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "bright comic explosion burst with a white core and yellow and orange jagged rays, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "d56fb1c7-c18e-47b3-b249-d9dd52ad76f1",
+        "generatedAt": "2026-10-02T08:41:15.546Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-02",
+      "kind": "fx",
+      "name": "เอฟเฟกต์รอยกรงเล็บของไคจู",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_slash": "battle/fx_slash.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "three curved red claw slash marks with white highlights, diagonal, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "cd1c7551-cc85-46ef-85a6-295c928da474",
+        "generatedAt": "2026-10-02T08:41:54.191Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-03",
+      "kind": "fx",
+      "name": "กระสุนพลังงานของการ์เดียน (พุ่งไปทางขวา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_bolt": "battle/fx_bolt.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "cyan energy blast projectile flying to the right with a bright white tip and a short trailing tail, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "2a39bf97-1573-4704-a9a6-5b1e4ec91a28",
+        "generatedAt": "2026-10-02T08:42:23.370Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-04",
+      "kind": "fx",
+      "name": "ลูกไฟของไคจู (พุ่งไปทางซ้าย)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_fireball": "battle/fx_fireball.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "orange and red fireball flying to the left with a trailing flame tail, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "f462d389-6bb9-4f93-8379-f33de5d31a07",
+        "generatedAt": "2026-10-02T08:42:43.440Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-05",
+      "kind": "fx",
+      "name": "โล่พลังงาน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_shield": "battle/fx_shield.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "translucent cyan hexagonal energy shield bubble with bright edges, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "23b663e9-8980-4f5d-b5f9-ed2ed1e52eca",
+        "generatedAt": "2026-10-02T08:43:12.340Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-06",
+      "kind": "fx",
+      "name": "ประกายฟื้นพลัง",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_spark": "battle/fx_spark.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "cluster of green healing sparkles and small plus signs rising upward, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "bc07765c-306b-404b-a12b-ebcacf207dba",
+        "generatedAt": "2026-10-02T08:55:56.741Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "2b1256b8-da12-4975-926b-3a886d394d70",
+          "reason": "ได้ต้นคริสตัลสีเขียวบนก้อนหิน ไม่ใช่ประกายฟื้นพลัง"
+        }
+      ]
     },
     {
       "id": "BT-07",
@@ -3621,6 +4954,193 @@
         "bg_battle_5",
         "bt_robot",
         "bt_kaiju_6"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_1 + bt_robot + bt_kaiju_1)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_1": "story/st_win_kaiju_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_1",
+        "bt_robot",
+        "bt_kaiju_1"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_2 + bt_robot + bt_kaiju_2)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_2": "story/st_win_kaiju_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_2",
+        "bt_robot",
+        "bt_kaiju_2"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_3 + bt_robot + bt_kaiju_3)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_3": "story/st_win_kaiju_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_3",
+        "bt_robot",
+        "bt_kaiju_3"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-4",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_4 + bt_robot + bt_kaiju_4)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_4": "story/st_win_kaiju_4.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_4",
+        "bt_robot",
+        "bt_kaiju_4"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-5",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_5 + bt_robot + bt_kaiju_5)",
+      "requested": false,
+      "size": [
+        320,
+        150
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_5": "story/st_win_kaiju_5.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_5",
+        "bt_robot",
+        "bt_kaiju_5"
+      ]
+    },
+    {
+      "id": "ST-WIN-BOSS-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_5 + bt_robot + bt_boss_2)",
+      "requested": false,
+      "size": [
+        320,
+        150
+      ],
+      "files": {},
+      "web": {
+        "st_win_boss_2": "story/st_win_boss_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_5",
+        "bt_robot",
+        "bt_boss_2"
+      ]
+    },
+    {
+      "id": "ST-WIN-BOSS-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_5 + bt_robot + bt_boss_3)",
+      "requested": false,
+      "size": [
+        320,
+        150
+      ],
+      "files": {},
+      "web": {
+        "st_win_boss_3": "story/st_win_boss_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_5",
+        "bt_robot",
+        "bt_boss_3"
+      ]
+    },
+    {
+      "id": "ST-UPGRADE",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_1 + bt_robot + ch_mentor_south + fx_spark)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_upgrade": "story/st_upgrade.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_1",
+        "bt_robot",
+        "ch_mentor_south",
+        "fx_spark"
+      ]
+    },
+    {
+      "id": "ST-FINALE",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_5 + bt_robot + ch_mentor_south + core_1 + core_2 + core_3 + core_4 + core_5 + core_6)",
+      "requested": false,
+      "size": [
+        320,
+        150
+      ],
+      "files": {},
+      "web": {
+        "st_finale": "story/st_finale.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_5",
+        "bt_robot",
+        "ch_mentor_south",
+        "core_1",
+        "core_2",
+        "core_3",
+        "core_4",
+        "core_5",
+        "core_6"
       ]
     }
   ]

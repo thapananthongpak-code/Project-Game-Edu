@@ -36,6 +36,17 @@ export const SFX = {
   win: [...run([523, 659, 784], 0.11, 0.12), blip(1047, 0.33, 0.4, 0.5), blip(784, 0.33, 0.4, 0.3, "triangle")],
   lose: run([392, 330, 262, 196], 0.16, 0.2, "triangle", 0.45),
   buy: [...run([1319, 1568], 0.05, 0.07, "square", 0.3), blip(2093, 0.12, 0.2, 0.3, "triangle")],
+  // เอฟเฟกต์ของด่านต่อสู้: กระสุนพลังงาน กรงเล็บ ลูกไฟ ระเบิด เกราะแตก และบอสกลายร่าง
+  laser: [blip(1700, 0, 0.16, 0.4, "square", 420), blip(2100, 0.02, 0.1, 0.2, "sawtooth", 700)],
+  slash: [{ wave: "noise", from: 5200, to: 900, at: 0, length: 0.12, gain: 0.5 }, { wave: "noise", from: 4200, to: 700, at: 0.07, length: 0.12, gain: 0.4 }],
+  fire: [{ wave: "noise", from: 500, to: 1800, at: 0, length: 0.3, gain: 0.45 }, blip(120, 0, 0.3, 0.35, "sawtooth", 260)],
+  boom: [{ wave: "noise", from: 900, to: 90, at: 0, length: 0.4, gain: 0.6 }, blip(110, 0, 0.36, 0.5, "sine", 38)],
+  crack: [{ wave: "noise", from: 6000, to: 1500, at: 0, length: 0.09, gain: 0.5 }, blip(1250, 0.03, 0.08, 0.3, "square", 500), blip(820, 0.1, 0.1, 0.25, "square", 300)],
+  transform: [blip(90, 0, 0.7, 0.4, "sawtooth", 900), { wave: "noise", from: 300, to: 4000, at: 0.1, length: 0.6, gain: 0.35 }, blip(1320, 0.7, 0.2, 0.4, "square", 1760)],
+  // กิจกรรมเสริมกับ NPC
+  npc: [blip(620, 0, 0.06, 0.3, "triangle"), blip(830, 0.07, 0.08, 0.3, "triangle")],
+  pickup: run([1047, 1568], 0.05, 0.08, "square", 0.35),
+  quest: [...run([523, 659, 784, 1047], 0.09, 0.11, "triangle", 0.45), blip(1319, 0.38, 0.35, 0.45, "square")],
 } satisfies Record<string, Tone[]>;
 
 export type SfxName = keyof typeof SFX;

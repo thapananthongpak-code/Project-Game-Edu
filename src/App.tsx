@@ -17,6 +17,7 @@ import { Shop } from "./ui/Shop";
 import { StageOverlay } from "./ui/StageOverlay";
 import { StoryDialog } from "./ui/StoryDialog";
 import { MinigameOverlay } from "./ui/minigames/MinigameOverlay";
+import { Npc } from "./ui/Npc";
 import { Toast } from "./ui/Toast";
 import { TouchControls } from "./ui/TouchControls";
 import { TutorPanel } from "./ui/TutorPanel";
@@ -71,6 +72,7 @@ export function App() {
       {overlay === "reward" && <CoreReward />}
       {overlay === "questlog" && <QuestLog />}
       {overlay === "shop" && <Shop />}
+      {overlay === "npc" && <Npc />}
       {overlay === "missions" && <Missions />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}

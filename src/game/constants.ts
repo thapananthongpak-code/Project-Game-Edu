@@ -1,5 +1,5 @@
 // ขนาดจาก docs/ART_GUIDE.md ข้อ 1
-import type { Avatar, Outfit } from "../state/shop.config";
+import type { Avatar, BitSkin, Outfit } from "../state/shop.config";
 
 export const BASE_WIDTH = 640;
 export const BASE_HEIGHT = 360;
@@ -17,3 +17,6 @@ export type Direction = "south" | "north" | "east" | "west";
 
 /** คีย์แผ่นสไปรต์ของผู้เล่นตามตัวละครและชุด (ตรงกับ scripts/build-assets.py) */
 export const playerTexture = (avatar: Avatar, outfit: Outfit): string => `ch_${avatar}_${outfit}`;
+
+/** คีย์ภาพของพี่บิตตามคอสตูม (ตรงกับ scripts/build-assets.py) */
+export const mentorTexture = (skin: BitSkin): string => (skin === "classic" ? "ch_mentor_south" : `ch_mentor_${skin}_south`);

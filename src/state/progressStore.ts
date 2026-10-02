@@ -8,10 +8,11 @@ import { course } from "../content";
 import type { FormId } from "../content/schema";
 import { DIFFICULTIES, type Difficulty } from "./campaign";
 import { emptyField, type FieldProgress } from "./field";
+import { emptyNpc, isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_ANSWER_CHARS, MAX_NAME_CHARS } from "./rules";
-import { AVATARS, type Avatar, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, SUPPLIES, type Supply } from "./shop.config";
+import { AVATARS, type Avatar, BIT_SKINS, type BitSkin, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, SUPPLIES, type Supply } from "./shop.config";
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export interface Profile {
   /** ชื่อที่แสดง แนะนำให้ใช้ชื่อเล่นหรือเลขที่ ไม่ใช้ชื่อจริง */
@@ -39,12 +40,14 @@ export interface BattleRecord {
 /** ร้านสหกรณ์แล็บ (GDD ข้อ 13) เครดิตคงเหลือ = เครดิตที่ได้จากความคืบหน้า - spent */
 export interface ShopState {
   spent: number;
-  /** รหัสสินค้าที่ซื้อแล้ว (ชุดและสีหุ่น) */
+  /** รหัสสินค้าที่ซื้อแล้ว (ชุด สีหุ่น คอสตูมและโมดูลอัปเกรดของพี่บิต) */
   owned: string[];
   /** ของใช้ในด่านต่อสู้ที่ถืออยู่ */
   supplies: Record<Supply, number>;
   outfit: Outfit;
   paint: Paint;
+  /** คอสตูมของพี่บิตที่ใช้อยู่ */
+  bit: BitSkin;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -92,6 +95,8 @@ export interface SaveData {
   rooms: Record<number, RoomProgress>;
   /** ผลของด่านต่อสู้ คีย์คือรหัสด่านใน src/state/campaign.ts */
   battles: Record<string, BattleRecord>;
+  /** กิจกรรมเสริมกับ NPC ประจำห้อง คีย์คือรหัส NPC ใน src/state/npcs.ts */
+  npcs: Record<string, NpcRecord>;
   /** ฉากเนื้อเรื่องที่ดูจบแล้ว (รหัสใน src/content/story.ts) */
   story: string[];
   shop: ShopState;
@@ -122,9 +127,9 @@ export const emptyRoom = (): RoomProgress => ({
 
 export const emptyBattle = (): BattleRecord => ({ won: false, wins: 0, sorties: 0, asked: 0, correct: 0 });
 
-export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>, outfit: "lab", paint: "standard" });
+export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: Object.fromEntries(SUPPLIES.map((supply) => [supply, 0])) as Record<Supply, number>, outfit: "lab", paint: "standard", bit: "classic" });
 
-export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, battles: {}, story: [], shop: emptyShop() });
+export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, battles: {}, npcs: {}, story: [], shop: emptyShop() });
 
 // ---------------------------------------------------------------- อ่านข้อมูลที่บันทึกไว้
 // ข้อมูลที่อ่านกลับมาอาจไม่ครบหรือผิดรูป (รุ่นเก่า ไฟล์เสีย หรือถูกแก้จากนอกเกม) ทุกช่องจึงถูกตรวจชนิดและเติมค่าเริ่มต้น
@@ -199,11 +204,12 @@ function shopOf(raw: unknown): ShopState {
   const base = emptyShop();
   const items = new Map(CATALOG.map((item) => [item.id, item]));
   const owned = [...new Set(Array.isArray(data.owned) ? data.owned.filter((id): id is string => typeof id === "string" && items.has(id) && items.get(id)?.kind !== "supply") : [])];
-  const has = (kind: "outfit" | "paint", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
+  const has = (kind: "outfit" | "paint" | "bit", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
   const supplies = { ...base.supplies };
   for (const item of CATALOG) if (item.kind === "supply") supplies[item.value] = Math.min(item.max, Math.floor(count(object(data.supplies)[item.value])));
   const outfit = OUTFITS.find((o) => o === data.outfit) ?? base.outfit;
   const paint = PAINTS.find((c) => c === data.paint) ?? base.paint;
+  const bit = BIT_SKINS.find((skin) => skin === data.bit) ?? base.bit;
   return {
     spent: Math.floor(count(data.spent)),
     owned,
@@ -211,8 +217,29 @@ function shopOf(raw: unknown): ShopState {
     // สวมได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว
     outfit: outfit === base.outfit || has("outfit", outfit) ? outfit : base.outfit,
     paint: paint === base.paint || has("paint", paint) ? paint : base.paint,
+    bit: bit === base.bit || has("bit", bit) ? bit : base.bit,
   };
 }
+
+function npcsOf(raw: unknown): Record<string, NpcRecord> {
+  const npcs: Record<string, NpcRecord> = {};
+  for (const [id, value] of Object.entries(object(raw))) {
+    if (!isNpcId(id)) continue;
+    const data = object(value);
+    const spec = NPCS[id];
+    const found = [...new Set(Array.isArray(data.found) ? data.found.filter((n): n is number => Number.isInteger(n) && n >= 0 && n < spec.pickups) : [])];
+    // ส่งของได้เมื่อเก็บครบเท่านั้น
+    const done = spec.role === "quest" && data.done === true && found.length >= spec.pickups;
+    npcs[id] = { ...emptyNpc(), accepted: data.accepted === true || found.length > 0 || done, found, done, best: Math.min(spec.questions, Math.floor(count(data.best))), tries: Math.floor(count(data.tries)) };
+  }
+  return npcs;
+}
+
+/**
+ * ข้อมูลจากรุ่นที่ยังไม่มีภาพเนื้อเรื่องหลังชนะด่าน: ด่านที่ชนะไปแล้วถือว่าดูฉากนั้นแล้ว
+ * ไม่เช่นนั้นผู้เล่นเดิมจะเห็นฉากของทุกด่านที่เคยชนะต่อกันรวดเดียวเมื่อเปิดเกม
+ */
+const withWinBeats = (story: string[], battles: Record<string, BattleRecord>): string[] => [...new Set([...story, ...Object.entries(battles).filter(([, record]) => record.won).map(([id]) => `win-${id}`)])];
 
 const MAX_STORY_BEATS = 40;
 const storyOf = (raw: unknown): string[] => [...new Set(Array.isArray(raw) ? raw.filter((beat): beat is string => typeof beat === "string" && beat.length <= 40) : [])].slice(0, MAX_STORY_BEATS);
@@ -258,7 +285,9 @@ export function migrateSave(raw: unknown): SaveData | null {
   if (!raw || typeof raw !== "object") return null;
   const data = raw as Raw;
   const hasRooms = typeof data.rooms === "object" && data.rooms !== null;
-  if (data.version === SAVE_VERSION && hasRooms) {
+  // รุ่น 5: ยังไม่มี NPC ประจำห้อง คอสตูมของพี่บิต และภาพเนื้อเรื่องหลังชนะด่าน ช่องอื่นเหมือนรุ่นปัจจุบัน
+  if ((data.version === SAVE_VERSION || data.version === 5) && hasRooms) {
+    const battles = battlesOf(data.battles);
     return {
       version: SAVE_VERSION,
       updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : emptySave().updatedAt,
@@ -266,8 +295,9 @@ export function migrateSave(raw: unknown): SaveData | null {
       pretest: assessmentOf(data.pretest),
       posttest: assessmentOf(data.posttest),
       rooms: roomsOf(data.rooms),
-      battles: battlesOf(data.battles),
-      story: storyOf(data.story),
+      battles,
+      npcs: npcsOf(data.npcs),
+      story: data.version === 5 ? withWinBeats(storyOf(data.story), battles) : storyOf(data.story),
       shop: shopOf(data.shop),
     };
   }
@@ -286,7 +316,8 @@ export function migrateSave(raw: unknown): SaveData | null {
       posttest: assessmentOf(data.posttest),
       rooms: roomsOf(data.rooms),
       battles,
-      story: storyOf(data.story),
+      npcs: {},
+      story: withWinBeats(storyOf(data.story), battles),
       shop: shopOf(data.shop),
     };
   }
@@ -301,19 +332,20 @@ export function migrateSave(raw: unknown): SaveData | null {
       posttest: assessmentOf(data.posttest),
       rooms,
       battles: battlesFromCores(rooms),
+      story: withWinBeats([], battlesFromCores(rooms)),
     };
   }
   // รุ่น 2: ยังไม่มีรหัสห้องเรียน แบบทดสอบหลังเรียน และรหัสข้อ ผลก่อนเรียนเดิมสุ่มโจทย์ จึงเก็บไว้เฉพาะคะแนนรายหัวข้อ
   if (data.version === 2 && hasRooms) {
     const pretest = assessmentOf(data.pretest);
     const rooms = roomsOf(data.rooms);
-    return { ...emptySave(), profile: profileOf(data.profile), pretest: pretest && { ...pretest, form: "A", items: [] }, rooms, battles: battlesFromCores(rooms) };
+    return { ...emptySave(), profile: profileOf(data.profile), pretest: pretest && { ...pretest, form: "A", items: [] }, rooms, battles: battlesFromCores(rooms), story: withWinBeats([], battlesFromCores(rooms)) };
   }
   // รุ่น 1 (ต้นแบบห้อง 1): { state: { progress }, version: 1 }
   const legacy = object(data.state).progress;
   if (legacy && typeof legacy === "object") {
     const rooms = roomsOf(legacy);
-    return { ...emptySave(), rooms, battles: battlesFromCores(rooms) };
+    return { ...emptySave(), rooms, battles: battlesFromCores(rooms), story: withWinBeats([], battlesFromCores(rooms)) };
   }
   return null;
 }

@@ -3,7 +3,7 @@
 // ด่านหนึ่งมีได้หลายร่าง (บอสของระดับกลางและยาก) ต้องชนะทีละร่าง
 import { BATTLE } from "./battle.config";
 import { type BattleSpec, campaignOf, type Difficulty, type FormSpec } from "./campaign";
-import type { Outfit, Supply } from "./shop.config";
+import type { BitModule, Outfit, Supply } from "./shop.config";
 
 /** ค่าที่ใช้ตลอดการออกปฏิบัติการหนึ่งครั้ง: ด่าน ระดับความยาก ชิ้นส่วนอัปเกรด และสิทธิพิเศษของเครื่องแบบ */
 export interface BattleSetup {
@@ -12,20 +12,24 @@ export interface BattleSetup {
   /** จำนวนครั้งที่ขอข้อมูลจากพี่บิตได้ */
   hints: number;
   assistDamage: number;
+  /** พลังที่การ์เดียนฟื้นทุกครั้งที่พี่บิตยิงเสริม (โมดูลพยาบาล) */
+  assistHeal: number;
   repairHeal: number;
   /** เริ่มพร้อมโล่ 1 ชั้น */
   startShield: boolean;
   formResetsOnRetry: boolean;
 }
 
-/** armorParts = จำนวนไคจูประจำห้องที่ชนะแล้ว (ชิ้นส่วนอัปเกรดการ์เดียน) */
-export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, armorParts: number): BattleSetup {
+/** armorParts = จำนวนไคจูประจำห้องที่ชนะแล้ว (ชิ้นส่วนอัปเกรดการ์เดียน) modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว */
+export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, armorParts: number, modules: readonly BitModule[] = []): BattleSetup {
   const level = campaignOf(difficulty);
+  const has = (module: BitModule) => modules.includes(module);
   return {
     spec,
     robotMax: level.robotHp + Math.min(BATTLE.armorMax, Math.max(0, armorParts)) * BATTLE.armorPerWin + (outfit === "guardian" ? BATTLE.perks.guardianHp : 0),
-    hints: level.battleHints + (outfit === "researcher" ? BATTLE.perks.researcherHints : 0),
-    assistDamage: outfit === "commander" ? BATTLE.perks.commanderAssist : BATTLE.assistDamage,
+    hints: level.battleHints + (outfit === "researcher" ? BATTLE.perks.researcherHints : 0) + (has("scanner") ? BATTLE.modules.scannerHints : 0),
+    assistDamage: (outfit === "commander" ? BATTLE.perks.commanderAssist : BATTLE.assistDamage) + (has("laser") ? BATTLE.modules.laserAssist : 0),
+    assistHeal: has("medic") ? BATTLE.modules.medicHeal : 0,
     repairHeal: BATTLE.repairKitHeal + (outfit === "engineer" ? BATTLE.perks.engineerHeal : 0),
     startShield: outfit === "pilot",
     formResetsOnRetry: level.formResetsOnRetry,
@@ -57,6 +61,7 @@ export type BattleEvent =
   | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean }
   | { type: "armor-break" }
   | { type: "bit-assist"; damage: number }
+  | { type: "bit-heal"; amount: number }
   | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean }
   | { type: "kaiju-regen"; amount: number }
   | { type: "phase"; phase: number; heal: number }
@@ -129,6 +134,11 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
     if (kaijuHp > 0 && streak % BATTLE.assistStreak === 0) {
       kaijuHp -= setup.assistDamage;
       events.push({ type: "bit-assist", damage: setup.assistDamage });
+      const heal = Math.min(setup.assistHeal, setup.robotMax - robotHp);
+      if (heal > 0) {
+        robotHp += heal;
+        events.push({ type: "bit-heal", amount: heal });
+      }
     }
     kaijuHp = Math.max(0, kaijuHp);
     const phase = phaseOf(setup, { form: formIndex, kaijuHp });

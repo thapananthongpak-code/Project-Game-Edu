@@ -5,6 +5,7 @@ import type { FormId } from "../content/schema";
 import { gainOf, totalCorrect } from "../state/assessment";
 import { campaignOf, type Difficulty } from "../state/campaign";
 import { fieldTotals } from "../state/field";
+import { npcActivitiesDone } from "../state/npcs";
 import { emptyRoom, migrateSave, type RoomProgress, type SaveData } from "../state/progressStore";
 
 /** แถวของตาราง players ตามที่ /api/teacher ส่งมา */
@@ -78,6 +79,8 @@ export interface StudentSummary {
   /** ด่านต่อสู้ไคจูที่ชนะแล้วจากจำนวนด่านของระดับความยาก และโจทย์ในด่านต่อสู้ที่ตอบทั้งหมดกับที่ตอบถูก (รวมการซ้อมรบ) */
   battlesWon: number;
   battlesTotal: number;
+  /** กิจกรรมเสริมกับ NPC ประจำห้องที่ทำแล้ว (เควสเสริมที่ส่งแล้ว และถามตอบพิเศษที่เล่นแล้ว) ไม่บังคับ ไม่ใช่คะแนน */
+  sideActivities: number;
   battleAsked: number;
   battleCorrect: number;
 }
@@ -119,6 +122,7 @@ export function summarizeStudent(player: Player): StudentSummary {
     forcedRepairs: rooms.filter((room) => room.outcome?.requiredRepair).length,
     battlesWon: fought.filter((record) => record.won).length,
     battlesTotal: level.battles.length,
+    sideActivities: npcActivitiesDone(save.npcs),
     battleAsked: fought.reduce((sum, record) => sum + record.asked, 0),
     battleCorrect: fought.reduce((sum, record) => sum + record.correct, 0),
   };
@@ -316,6 +320,7 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
       s.battlesTotal,
       s.battleAsked,
       s.battleCorrect,
+      s.sideActivities,
       ...topics.map((id) => save.pretest?.correctByTopic[id] ?? null),
       ...topics.map((id) => save.posttest?.correctByTopic[id] ?? null),
       ...lessons.map((id) => (save.rooms[id]?.minigameDone ? save.rooms[id].stars : null)),

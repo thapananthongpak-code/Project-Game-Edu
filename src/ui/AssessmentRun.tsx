@@ -6,6 +6,7 @@ import { fmt, ui } from "../content/ui-strings";
 import { scoreAssessment } from "../state/assessment";
 import type { AssessmentResult } from "../state/progressStore";
 import { ChoiceCard } from "./ChoiceCard";
+import { useBit } from "./useBit";
 
 interface AssessmentRunProps {
   phase: "pretest" | "posttest";
@@ -23,6 +24,7 @@ export function AssessmentRun({ phase, form, onFinish, onCancel }: AssessmentRun
   const [items] = useState(() => buildAssessment(form));
   const [results, setResults] = useState<AssessmentResult["items"]>([]);
   const shownAt = useRef(performance.now());
+  const bit = useBit();
   const index = results.length;
   const text = ui[phase];
 
@@ -46,7 +48,7 @@ export function AssessmentRun({ phase, form, onFinish, onCancel }: AssessmentRun
         )}
       </div>
       <div className="flex items-center gap-3 rounded-md border-2 border-ink bg-teal-light px-3 py-2">
-        <img src="assets/characters/ch_mentor_south.png" alt="" className="pixelated h-12 w-12 shrink-0" />
+        <img src={bit} alt="" className="pixelated h-12 w-12 shrink-0" />
         <p className="text-sm font-semibold">
           <span className="mr-1 font-extrabold">{ui.mentorName}:</span>
           {index < items.length ? text.intro : text.done}

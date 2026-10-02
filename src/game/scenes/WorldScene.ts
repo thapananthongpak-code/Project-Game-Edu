@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 import { useGameStore } from "../../state/gameStore";
 import { touchInput } from "../../state/input";
 import { type CharacterSheet, sheetKey, wangKey } from "./BootScene";
-import { BASE_WIDTH, type Direction, MAP_COLS, MAP_ROWS, MAP_TOP, playerTexture, TILE } from "../constants";
+import { BASE_WIDTH, type Direction, MAP_COLS, MAP_ROWS, MAP_TOP, mentorTexture, playerTexture, TILE } from "../constants";
 import { blockedCells, cellSpot, type GameMap, interactSpot, isFloorCell, type MapObject, objectBaseY, objectX } from "../maps";
 
 const PLAYER_SPEED = 120;
@@ -26,6 +26,8 @@ export interface Interactable {
   top: number;
   prompt: () => string;
   action: () => void;
+  /** ไม่ระบุ = โต้ตอบได้เสมอ (ของในเควสเสริมโต้ตอบได้เฉพาะตอนที่มองเห็น) */
+  enabled?: () => boolean;
 }
 
 /** ฉากเดินสำรวจ: แผนที่ 20×11 ไทล์ตามผังของแต่ละฉาก ผู้เล่น พี่บิตที่เดินตาม การชน และการโต้ตอบกับวัตถุ */
@@ -52,8 +54,8 @@ export abstract class WorldScene extends Phaser.Scene {
   private unsubscribe?: () => void;
 
   /** ตำแหน่งของพี่บิต (สำหรับการทดสอบอัตโนมัติ) */
-  get companionPosition(): { x: number; y: number } {
-    return { x: this.companionAt.x, y: this.companionAt.y };
+  get companionPosition(): { x: number; y: number; texture: string } {
+    return { x: this.companionAt.x, y: this.companionAt.y, texture: this.companion.texture.key };
   }
 
   /** แผ่นสไปรต์ที่ผู้เล่นใช้อยู่ และกำลังเล่นแอนิเมชันเดินหรือไม่ (สำหรับการทดสอบอัตโนมัติ) */
@@ -132,17 +134,18 @@ export abstract class WorldScene extends Phaser.Scene {
   private placeObject(object: MapObject): void {
     const x = objectX(object);
     const baseY = objectBaseY(object);
-    const image = this.add.image(x, baseY, object.prop).setOrigin(0.5, 1).setDepth(baseY);
+    // ของที่วางราบกับพื้นอยู่ใต้ตัวละครเสมอ
+    const image = this.add.image(x, baseY, object.prop).setOrigin(0.5, 1).setDepth(object.flat ? 1 : baseY);
     this.placed.set(object, image);
-    if (!object.mount) this.addObstacle(x, baseY - 6, Math.max(20, image.width - 10), 12);
+    if (!object.mount && !object.flat) this.addObstacle(x, baseY - 6, Math.max(20, Math.min(image.width, (object.w ?? 1) * TILE) - 10), 12);
   }
 
   /** จุดโต้ตอบของวัตถุบนแผนที่ */
-  protected addInteractable(object: MapObject, id: string, prompt: () => string, action: () => void): Interactable {
+  protected addInteractable(object: MapObject, id: string, prompt: () => string, action: () => void, enabled?: () => boolean): Interactable {
     const image = this.placed.get(object) as Phaser.GameObjects.Image;
     // วัตถุติดผนัง (ประตู) สูงถึงขอบจอ ลูกศรชี้เป้าหมายจึงอยู่หน้าบานประตูแทนที่จะอยู่เหนือวัตถุ
     const top = object.mount ? objectBaseY(object) - 20 : objectBaseY(object) - image.height;
-    const item = { id, ...interactSpot(object), top, prompt, action };
+    const item = { id, ...interactSpot(object), top, prompt, action, enabled };
     this.interactables.push(item);
     return item;
   }
@@ -202,7 +205,7 @@ export abstract class WorldScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.obstacles);
 
     this.companionAt.set(x - 30, y - 4);
-    this.companion = this.add.image(this.companionAt.x, this.companionAt.y, "ch_mentor_south").setOrigin(0.5, 60 / 64).setDepth(this.companionAt.y);
+    this.companion = this.add.image(this.companionAt.x, this.companionAt.y, mentorTexture(useGameStore.getState().shop.bit)).setOrigin(0.5, 60 / 64).setDepth(this.companionAt.y);
 
     const { KeyCodes } = Phaser.Input.Keyboard;
     // ไม่ capture ปุ่ม เพื่อให้พิมพ์ในช่องคำตอบของหน้าต่าง React ได้ตามปกติ
@@ -231,6 +234,8 @@ export abstract class WorldScene extends Phaser.Scene {
       }
       // เปลี่ยนตัวละครหรือชุด (ร้านค้า ตู้เสื้อผ้า หรือโหลดความคืบหน้าเสร็จ)
       if (state.profile?.avatar !== previous.profile?.avatar || state.shop.outfit !== previous.shop.outfit) this.applyTexture();
+      // เปลี่ยนคอสตูมของพี่บิต
+      if (state.shop.bit !== previous.shop.bit) this.companion.setTexture(mentorTexture(state.shop.bit));
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.unsubscribe?.();
@@ -308,6 +313,7 @@ export abstract class WorldScene extends Phaser.Scene {
     let nearest: Interactable | null = null;
     let best = INTERACT_RANGE;
     for (const item of this.interactables) {
+      if (item.enabled && !item.enabled()) continue;
       const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, item.x, item.y);
       if (distance < best) {
         best = distance;

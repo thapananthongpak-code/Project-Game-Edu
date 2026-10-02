@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { playSfx } from "../audio/engine";
+import type { SfxName } from "../audio/sfx";
+import { bossVariant } from "../audio/tracks";
 import { battleReference } from "../content";
 import { buildBattleItems, type ChoiceItem } from "../content/choices";
 import { foeName, storyNames } from "../content/story";
@@ -7,26 +9,136 @@ import { fmt, ui } from "../content/ui-strings";
 import { type ActiveSupply, applySupply, type BattleEvent, battleSetup, type BattleState, formOf, isCharging, isEnraged, phaseCount, phaseOf, questionSource, resolveAnswer, retryCarry, startBattle } from "../state/battle";
 import { BATTLE } from "../state/battle.config";
 import { type BattleSpec, battleOf } from "../state/campaign";
-import { armorParts, creditsOf, difficultyOf, planOf, useGameStore } from "../state/gameStore";
+import { armorParts, creditsOf, difficultyOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
+import { modulesOf } from "../state/shop";
 import { PAINT_FILTER, REWARDS, type Supply } from "../state/shop.config";
-import { art } from "./art";
+import { art, type FxArt } from "./art";
 import { ChoiceCard } from "./ChoiceCard";
 import { PageView } from "./ContentView";
+import { useBit } from "./useBit";
 import { useDialog } from "./useDialog";
 
 type Stage = "intro" | "fight" | "won" | "lost";
-/** ท่าของตัวละครในฉาก id เปลี่ยนทุกครั้งเพื่อให้แอนิเมชันเล่นใหม่ */
+type Side = "robot" | "kaiju";
+/** เอฟเฟกต์หนึ่งชิ้นในฉาก: ภาพ ตำแหน่ง การเคลื่อนไหว และเวลาเริ่ม (มิลลิวินาทีหลังตอบ) */
+interface Spark {
+  art: FxArt;
+  /** pop = ปรากฏที่ตัว side, shot = พุ่งไปหา side, assist = พี่บิตยิงไปหา side, rise = ลอยขึ้นจากตัว side */
+  motion: "pop" | "shot" | "assist" | "rise";
+  side: Side;
+  at: number;
+  big?: boolean;
+}
+/** ตัวเลขที่ลอยขึ้นจากตัวละคร: ความเสียหายหรือพลังที่ฟื้น */
+interface Floater {
+  text: string;
+  side: Side;
+  at: number;
+  tone: "damage" | "heal";
+}
+/** ท่าของตัวละครและเอฟเฟกต์ของตานี้ id เปลี่ยนทุกครั้งเพื่อให้แอนิเมชันเล่นใหม่ */
 interface Fx {
   id: number;
   robot: "attack" | "hurt" | "guard" | null;
   kaiju: "attack" | "hurt" | "heal" | "transform" | null;
   assist: boolean;
+  sparks: Spark[];
+  floaters: Floater[];
+  shake: boolean;
+  /** ภาพเนื้อเรื่องของร่างใหม่ที่ตัดเข้ามาตอนบอสกลายร่าง */
+  cutIn: { art: string; name: string } | null;
 }
 
-const NO_FX: Fx = { id: 0, robot: null, kaiju: null, assist: false };
+const NO_FX: Fx = { id: 0, robot: null, kaiju: null, assist: false, sparks: [], floaters: [], shake: false, cutIn: null };
+/** เวลาที่กระสุนพุ่งถึงเป้า (ตรงกับ battle-fx-shot ใน index.css) */
+const SHOT_MS = 260;
+
+/** เอฟเฟกต์ ตัวเลข และเสียงของเหตุการณ์ในตาหนึ่ง เรียงตามลำดับที่เกิด */
+function stageEvents(events: BattleEvent[], spec: BattleSpec): Pick<Fx, "sparks" | "floaters" | "shake" | "cutIn"> & { sounds: [SfxName, number][] } {
+  const sparks: Spark[] = [];
+  const floaters: Floater[] = [];
+  const sounds: [SfxName, number][] = [];
+  let shake = false;
+  let cutIn: Fx["cutIn"] = null;
+  let at = 0;
+  for (const event of events) {
+    switch (event.type) {
+      case "robot-hit":
+        sparks.push({ art: "bolt", motion: "shot", side: "kaiju", at, big: event.boosted || event.counter }, { art: "impact", motion: "pop", side: "kaiju", at: at + SHOT_MS, big: event.boosted || event.counter });
+        floaters.push({ text: `-${event.damage}`, side: "kaiju", at: at + SHOT_MS, tone: "damage" });
+        sounds.push(["laser", at], ["boom", at + SHOT_MS]);
+        at += SHOT_MS + 160;
+        break;
+      case "armor-break":
+        sparks.push({ art: "bolt", motion: "shot", side: "kaiju", at }, { art: "shield", motion: "pop", side: "kaiju", at: at + SHOT_MS, big: true });
+        sounds.push(["laser", at], ["crack", at + SHOT_MS]);
+        at += SHOT_MS + 160;
+        break;
+      case "bit-assist":
+        sparks.push({ art: "bolt", motion: "assist", side: "kaiju", at }, { art: "impact", motion: "pop", side: "kaiju", at: at + SHOT_MS });
+        floaters.push({ text: `-${event.damage}`, side: "kaiju", at: at + SHOT_MS, tone: "damage" });
+        sounds.push(["assist", at]);
+        at += SHOT_MS + 160;
+        break;
+      case "bit-heal":
+        sparks.push({ art: "spark", motion: "rise", side: "robot", at });
+        floaters.push({ text: `+${event.amount}`, side: "robot", at, tone: "heal" });
+        sounds.push(["heal", at]);
+        break;
+      case "kaiju-hit":
+        if (event.blocked) {
+          sparks.push({ art: event.heavy ? "fireball" : "slash", motion: event.heavy ? "shot" : "pop", side: "robot", at }, { art: "shield", motion: "pop", side: "robot", at: at + (event.heavy ? SHOT_MS : 60), big: true });
+          sounds.push(["shield", at + (event.heavy ? SHOT_MS : 60)]);
+        } else if (event.heavy) {
+          sparks.push({ art: "fireball", motion: "shot", side: "robot", at, big: true }, { art: "impact", motion: "pop", side: "robot", at: at + SHOT_MS, big: true });
+          floaters.push({ text: `-${event.damage}`, side: "robot", at: at + SHOT_MS, tone: "damage" });
+          sounds.push(["fire", at], ["boom", at + SHOT_MS]);
+          shake = true;
+        } else {
+          sparks.push({ art: "slash", motion: "pop", side: "robot", at: at + 120 });
+          floaters.push({ text: `-${event.damage}`, side: "robot", at: at + 120, tone: "damage" });
+          sounds.push(["slash", at + 120], ["hurt", at + 160]);
+          shake = true;
+        }
+        at += SHOT_MS + 160;
+        break;
+      case "kaiju-regen":
+        sparks.push({ art: "spark", motion: "rise", side: "kaiju", at });
+        floaters.push({ text: `+${event.amount}`, side: "kaiju", at, tone: "heal" });
+        break;
+      case "phase":
+      case "transform":
+        if (event.heal > 0) {
+          sparks.push({ art: "spark", motion: "rise", side: "robot", at });
+          floaters.push({ text: `+${event.heal}`, side: "robot", at, tone: "heal" });
+        }
+        if (event.type === "transform") {
+          const form = spec.forms[event.form];
+          cutIn = { art: `st_${form.art}`, name: foeName(form.art) };
+          sounds.push(["transform", at]);
+          shake = true;
+        }
+        break;
+      case "repair":
+      case "reboot":
+        sparks.push({ art: "spark", motion: "rise", side: "robot", at, big: event.type === "reboot" });
+        floaters.push({ text: `+${event.amount}`, side: "robot", at, tone: "heal" });
+        sounds.push(["heal", at]);
+        break;
+      case "shield":
+        sparks.push({ art: "shield", motion: "pop", side: "robot", at, big: true });
+        sounds.push(["shield", at]);
+        break;
+      case "boost":
+        sparks.push({ art: "bolt", motion: "rise", side: "robot", at });
+        sounds.push(["charge", at]);
+        break;
+    }
+  }
+  return { sparks, floaters, shake, cutIn, sounds };
+}
 /** ของที่ผู้เล่นกดใช้เองระหว่างสู้ (แกนสำรองทำงานเอง) */
 const ACTIVE: readonly ActiveSupply[] = ["repair-kit", "shield", "overcharge"];
-const SUPPLY_SFX: Record<ActiveSupply, "heal" | "shield" | "charge"> = { "repair-kit": "heal", shield: "shield", overcharge: "charge" };
 
 function HpBar({ label, hp, max, align }: { label: string; hp: number; max: number; align: "left" | "right" }) {
   return (
@@ -49,6 +161,8 @@ function eventText(event: BattleEvent, kaiju: string, spec: BattleSpec): string 
       return ui.battle.log.armorBreak;
     case "bit-assist":
       return fmt(ui.battle.log.assist, { n: event.damage });
+    case "bit-heal":
+      return fmt(ui.battle.log.bitHeal, { n: event.amount });
     case "kaiju-hit":
       return event.blocked ? ui.battle.log.blocked : fmt(event.heavy ? ui.battle.log.heavyHit : ui.battle.log.kaijuHit, { kaiju, n: event.damage });
     case "kaiju-regen":
@@ -81,6 +195,8 @@ export function Battle() {
   const recordBattle = useGameStore((s) => s.recordBattle);
   const consumeSupply = useGameStore((s) => s.consumeSupply);
   const setTutorOpen = useGameStore((s) => s.setTutorOpen);
+  const setMusicCue = useGameStore((s) => s.setMusicCue);
+  const bit = useBit();
 
   // ค่าของการออกปฏิบัติการคงที่ตลอดหน้าต่างนี้ (ชนะแล้วชิ้นส่วนอัปเกรดเพิ่ม แต่มีผลกับด่านถัดไป)
   const [boot] = useState(() => {
@@ -89,7 +205,8 @@ export function Battle() {
     const parts = armorParts(state);
     const record = state.battles[battleId];
     return {
-      setup: battleSetup(difficultyOf(state), spec, state.shop.outfit, parts),
+      setup: battleSetup(difficultyOf(state), spec, state.shop.outfit, parts, modulesOf(state.shop)),
+      modules: modulesOf(state.shop),
       parts: Math.min(BATTLE.armorMax, parts),
       outfit: state.shop.outfit,
       pools: planOf(state).pools,
@@ -169,11 +286,9 @@ export function Battle() {
     const blocked = result.events.some((e) => e.type === "kaiju-hit" && e.blocked);
     // แกนสำรองทำงานแล้ว: หักออกจากของที่ถือ
     if (has("reboot")) consumeSupply("reboot");
-    setFx({ id: fx.id + 1, robot: correct ? "attack" : blocked ? "guard" : "hurt", kaiju: has("transform") ? "transform" : correct ? "hurt" : has("kaiju-regen") ? "heal" : "attack", assist: has("bit-assist") });
-    playSfx(correct ? "hit" : blocked ? "shield" : "hurt");
-    if (has("bit-assist")) window.setTimeout(() => playSfx("assist"), 180);
-    if (has("transform")) window.setTimeout(() => playSfx("charge"), 320);
-    if (has("reboot")) window.setTimeout(() => playSfx("heal"), 320);
+    const { sounds, ...effects } = stageEvents(result.events, spec);
+    setFx({ id: fx.id + 1, robot: correct ? "attack" : blocked ? "guard" : "hurt", kaiju: has("transform") ? "transform" : correct ? "hurt" : has("kaiju-regen") ? "heal" : "attack", assist: has("bit-assist"), ...effects });
+    for (const [name, at] of sounds) window.setTimeout(() => playSfx(name), at);
   };
 
   const next = () => {
@@ -187,8 +302,9 @@ export function Battle() {
     setState(result.state);
     setEvents(result.events);
     setNote(null);
-    setFx({ id: fx.id + 1, robot: "guard", kaiju: null, assist: false });
-    playSfx(SUPPLY_SFX[supply]);
+    const { sounds, ...effects } = stageEvents(result.events, spec);
+    setFx({ id: fx.id + 1, robot: "guard", kaiju: null, assist: false, ...effects });
+    for (const [name, at] of sounds) window.setTimeout(() => playSfx(name), at);
   };
 
   // ชิปวิเคราะห์: ตัดตัวเลือกที่ผิดออก 1 ข้อ ต้องเหลือตัวเลือกที่ผิดอย่างน้อย 1 ข้อ
@@ -212,6 +328,13 @@ export function Battle() {
   useEffect(() => {
     if (answered !== undefined) nextButton.current?.focus({ preventScroll: true });
   }, [answered]);
+
+  // เพลงตามอารมณ์ของฉาก: ตึงเครียดก่อนออกรบ เร่งขึ้นเมื่อพลังเหลือน้อย บอสแต่ละร่างเร็วและสูงขึ้น ชนะแล้วเป็นเพลงมีชัย
+  const danger = stage === "fight" && setup.robotMax > BATTLE.dangerHp && state.robotHp <= BATTLE.dangerHp;
+  useEffect(() => {
+    const cue: MusicCue = stage === "intro" ? { name: "tension" } : stage === "won" ? { name: "victory" } : stage === "lost" ? { name: "defeat" } : spec.boss ? { name: "boss", variant: bossVariant(state.form, danger) } : { name: danger ? "danger" : "battle" };
+    setMusicCue(cue);
+  }, [stage, state.form, danger, spec.boss, setMusicCue]);
 
   const waiting = stage === "fight" && answered === undefined;
   const charging = waiting && isCharging(setup, state);
@@ -259,6 +382,7 @@ export function Battle() {
           style={{ backgroundImage: `url(${art.backdrop(spec.backdrop)})` }}
           data-testid="battle-arena"
         >
+          <div key={`stage-${fx.id}`} className={`absolute inset-0 ${fx.shake ? "battle-shake" : ""}`}>
           <HpBar label={storyNames.robot} hp={state.robotHp} max={setup.robotMax} align="left" />
           <HpBar label={kaiju} hp={state.kaijuHp} max={form.hp} align="right" />
           <img
@@ -268,7 +392,7 @@ export function Battle() {
             className={`pixelated absolute bottom-[3%] left-[8%] h-[72%] ${fx.robot ? `battle-robot-${fx.robot}` : "battle-idle"} ${state.shield ? "battle-shielded" : ""}`}
             style={{ filter: PAINT_FILTER[paint] }}
           />
-          <img key={`bit-${fx.id}`} src={art.mentor} alt="" className={`pixelated absolute bottom-[52%] left-[2%] h-[26%] ${fx.assist ? "battle-bit-assist" : "battle-idle"}`} />
+          <img key={`bit-${fx.id}`} src={bit} alt="" className={`pixelated absolute bottom-[52%] left-[2%] h-[26%] ${fx.assist ? "battle-bit-assist" : "battle-idle"}`} />
           <img
             key={`kaiju-${fx.id}-${state.form}`}
             src={art.foe(form.art)}
@@ -298,6 +422,34 @@ export function Battle() {
             {state.shield && <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold">🛡 {ui.battle.shieldOn}</span>}
             {state.boost && <span className="rounded border-2 border-ink bg-hint px-2 text-xs font-extrabold">🔋 {ui.battle.boostOn}</span>}
             {stage === "fight" && state.reboot && <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold">💠 {ui.battle.rebootReady}</span>}
+            {danger && (
+              <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-danger">
+                ⚠ {ui.battle.danger}
+              </span>
+            )}
+          </div>
+          </div>
+          {/* เอฟเฟกต์การโจมตี: ภาพและตัวเลขเล่นแอนิเมชันครั้งเดียวต่อตา ซ่อนอยู่เมื่อไม่เล่น (รวมถึงเมื่อระบบตั้งค่าลดการเคลื่อนไหว) ผลของตาอ่านได้จากบันทึกเหตุการณ์ */}
+          <div key={`fx-${fx.id}`} className="pointer-events-none absolute inset-0" aria-hidden="true" data-testid="battle-fx" data-sparks={fx.sparks.map((spark) => `${spark.art}:${spark.side}`).join(",")}>
+            {fx.sparks.map((spark, i) => (
+              <img
+                key={i}
+                src={art.fx(spark.art)}
+                alt=""
+                className={`pixelated battle-fx battle-fx-${spark.motion} battle-fx-to-${spark.side} ${spark.big ? "battle-fx-big" : ""}`}
+                style={{ animationDelay: `${spark.at}ms` }}
+              />
+            ))}
+            {fx.floaters.map((floater, i) => (
+              <span key={i} className={`battle-float battle-float-${floater.side} ${floater.tone === "heal" ? "battle-float-heal" : ""}`} style={{ animationDelay: `${floater.at}ms` }}>
+                {floater.text}
+              </span>
+            ))}
+            {fx.cutIn && (
+              <div className="battle-cutin absolute inset-0 flex items-end justify-center bg-ink bg-cover bg-center" style={{ backgroundImage: `url(${art.story(fx.cutIn.art)})` }}>
+                <span className="mb-[4%] rounded border-[3px] border-ink bg-wrong px-3 py-0.5 text-base font-extrabold text-paper">{fmt(ui.battle.transformed, { kaiju: fx.cutIn.name })}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -318,6 +470,7 @@ export function Battle() {
               <li data-testid="battle-hints-note">{setup.hints > 0 ? fmt(ui.battle.hintsNote, { n: setup.hints }) : ui.battle.noHintsNote}</li>
               {boot.parts > 0 && <li data-testid="battle-armor-note">{fmt(ui.battle.armorParts, { n: boot.parts * BATTLE.armorPerWin })}</li>}
               {perk && <li data-testid="battle-perk">{fmt(ui.battle.perk, { outfit: ui.shop.items[`outfit-${boot.outfit}`].name, perk })}</li>}
+              {boot.modules.length > 0 && <li data-testid="battle-modules">{fmt(ui.battle.modules, { list: boot.modules.map((module) => ui.shop.items[`module-${module}`].name).join(" ") })}</li>}
               {supplies.reboot > 0 && <li>💠 {ui.battle.rebootReady}</li>}
             </ul>
             {training && (
@@ -379,7 +532,7 @@ export function Battle() {
         {stage === "fight" && hintOpen && (
           <div className="flex flex-col gap-2" data-testid="battle-hint-panel">
             <h3 className="flex items-center gap-2 font-extrabold text-teal-dark">
-              <img src={art.mentor} alt="" className="pixelated h-9 w-9" />
+              <img src={bit} alt="" className="pixelated h-9 w-9" />
               {ui.battle.hintTitle}
             </h3>
             {battleReference(source).map((station) => (

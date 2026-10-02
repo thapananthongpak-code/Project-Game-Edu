@@ -39,7 +39,7 @@ export class HangarScene extends WorldScene {
     const [hologram] = this.objectsOf("hologram");
     this.addInteractable(hologram, "hologram", () => ui.prompt.hologram, () => store().openStory("prologue"));
     const [wardrobe] = this.objectsOf("wardrobe");
-    this.addInteractable(wardrobe, "wardrobe", () => ui.prompt.wardrobe, () => store().openOverlay("shop"));
+    this.addInteractable(wardrobe, "wardrobe", () => ui.prompt.wardrobe, () => store().openShop());
 
     const spot = this.spotBelow(door);
     this.createPlayer(spot.x, spot.y);

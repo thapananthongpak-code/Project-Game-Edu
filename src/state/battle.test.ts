@@ -277,4 +277,22 @@ describe("ของจากร้านและเครื่องแบบ 
     expect(setupOf("easy", "k3", "lab", 2).robotMax).toBe(ROBOT + 2 * BATTLE.armorPerWin);
     expect(setupOf("easy", "omega", "lab", 5).robotMax).toBe(ROBOT + BATTLE.armorMax * BATTLE.armorPerWin);
   });
+
+  it("โมดูลอัปเกรดของพี่บิต: เลเซอร์ยิงเสริมแรงขึ้น สแกนเนอร์ขอข้อมูลได้เพิ่ม พยาบาลฟื้นพลังเมื่อยิงเสริม และใช้ร่วมกับเครื่องแบบได้", () => {
+    const spec = battleOf("easy", "k1") as BattleSpec;
+    const base = battleSetup("easy", spec, "lab", 0);
+    expect(base.assistHeal).toBe(0);
+    expect(battleSetup("easy", spec, "lab", 0, ["laser"]).assistDamage).toBe(BATTLE.assistDamage + BATTLE.modules.laserAssist);
+    expect(battleSetup("easy", spec, "commander", 0, ["laser"]).assistDamage).toBe(BATTLE.perks.commanderAssist + BATTLE.modules.laserAssist);
+    expect(battleSetup("hard", battleOf("hard", "end") as BattleSpec, "lab", 0, ["scanner"]).hints).toBe(BATTLE.modules.scannerHints);
+    expect(battleSetup("easy", spec, "researcher", 0, ["scanner"]).hints).toBe(base.hints + BATTLE.perks.researcherHints + BATTLE.modules.scannerHints);
+
+    const medic = battleSetup("easy", battleOf("easy", "k2") as BattleSpec, "lab", 0, ["medic"]);
+    // เสียพลัง 1 แล้วตอบถูกสองข้อติดกัน: พี่บิตยิงเสริมและซ่อมการ์เดียน 1
+    const healed = play(medic, [false, true, true]);
+    expect(healed.events.map((e) => e.type)).toEqual(["kaiju-hit", "robot-hit", "robot-hit", "bit-assist", "bit-heal"]);
+    expect(healed.state.robotHp).toBe(medic.robotMax);
+    // พลังเต็มอยู่แล้ว: ไม่มีอะไรให้ซ่อม
+    expect(play(medic, [true, true]).events.map((e) => e.type)).toEqual(["robot-hit", "robot-hit", "bit-assist"]);
+  });
 });

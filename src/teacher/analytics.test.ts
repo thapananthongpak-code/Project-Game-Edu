@@ -48,6 +48,13 @@ describe("ระดับความยากและด่านต่อส�
     expect(summarizeStudent(hard)).toMatchObject({ difficulty: "hard", battlesWon: 1, battlesTotal: 1, reviewsTotal: 0 });
   });
 
+  it("กิจกรรมเสริมกับ NPC: นับเควสที่ส่งแล้วและถามตอบพิเศษที่เล่นแล้ว ร้านพิเศษไม่นับ", () => {
+    const done = { accepted: true, found: [0, 1, 2], done: true, best: 0, tries: 0 };
+    const busy = player("ขยัน", { npcs: { mechanic: done, foreman: { ...done, found: [0], done: false }, coach: { accepted: false, found: [], done: false, best: 3, tries: 2 }, archivist: done } });
+    expect(summarizeStudent(busy).sideActivities).toBe(2);
+    expect(summarizeStudent(mai).sideActivities).toBe(0);
+  });
+
   it("ไฟล์ CSV มีคอลัมน์ระดับความยากและจำนวนด่านทั้งหมด", () => {
     const hard = player("ยาก", { profile: { name: "ยาก", difficulty: "hard", classCode: "PVC1", avatar: "a" }, battles: { end: win } });
     const [header, row] = studentsCsv([hard], { fixed: t.csv.students, pre: t.csv.pre, post: t.csv.post, stars: t.csv.stars, minutes: t.csv.minutes })

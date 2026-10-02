@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "cheerful young street vendor girl with a coral pink bandana and a pink apron over a striped shirt, carrying a tray of small gadgets, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "น้องมิว แม่ค้าลาน (ห้อง 5 ร้านพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "56090143-2b97-41fd-90cd-6f51456b5e95",
+  "generatedAt": "2026-10-02T08:40:02.341Z"
+}

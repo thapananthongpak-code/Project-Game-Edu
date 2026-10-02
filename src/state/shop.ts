@@ -4,14 +4,17 @@ import { course } from "../content";
 import { BATTLE } from "./battle.config";
 import { campaignOf, type Difficulty } from "./campaign";
 import { emptyField, fieldStatus } from "./field";
+import { type NpcRecord, npcCredits } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
 import { MIN_ANSWER_CHARS } from "./rules";
-import { CATALOG, REWARDS, type ShopItem } from "./shop.config";
+import { BIT_MODULES, type BitModule, CATALOG, REWARDS, type ShopItem } from "./shop.config";
 
 export interface Earning {
   difficulty: Difficulty | undefined;
   rooms: Record<number, RoomProgress>;
   battles: Record<string, BattleRecord>;
+  /** กิจกรรมเสริมกับ NPC ประจำห้อง (ไม่ระบุ = ยังไม่มี) */
+  npcs?: Record<string, NpcRecord>;
   posttest: AssessmentResult | null;
 }
 
@@ -25,9 +28,9 @@ export function battleCredits(record: BattleRecord | undefined, boss: boolean): 
 }
 
 /** เครดิตวิจัยทั้งหมดที่ผู้เล่นได้จากความคืบหน้าจนถึงตอนนี้ */
-export function earnedCredits({ difficulty, rooms, battles, posttest }: Earning): number {
+export function earnedCredits({ difficulty, rooms, battles, npcs, posttest }: Earning): number {
   const level = campaignOf(difficulty);
-  let total = posttest ? REWARDS.posttest : 0;
+  let total = (posttest ? REWARDS.posttest : 0) + npcCredits(npcs ?? {});
   for (const room of Object.values(rooms)) {
     total += room.stationsSeen * REWARDS.station + room.stars * REWARDS.star;
     if (room.reviewDone) total += REWARDS.review;
@@ -49,7 +52,7 @@ export function ownsItem(shop: ShopState, item: ShopItem): boolean {
 
 export type PurchaseError = "unknown" | "owned" | "credits";
 
-/** ซื้อของหนึ่งชิ้น คืนสถานะร้านใหม่ หรือเหตุที่ซื้อไม่ได้ ชุดและสีหุ่นที่ซื้อจะถูกสวมให้ทันที */
+/** ซื้อของหนึ่งชิ้น คืนสถานะร้านใหม่ หรือเหตุที่ซื้อไม่ได้ ชุด สีหุ่น และคอสตูมของพี่บิตที่ซื้อจะถูกใช้ให้ทันที */
 export function purchase(shop: ShopState, id: string, balance: number): ShopState | PurchaseError {
   const item = findItem(id);
   if (!item) return "unknown";
@@ -58,12 +61,18 @@ export function purchase(shop: ShopState, id: string, balance: number): ShopStat
   const spent = shop.spent + item.price;
   if (item.kind === "supply") return { ...shop, spent, supplies: { ...shop.supplies, [item.value]: shop.supplies[item.value] + 1 } };
   const owned = [...shop.owned, item.id];
-  return item.kind === "outfit" ? { ...shop, spent, owned, outfit: item.value } : { ...shop, spent, owned, paint: item.value };
+  if (item.kind === "outfit") return { ...shop, spent, owned, outfit: item.value };
+  if (item.kind === "paint") return { ...shop, spent, owned, paint: item.value };
+  if (item.kind === "bit") return { ...shop, spent, owned, bit: item.value };
+  return { ...shop, spent, owned };
 }
 
-/** สวมชุดหรือเปลี่ยนสีหุ่น ได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว */
-export function equip(shop: ShopState, kind: "outfit" | "paint", value: string): ShopState {
-  const fallback = kind === "outfit" ? "lab" : "standard";
+/** โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว */
+export const modulesOf = (shop: ShopState): BitModule[] => BIT_MODULES.filter((module) => shop.owned.includes(`module-${module}`));
+
+/** สวมชุด เปลี่ยนสีหุ่น หรือเปลี่ยนคอสตูมของพี่บิต ได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว */
+export function equip(shop: ShopState, kind: "outfit" | "paint" | "bit", value: string): ShopState {
+  const fallback = kind === "outfit" ? "lab" : kind === "paint" ? "standard" : "classic";
   const item = CATALOG.find((candidate) => candidate.kind === kind && candidate.value === value);
   if (value !== fallback && !(item && shop.owned.includes(item.id))) return shop;
   return { ...shop, [kind]: value } as ShopState;

@@ -12,17 +12,17 @@ export function installDebugHook(game: Phaser.Game): void {
     snapshot: () => {
       const key = [SCENE.room, SCENE.hangar, SCENE.hall].find((k) => game.scene.isActive(k));
       const scene = key ? (game.scene.getScene(key) as WorldScene) : null;
-      const { ready, screen, zone, room, overlay, stationIndex, prompt, toast, progress, battles, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat } = useGameStore.getState();
+      const { ready, screen, zone, room, overlay, stationIndex, prompt, toast, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor } = useGameStore.getState();
       return {
         scene: key ?? null,
         // ผังของฉากปัจจุบัน ให้สคริปต์ทดสอบหาเส้นทางเดินเองได้
         map: scene?.mapInfo ?? null,
         player: scene?.player ? { x: scene.player.x, y: scene.player.y } : null,
-        interactables: scene?.interactables.map(({ id, x, y }) => ({ id, x, y })) ?? [],
+        interactables: scene?.interactables.map(({ id, x, y, enabled }) => ({ id, x, y, enabled: enabled ? enabled() : true })) ?? [],
         companion: scene?.companionPosition ?? null,
         avatar: scene?.player ? scene.avatarState : null,
         audio: audioDebug(),
-        store: { ready, screen, zone, room, overlay, stationIndex, prompt, toast: toast?.text ?? null, progress, battles, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat },
+        store: { ready, screen, zone, room, overlay, stationIndex, prompt, toast: toast?.text ?? null, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor },
       };
     },
   };

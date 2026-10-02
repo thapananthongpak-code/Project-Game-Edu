@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { course, ROOM_COUNT, stationsOf } from "../content";
 import type { FormId } from "../content/schema";
-import { zoneBeat } from "../content/story";
+import { storyBeats, zoneBeat } from "../content/story";
+import type { TrackName } from "../audio/tracks";
 import { type MinigameState, roomStartTier } from "./adaptive";
 import type { Tier } from "./adaptive.config";
 import { type BattleSpec, campaignOf, type Difficulty, type DifficultySpec, gateOf } from "./campaign";
@@ -23,6 +24,7 @@ import {
   SyncedProgressStore,
   type SyncStatus,
 } from "./progressStore";
+import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
 import { MIN_ANSWER_CHARS } from "./rules";
 import { creditBalance, type Earning, equip, purchase, type PurchaseError } from "./shop";
 import type { Avatar, Supply } from "./shop.config";
@@ -30,7 +32,13 @@ import type { Avatar, Supply } from "./shop.config";
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc";
+
+/** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
+export interface MusicCue {
+  name: TrackName;
+  variant?: number;
+}
 
 /** stationIndex พิเศษ: เปิดคลังความรู้ของหัวข้อ (บทสอนทุกสถานีต่อกัน ใช้ในระดับกลางที่ไม่บังคับฟังสถานี) */
 export const ARCHIVE = -1;
@@ -66,6 +74,11 @@ interface GameState {
   storyBeat: string | null;
   /** ด่านต่อสู้ที่กำลังเล่น (รหัสด่านใน src/state/campaign.ts) */
   battleId: string | null;
+  /** NPC ที่กำลังคุยด้วย */
+  npcId: NpcId | null;
+  /** ร้านที่เปิดอยู่เป็นร้านพิเศษของ NPC คนนี้ (null = ร้านสหกรณ์แล็บหรือตู้เสื้อผ้า) */
+  shopVendor: NpcId | null;
+  musicCue: MusicCue | null;
   /** หน้าต่างถามพี่บิต เปิดซ้อนบนหน้าต่างอื่นได้ */
   tutorOpen: boolean;
   /** หัวข้อที่พี่บิตตอบคำถาม: หัวข้อที่ผู้เล่นทำอยู่ หรือหัวข้อของโจทย์ในด่านต่อสู้ */
@@ -79,6 +92,7 @@ interface GameState {
   posttest: AssessmentResult | null;
   progress: Record<number, RoomProgress>;
   battles: Record<string, BattleRecord>;
+  npcs: Record<string, NpcRecord>;
   story: string[];
   shop: ShopState;
 
@@ -106,7 +120,19 @@ interface GameState {
   /** บันทึกผลการออกปฏิบัติการหนึ่งครั้ง */
   recordBattle: (id: string, result: { won: boolean; asked: number; correct: number }) => void;
   buy: (itemId: string) => PurchaseError | null;
-  equip: (kind: "outfit" | "paint", value: string) => void;
+  equip: (kind: "outfit" | "paint" | "bit", value: string) => void;
+  /** เปิดร้าน: ไม่ระบุ = ร้านสหกรณ์แล็บ ระบุ NPC = ร้านพิเศษของคนนั้น */
+  openShop: (vendor?: NpcId) => void;
+  openNpc: (id: NpcId) => void;
+  /** รับเควสเสริมของ NPC */
+  acceptQuest: (id: NpcId) => void;
+  /** เก็บของชิ้นที่ index ของเควสเสริม คืนจำนวนที่เก็บได้แล้ว */
+  collectPickup: (id: NpcId, index: number) => number;
+  /** ส่งของที่เก็บครบแล้วให้ NPC */
+  completeQuest: (id: NpcId) => void;
+  /** บันทึกผลถามตอบพิเศษหนึ่งรอบ */
+  recordQuiz: (id: NpcId, correct: number) => void;
+  setMusicCue: (cue: MusicCue | null) => void;
   /** ใช้ของหนึ่งชิ้นในด่านต่อสู้ คืน false ถ้าไม่มีของ */
   consumeSupply: (supply: Supply) => boolean;
   openStation: (index: number) => void;
@@ -136,7 +162,12 @@ export const useGameStore = create<GameState>()((set, get) => {
     const current = progress[room] ?? emptyRoom();
     set({ progress: { ...progress, [room]: { ...current, ...patch(current) } } });
   };
-  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const updateNpc = (id: NpcId, patch: (record: NpcRecord) => Partial<NpcRecord>) => {
+    const { npcs } = get();
+    const current = npcs[id] ?? emptyNpc();
+    set({ npcs: { ...npcs, [id]: { ...current, ...patch(current) } } });
+  };
 
   return {
     ready: false,
@@ -151,6 +182,9 @@ export const useGameStore = create<GameState>()((set, get) => {
     stationIndex: null,
     storyBeat: null,
     battleId: null,
+    npcId: null,
+    shopVendor: null,
+    musicCue: null,
     tutorOpen: false,
     tutorRoom: null,
     prompt: null,
@@ -161,6 +195,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     posttest: null,
     progress: {},
     battles: {},
+    npcs: {},
     story: [],
     shop: emptyShop(),
 
@@ -173,6 +208,7 @@ export const useGameStore = create<GameState>()((set, get) => {
         posttest: data?.posttest ?? null,
         progress: data?.rooms ?? {},
         battles: data?.battles ?? {},
+        npcs: data?.npcs ?? {},
         story: data?.story ?? [],
         shop: data?.shop ?? emptyShop(),
       }),
@@ -180,7 +216,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     setAccount: (account) => set({ account }),
 
     // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อ เลือกระดับความยาก และแบบทดสอบก่อนเรียน (GDD ข้อ 3)
-    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, battles: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
+    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, battles: {}, npcs: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
     continueGame: () => {
       const { profile, pretest } = get();
       set({ ...closed, screen: profile && pretest ? "hall" : "onboarding" });
@@ -212,7 +248,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     openStory: (beat) => set({ overlay: "story", storyBeat: beat, prompt: null }),
     finishStory: () => {
       const { storyBeat, story } = get();
-      set({ overlay: null, storyBeat: null, story: storyBeat && !story.includes(storyBeat) ? [...story, storyBeat] : story });
+      set({ overlay: null, storyBeat: null, musicCue: null, story: storyBeat && !story.includes(storyBeat) ? [...story, storyBeat] : story });
     },
     openBattle: (id) => set({ overlay: "battle", battleId: id, prompt: null }),
     recordBattle: (id, result) => {
@@ -228,6 +264,19 @@ export const useGameStore = create<GameState>()((set, get) => {
       return null;
     },
     equip: (kind, value) => set({ shop: equip(get().shop, kind, value) }),
+    openShop: (vendor) => set({ overlay: "shop", shopVendor: vendor ?? null, npcId: null, prompt: null }),
+    openNpc: (id) => set({ overlay: "npc", npcId: id, prompt: null }),
+    acceptQuest: (id) => updateNpc(id, () => ({ accepted: true })),
+    collectPickup: (id, index) => {
+      updateNpc(id, (record) => (record.accepted && !record.done && !record.found.includes(index) && index >= 0 && index < NPCS[id].pickups ? { found: [...record.found, index] } : {}));
+      return get().npcs[id]?.found.length ?? 0;
+    },
+    completeQuest: (id) => updateNpc(id, (record) => (record.found.length >= NPCS[id].pickups ? { done: true } : {})),
+    recordQuiz: (id, correct) => updateNpc(id, (record) => ({ best: Math.max(record.best, Math.min(NPCS[id].questions, Math.max(0, correct))), tries: record.tries + 1 })),
+    setMusicCue: (musicCue) => {
+      const current = get().musicCue;
+      if (current?.name !== musicCue?.name || (current?.variant ?? 0) !== (musicCue?.variant ?? 0)) set({ musicCue });
+    },
     consumeSupply: (supply) => {
       const { shop } = get();
       if (shop.supplies[supply] <= 0) return false;
@@ -247,7 +296,7 @@ export const useGameStore = create<GameState>()((set, get) => {
       set({ overlay: null, stationIndex: null, room: focusAfter(get()) });
     },
     openOverlay: (overlay) => set({ overlay, prompt: null }),
-    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, room: focusAfter(get()) }),
+    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, musicCue: null, room: focusAfter(get()) }),
     setTutorOpen: (tutorOpen, room) => set({ tutorOpen, tutorRoom: tutorOpen ? (room ?? get().room) : null }),
 
     completeMinigame: (result) => {
@@ -286,7 +335,7 @@ export const useGameStore = create<GameState>()((set, get) => {
   };
 });
 
-type Saved = Pick<GameState, "profile" | "pretest" | "posttest" | "progress" | "battles" | "story" | "shop">;
+type Saved = Pick<GameState, "profile" | "pretest" | "posttest" | "progress" | "battles" | "npcs" | "story" | "shop">;
 type Level = Pick<GameState, "profile">;
 type Run = Pick<GameState, "profile" | "progress" | "battles">;
 
@@ -360,16 +409,21 @@ export const armorParts = (state: Run): number => planOf(state).battles.filter((
 
 /**
  * ฉากเนื้อเรื่องที่ควรแสดงตอนนี้ (ยังไม่เคยดู) ไม่มีคืน null
- * บทนำ: เมื่อเข้าแล็บครั้งแรก, บรรยายสรุปของห้อง: เมื่อเข้าห้องนั้นครั้งแรก, บทส่งท้าย: เมื่อชนะครบทุกด่าน
+ * บทนำ: เมื่อเข้าแล็บครั้งแรก, ฉากหลังชนะไคจูประจำห้อง: ทันทีที่กลับจากด่านต่อสู้, บรรยายสรุปของห้อง: เมื่อเข้าห้องนั้นครั้งแรก, บทส่งท้าย: เมื่อชนะครบทุกด่าน
  */
 export function pendingStory(state: Pick<GameState, "screen" | "zone" | "story" | "pretest" | "progress" | "battles" | "profile">): string | null {
   if (state.screen !== "hall" && state.screen !== "hangar" && state.screen !== "room") return null;
   const unseen = (beat: string) => !state.story.includes(beat);
   if (state.pretest && unseen("prologue")) return "prologue";
+  const won = planOf(state).battles.find((battle) => state.battles[battle.id]?.won && winBeat(battle.id) in storyBeats && unseen(winBeat(battle.id)));
+  if (won) return winBeat(won.id);
   if (state.screen === "room" && state.zone !== null && unseen(zoneBeat(difficultyOf(state), state.zone))) return zoneBeat(difficultyOf(state), state.zone);
   if (allBattlesWon(state) && unseen("ending")) return "ending";
   return null;
 }
+
+/** รหัสฉากเนื้อเรื่องหลังชนะด่านต่อสู้ (มีเฉพาะไคจูประจำห้อง บอสใช้บทส่งท้าย) */
+export const winBeat = (battleId: string): string => `win-${battleId}`;
 
 export const coreCount = (state: Pick<GameState, "progress">): number =>
   Object.values(state.progress).filter((p) => p.core).length;
@@ -379,9 +433,9 @@ export const startTierOf = (state: Pick<GameState, "pretest" | "progress" | "pro
   roomStartTier(state.pretest?.correctByTopic[room] ?? 0, state.progress[room - 1]?.outcome ?? null, planOf(state).minTier);
 
 /** ข้อมูลที่ใช้คำนวณเครดิตวิจัย */
-export const earningOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "posttest">): Earning => ({ difficulty: state.profile?.difficulty, rooms: state.progress, battles: state.battles, posttest: state.posttest });
+export const earningOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "npcs" | "posttest">): Earning => ({ difficulty: state.profile?.difficulty, rooms: state.progress, battles: state.battles, npcs: state.npcs, posttest: state.posttest });
 
-export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "posttest" | "shop">): number => creditBalance(earningOf(state), state.shop);
+export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "battles" | "npcs" | "posttest" | "shop">): number => creditBalance(earningOf(state), state.shop);
 
 export const hasSave = (state: Saved): boolean => state.profile !== null || Object.keys(state.progress).length > 0;
 
@@ -393,6 +447,7 @@ const toSaveData = (state: Saved): SaveData => ({
   posttest: state.posttest,
   rooms: state.progress,
   battles: state.battles,
+  npcs: state.npcs,
   story: state.story,
   shop: state.shop,
 });
@@ -448,6 +503,7 @@ export async function connectProgressStore(store?: ProgressStore): Promise<() =>
       state.posttest === previous.posttest &&
       state.progress === previous.progress &&
       state.battles === previous.battles &&
+      state.npcs === previous.npcs &&
       state.story === previous.story &&
       state.shop === previous.shop
     )

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ROOM_COUNT, stationsOf } from "../content";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
+import { NPC_IDS, NPCS } from "../state/npcs";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
 import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMap, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
 
@@ -54,10 +55,17 @@ describe("แผนที่ของทุกฉาก", () => {
     for (const object of map.objects) {
       const size = sizes.get(object.prop);
       expect(size, object.prop).toBeDefined();
-      expect(size?.[0], object.prop).toBe((object.w ?? 1) * TILE);
+      // NPC ใช้ภาพตัวละคร 64×64 แบบเดียวกับผู้เล่น ยืนกลางช่องเดียว
+      if (object.kind !== "npc") expect(size?.[0], object.prop).toBe((object.w ?? 1) * TILE);
       if (object.mount) {
-        expect(isFloorCell(map, Math.floor(object.col), object.row), `${object.prop} ต้องอยู่บนผนัง`).toBe(false);
-        expect(isFloorCell(map, Math.floor(object.col), object.row + 1), `${object.prop} ต้องมีพื้นอยู่ข้างหน้า`).toBe(true);
+        for (let col = Math.floor(object.col); col < Math.ceil(object.col + (object.w ?? 1)); col++) {
+          expect(isFloorCell(map, col, object.row), `${object.prop} ต้องอยู่บนผนัง`).toBe(false);
+          expect(isFloorCell(map, col, object.row + 1), `${object.prop} ต้องมีพื้นอยู่ข้างหน้า`).toBe(true);
+        }
+      }
+      // ของที่วางราบกับพื้น (พรม ลายบนพื้น ของที่เก็บได้) ต้องอยู่บนพื้นทั้งชิ้น
+      if (object.flat) {
+        for (let col = Math.floor(object.col); col < Math.ceil(object.col + (object.w ?? 1)); col++) expect(isFloorCell(map, col, object.row), `${object.prop} ที่ ${col},${object.row} ต้องอยู่บนพื้น`).toBe(true);
       }
       for (const cell of blockedCells(object)) {
         const key = `${cell.col},${cell.row}`;
@@ -121,4 +129,39 @@ describe("แผนที่ของทุกฉาก", () => {
     expect(map.objects.find((o) => o.kind === "minigame")?.topic).toBeUndefined();
     expect(map.objects.find((o) => o.kind === "core")?.topic).toBe(ROOM_COUNT);
   });
+
+  it("NPC ประจำห้อง: ทุกระดับความยากมี NPC ครบทุกคน คนละหนึ่งที่ อยู่ในห้องของหัวข้อตัวเอง และของในเควสเสริมมีครบตามจำนวน", () => {
+    for (const difficulty of DIFFICULTIES) {
+      const placed = CAMPAIGN[difficulty].zones.flatMap((zone, i) => zoneMap(difficulty, i + 1).objects.filter((o) => o.kind === "npc").map((o) => ({ npc: o.npc, zone })));
+      expect(placed.map((p) => p.npc).sort(), difficulty).toEqual([...NPC_IDS].sort());
+      for (const { npc, zone } of placed) expect(zone.topics, `${difficulty} ${npc}`).toContain(NPCS[npc as keyof typeof NPCS].topic);
+      CAMPAIGN[difficulty].zones.forEach((_, i) => {
+        const map = zoneMap(difficulty, i + 1);
+        const here = map.objects.filter((o) => o.kind === "npc").map((o) => o.npc);
+        const found = map.objects.filter((o) => o.kind === "pickup");
+        // ของของเควสอยู่ในห้องเดียวกับ NPC เจ้าของเควส ลำดับไม่ซ้ำ และวางราบกับพื้น
+        for (const pickup of found) expect(here, `${difficulty} ห้อง ${i + 1} ${pickup.prop}`).toContain(pickup.npc);
+        for (const npc of here) {
+          const indexes = found.filter((o) => o.npc === npc).map((o) => o.index).sort();
+          expect(indexes, `${difficulty} ${npc}`).toEqual(Array.from({ length: NPCS[npc as keyof typeof NPCS].pickups }, (_, n) => n));
+        }
+        expect(found.every((o) => o.flat)).toBe(true);
+        // ของของเควสไม่วางทับกัน และไม่วางบนจุดเริ่มของผู้เล่น
+        const cells = found.map((o) => `${o.col},${o.row}`);
+        expect(new Set(cells).size).toBe(cells.length);
+        expect(cells).not.toContain(`${map.spawn.col},${map.spawn.row}`);
+      });
+    }
+  });
+
+  it("โถงและโรงเก็บหุ่นไม่มี NPC ประจำห้อง ของตกแต่งติดผนังของโถงไม่ชนประตูของทุกระดับ", () => {
+    for (const zones of [6, 3, 1]) {
+      const map = hallMapOf(zones);
+      expect(count(map, "npc") + count(map, "pickup")).toBe(0);
+      const mounted = map.objects.filter((o) => o.mount).flatMap((o) => Array.from({ length: o.w ?? 1 }, (_, n) => Math.floor(o.col) + n));
+      expect(new Set(mounted).size, `โถง ${zones} ประตู`).toBe(mounted.length);
+    }
+    expect(count(hangarMap, "npc")).toBe(0);
+  });
 });
+

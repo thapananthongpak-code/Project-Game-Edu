@@ -3,6 +3,7 @@ import { evaluateMinigame } from "./adaptive";
 import { BATTLE } from "./battle.config";
 import { CAMPAIGN, type Difficulty } from "./campaign";
 import { allBattlesWon, armorParts, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
+import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyShop } from "./progressStore";
 import { earnedCredits } from "./shop";
 import { REWARDS } from "./shop.config";
@@ -36,7 +37,7 @@ function grantCore(topic: number) {
 }
 
 beforeEach(() => {
-  useGameStore.setState({ progress: {}, battles: {}, pretest: null, posttest: null, story: [], shop: emptyShop(), zone: null, room: null, screen: "hall", overlay: null });
+  useGameStore.setState({ progress: {}, battles: {}, npcs: {}, pretest: null, posttest: null, story: [], shop: emptyShop(), zone: null, room: null, screen: "hall", overlay: null, musicCue: null, npcId: null, shopVendor: null });
   setDifficulty("easy");
 });
 
@@ -264,8 +265,27 @@ describe("เนื้อเรื่อง (GDD 2)", () => {
     expect(pendingStory(useGameStore.getState())).toBeNull();
   });
 
+  it("ชนะไคจูประจำห้องแล้วเห็นฉากหลังชนะหนึ่งครั้ง ก่อนบรรยายสรุปของห้องถัดไป แพ้หรือซ้อมรบซ้ำไม่แสดงซ้ำ", () => {
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "room-1"] });
+    useGameStore.getState().enterRoom(1);
+    useGameStore.getState().collectCore();
+    useGameStore.getState().exitToHall();
+    useGameStore.getState().enterHangar();
+    useGameStore.getState().recordBattle("k1", { won: false, asked: 3, correct: 0 });
+    expect(pendingStory(useGameStore.getState())).toBeNull();
+    useGameStore.getState().recordBattle("k1", win);
+    expect(pendingStory(useGameStore.getState())).toBe("win-k1");
+    useGameStore.getState().openStory("win-k1");
+    useGameStore.getState().finishStory();
+    useGameStore.getState().recordBattle("k1", win);
+    expect(pendingStory(useGameStore.getState())).toBeNull();
+    useGameStore.getState().exitToHall();
+    useGameStore.getState().enterRoom(2);
+    expect(pendingStory(useGameStore.getState())).toBe("room-2");
+  });
+
   it("บทส่งท้ายแสดงเมื่อชนะครบทุกด่าน ไม่แสดงบนหน้าเมนู", () => {
-    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6"] });
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5"] });
     for (let room = 1; room <= 6; room++) finishRoom(room);
     useGameStore.getState().exitToHall();
     expect(allBattlesWon(useGameStore.getState())).toBe(true);
@@ -360,5 +380,75 @@ describe("เครดิตวิจัยและร้านสหกรณ�
     useGameStore.setState({ story: ["prologue"] });
     useGameStore.getState().newGame();
     expect(useGameStore.getState()).toMatchObject({ story: [], shop: emptyShop(), progress: {} });
+  });
+});
+
+describe("NPC ประจำห้อง (GDD 16)", () => {
+  it("เควสเสริม: ต้องรับเควสก่อนจึงเก็บของได้ เก็บซ้ำไม่นับ เก็บครบแล้วจึงส่งได้ และได้เครดิตครั้งเดียว", () => {
+    const store = () => useGameStore.getState();
+    expect(store().collectPickup("mechanic", 0)).toBe(0);
+    store().acceptQuest("mechanic");
+    expect(store().collectPickup("mechanic", 0)).toBe(1);
+    expect(store().collectPickup("mechanic", 0)).toBe(1);
+    expect(store().collectPickup("mechanic", 99)).toBe(1);
+    store().completeQuest("mechanic");
+    expect(store().npcs.mechanic.done).toBe(false);
+    expect(creditsOf(store())).toBe(0);
+    for (let index = 1; index < NPCS.mechanic.pickups; index++) store().collectPickup("mechanic", index);
+    store().completeQuest("mechanic");
+    expect(store().npcs.mechanic).toMatchObject({ done: true, found: [0, 1, 2] });
+    expect(creditsOf(store())).toBe(NPC_REWARDS.quest);
+    store().completeQuest("mechanic");
+    expect(store().collectPickup("mechanic", 1)).toBe(3);
+    expect(creditsOf(store())).toBe(NPC_REWARDS.quest);
+  });
+
+  it("ถามตอบพิเศษ: เก็บรอบที่ดีที่สุด เครดิตคิดจากรอบนั้น เล่นซ้ำแล้วได้น้อยลงเครดิตไม่ลด และคูณตามระดับความยาก", () => {
+    const store = () => useGameStore.getState();
+    store().recordQuiz("coach", 2);
+    expect(creditsOf(store())).toBe(2 * NPC_REWARDS.quizPerCorrect);
+    store().recordQuiz("coach", 1);
+    store().recordQuiz("coach", 99);
+    expect(store().npcs.coach).toMatchObject({ best: NPCS.coach.questions, tries: 3 });
+    expect(creditsOf(store())).toBe(NPCS.coach.questions * NPC_REWARDS.quizPerCorrect);
+    setDifficulty("hard");
+    expect(creditsOf(store())).toBe(NPCS.coach.questions * NPC_REWARDS.quizPerCorrect * CAMPAIGN.hard.creditMultiplier);
+  });
+
+  it("กิจกรรมเสริมไม่มีผลต่อการปลดล็อกห้อง ระดับความช่วยเหลือ หรือขั้นตอนของหัวข้อ", () => {
+    const store = () => useGameStore.getState();
+    useGameStore.setState({ pretest: pretest({ 1: 1 }) });
+    const before = [isRoomUnlocked(store(), 2), startTierOf(store(), 1), nextStepOf(store(), 1), pendingBattle(store())];
+    store().acceptQuest("mechanic");
+    for (let index = 0; index < NPCS.mechanic.pickups; index++) store().collectPickup("mechanic", index);
+    store().completeQuest("mechanic");
+    store().recordQuiz("coach", 4);
+    expect([isRoomUnlocked(store(), 2), startTierOf(store(), 1), nextStepOf(store(), 1), pendingBattle(store())]).toEqual(before);
+    expect(store().progress).toEqual({});
+  });
+
+  it("ร้านพิเศษและคอสตูมของพี่บิต: ซื้อแล้วใช้ทันที สลับกลับรูปเดิมได้ โมดูลซื้อได้ครั้งเดียว", () => {
+    const store = () => useGameStore.getState();
+    for (let room = 1; room <= 4; room++) finishRoom(room);
+    store().openShop("archivist");
+    expect(store()).toMatchObject({ overlay: "shop", shopVendor: "archivist" });
+    expect(store().buy("bit-explorer")).toBeNull();
+    expect(store().shop).toMatchObject({ bit: "explorer", owned: ["bit-explorer"] });
+    store().equip("bit", "classic");
+    expect(store().shop.bit).toBe("classic");
+    store().equip("bit", "gold");
+    expect(store().shop.bit).toBe("classic");
+    expect(store().buy("module-scanner")).toBeNull();
+    expect(store().buy("module-scanner")).toBe("owned");
+    store().closeOverlay();
+    expect(store()).toMatchObject({ overlay: null, shopVendor: null });
+    store().openShop();
+    expect(store().shopVendor).toBeNull();
+  });
+
+  it("เริ่มเกมใหม่: กิจกรรมเสริมกลับเป็นค่าเริ่มต้น", () => {
+    useGameStore.getState().recordQuiz("coach", 3);
+    useGameStore.getState().newGame();
+    expect(useGameStore.getState().npcs).toEqual({});
   });
 });

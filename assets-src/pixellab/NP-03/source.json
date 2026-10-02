@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "elderly woman archivist with gray hair in a bun, round glasses, green cardigan and a long apron, holding a stack of folders, gentle smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "ป้าดา ผู้ดูแลคลัง (ห้อง 3 ร้านพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "9587718a-3f11-4cfa-bce9-834803f57b39",
+  "generatedAt": "2026-10-02T08:38:30.274Z"
+}

@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "young woman mechanic with short brown hair under a yellow cap, orange jumpsuit with rolled sleeves, holding a big wrench, cheerful face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "ช่างเมย์ ช่างซ่อมหุ่น (ห้อง 1 เควสเสริม)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "6d588656-eee9-408b-8514-6820ca7ba1e3",
+  "generatedAt": "2026-10-02T08:36:41.608Z"
+}

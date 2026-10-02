@@ -6,6 +6,7 @@ import { fmt, ui } from "../content/ui-strings";
 import { BATTLE } from "../state/battle.config";
 import { zoneOfTopic } from "../state/campaign";
 import { armorParts, cloudEnabled, coreCount, creditsOf, difficultyOf, fieldComplete, isRoomUnlocked, isTopicOpen, planOf, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
+import { NPC_ACTIVITY_TOTAL, npcActivitiesDone, NPCS } from "../state/npcs";
 import { art } from "./art";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
@@ -22,6 +23,7 @@ export function QuestLog() {
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const progress = useGameStore((s) => s.progress);
   const battles = useGameStore((s) => s.battles);
+  const npcs = useGameStore((s) => s.npcs);
   const outfit = useGameStore((s) => s.shop.outfit);
   const credits = useGameStore(creditsOf);
   const audio = useAudioSettings();
@@ -173,6 +175,31 @@ export function QuestLog() {
                 <span className={step.done ? "text-slate line-through" : "font-semibold"}>{step.text}</span>
               </li>
             ))}
+          </ul>
+        </section>
+
+        <section data-testid="questlog-side">
+          <h3 className="mb-1 text-xs font-bold text-slate">{fmt(ui.questLog.side, { n: npcActivitiesDone(npcs), total: NPC_ACTIVITY_TOTAL })}</h3>
+          <ul className="flex flex-col gap-1">
+            {Object.values(NPCS)
+              .filter((spec) => spec.role !== "shop")
+              .map((spec) => {
+                const record = npcs[spec.id];
+                const id = spec.id as "mechanic" | "foreman" | "coach" | "director";
+                const done = spec.role === "quest" ? Boolean(record?.done) : (record?.tries ?? 0) > 0;
+                const started = done || Boolean(record?.accepted);
+                const text =
+                  spec.role === "quest"
+                    ? fmt(ui.questLog.sideQuest, { name: ui.npc[id].name, item: ui.npc[id as "mechanic" | "foreman"].item, n: record?.found.length ?? 0, total: spec.pickups })
+                    : fmt(ui.questLog.sideQuiz, { name: ui.npc[id].name, n: record?.best ?? 0, total: spec.questions });
+                return (
+                  <li key={spec.id} className="flex items-center gap-2 text-sm" data-done={done}>
+                    <img src={art.npc(spec.id)} alt="" className="pixelated h-8 w-8 shrink-0" />
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 border-ink text-sm font-bold ${done ? "bg-correct text-ink" : "bg-paper"}`}>{done ? "✓" : ""}</span>
+                    <span className={done ? "text-slate" : "font-semibold"}>{started ? text : `${ui.npc[id].name}: ${ui.questLog.sideOpen}`}</span>
+                  </li>
+                );
+              })}
           </ul>
         </section>
       </div>

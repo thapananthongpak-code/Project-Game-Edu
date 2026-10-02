@@ -32,15 +32,16 @@ function fakeStorage(initial: Record<string, string> = {}) {
 const won = { won: true, wins: 1, sorties: 1, asked: 5, correct: 4 };
 
 const sample: SaveData = {
-  version: 5,
+  version: 6,
   updatedAt: "2026-10-02T01:00:00.000Z",
   profile: { name: "ทดสอบ", difficulty: "normal", classCode: "PVC1-67", avatar: "b" },
   pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
   posttest: null,
   rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false } } },
   battles: { n1: won },
-  story: ["prologue", "zone-n1"],
-  shop: { spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1, reboot: 1 }, outfit: "engineer", paint: "standard" },
+  npcs: { mechanic: { accepted: true, found: [0, 2], done: false, best: 0, tries: 0 }, coach: { accepted: false, found: [], done: false, best: 3, tries: 2 } },
+  story: ["prologue", "zone-n1", "win-n1"],
+  shop: { spent: 325, owned: ["outfit-engineer", "bit-ninja", "module-scanner"], supplies: { ...emptyShop().supplies, "repair-kit": 1, reboot: 1 }, outfit: "engineer", paint: "standard", bit: "ninja" },
 };
 
 const withImage = (data: SaveData, image: string | null): SaveData => ({
@@ -94,6 +95,7 @@ describe("migrateSave", () => {
       ...emptySave(),
       rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } },
       battles: { k1: { ...emptyBattle(), won: true, wins: 1 } },
+      story: ["win-k1"],
     });
   });
 
@@ -122,12 +124,12 @@ describe("migrateSave", () => {
       rooms: { 1: { ...emptyRoom(), core: true }, 2: { ...emptyRoom(), stationsSeen: 2 } },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v3))) as SaveData;
-    expect(save.version).toBe(5);
+    expect(save.version).toBe(6);
     expect(save.updatedAt).toBe(v3.updatedAt);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1", avatar: "a" });
     expect(save.pretest).toEqual(sample.pretest);
     expect(save.battles).toEqual({ k1: { ...emptyBattle(), won: true, wins: 1 } });
-    expect(save.story).toEqual([]);
+    expect(save.story).toEqual(["win-k1"]);
     expect(save.shop).toEqual(emptyShop());
   });
 
@@ -149,7 +151,7 @@ describe("migrateSave", () => {
       shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v4))) as SaveData;
-    expect(save.version).toBe(5);
+    expect(save.version).toBe(6);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1-67", avatar: "b" });
     expect(save.battles).toEqual({
       k1: { won: true, wins: 1, sorties: 2, asked: 9, correct: 6 },
@@ -158,10 +160,64 @@ describe("migrateSave", () => {
     });
     expect(save.rooms[1]).toEqual({ ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true });
     expect("battle" in save.rooms[1]).toBe(false);
-    expect(save.story).toEqual(["prologue", "room-1"]);
-    expect(save.shop).toEqual({ spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1 }, outfit: "engineer", paint: "standard" });
+    // ด่านที่ชนะไปแล้วถือว่าดูฉากหลังชนะแล้ว ผู้เล่นเดิมจึงไม่เห็นฉากย้อนหลังต่อกันรวดเดียว
+    expect(save.story).toEqual(["prologue", "room-1", "win-k1", "win-omega"]);
+    expect(save.npcs).toEqual({});
+    expect(save.shop).toEqual({ spent: 125, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, "repair-kit": 1 }, outfit: "engineer", paint: "standard", bit: "classic" });
     // ย้ายซ้ำได้ผลเดิม
     expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
+  });
+
+  it("รุ่น 5 (ก่อนมี NPC ประจำห้อง คอสตูมของพี่บิต และภาพเนื้อเรื่องหลังชนะด่าน): ความคืบหน้าคงเดิม ได้ช่องใหม่เป็นค่าเริ่มต้น", () => {
+    const v5 = {
+      version: 5,
+      updatedAt: "2026-10-02T03:00:00.000Z",
+      profile: { name: "ทดสอบ", difficulty: "normal", classCode: "PVC1-67", avatar: "b" },
+      pretest: sample.pretest,
+      posttest: null,
+      rooms: sample.rooms,
+      battles: { n1: won, n2: { won: false, wins: 0, sorties: 1, asked: 3, correct: 1 } },
+      story: ["prologue", "zone-n1"],
+      shop: { spent: 100, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, shield: 2 }, outfit: "engineer", paint: "standard" },
+    };
+    const save = migrateSave(JSON.parse(JSON.stringify(v5))) as SaveData;
+    expect(save.version).toBe(6);
+    expect([save.profile, save.rooms, save.battles]).toEqual([v5.profile, v5.rooms, v5.battles]);
+    expect(save.story).toEqual(["prologue", "zone-n1", "win-n1"]);
+    expect(save.npcs).toEqual({});
+    expect(save.shop).toEqual({ ...v5.shop, bit: "classic" });
+    // ข้อมูลรุ่นปัจจุบันไม่ถูกเติมฉากให้เอง: ผู้เล่นที่เพิ่งชนะด่านต้องได้เห็นฉากหลังชนะ
+    const fresh = migrateSave({ ...JSON.parse(JSON.stringify(save)), battles: { ...save.battles, n2: won } }) as SaveData;
+    expect(fresh.story).toEqual(save.story);
+  });
+
+  it("กิจกรรมเสริมกับ NPC ที่ผิดรูป: ตัด NPC ที่ไม่รู้จัก ชิ้นที่เก็บต้องอยู่ในช่วงของเควส ส่งของได้เมื่อเก็บครบ และคะแนนถามตอบไม่เกินจำนวนข้อ", () => {
+    const save = migrateSave({
+      ...JSON.parse(JSON.stringify(sample)),
+      npcs: {
+        mechanic: { accepted: false, found: [0, 0, 1, 7, -1, "x"], done: true, best: 99 },
+        foreman: { found: [0, 1, 2, 3], done: true },
+        coach: { best: 99, tries: 2.7, done: true, found: [0] },
+        archivist: { done: true },
+        stranger: { done: true },
+        director: null,
+      },
+    }) as SaveData;
+    expect(Object.keys(save.npcs).sort()).toEqual(["archivist", "coach", "director", "foreman", "mechanic"]);
+    // เก็บได้ 2 จาก 3 ชิ้น: ยังส่งไม่ได้ แต่ถือว่ารับเควสแล้ว
+    expect(save.npcs.mechanic).toEqual({ accepted: true, found: [0, 1], done: false, best: 0, tries: 0 });
+    expect(save.npcs.foreman).toMatchObject({ accepted: true, found: [0, 1, 2, 3], done: true });
+    expect(save.npcs.coach).toEqual({ accepted: false, found: [], done: false, best: 4, tries: 2 });
+    expect(save.npcs.archivist).toMatchObject({ done: false });
+    expect(save.npcs.director).toEqual({ accepted: false, found: [], done: false, best: 0, tries: 0 });
+  });
+
+  it("คอสตูมและโมดูลของพี่บิต: ใช้คอสตูมได้เฉพาะที่ซื้อแล้ว", () => {
+    const shop = (patch: object) => (migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop: { ...sample.shop, ...patch } }) as SaveData).shop;
+    expect(shop({}).bit).toBe("ninja");
+    expect(shop({ bit: "gold" }).bit).toBe("classic");
+    expect(shop({ bit: "robot-dragon" }).bit).toBe("classic");
+    expect(shop({ owned: ["module-laser", "bit-star", "module-teleport"], bit: "star" })).toMatchObject({ owned: ["module-laser", "bit-star"], bit: "star" });
   });
 
   it("ผลด่านต่อสู้ที่ผิดรูป: ตัดรหัสด่านที่ไม่ถูกรูปแบบ เติมตัวเลขที่หายไป และด่านที่ชนะแล้วนับว่าชนะอย่างน้อยหนึ่งครั้ง", () => {
@@ -184,12 +240,12 @@ describe("migrateSave", () => {
       shop: { spent: -5, owned: ["outfit-pilot", "outfit-pilot", "free-everything", "supply-shield", 7], supplies: { "repair-kit": 99, shield: "x" }, outfit: "guardian", paint: "gold" },
     }) as SaveData;
     expect(save.story).toEqual(["prologue"]);
-    expect(save.shop).toEqual({ spent: 0, owned: ["outfit-pilot"], supplies: { ...emptyShop().supplies, "repair-kit": 3 }, outfit: "lab", paint: "standard" });
+    expect(save.shop).toEqual({ spent: 0, owned: ["outfit-pilot"], supplies: { ...emptyShop().supplies, "repair-kit": 3 }, outfit: "lab", paint: "standard", bit: "classic" });
   });
 
   it("ข้อมูลผิดรูป (ไฟล์เสีย หรือถูกแก้จากนอกเกม): เติมค่าเริ่มต้นทีละช่อง ไม่ปล่อยค่าผิดชนิดเข้าเกมหรือแดชบอร์ดครู", () => {
     const hostile = {
-      version: 5,
+      version: 6,
       updatedAt: 5,
       profile: { name: "ก".repeat(200), style: "telepathy", classCode: 7 },
       pretest: { form: "Z", correctByTopic: { 1: "สอง", 2: 2 }, items: [{ id: "A1a", topic: 1, correct: "yes" }, "junk", null], completedAt: {} },

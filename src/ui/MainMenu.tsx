@@ -160,7 +160,7 @@ export function MainMenu() {
       <div className="panel w-full max-w-md p-6 text-center">
         <div className="flex items-end justify-center gap-1">
           <img src={art.player("a", "lab")} alt="" className="pixelated h-20 w-20" />
-          <img src={art.mentor} alt="" className="pixelated h-24 w-24" />
+          <img src={art.bit("classic")} alt="" className="pixelated h-24 w-24" />
           <img src={art.player("b", "lab")} alt="" className="pixelated h-20 w-20" />
         </div>
         <h1 className="mt-2 text-3xl font-extrabold text-teal-dark">{ui.gameTitle}</h1>

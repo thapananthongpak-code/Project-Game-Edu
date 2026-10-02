@@ -3,6 +3,7 @@ import { archiveOf, stationsOf } from "../content";
 import { fmt, ui } from "../content/ui-strings";
 import { ARCHIVE, useGameStore } from "../state/gameStore";
 import { PageView } from "./ContentView";
+import { useBit } from "./useBit";
 
 /**
  * กล่องบทสนทนาของพี่บิต: บทสอนเป็นข้อความจาก course.json ทีละหน้า
@@ -13,6 +14,7 @@ export function DialogueBox() {
   const stationIndex = useGameStore((s) => s.stationIndex);
   const tutorOpen = useGameStore((s) => s.tutorOpen);
   const closeDialogue = useGameStore((s) => s.closeDialogue);
+  const bit = useBit();
   const [pageIndex, setPageIndex] = useState(0);
 
   const pages = useMemo(() => {
@@ -58,7 +60,7 @@ export function DialogueBox() {
     <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center p-2 sm:p-3" data-testid="dialogue" data-archive={stationIndex === ARCHIVE || undefined}>
       <div className="panel flex w-full max-w-3xl gap-3 p-3">
         <div className="hidden shrink-0 flex-col items-center sm:flex">
-          <img src="assets/characters/ch_mentor_south.png" alt="" className="pixelated h-20 w-20" />
+          <img src={bit} alt="" className="pixelated h-20 w-20" />
           <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-bold">{ui.mentorName}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">

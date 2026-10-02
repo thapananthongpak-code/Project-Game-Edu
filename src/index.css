@@ -187,6 +187,206 @@ canvas {
   outline-offset: -6px;
   border-radius: 50%;
 }
+/* เอฟเฟกต์การโจมตี: ซ่อนอยู่ (opacity 0) แล้วแสดงด้วยแอนิเมชันครั้งเดียว เมื่อปิดแอนิเมชันจึงไม่ค้างบนจอ */
+.battle-fx {
+  position: absolute;
+  bottom: 24%;
+  width: 20%;
+  opacity: 0;
+  animation-fill-mode: both;
+  animation-timing-function: ease-out;
+}
+.battle-fx-big {
+  width: 30%;
+  bottom: 18%;
+}
+.battle-fx-to-kaiju {
+  right: 10%;
+}
+.battle-fx-to-robot {
+  left: 10%;
+}
+@keyframes battle-fx-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+.battle-fx-pop {
+  animation-name: battle-fx-pop;
+  animation-duration: 0.45s;
+}
+/* กระสุนพุ่งข้ามฉากไปหาเป้า (ความยาวตรงกับ SHOT_MS ใน Battle.tsx) */
+@keyframes battle-fx-shot-right {
+  0% {
+    opacity: 1;
+    transform: translateX(-260%);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes battle-fx-shot-left {
+  0% {
+    opacity: 1;
+    transform: translateX(260%);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+.battle-fx-shot {
+  animation-duration: 0.26s;
+  animation-timing-function: linear;
+}
+.battle-fx-shot.battle-fx-to-kaiju {
+  animation-name: battle-fx-shot-right;
+}
+.battle-fx-shot.battle-fx-to-robot {
+  animation-name: battle-fx-shot-left;
+}
+/* พี่บิตยิงจากมุมซ้ายบนลงไปหาไคจู */
+@keyframes battle-fx-assist {
+  0% {
+    opacity: 1;
+    transform: translate(-330%, -150%) rotate(18deg) scale(0.7);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(18deg) scale(0.7);
+  }
+}
+.battle-fx-assist {
+  animation-name: battle-fx-assist;
+  animation-duration: 0.26s;
+  animation-timing-function: linear;
+}
+@keyframes battle-fx-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(25%);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-70%);
+  }
+}
+.battle-fx-rise {
+  animation-name: battle-fx-rise;
+  animation-duration: 0.8s;
+}
+/* ตัวเลขความเสียหายและพลังที่ฟื้น ลอยขึ้นจากตัวละคร */
+@keyframes battle-float {
+  0% {
+    opacity: 0;
+    transform: translateY(40%) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.25);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-140%) scale(1);
+  }
+}
+.battle-float {
+  position: absolute;
+  top: 34%;
+  opacity: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-hint);
+  -webkit-text-stroke: 4px var(--color-ink);
+  paint-order: stroke fill;
+  animation: battle-float 0.95s ease-out both;
+}
+.battle-float-kaiju {
+  right: 18%;
+}
+.battle-float-robot {
+  left: 18%;
+  color: #ff8a80;
+}
+.battle-float-heal {
+  color: #a7f070;
+}
+/* ฉากสั่นเมื่อการ์เดียนโดนโจมตีหรือบอสกลายร่าง */
+@keyframes battle-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: translate(-1.2%, 0.8%);
+  }
+  30% {
+    transform: translate(1.2%, -0.8%);
+  }
+  45% {
+    transform: translate(-0.9%, -0.6%);
+  }
+  60% {
+    transform: translate(0.9%, 0.6%);
+  }
+  80% {
+    transform: translate(-0.4%, 0);
+  }
+}
+.battle-shake {
+  animation: battle-shake 0.42s linear 0.18s;
+}
+/* ภาพเนื้อเรื่องของร่างใหม่ตัดเข้ามาตอนบอสกลายร่าง */
+@keyframes battle-cutin {
+  0% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.battle-cutin {
+  opacity: 0;
+  animation: battle-cutin 1.7s ease-out both;
+}
 /* บอสกลายร่าง: ร่างใหม่ปรากฏขึ้นพร้อมแสงวาบ */
 @keyframes battle-transform {
   0% {

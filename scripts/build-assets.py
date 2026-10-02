@@ -370,7 +370,10 @@ def import_generated(asset, source):
             bottom -= 1
         images[key] = scene.crop((0, top, scene.width, bottom))
         asset["size"] = [scene.width, bottom - top]
-    elif asset["kind"] in ("icon", "portrait"):
+    elif asset["kind"] == "npc":
+        key = next(iter(asset["files"]))
+        images[key] = normalize_sprite(Image.open(folder / "south.png"), source.get("postprocess"))
+    elif asset["kind"] in ("icon", "portrait", "fx"):
         # ใช้ภาพตามที่เจนมา ต้องได้ขนาดตรงกับที่เกมใช้
         key = next(iter({**asset["files"], **asset.get("web", {})}))
         icon = Image.open(folder / "image.png").convert("RGBA")
@@ -426,6 +429,12 @@ STORY_COMPOSITES = {
 STORY_CORES = ("st_prologue_4", "st_corridor")
 # บทส่งท้ายช่องที่ 1: หุ่นการ์เดียนของเกมยืนอยู่ โอเมก้าล้มอยู่ข้างหลัง (ภาพที่เจนได้หุ่นหน้าตาไม่ตรงกับการ์เดียน จึงประกอบจากภาพของเกมเอง)
 STORY_VICTORY = ("st_ending_1", "bg_battle_5", "bt_robot", "bt_kaiju_6")
+# ภาพหลังชนะด่าน: ไฟล์ -> (ฉากหลัง, คู่ต่อสู้ที่ล้มแล้ว) ประกอบแบบเดียวกับ STORY_VICTORY
+STORY_WINS = {
+    **{f"st_win_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(1, 6)},
+    "st_win_boss_2": ("bg_battle_5", "bt_boss_2"),
+    "st_win_boss_3": ("bg_battle_5", "bt_boss_3"),
+}
 KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
 # วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
 ROOM_PROPS = [
@@ -443,6 +452,26 @@ ROOM_PROPS = [
     ("PR-601", "pr_r6_portal_pc", (64, 64)), ("PR-602", "pr_r6_webcam", (32, 64)), ("PR-606", "pr_r6_result_board", (64, 64)),
     ("PR-607", "pr_r6_checklist_stand", (32, 64)), ("PR-608", "pr_r6_cert_printer", (64, 64)),
 ]
+
+# คอสตูมของพี่บิต: (รหัส, ชื่อคอสตูม) ไฟล์คือ ch_mentor_<ชื่อ>_south
+BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-24", "gold"), ("CH-25", "explorer"), ("CH-26", "star")]
+# NPC ประจำห้อง: (รหัส, ไฟล์)
+NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director")]
+# เอฟเฟกต์ของฉากต่อสู้: (รหัส, ไฟล์, ทิศที่ภาพหัน)
+BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX-03", "fx_bolt", "east"), ("FX-04", "fx_fireball", "west"), ("FX-05", "fx_shield", "east"), ("FX-06", "fx_spark", "east")]
+# ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
+DECOR_PROPS = [
+    ("PR-Q01", "pr_pickup_bolt", (32, 32)), ("PR-Q02", "pr_pickup_gear", (32, 32)),
+    ("PR-D01", "pr_decor_window", (64, 32)), ("PR-D02", "pr_decor_wall_screens", (64, 32)), ("PR-D03", "pr_decor_rug", (64, 64)),
+    ("PR-D04", "pr_decor_crates", (32, 64)), ("PR-D05", "pr_decor_vending", (32, 64)), ("PR-D06", "pr_decor_lamp", (32, 64)),
+    ("PR-D07", "pr_decor_tool_rack", (64, 32)), ("PR-D08", "pr_decor_energy_tanks", (64, 64)), ("PR-D09", "pr_decor_bookshelf", (64, 64)),
+    ("PR-D10", "pr_decor_water_cooler", (32, 64)), ("PR-D11", "pr_decor_trophy_case", (64, 64)), ("PR-D12", "pr_decor_hazard_floor", (64, 64)),
+    # วัตถุจากรายการในข้อ 5.3 ที่ใช้เป็นของตกแต่ง
+    ("PR-105", "pr_r1_ring_emblem", (64, 64)), ("PR-205", "pr_r2_cluster_table", (64, 64)), ("PR-207", "pr_r2_compare_board", (64, 64)),
+    ("PR-304", "pr_r3_label_printer", (32, 32)), ("PR-306", "pr_r3_compare_board", (64, 64)), ("PR-307", "pr_r3_intake_table", (64, 32)),
+    ("PR-507", "pr_r5_light_switch", (32, 32)), ("PR-603", "pr_r6_poster_rock", (32, 32)), ("PR-604", "pr_r6_poster_paper", (32, 32)), ("PR-605", "pr_r6_poster_scissors", (32, 32)),
+]
+
 
 def art_guide_names():
     """ไฟล์ -> ชื่อชิ้นงานตามตารางใน docs/ART_GUIDE.md"""
@@ -547,9 +576,40 @@ def main():
         },
     }
 
+    def bit_skin(asset_id, skin):
+        key = f"ch_mentor_{skin}_south"
+        return {
+            "id": asset_id, "kind": "sprite", "name": names[f"ch_mentor_{skin}"], "requested": True, "size": [64, 64],
+            "files": {key: f"characters/{key}.png"},
+            "draw": {key: lambda: draw_mentor("south")},
+            "pixellab": {
+                "tool": "create_image_pixflux",
+                "arguments": {"description": prompts[f"ch_mentor_{skin}"], **IMAGE_SETTINGS},
+                "fetchTool": "get_image",
+            },
+        }
+
+    def npc(asset_id, base):
+        """NPC ประจำห้อง: ตัวละครแบบเดียวกับผู้เล่น แต่ใช้ภาพหันหน้าตรงภาพเดียว ไม่มีแอนิเมชันเดิน"""
+        return {
+            "id": asset_id, "kind": "npc", "name": names[base], "requested": True, "size": [64, 64],
+            "files": {base: f"characters/{base}.png"},
+            "draw": {base: lambda: draw_player("south", coat=MIST, long_hair=False)},
+            "pixellab": {
+                "tool": "create_character",
+                "arguments": {"description": prompts[base], "name": names[base], **CHARACTER_SETTINGS},
+                "fetchTool": "get_character",
+            },
+        }
+
+    def battle_fx(asset_id, base, direction):
+        return image(asset_id, base, (64, 64), lambda: draw_blob(64, YELLOW, PAPER), "fx", {**BATTLE_SETTINGS, "direction": direction}, "battle", web=True)
+
     assets = [
         *[player(*spec) for spec in PLAYER_CHARACTERS],
         mentor,
+        *[bit_skin(*spec) for spec in BIT_SKINS],
+        *[npc(*spec) for spec in NPCS],
         *[room_tileset(room) for room in ROOM_COLORS],
         tileset("TS-00", "ts_common", "ไทล์เซตส่วนกลาง (โถงทางเดิน)", True,
                 lambda: draw_floor("#C9D6E0", MIST), lambda: draw_wall(SLATE, INK, stripe=YELLOW)),
@@ -562,6 +622,7 @@ def main():
         prop("PR-C05", "pr_notebook_desk", (64, 64), draw_notebook_desk),
         prop("PR-102", "pr_r1_learning_machine", (64, 64), draw_learning_machine),
         *[prop(asset_id, base, size) for asset_id, base, size in ROOM_PROPS],
+        *[prop(asset_id, base, size) for asset_id, base, size in DECOR_PROPS],
         prop("PR-H01", "pr_shop", (64, 64), lambda: draw_block(64, 64, YELLOW, SLATE)),
         prop("PR-H02", "pr_hangar_gate", (64, 64), lambda: draw_block(64, 64, STEEL, YELLOW)),
         prop("PR-H03", "pr_hall_plant", (32, 64), lambda: draw_block(32, 64, GREEN, PAPER)),
@@ -573,6 +634,7 @@ def main():
         *[core(room) for room in ROOM_COLORS],
         image("BT-00", "bt_robot", (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "battle", {**BATTLE_SETTINGS, "direction": "east"}, "battle", web=True),
         *[kaiju(n) for n in KAIJU_COLORS],
+        *[battle_fx(*spec) for spec in BATTLE_FX],
         image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         image("BT-08", "bt_boss_3", (128, 128), lambda: draw_blob(128, INK, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         *[image(asset_id, key, (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "story", web=True) for asset_id, key in STORY_PANELS],
@@ -607,8 +669,20 @@ def main():
             images[key].save(target)
         out.append(asset)
 
-    # ภาพประกอบเนื้อเรื่องของแต่ละด่าน: ฉากหลังของด่าน + ไคจูตัวนั้นยืนอยู่ทางขวา (ไม่ใช้เครดิตเจน)
     built = {key: ASSETS / path for a in out for key, path in {**a["files"], **a.get("web", {})}.items()}
+
+    # โปสเตอร์ท่ามือของห้อง 6: ภาพที่เจนได้เป็นมือเปล่าไม่มีกรอบ จึงวางลงบนกระดาษโปสเตอร์ที่วาดเอง
+    for key in ("pr_r6_poster_rock", "pr_r6_poster_paper", "pr_r6_poster_scissors"):
+        hand = Image.open(built[key]).convert("RGBA")
+        hand = hand.crop(hand.getbbox())
+        scale = min(24 / hand.width, 24 / hand.height, 1)
+        hand = hand.resize((max(1, round(hand.width * scale)), max(1, round(hand.height * scale))), Image.NEAREST)
+        poster, d = canvas(32, 32)
+        d.rectangle((1, 1, 30, 30), fill=CREAM, outline=INK, width=2)
+        poster.alpha_composite(hand, ((32 - hand.width) // 2, (32 - hand.height) // 2))
+        poster.save(built[key])
+
+    # ภาพประกอบเนื้อเรื่องของแต่ละด่าน: ฉากหลังของด่าน + ไคจูตัวนั้นยืนอยู่ทางขวา (ไม่ใช้เครดิตเจน)
     for key, (backdrop_key, kaiju_key) in STORY_COMPOSITES.items():
         scene = Image.open(built[backdrop_key]).convert("RGBA")
         monster = Image.open(built[kaiju_key]).convert("RGBA")
@@ -633,20 +707,50 @@ def main():
     out.append({"id": key.upper().replace("_", "-"), "kind": "composite", "name": f"ภาพประกอบเนื้อเรื่อง ({corridor_key} + แกน AI 6 ชิ้น)", "requested": False, "size": list(scene.size),
                 "files": {}, "web": {key: f"story/{key}.png"}, "status": "composed", "composedFrom": [corridor_key, *[f"core_{n}" for n in range(1, 7)]]})
 
-    key, backdrop_key, robot_key, kaiju_key = STORY_VICTORY
-    scene = Image.open(built[backdrop_key]).convert("RGBA")
-    fallen = Image.open(built[kaiju_key]).convert("RGBA").rotate(90, expand=True)
-    alpha = fallen.getchannel("A")
-    dimmed = ImageEnhance.Color(ImageEnhance.Brightness(fallen.convert("RGB")).enhance(0.6)).enhance(0.5)
-    fallen = Image.merge("RGBA", (*dimmed.split(), alpha))
-    fallen = fallen.crop(fallen.getbbox())
-    scene.alpha_composite(fallen, (scene.width - fallen.width - 10, scene.height - fallen.height - 2))
-    robot = Image.open(built[robot_key]).convert("RGBA")
-    robot = robot.crop(robot.getbbox())
-    scene.alpha_composite(robot, (40, scene.height - robot.height - 4))
-    scene.convert("RGB").save(ASSETS / "story" / f"{key}.png")
-    out.append({"id": key.upper().replace("_", "-"), "kind": "composite", "name": f"ภาพประกอบเนื้อเรื่อง ({backdrop_key} + {robot_key} + {kaiju_key})", "requested": False, "size": list(scene.size),
-                "files": {}, "web": {key: f"story/{key}.png"}, "status": "composed", "composedFrom": [backdrop_key, robot_key, kaiju_key]})
+    def composed(key, scene, parts):
+        scene.convert("RGB").save(ASSETS / "story" / f"{key}.png")
+        out.append({"id": key.upper().replace("_", "-"), "kind": "composite", "name": f"ภาพประกอบเนื้อเรื่อง ({' + '.join(parts)})", "requested": False, "size": list(scene.size),
+                    "files": {}, "web": {key: f"story/{key}.png"}, "status": "composed", "composedFrom": parts})
+
+    def sprite(key):
+        image = Image.open(built[key]).convert("RGBA")
+        return image.crop(image.getbbox())
+
+    def fallen_scene(key, backdrop_key, robot_key, kaiju_key):
+        """หุ่นการ์เดียนยืนอยู่ทางซ้าย คู่ต่อสู้ล้มหงายอยู่ทางขวา (หมุนและลดสี)"""
+        scene = Image.open(built[backdrop_key]).convert("RGBA")
+        fallen = Image.open(built[kaiju_key]).convert("RGBA").rotate(90, expand=True)
+        alpha = fallen.getchannel("A")
+        dimmed = ImageEnhance.Color(ImageEnhance.Brightness(fallen.convert("RGB")).enhance(0.6)).enhance(0.5)
+        fallen = Image.merge("RGBA", (*dimmed.split(), alpha))
+        fallen = fallen.crop(fallen.getbbox())
+        scene.alpha_composite(fallen, (scene.width - fallen.width - 10, scene.height - fallen.height - 2))
+        robot = sprite(robot_key)
+        scene.alpha_composite(robot, (40, scene.height - robot.height - 4))
+        composed(key, scene, [backdrop_key, robot_key, kaiju_key])
+
+    fallen_scene(*STORY_VICTORY)
+    for key, (backdrop_key, kaiju_key) in STORY_WINS.items():
+        fallen_scene(key, backdrop_key, "bt_robot", kaiju_key)
+
+    # ฉากเสริมเกราะ: การ์เดียนหน้าแล็บ พี่บิตลอยอยู่ข้าง ๆ มีประกายฟื้นพลังรอบตัว
+    scene = Image.open(built["bg_battle_1"]).convert("RGBA")
+    robot = sprite("bt_robot")
+    scene.alpha_composite(robot, ((scene.width - robot.width) // 2, scene.height - robot.height - 4))
+    mentor = sprite("ch_mentor_south")
+    scene.alpha_composite(mentor, (scene.width // 2 - robot.width // 2 - mentor.width - 14, scene.height - robot.height + 6))
+    spark = Image.open(built["fx_spark"]).convert("RGBA")
+    scene.alpha_composite(spark, (scene.width // 2 + robot.width // 2 - 20, scene.height - robot.height - 2))
+    composed("st_upgrade", scene, ["bg_battle_1", "bt_robot", "ch_mentor_south", "fx_spark"])
+
+    # ฉากจบ: เมืองตอนพลบค่ำกลับมาสงบ การ์เดียนกับพี่บิตยืนเฝ้า แกน AI ทั้ง 6 ชิ้นเรียงอยู่บนฟ้า
+    scene = Image.open(built["bg_battle_5"]).convert("RGBA")
+    scene.alpha_composite(robot, (scene.width - robot.width - 36, scene.height - robot.height - 4))
+    scene.alpha_composite(mentor, (scene.width - robot.width - mentor.width - 44, scene.height - mentor.height - 34))
+    for n in range(1, 7):
+        core = Image.open(built[f"core_{n}"]).convert("RGBA")
+        scene.alpha_composite(core, (22 + (n - 1) * 30, int(10 + abs(n - 3.5) * 6)))
+    composed("st_finale", scene, ["bg_battle_5", "bt_robot", "ch_mentor_south", *[f"core_{n}" for n in range(1, 7)]])
 
     # ลบไฟล์ภาพที่ไม่มีแอสเซตใดใช้แล้ว
     wanted = {ASSETS / path for a in out for path in [*a["files"].values(), *a.get("web", {}).values()]}

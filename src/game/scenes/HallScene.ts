@@ -50,7 +50,7 @@ export class HallScene extends WorldScene {
     const [gate] = this.objectsOf("gate");
     this.addInteractable(gate, "gate", () => ui.prompt.hangarGate, () => store().enterHangar());
     const [shop] = this.objectsOf("shop");
-    this.addInteractable(shop, "shop", () => ui.prompt.shop, () => store().openOverlay("shop"));
+    this.addInteractable(shop, "shop", () => ui.prompt.shop, () => store().openShop());
 
     const start = this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0]);
     const spot = this.spotBelow(start);

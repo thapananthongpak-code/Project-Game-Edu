@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "energetic male sports coach with a short flat-top haircut, violet track suit with white stripes, a whistle around the neck, a clipboard under one arm, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "โค้ชต้น ครูฝึก (ห้อง 2 ถามตอบพิเศษ)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "8150f9ad-46fc-43bd-9299-de95263367d1",
+  "generatedAt": "2026-10-02T08:37:23.755Z"
+}

@@ -1,24 +1,34 @@
-import { useState } from "react";
-import { type Speaker, storyBeats } from "../content/story";
+import { useEffect, useState } from "react";
+import { type Mood, type Speaker, storyLines } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
 import { playSfx } from "../audio/engine";
 import { useGameStore } from "../state/gameStore";
+import type { TrackName } from "../audio/tracks";
 import { art } from "./art";
+import { useBit } from "./useBit";
 import { useDialog } from "./useDialog";
 
-const PORTRAIT: Record<Speaker, string | null> = { narrator: null, professor: art.professor, mentor: art.mentor };
+/** เพลงตามอารมณ์ของช่อง */
+const MOOD_TRACK: Record<Mood, TrackName> = { tense: "tension", calm: "story", bright: "victory" };
 
 /**
  * ฉากเนื้อเรื่องแบบช่องการ์ตูน: ภาพประกอบหนึ่งภาพต่อหนึ่งช่อง คำบรรยายหรือคำพูดอยู่ใต้ภาพ
- * อ่านทีละช่อง ข้ามได้ ดูจบแล้วบันทึกว่าดูแล้วและไม่แสดงซ้ำ (GDD ข้อ 2)
+ * อ่านทีละช่อง ข้ามได้ ดูจบแล้วบันทึกว่าดูแล้วและไม่แสดงซ้ำ เพลงเปลี่ยนตามอารมณ์ของช่อง (GDD ข้อ 2 และ 14)
  */
 export function StoryDialog() {
   const beat = useGameStore((s) => s.storyBeat) as string;
   const name = useGameStore((s) => s.profile?.name ?? ui.questLog.name);
   const finishStory = useGameStore((s) => s.finishStory);
   const openOverlay = useGameStore((s) => s.openOverlay);
-  const lines = storyBeats[beat] ?? [];
+  const difficulty = useGameStore((s) => s.profile?.difficulty);
+  const setMusicCue = useGameStore((s) => s.setMusicCue);
+  const bit = useBit();
+  const lines = storyLines(beat, difficulty);
   const [page, setPage] = useState(0);
+  const mood = lines[Math.min(page, lines.length - 1)]?.mood;
+  useEffect(() => {
+    if (mood) setMusicCue({ name: MOOD_TRACK[mood] });
+  }, [mood, setMusicCue]);
 
   const finish = () => {
     finishStory();
@@ -29,11 +39,11 @@ export function StoryDialog() {
   const line = lines[Math.min(page, lines.length - 1)];
   const last = page >= lines.length - 1;
   if (!line) return null;
-  const portrait = PORTRAIT[line.speaker];
+  const portrait: Record<Speaker, string | null> = { narrator: null, professor: art.professor, mentor: bit };
   const narration = line.speaker === "narrator";
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-ink/90 p-2 sm:p-6" data-testid="story" data-beat={beat}>
+    <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-ink/90 p-2 sm:p-6" data-testid="story" data-beat={beat} data-mood={line.mood}>
       <div ref={dialog} role="dialog" aria-modal="true" tabIndex={-1} aria-label={ui.story.speakers[line.speaker]} className="panel flex w-full max-w-2xl flex-col gap-2 p-2 sm:gap-3 sm:p-3">
         {/* ช่องภาพ: ภาพก่อนหน้ายังอยู่จนกว่าภาพใหม่จะมา จึงไม่กระพริบ */}
         <div className="story-panel relative aspect-video max-h-[46dvh] w-full overflow-hidden rounded-md border-[3px] border-ink bg-slate">
@@ -41,7 +51,7 @@ export function StoryDialog() {
           <span className="absolute left-1.5 top-1.5 rounded border-2 border-ink bg-cream px-1.5 text-xs font-extrabold">{fmt(ui.story.page, { n: page + 1, total: lines.length })}</span>
         </div>
         <div className={`flex items-start gap-3 rounded-md border-[3px] border-ink p-2 sm:p-3 ${narration ? "bg-hint" : "bg-paper"}`}>
-          {portrait && <img src={portrait} alt="" className="pixelated h-14 w-14 shrink-0 rounded-md border-2 border-ink bg-teal-light sm:h-16 sm:w-16" />}
+          {portrait[line.speaker] && <img src={portrait[line.speaker] as string} alt="" className="pixelated h-14 w-14 shrink-0 rounded-md border-2 border-ink bg-teal-light sm:h-16 sm:w-16" />}
           <div className="min-w-0 flex-1" aria-live="polite">
             <div className="text-sm font-extrabold text-teal-dark" data-testid="story-speaker">
               {ui.story.speakers[line.speaker]}

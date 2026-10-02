@@ -3,6 +3,7 @@ import { isFieldRoom, questTitle, stationsOf, stripNumber, topicOf } from "../..
 import { fmt, ui } from "../../content/ui-strings";
 import type { DifficultySpec } from "../../state/campaign";
 import { ARCHIVE, difficultyOf, fieldComplete, isTopicOpen, nextStepOf, planOf, roomProgress, useGameStore } from "../../state/gameStore";
+import { type NpcId, type NpcRecord, NPCS, questReady } from "../../state/npcs";
 import { SCENE } from "../constants";
 import { objectBaseY, objectX, zoneMap } from "../maps";
 import { WorldScene } from "./WorldScene";
@@ -13,6 +14,7 @@ import { WorldScene } from "./WorldScene";
  * - กลาง: ห้องละ 2 หัวข้อ แต่ละหัวข้อมีคลังความรู้ (ไม่บังคับอ่าน) เครื่องฝึก โต๊ะสมุดบันทึก และแท่นของตัวเอง
  * - ยาก: ห้องเดียว เครื่องทดสอบรวมทำเควสทีละหัวข้อ ผ่านแล้วได้แกน AI ทันที
  * หัวข้อสุดท้าย (ภาคสนาม): จอภารกิจ และแท่นแกน AI ที่ออกใบประกาศ
+ * ทุกห้องมี NPC ประจำห้อง (เควสเสริม ถามตอบพิเศษ หรือร้านพิเศษ GDD ข้อ 16) และของที่เก็บในเควสเสริม
  */
 export class RoomScene extends WorldScene {
   private zone = 1;
@@ -22,6 +24,9 @@ export class RoomScene extends WorldScene {
   /** id ของจุดโต้ตอบของแต่ละหัวข้อ ใช้ชี้เป้าหมายถัดไป */
   private ids = { minigame: new Map<number, string>(), review: new Map<number, string>(), core: new Map<number, string>() };
   private labelKey = "";
+  /** ของในเควสเสริม: เห็นและเก็บได้เฉพาะตอนที่รับเควสแล้วและยังไม่ได้เก็บชิ้นนั้น */
+  private pickups: { image: Phaser.GameObjects.Image; visible: () => boolean }[] = [];
+  private npcs: NpcId[] = [];
 
   constructor() {
     super(SCENE.room);
@@ -32,6 +37,8 @@ export class RoomScene extends WorldScene {
     this.labelKey = "";
     this.coreIcons = new Map();
     this.ids = { minigame: new Map(), review: new Map(), core: new Map() };
+    this.pickups = [];
+    this.npcs = [];
   }
 
   create(): void {
@@ -159,6 +166,35 @@ export class RoomScene extends WorldScene {
       });
     }
 
+    // NPC ประจำห้อง: ร้านพิเศษเปิดร้านเลย บทบาทอื่นเปิดหน้าต่างคุย
+    for (const object of this.objectsOf("npc")) {
+      const id = object.npc as NpcId;
+      this.npcs.push(id);
+      this.addInteractable(object, `npc-${id}`, () => fmt(ui.prompt.npc, { name: ui.npc[id].name, role: ui.npc.roles[NPCS[id].role] }), () => (NPCS[id].role === "shop" ? store().openShop(id) : store().openNpc(id)));
+    }
+    for (const object of this.objectsOf("pickup")) {
+      const id = object.npc as "mechanic" | "foreman";
+      const index = object.index as number;
+      const image = this.placed.get(object) as Phaser.GameObjects.Image;
+      const visible = () => {
+        const record = store().npcs[id];
+        return Boolean(record?.accepted && !record.done && !record.found.includes(index));
+      };
+      this.pickups.push({ image, visible });
+      this.tweens.add({ targets: image, alpha: 0.55, duration: 520, yoyo: true, repeat: -1 });
+      this.addInteractable(
+        object,
+        `pickup-${id}-${index}`,
+        () => fmt(ui.prompt.pickup, { item: ui.npc[id].item }),
+        () => {
+          const found = store().collectPickup(id, index);
+          const total = NPCS[id].pickups;
+          store().showToast(found >= total ? fmt(ui.npc.allFound, { item: ui.npc[id].item, name: ui.npc[id].name }) : fmt(ui.npc.found, { item: ui.npc[id].item, n: found, total }));
+        },
+        visible,
+      );
+    }
+
     const spot = this.spotBelow(door);
     this.createPlayer(spot.x, spot.y);
     this.syncWithProgress();
@@ -167,6 +203,20 @@ export class RoomScene extends WorldScene {
   update(time: number, delta: number): void {
     super.update(time, delta);
     this.syncWithProgress();
+    for (const pickup of this.pickups) pickup.image.setVisible(pickup.visible());
+  }
+
+  /** ป้ายเหนือ NPC: ! = มีเรื่องให้ทำ, n/N = ความคืบหน้าของเควส, ✓ = เสร็จแล้ว (ร้านพิเศษไม่มีป้ายสถานะ) */
+  private npcLabel(id: NpcId, record: NpcRecord | undefined, unlocked: boolean): { text: string; tone: "default" | "done" | "locked" } | null {
+    const spec = NPCS[id];
+    if (spec.role === "shop") return { text: "$", tone: "default" };
+    if (spec.role === "quest") {
+      if (record?.done) return { text: "✓", tone: "done" };
+      if (!record?.accepted || questReady(spec, record)) return { text: "!", tone: "default" };
+      return { text: `${record.found.length}/${spec.pickups}`, tone: "default" };
+    }
+    if (!unlocked) return null;
+    return (record?.tries ?? 0) > 0 ? { text: `${record?.best}/${spec.questions}`, tone: "done" } : { text: "?", tone: "default" };
   }
 
   /** ปรับเป้าหมายถัดไป ป้ายสถานีและป้ายหัวข้อ และแกน AI ให้ตรงกับความคืบหน้า */
@@ -196,7 +246,7 @@ export class RoomScene extends WorldScene {
 
     const seen = roomProgress(state, this.topics[0]).stationsSeen;
     const cores = this.topics.map((topic) => (roomProgress(state, topic).core ? "1" : "0")).join("");
-    const labelKey = `${seen}|${cores}`;
+    const labelKey = `${seen}|${cores}|${this.npcs.map((id) => JSON.stringify(state.npcs[id] ?? null) + (roomProgress(state, NPCS[id].topic).core ? "1" : "0")).join("")}`;
     if (labelKey === this.labelKey) return;
     this.labelKey = labelKey;
     const tone = (topic: number) => (roomProgress(state, topic).core ? ("done" as const) : topic === current ? ("default" as const) : ("locked" as const));
@@ -218,6 +268,13 @@ export class RoomScene extends WorldScene {
               }
               return { id: i.id, x: i.x, y: i.top + 4, text: roomProgress(state, topic as number).core ? `${topic} ✓` : String(topic), tone: tone(topic as number) };
             });
-    state.setLabels([...stationLabels, ...topicLabels]);
+    const npcLabels = this.interactables
+      .filter((i) => i.id.startsWith("npc-"))
+      .flatMap((i) => {
+        const id = i.id.slice(4) as NpcId;
+        const label = this.npcLabel(id, state.npcs[id], roomProgress(state, NPCS[id].topic).core);
+        return label ? [{ id: i.id, x: i.x, y: i.top + 2, ...label }] : [];
+      });
+    state.setLabels([...stationLabels, ...topicLabels, ...npcLabels]);
   }
 }

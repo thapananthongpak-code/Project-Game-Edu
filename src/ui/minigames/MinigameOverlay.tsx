@@ -12,6 +12,7 @@ import { Stars } from "../Stars";
 import { AccuracyBoard } from "./AccuracyBoard";
 import { MatchBoard } from "./MatchBoard";
 import { SortBoard } from "./SortBoard";
+import { useBit } from "../useBit";
 import { useDialog } from "../useDialog";
 import { type MinigameSession, useMinigameSession } from "./useMinigameSession";
 
@@ -143,6 +144,7 @@ export function MinigameOverlay() {
   const stages = useMemo(() => (questOf(room)?.minigames ?? []).flatMap((game) => stagesOf(room, topicOf(room), game)), [room]);
   const [stageIndex, setStageIndex] = useState(0);
   const [peeking, setPeeking] = useState(false);
+  const bit = useBit();
   const dialog = useDialog<HTMLDivElement>();
 
   if (stages.length === 0) return null;
@@ -202,7 +204,7 @@ export function MinigameOverlay() {
         </div>
 
         <div className="flex items-center gap-3 rounded-md border-2 border-ink bg-teal-light px-3 py-2">
-          <img src="assets/characters/ch_mentor_south.png" alt="" className="pixelated h-10 w-10 shrink-0" />
+          <img src={bit} alt="" className="pixelated h-10 w-10 shrink-0" />
           <div className="flex flex-1 flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold" data-testid="feedback" data-state={session.feedback}>
               <span className="mr-1 font-extrabold">{ui.mentorName}:</span>
