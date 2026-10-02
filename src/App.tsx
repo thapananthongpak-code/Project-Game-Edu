@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { useAudioDirector } from "./audio/useAudio";
 import { PhaserGame } from "./game/PhaserGame";
-import { useGameStore } from "./state/gameStore";
+import { pendingStory, useGameStore } from "./state/gameStore";
 import { ui, fmt } from "./content/ui-strings";
 import { nextStyle } from "./state/adaptive";
+import { art } from "./ui/art";
+import { Battle } from "./ui/Battle";
 import { Certificate } from "./ui/Certificate";
 import { CoreReward } from "./ui/CoreReward";
 import { DialogueBox } from "./ui/DialogueBox";
@@ -12,7 +15,9 @@ import { MainMenu } from "./ui/MainMenu";
 import { Onboarding, Posttest } from "./ui/Onboarding";
 import { QuestLog } from "./ui/QuestLog";
 import { ReviewNotebook } from "./ui/ReviewNotebook";
+import { Shop } from "./ui/Shop";
 import { StageOverlay } from "./ui/StageOverlay";
+import { StoryDialog } from "./ui/StoryDialog";
 import { MinigameOverlay } from "./ui/minigames/MinigameOverlay";
 import { Toast } from "./ui/Toast";
 import { TouchControls } from "./ui/TouchControls";
@@ -41,7 +46,7 @@ function StyleSuggestion() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center p-3" data-testid="style-suggestion">
       <div className="panel flex max-w-xl flex-wrap items-center gap-3 p-3">
-        <img src="assets/characters/ch_mentor_south.png" alt="" className="pixelated h-12 w-12" />
+        <img src={art.mentor} alt="" className="pixelated h-12 w-12" />
         <p className="min-w-0 flex-1 text-sm font-semibold">{fmt(ui.styleSuggestion.text, { style: ui.style[suggested].name })}</p>
         <button type="button" className="btn btn-ghost !min-h-9 text-sm" onClick={dismiss}>
           {ui.styleSuggestion.decline}
@@ -61,13 +66,25 @@ function StyleSuggestion() {
   );
 }
 
+/** เปิดฉากเนื้อเรื่องที่ถึงคิวเมื่อผู้เล่นว่างอยู่ (ไม่มีหน้าต่างอื่นเปิด) */
+function useStoryTrigger(): void {
+  const beat = useGameStore((s) => (s.ready && s.overlay === null && !s.tutorOpen ? pendingStory(s) : null));
+  const openStory = useGameStore((s) => s.openStory);
+  useEffect(() => {
+    if (beat) openStory(beat);
+  }, [beat, openStory]);
+}
+
 export function App() {
   const screen = useGameStore((s) => s.screen);
   const overlay = useGameStore((s) => s.overlay);
   const tutorOpen = useGameStore((s) => s.tutorOpen);
+  const tutorRoom = useGameStore((s) => s.tutorRoom);
   const touch = useTouchDevice();
   useRoomTimer();
-  const playing = screen === "hall" || screen === "room";
+  useAudioDirector();
+  useStoryTrigger();
+  const playing = screen === "hall" || screen === "hangar" || screen === "room";
 
   return (
     <div className="flex h-dvh w-full select-none flex-col overflow-hidden bg-ink">
@@ -87,7 +104,10 @@ export function App() {
       {overlay === "review" && <ReviewNotebook />}
       {overlay === "reward" && <CoreReward />}
       {overlay === "questlog" && <QuestLog />}
-      {tutorOpen && screen === "room" && <TutorPanel />}
+      {overlay === "shop" && <Shop />}
+      {overlay === "battle" && <Battle />}
+      {overlay === "story" && <StoryDialog />}
+      {tutorOpen && tutorRoom !== null && <TutorPanel />}
       {screen === "onboarding" && <Onboarding />}
       {screen === "menu" && <MainMenu />}
       <Toast />

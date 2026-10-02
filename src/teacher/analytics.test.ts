@@ -15,7 +15,7 @@ function result(form: "A" | "B", correctIds: string[]): AssessmentResult {
 }
 
 function player(name: string, patch: Partial<SaveData>, extra: Partial<Player> = {}): Player {
-  return { id: name, classCode: "PVC1", name, save: { ...emptySave(), profile: { name, style: "read", classCode: "PVC1" }, ...patch }, resumeCode: null, updatedAt: "2026-10-02T03:00:00.000Z", archived: false, ...extra };
+  return { id: name, classCode: "PVC1", name, save: { ...emptySave(), profile: { name, style: "read", classCode: "PVC1", avatar: "a" }, ...patch }, resumeCode: null, updatedAt: "2026-10-02T03:00:00.000Z", archived: false, ...extra };
 }
 
 const field = { ...emptyField(course.finalQuest), results: course.finalQuest.resultTable.classes.map((_, i) => ({ images: 30, correct: 10 - i })) };

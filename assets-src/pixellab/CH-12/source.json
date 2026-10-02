@@ -1,0 +1,22 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage girl lab intern with dark hair tied in a high ponytail, navy blue pilot jacket with yellow shoulder stripes over a white shirt, gray cargo trousers, white sneakers, small headset on one ear, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงานแบบ ข แจ็กเก็ตนักบิน 4 ทิศ + เดิน 6 เฟรม",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "animate": {
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk"
+  },
+  "id": "dceed560-33ac-4da5-b102-a7c346951c95",
+  "generatedAt": "2026-10-02T04:43:21.731Z"
+}

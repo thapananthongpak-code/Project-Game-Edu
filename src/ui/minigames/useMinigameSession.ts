@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { playSfx } from "../../audio/engine";
 import { type AdaptiveEvent, evaluateMinigame, type MinigameState } from "../../state/adaptive";
 import { startTierOf, useGameStore } from "../../state/gameStore";
 
@@ -45,6 +46,7 @@ export function useMinigameSession(room: number): MinigameSession {
     roundMode: state.checkMode === "round",
     record: (correct, missed = []) => {
       if (missed.length > 0) useGameStore.getState().recordMisses(missed);
+      playSfx(correct ? "correct" : "wrong");
       const now = performance.now();
       const timeMs = Math.round(now - lastEventAt.current);
       lastEventAt.current = now;

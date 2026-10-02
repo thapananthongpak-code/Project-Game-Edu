@@ -5,6 +5,8 @@ import { LEARNING_STYLES, type LearningStyle } from "../state/adaptive.config";
 import { cloudEnabled, randomForm, useGameStore } from "../state/gameStore";
 import { CLASS_CODE_PATTERN, normalizeClassCode } from "../state/progressStore";
 import { MAX_NAME_CHARS } from "../state/rules";
+import { AVATARS, type Avatar } from "../state/shop.config";
+import { art } from "./art";
 import { AssessmentRun } from "./AssessmentRun";
 import { useDialog } from "./useDialog";
 
@@ -29,6 +31,27 @@ export function StylePicker({ value, onChange }: { value: LearningStyle; onChang
   );
 }
 
+export function AvatarPicker({ value, onChange }: { value: Avatar; onChange: (avatar: Avatar) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={ui.onboarding.avatar}>
+      {AVATARS.map((avatar) => (
+        <button
+          key={avatar}
+          type="button"
+          role="radio"
+          aria-checked={value === avatar}
+          data-testid={`avatar-${avatar}`}
+          onClick={() => onChange(avatar)}
+          className={`flex items-center gap-2 rounded-lg border-[3px] border-ink p-2 text-left font-extrabold ${value === avatar ? "bg-hint shadow-[0_3px_0_0_#1a1c2c]" : "bg-paper hover:bg-teal-light"}`}
+        >
+          <img src={art.player(avatar, "lab")} alt="" className="pixelated h-16 w-16 shrink-0" />
+          {ui.onboarding.avatars[avatar]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** ขั้นแรกของเกมใหม่: ตั้งชื่อที่แสดง ใส่รหัสห้องเรียน เลือกสไตล์การเรียน แล้วทำแบบทดสอบก่อนเรียน (GDD ข้อ 3 และ 7.1) */
 export function Onboarding() {
   const profile = useGameStore((s) => s.profile);
@@ -37,6 +60,7 @@ export function Onboarding() {
   const [name, setName] = useState(profile?.name ?? "");
   const [classCode, setClassCode] = useState(profile?.classCode ?? "");
   const [style, setStyle] = useState<LearningStyle>(profile?.style ?? "read");
+  const [avatar, setAvatar] = useState<Avatar>(profile?.avatar ?? "a");
   // สุ่มชุดข้อสอบก่อนเรียน ผู้เรียนครึ่งหนึ่งได้ชุด A อีกครึ่งได้ชุด B แล้วสลับชุดตอนหลังเรียน
   const [form] = useState(randomForm);
   const dialog = useDialog<HTMLDivElement>();
@@ -53,7 +77,7 @@ export function Onboarding() {
             className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
-              if (name.trim() && codeValid) setProfile({ name: name.trim(), style, classCode: code });
+              if (name.trim() && codeValid) setProfile({ name: name.trim(), style, classCode: code, avatar });
             }}
           >
             <h1 className="text-2xl font-extrabold text-teal-dark">{ui.onboarding.title}</h1>
@@ -87,6 +111,10 @@ export function Onboarding() {
               </label>
             )}
             <div className="flex flex-col gap-1">
+              <span className="font-semibold">{ui.onboarding.avatar}</span>
+              <AvatarPicker value={avatar} onChange={setAvatar} />
+            </div>
+            <div className="flex flex-col gap-1">
               <span className="font-semibold">{ui.onboarding.style}</span>
               <StylePicker value={style} onChange={setStyle} />
             </div>
@@ -100,7 +128,7 @@ export function Onboarding() {
   );
 }
 
-/** แบบทดสอบหลังเรียน: ใช้ชุดที่ผู้เรียนไม่ได้ทำตอนก่อนเรียน จบแล้วรับแกน AI ชิ้นสุดท้ายและเปิดใบประกาศ */
+/** แบบทดสอบหลังเรียน: ใช้ชุดที่ผู้เรียนไม่ได้ทำตอนก่อนเรียน จบแล้วรับแกน AI ชิ้นสุดท้าย (ใบประกาศเปิดได้จากหน้ารับแกนและที่แท่น) */
 export function Posttest() {
   const pretest = useGameStore((s) => s.pretest);
   const completePosttest = useGameStore((s) => s.completePosttest);
@@ -120,7 +148,7 @@ export function Posttest() {
           onFinish={(result) => {
             completePosttest(result);
             collectCore();
-            openOverlay("certificate");
+            openOverlay("reward");
           }}
         />
       </div>

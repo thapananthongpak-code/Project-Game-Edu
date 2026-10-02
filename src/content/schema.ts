@@ -143,7 +143,11 @@ export type BackupPool =
   /** สุ่ม sections 2 ข้อ ถามว่าข้อใดมาก่อน */
   | { kind: "step-pairs" }
   /** คำนวณจาก sections[section].accuracyCase */
-  | { kind: "accuracy-example"; section: number };
+  | { kind: "accuracy-example"; section: number }
+  /** บัตร = definition ของ sections[section].terms ตัวเลือก = term ทุกคำ */
+  | { kind: "term-definitions"; section: number }
+  /** สุ่ม finalQuest.steps 2 ข้อ ถามว่าข้อใดมาก่อน (ใช้ได้กับหัวข้อสุดท้ายเท่านั้น) */
+  | { kind: "quest-step-pairs" };
 
 /** ชุดของแบบทดสอบก่อนเรียน/หลังเรียน สองชุดคู่ขนานกัน ผู้เรียนได้ชุดหนึ่งก่อนเรียนและอีกชุดหลังเรียน */
 export type FormId = "A" | "B";
@@ -177,8 +181,16 @@ export interface RoomQuest {
   selfCheck: ContentRef[];
 }
 
+/** ชุดโจทย์ของด่านต่อสู้ไคจูหลังได้แกน AI ของห้องนั้น (GDD ข้อ 12) ด่านสุดท้ายใช้ชุดของทุกห้องเรียงตามเฟส */
+export interface BattleQuest {
+  /** เลขห้อง 1-6 */
+  room: number;
+  pools: BackupPool[];
+}
+
 export interface Quests {
   /** แบบทดสอบก่อนเรียน/หลังเรียนคู่ขนาน (GDD ข้อ 7.1 และ docs/EVALUATION_PLAN.md) */
   assessment: Record<FormId, AssessmentItem[]>;
   rooms: RoomQuest[];
+  battles: BattleQuest[];
 }

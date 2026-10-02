@@ -1,3 +1,4 @@
+import { playSfx } from "../../audio/engine";
 import { type ReactNode, useMemo, useState } from "react";
 import { questOf, resolveRefs, type Station, stripNumber, topicOf } from "../../content";
 import { shuffled } from "../../content/choices";
@@ -156,6 +157,7 @@ export function MinigameOverlay() {
     setStageIndex(stageIndex + 1);
   };
   const finish = () => {
+    playSfx("star");
     completeMinigame(state);
     closeOverlay();
   };

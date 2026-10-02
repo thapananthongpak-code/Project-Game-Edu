@@ -1,8 +1,13 @@
+import { setAudioSettings } from "../audio/engine";
+import { useAudioSettings } from "../audio/useAudio";
 import { course, isFieldRoom, questTitle, ROOM_COUNT, stationsOf } from "../content";
+import { kaijuName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
 import { emptyField, fieldStatus } from "../state/field";
 import { cloudEnabled, coreCount, isRoomUnlocked, roomProgress, startTierOf, useGameStore } from "../state/gameStore";
 import { MIN_ANSWER_CHARS } from "../state/rules";
+import { creditBalance } from "../state/shop";
+import { art } from "./art";
 import { StylePicker } from "./Onboarding";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
@@ -19,6 +24,9 @@ export function QuestLog() {
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const progress = useGameStore((s) => s.progress);
   const setStyle = useGameStore((s) => s.setStyle);
+  const outfit = useGameStore((s) => s.shop.outfit);
+  const credits = useGameStore((s) => creditBalance({ rooms: s.progress, posttest: s.posttest }, s.shop));
+  const audio = useAudioSettings();
   const focus = room ?? 1;
   const p = roomProgress({ progress }, focus);
   const total = stationsOf(focus).length;
@@ -28,12 +36,14 @@ export function QuestLog() {
         { done: fieldStatus(p.field ?? emptyField(course.finalQuest), course.finalQuest, MIN_ANSWER_CHARS).complete, text: ui.questLog.stepField },
         { done: posttest !== null, text: ui.questLog.stepPosttest },
         { done: p.core, text: ui.questLog.stepCertificate },
+        { done: p.battle.won, text: fmt(ui.questLog.stepBattle, { kaiju: kaijuName(focus) }) },
       ]
     : [
         { done: p.stationsSeen >= total, text: fmt(ui.questLog.stepStations, { n: p.stationsSeen, total }) },
         { done: p.minigameDone, text: fmt(ui.questLog.stepMinigame, { quest: questTitle(focus) }) },
         { done: p.reviewDone, text: ui.questLog.stepReview },
         { done: p.core, text: ui.questLog.stepCore },
+        { done: p.battle.won, text: fmt(ui.questLog.stepBattle, { kaiju: kaijuName(focus) }) },
       ];
 
   return (
@@ -49,13 +59,16 @@ export function QuestLog() {
         {profile && (
           <section className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <img src="assets/characters/ch_player_south.png" alt="" className="pixelated h-16 w-16 rounded-md border-2 border-ink bg-teal-light" />
+              <img src={art.player(profile.avatar, outfit)} alt="" className="pixelated h-16 w-16 rounded-md border-2 border-ink bg-teal-light" />
               <div>
                 <div className="text-xs font-bold text-slate">{ui.questLog.name}</div>
                 <div className="text-xl font-extrabold" data-testid="profile-name">
                   {profile.name}
                 </div>
                 {profile.classCode && <div className="text-sm font-semibold text-slate">{fmt(ui.questLog.classCode, { code: profile.classCode })}</div>}
+                <div className="text-sm font-bold text-teal-dark" data-testid="profile-credits">
+                  {fmt(ui.questLog.credits, { n: credits })}
+                </div>
               </div>
             </div>
             {cloudEnabled() && profile.classCode && (
@@ -72,6 +85,22 @@ export function QuestLog() {
             )}
             <h3 className="text-xs font-bold text-slate">{ui.questLog.style}</h3>
             <StylePicker value={profile.style} onChange={setStyle} />
+            <h3 className="text-xs font-bold text-slate">{ui.sound.title}</h3>
+            <div className="flex flex-wrap gap-2">
+              {(["music", "sfx"] as const).map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  role="switch"
+                  aria-checked={audio[kind]}
+                  data-testid={`sound-${kind}`}
+                  onClick={() => setAudioSettings({ [kind]: !audio[kind] })}
+                  className={`min-h-10 rounded-lg border-[3px] border-ink px-3 font-bold ${audio[kind] ? "bg-hint" : "bg-paper"}`}
+                >
+                  {kind === "music" ? ui.sound.music : ui.sound.effects}: {audio[kind] ? ui.sound.on : ui.sound.off}
+                </button>
+              ))}
+            </div>
           </section>
         )}
 

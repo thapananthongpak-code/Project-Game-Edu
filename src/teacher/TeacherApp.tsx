@@ -110,7 +110,7 @@ function Card({ label, value, note }: { label: string; value: string; note?: str
   );
 }
 
-type SortKey = "name" | "roomReached" | "cores" | "stars" | "reviewsDone" | "fieldAccuracy" | "pre" | "post" | "gain" | "tutorAi" | "timeMs" | "updatedAt";
+type SortKey = "name" | "roomReached" | "cores" | "stars" | "reviewsDone" | "battlesWon" | "fieldAccuracy" | "pre" | "post" | "gain" | "tutorAi" | "timeMs" | "updatedAt";
 
 function StudentsTable({ players }: { players: Player[] }) {
   const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: "name", descending: false });
@@ -149,6 +149,7 @@ function StudentsTable({ players }: { players: Player[] }) {
             {head("cores", t.students.cores)}
             {head("stars", t.students.stars)}
             {head("reviewsDone", t.students.review)}
+            {head("battlesWon", t.students.battles)}
             {head("fieldAccuracy", t.students.accuracy)}
             {head("pre", t.students.pre)}
             {head("post", t.students.post)}
@@ -189,6 +190,9 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
         <td className={td}>
           {s.reviewsDone}/{s.reviewsTotal}
         </td>
+        <td className={td}>
+          {s.battlesWon}/{course.topics.length}
+        </td>
         <td className={td} data-testid="teacher-accuracy">
           {s.fieldAccuracy === null ? "—" : `${s.fieldAccuracy}%`}
           {s.fieldAccuracy !== null && !s.fieldDone && <span className="ml-1 text-xs text-slate">({t.students.fieldPending})</span>}
@@ -211,7 +215,7 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
       </tr>
       {open && (
         <tr className="bg-cream">
-          <td className={td} colSpan={14}>
+          <td className={td} colSpan={15}>
             {s.resumeCode && (
               <p className="mb-2 text-sm">
                 {t.students.resumeCode}: <span className="font-mono font-bold tracking-widest">{s.resumeCode}</span>

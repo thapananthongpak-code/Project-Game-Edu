@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { playSfx } from "../audio/engine";
 import type { Station } from "../content";
 import { buildRepairItems } from "../content/choices";
 import { fmt, ui } from "../content/ui-strings";
@@ -41,6 +42,7 @@ export function RepairBay({ room, style, stations, onDone }: RepairBayProps) {
   const answer = (option: number | null) => {
     setAnswered(option);
     setResults([...results, option === item.answer]);
+    playSfx(option === item.answer ? "correct" : "wrong");
   };
   const nextItem = () => {
     setAnswered(undefined);

@@ -8,7 +8,8 @@ import { chromium } from "playwright-core";
 
 const BASE_URL = process.env.E2E_URL ?? "http://localhost:5173/";
 const SHOTS = process.env.E2E_SHOTS ?? "test-results";
-const LANE_Y = 130; // แนวเดินว่างระหว่างสถานีริมผนังกับวัตถุกลางห้อง
+const TILE = 32;
+const MAP_TOP = 8;
 const LONG_ANSWER = "คำตอบทดสอบอัตโนมัติของช่องนี้ ยาวเกินยี่สิบตัวอักษร";
 
 const readJson = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
@@ -16,6 +17,7 @@ const course = readJson("../src/content/course.json");
 const quests = readJson("../src/content/quests.json");
 const topicOf = (room) => course.topics[room - 1];
 const questOf = (room) => quests.rooms.find((r) => r.room === room);
+const KAIJU = ["กลิตช์", "ไตรฮอร์น", "สแครป", "เกียร์แครบ", "ฝูงมิมิก", "โอเมก้า"];
 const strip = (heading) => heading.replace(/^\d+\s+/, "");
 const stationsCount = (room) => topicOf(room).sections.length + (topicOf(room).intro ? 1 : 0);
 const topic1 = topicOf(1);
@@ -69,10 +71,32 @@ const shot = async (page, name) => {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
   await audit(page, name);
 };
-const inHall = (page) => page.waitForFunction(() => window.__aitq?.snapshot().scene === "Hall" && window.__aitq.snapshot().store.screen === "hall");
-const inRoom = async (page, room) => {
-  await page.waitForFunction((n) => window.__aitq.snapshot().scene === "Room" && window.__aitq.snapshot().store.room === n && window.__aitq.snapshot().interactables.length > 0, room);
+const inHall = (page) => page.waitForFunction(() => window.__aitq?.snapshot().scene === "Hall" && window.__aitq.snapshot().store.screen === "hall" && window.__aitq.snapshot().interactables.length > 0);
+const inHangar = async (page) => {
+  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Hangar" && window.__aitq.snapshot().interactables.length > 0);
   await page.waitForTimeout(350);
+};
+
+/** อ่านฉากเนื้อเรื่องที่เปิดอยู่จนจบ คืนรหัสฉากและข้อความทุกหน้า (ไม่มีฉากเปิดอยู่คืน null) */
+async function readStory(page, press = (locator) => locator.click()) {
+  await page.waitForTimeout(350);
+  if ((await snap(page)).store.overlay !== "story") return null;
+  const beat = await page.getByTestId("story").getAttribute("data-beat");
+  const lines = [];
+  for (let guard = 0; guard < 20 && (await page.getByTestId("story").count()); guard++) {
+    lines.push(`${await page.getByTestId("story-speaker").innerText()}: ${await page.getByTestId("story-text").innerText()}`);
+    await press(page.getByTestId("story-next"));
+    await page.waitForTimeout(120);
+  }
+  assert.equal(await page.getByTestId("story").count(), 0, "ฉากเนื้อเรื่องต้องปิดเมื่ออ่านจบ");
+  await page.waitForTimeout(300);
+  return { beat, lines };
+}
+
+/** รอจนเข้าห้อง แล้วอ่านบรรยายสรุปของห้อง (แสดงเฉพาะครั้งแรกที่เข้า) คืนฉากเนื้อเรื่องที่อ่าน หรือ null */
+const inRoom = async (page, room, press) => {
+  await page.waitForFunction((n) => window.__aitq.snapshot().scene === "Room" && window.__aitq.snapshot().store.room === n && window.__aitq.snapshot().interactables.length > 0, room);
+  return readStory(page, press);
 };
 const attr = (label) => JSON.stringify(label);
 
@@ -96,15 +120,58 @@ async function moveAxis(page, axis, goal) {
   await page.waitForTimeout(40);
 }
 
-/** เดินไปหาจุดโต้ตอบ: เข้าแนวเดิน ไปตามแกน x แล้วเข้าหาวัตถุ */
+const cellOf = (x, y) => ({ col: Math.floor(x / TILE), row: Math.floor((y - MAP_TOP - 1) / TILE) });
+const cellSpot = ({ col, row }) => ({ x: col * TILE + TILE / 2, y: MAP_TOP + row * TILE + 20 });
+
+/**
+ * เส้นทางเดินบนผังของฉาก (หาแบบกว้างก่อน เดิน 4 ทิศ ไม่ผ่านผนังและช่องที่วัตถุตั้งอยู่)
+ * จากช่องของผู้เล่นไปยังช่องที่ใกล้จุดโต้ตอบที่สุดในระยะโต้ตอบ คืนรายการช่องที่ต้องเดินผ่าน
+ */
+function findPath(map, from, target) {
+  const blocked = new Set(map.blocked);
+  const open = ({ col, row }) => map.shape[row]?.[col] === "." && !blocked.has(`${col},${row}`);
+  const key = (cell) => `${cell.col},${cell.row}`;
+  const reach = (cell) => Math.hypot(cellSpot(cell).x - target.x, cellSpot(cell).y - target.y);
+  const cameFrom = new Map([[key(from), null]]);
+  const queue = [from];
+  let best = null;
+  while (queue.length > 0) {
+    const cell = queue.shift();
+    if (reach(cell) < 40 && (best === null || reach(cell) < reach(best))) best = cell;
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const next = { col: cell.col + dc, row: cell.row + dr };
+      if (!open(next) || cameFrom.has(key(next))) continue;
+      cameFrom.set(key(next), cell);
+      queue.push(next);
+    }
+  }
+  if (!best) return null;
+  const path = [];
+  for (let cell = best; cell; cell = cameFrom.get(key(cell))) path.unshift(cell);
+  return path;
+}
+
+/** เดินไปหาจุดโต้ตอบตามเส้นทางบนผังของฉาก (ผังอ่านจาก window.__aitq) */
 async function walkTo(page, id) {
-  const target = (await snap(page)).interactables.find((i) => i.id === id);
+  const { interactables, map, player } = await snap(page);
+  const target = interactables.find((i) => i.id === id);
   assert.ok(target, `ไม่พบจุดโต้ตอบ ${id}`);
-  await moveAxis(page, "y", LANE_Y);
-  await moveAxis(page, "x", target.x);
-  await moveAxis(page, "y", target.y);
-  const { player } = await snap(page);
-  assert.ok(Math.hypot(player.x - target.x, player.y - target.y) < 46, `เดินไปไม่ถึง ${id}`);
+  if (Math.hypot(player.x - target.x, player.y - target.y) >= 30) {
+    const path = findPath(map, cellOf(player.x, player.y), target);
+    assert.ok(path, `ไม่มีทางเดินไป ${id}`);
+    // เดินไปที่กลางช่องของทุกจุดเลี้ยว
+    for (let i = 0; i < path.length; i++) {
+      const turn = i === 0 || i === path.length - 1 || path[i + 1].col - path[i].col !== path[i].col - path[i - 1].col || path[i + 1].row - path[i].row !== path[i].row - path[i - 1].row;
+      if (!turn) continue;
+      const spot = cellSpot(path[i]);
+      await moveAxis(page, "x", spot.x);
+      await moveAxis(page, "y", spot.y);
+    }
+    await moveAxis(page, "x", target.x);
+    await moveAxis(page, "y", target.y);
+  }
+  const now = (await snap(page)).player;
+  assert.ok(Math.hypot(now.x - target.x, now.y - target.y) < 46, `เดินไปไม่ถึง ${id} (อยู่ที่ ${Math.round(now.x)},${Math.round(now.y)} เป้าหมาย ${target.x},${target.y})`);
 }
 
 /** canvas ต้องอยู่ในกรอบจอทั้งหมดและคงสัดส่วน 16:9 */
@@ -180,11 +247,13 @@ async function takeAssessment(page, phase, shouldAnswer, press = (locator) => lo
 }
 
 /** ขั้นเริ่มเกม: ตั้งชื่อ เลือกสไตล์ ทำแบบทดสอบก่อนเรียนโดยให้หัวข้อ 1 ถูกตามจำนวนที่ระบุ หัวข้ออื่นกดยังไม่รู้ */
-async function onboard(page, { name, topic1Correct, tap = false, shots = false, started = false }) {
+async function onboard(page, { name, topic1Correct, tap = false, shots = false, started = false, avatar = null }) {
   const press = (locator) => (tap ? locator.tap() : locator.click());
   if (shots) await shot(page, "00-menu");
   if (!started) await press(page.getByRole("button", { name: "เริ่มเกมใหม่" }));
   await page.getByTestId("player-name").fill(name);
+  assert.equal(await page.getByTestId("avatar-a").getAttribute("aria-checked"), "true");
+  if (avatar) await press(page.getByTestId(`avatar-${avatar}`));
   assert.equal(await page.getByTestId("style-read").getAttribute("aria-checked"), "true");
   assert.equal(await page.getByTestId("class-code").count(), 0, "ยังไม่ตั้งค่าฐานข้อมูลกลาง: ไม่ถามรหัสห้องเรียน");
   if (shots) await shot(page, "00-onboarding");
@@ -193,9 +262,20 @@ async function onboard(page, { name, topic1Correct, tap = false, shots = false, 
   if (shots) await shot(page, "00-pretest");
   const form = await takeAssessment(page, "pretest", (topic, nth) => topic === 1 && nth <= topic1Correct, press);
   await inHall(page);
-  await page.waitForTimeout(300);
-  const { profile, pretest } = (await snap(page)).store;
+  // บทนำของเนื้อเรื่องแสดงครั้งแรกที่เข้าแล็บ
+  if (shots) {
+    await page.getByTestId("story").waitFor();
+    await shot(page, "00-story-prologue");
+  }
+  const story = await readStory(page, press);
+  assert.equal(story?.beat, "prologue", "เข้าแล็บครั้งแรกต้องเห็นบทนำของเนื้อเรื่อง");
+  assert.equal(story.lines.length, 5);
+  assert.ok(story.lines.some((line) => line.startsWith("อาจารย์วิน:") && line.includes(name)), "อาจารย์วินเรียกชื่อผู้เล่น");
+  assert.ok(story.lines.at(-1).startsWith("พี่บิต:"));
+  const { profile, pretest, story: seen } = (await snap(page)).store;
+  assert.deepEqual(seen, ["prologue"], "ดูบทนำจบแล้วถูกบันทึก ไม่แสดงซ้ำ");
   assert.equal(profile.name, name);
+  assert.equal(profile.avatar, avatar ?? "a");
   assert.equal(pretest.form, form);
   assert.deepEqual(pretest.correctByTopic, { 1: topic1Correct, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 });
   assert.deepEqual(pretest.items.map((item) => item.id), quests.assessment[form].map((item) => item.id));
@@ -323,8 +403,113 @@ async function takeCore(page, room) {
   await page.getByTestId("reward").waitFor();
   assert.match(await page.getByTestId("reward-title").innerText(), new RegExp(`ได้รับแกน AI ชิ้นที่ ${room}`));
   assert.ok((await page.getByTestId("reward").innerText()).includes(topicOf(room).objective), "หน้ารางวัลต้องแสดงสมรรถนะจาก course.json");
+  assert.ok((await page.getByTestId("reward-next").innerText()).includes(KAIJU[room - 1]), "หน้ารางวัลบอกภารกิจต่อไป: ออกสู้กับไคจูของห้องนี้");
   await page.getByRole("button", { name: "อยู่ในห้องต่อ" }).click();
   assert.equal((await snap(page)).store.progress[room].core, true);
+  assert.match(await page.getByTestId("objective").innerText(), new RegExp(`โรงเก็บหุ่น.*${KAIJU[room - 1]}`));
+}
+
+// ---------------------------------------------------------------- โรงเก็บหุ่นและด่านต่อสู้ไคจู
+
+/** คำตอบที่ถูกของโจทย์เลือกตอบจากชุดโจทย์ใน quests.json (ห้องซ่อมและด่านต่อสู้) คิดจาก course.json */
+function poolAnswer(room, pools, cardText, options) {
+  const topic = topicOf(room);
+  const earliest = (order) => [...options].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
+  for (const pool of pools) {
+    const table = pool.table === undefined ? null : topic.tables[pool.table];
+    if (pool.kind === "term-definitions") {
+      const term = topic.sections[pool.section].terms.find((t) => t.definition === cardText);
+      if (term) return term.term;
+    }
+    if (pool.kind === "match-table-cells") {
+      const row = table.rows.find((r) => pool.columns.some((column) => r[column] === cardText));
+      if (row) return row[0];
+    }
+    if (pool.kind === "sort-table-cells") {
+      for (const row of table.rows) for (const column of pool.columns) if (row[column] === cardText) return table.headers[column];
+    }
+    if (pool.kind === "step-pairs" && !cardText) return earliest(topic.sections.map((section) => strip(section.heading)));
+    if (pool.kind === "quest-step-pairs" && !cardText) return earliest(course.finalQuest.steps);
+  }
+  throw new Error(`ห้อง ${room}: ไม่พบเฉลยของโจทย์ "${cardText}" ${JSON.stringify(options)}`);
+}
+
+const click = (locator) => locator.click();
+
+/** ออกจากห้อง (หรือโถง) ไปโรงเก็บหุ่น */
+async function goToHangar(page) {
+  if ((await snap(page)).store.screen === "room") {
+    await walkTo(page, "door-entry");
+    await act(page);
+    await inHall(page);
+    await page.waitForTimeout(300);
+  }
+  await walkTo(page, "gate");
+  assert.match((await snap(page)).store.prompt, /ประตูโรงเก็บหุ่น/);
+  await act(page);
+  await inHangar(page);
+}
+
+async function backToHall(page) {
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await page.waitForTimeout(300);
+}
+
+/** ตอบโจทย์ของด่านต่อสู้หนึ่งข้อ (ถูกหรือผิดตามที่สั่ง) คืนข้อความบันทึกเหตุการณ์และพลังของทั้งสองฝ่ายหลังตอบ */
+async function battleTurn(page, correctly, press = click) {
+  const source = Number(await page.getByTestId("battle").getAttribute("data-source"));
+  const cardText = (await page.getByTestId("choice-card").count()) ? await page.getByTestId("choice-card").innerText() : "";
+  const options = await page.getByTestId("choice-option").allInnerTexts();
+  const right = options.indexOf(poolAnswer(source, quests.battles.find((b) => b.room === source).pools, cardText, options));
+  assert.notEqual(right, -1, `ด่านต่อสู้: ไม่พบตัวเลือกที่ถูกของ "${cardText}" ใน ${JSON.stringify(options)}`);
+  await press(page.getByTestId("choice-option").nth(correctly ? right : (right + 1) % options.length));
+  const turn = {
+    source,
+    log: (await page.getByTestId("battle-log").innerText()).replace(/\s+/g, " "),
+    robot: Number(await page.getByTestId("hp-left").getAttribute("data-hp")),
+    kaiju: Number(await page.getByTestId("hp-right").getAttribute("data-hp")),
+  };
+  await press(page.getByTestId("battle-next"));
+  await page.waitForTimeout(60);
+  return turn;
+}
+
+/** เปิดด่านต่อสู้จากแผงสั่งปฏิบัติการในโรงเก็บหุ่น แล้วกดออกปฏิบัติการ */
+async function startBattle(page, room) {
+  await walkTo(page, "console");
+  assert.match((await snap(page)).store.prompt, /แผงสั่งปฏิบัติการ/);
+  await act(page);
+  const battle = page.getByTestId("battle");
+  await battle.waitFor();
+  assert.equal(await battle.getAttribute("data-room"), String(room), "ด่านที่เปิดคือด่านแรกที่ได้แกน AI แล้วแต่ยังไม่ชนะ");
+  assert.ok((await page.getByTestId("battle-title").innerText()).includes(KAIJU[room - 1]));
+  return battle;
+}
+
+/** ตอบถูกจนชนะ แล้วกลับโรงเก็บหุ่น คืนรายการผลของแต่ละตา */
+async function winBattle(page, room, press = click) {
+  const turns = [];
+  for (let guard = 0; guard < 40 && (await page.getByTestId("battle").getAttribute("data-stage")) === "fight"; guard++) turns.push(await battleTurn(page, true, press));
+  await page.getByTestId("battle-won").waitFor();
+  assert.ok((await page.getByTestId("battle-won").innerText()).includes(KAIJU[room - 1]));
+  const credits = (await page.getByTestId("battle-credits").count()) ? await page.getByTestId("battle-credits").innerText() : "";
+  await press(page.getByTestId("battle-finish"));
+  await page.waitForTimeout(350);
+  const record = (await snap(page)).store.progress[room].battle;
+  assert.equal(record.won, true);
+  return { turns, credits, record };
+}
+
+/** ด่านต่อสู้ของห้องแบบตอบถูกทุกข้อ: ไปโรงเก็บหุ่น สู้ ชนะ กลับโถง */
+async function clearBattle(page, room) {
+  await goToHangar(page);
+  await startBattle(page, room);
+  await page.getByTestId("battle-start").click();
+  const result = await winBattle(page, room);
+  await backToHall(page);
+  return result;
 }
 
 // ---------------------------------------------------------------- ห้อง 1: ระดับปกติ + ห้องซ่อม + ติวเตอร์ + สไตล์
@@ -338,12 +523,52 @@ async function playRoom1(page) {
     sessionStorage.clear();
   });
   await page.reload();
-  const form = await onboard(page, { name: "นักทดสอบ", topic1Correct: 1, shots: true });
-  log(`ขั้นเริ่มเกม: ตั้งชื่อ เลือกสไตล์ แบบทดสอบก่อนเรียนชุด ${form} 12 ข้อ (สมรรถนะละ 2 ข้อ) ไม่เฉลย เก็บผลรายข้อและรายสมรรถนะ (หัวข้อ 1 ถูก 1/2)`);
+  const form = await onboard(page, { name: "นักทดสอบ", topic1Correct: 1, shots: true, avatar: "b" });
+  log(`ขั้นเริ่มเกม: ตั้งชื่อ เลือกตัวละคร เลือกสไตล์ แบบทดสอบก่อนเรียนชุด ${form} 12 ข้อ (สมรรถนะละ 2 ข้อ) ไม่เฉลย เก็บผลรายข้อและรายสมรรถนะ (หัวข้อ 1 ถูก 1/2) แล้วเห็นบทนำของเนื้อเรื่อง 5 หน้า`);
 
   assert.equal((await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length, 6);
+  assert.equal((await snap(page)).avatar.texture, "ch_b_lab", "ตัวละครในฉากเป็นแบบที่เลือกตอนลงทะเบียน");
   await assertCanvasFits(page, "โถงทางเดิน");
   await shot(page, "01-hall");
+
+  // --- เสียง: เพลงของโถงเล่นหลังผู้ใช้กดปุ่มครั้งแรก ปิดเปิดได้จากปุ่มบน HUD และจำค่าไว้ในเครื่อง
+  let audio = (await snap(page)).audio;
+  assert.deepEqual([audio.state, audio.playing, audio.settings], ["running", "lab:0", { music: true, sfx: true }], `สถานะเสียงในโถง: ${JSON.stringify(audio)}`);
+  assert.ok(audio.sfxCount > 0, "ปุ่มที่กดมาแล้วมีเสียงประกอบ");
+  await page.getByTestId("hud-sound").click();
+  audio = (await snap(page)).audio;
+  assert.deepEqual([audio.playing, audio.settings], [null, { music: false, sfx: false }], "ปิดเสียง: เพลงหยุด");
+  assert.equal(await page.getByTestId("hud-sound").getAttribute("aria-pressed"), "false");
+  const muted = audio.sfxCount;
+  await page.getByTestId("hud-questlog").click();
+  assert.equal((await snap(page)).audio.sfxCount, muted, "ปิดเสียง: ไม่มีเสียงประกอบ");
+  await page.getByTestId("sound-music").click();
+  assert.deepEqual((await snap(page)).audio.settings, { music: true, sfx: false }, "สมุดเควสเปิดปิดดนตรีและเสียงประกอบแยกกันได้");
+  await page.getByTestId("sound-sfx").click();
+  await page.getByRole("button", { name: "ปิด", exact: true }).click();
+  assert.deepEqual(JSON.parse(await page.evaluate(() => localStorage.getItem("ai-trainer-quest-settings"))), { music: true, sfx: true });
+  assert.equal((await snap(page)).audio.playing, "lab:0");
+  log("เสียง: เพลงของโถงเล่นหลังกดปุ่มครั้งแรก ปุ่มทุกปุ่มมีเสียงประกอบ ปิดเปิดได้จาก HUD และสมุดเควส จำค่าไว้ในเครื่อง");
+
+  // --- เดิน: มีแอนิเมชันเดิน และพี่บิตตามผู้เล่น
+  const startAt = (await snap(page)).player;
+  await page.keyboard.down("ArrowDown");
+  await page.waitForTimeout(350);
+  const moving = await snap(page);
+  await page.keyboard.up("ArrowDown");
+  await page.keyboard.down("ArrowRight");
+  await page.waitForTimeout(1300);
+  const walking = await snap(page);
+  await page.keyboard.up("ArrowRight");
+  await page.waitForTimeout(700);
+  const resting = await snap(page);
+  assert.equal(moving.avatar.walking && walking.avatar.walking, true, "ระหว่างเดินต้องเล่นแอนิเมชันเดิน");
+  assert.notEqual(moving.avatar.frame, walking.avatar.frame, "เดินคนละทิศใช้เฟรมคนละแถว");
+  assert.equal(resting.avatar.walking, false, "หยุดเดิน: กลับท่ายืน");
+  assert.ok(resting.player.x - startAt.x > 120, "ผู้เล่นเดินไปทางขวา");
+  const gap = Math.hypot(resting.companion.x - resting.player.x, resting.companion.y - resting.player.y);
+  assert.ok(gap < 60, `พี่บิตต้องตามผู้เล่นมาอยู่ใกล้ ๆ (ห่าง ${Math.round(gap)} px)`);
+  log("การเดิน: ตัวละครมีแอนิเมชันเดินตามทิศ หยุดแล้วกลับท่ายืน พี่บิตลอยตามผู้เล่น");
   await walkTo(page, "door-2");
   assert.match((await snap(page)).store.prompt, /ห้อง 2 ล็อกอยู่/);
   await act(page);
@@ -354,7 +579,10 @@ async function playRoom1(page) {
   await walkTo(page, "door-1");
   assert.ok((await snap(page)).store.prompt.includes(topic1.title), "คำแนะนำหน้าประตูต้องแสดงชื่อหัวข้อจาก course.json");
   await act(page);
-  await inRoom(page, 1);
+  const briefing = await inRoom(page, 1);
+  assert.equal(briefing?.beat, "room-1", "เข้าห้องครั้งแรก: พี่บิตบรรยายสรุปภารกิจของห้อง");
+  assert.ok(briefing.lines[0].includes(KAIJU[0]));
+  assert.equal((await snap(page)).audio.playing, "study:1", "ในห้องเรียนเปลี่ยนเป็นเพลงของห้องนั้น");
   await assertCanvasFits(page, "ห้อง 1");
   await shot(page, "02-room1");
 
@@ -365,11 +593,7 @@ async function playRoom1(page) {
   await walkTo(page, "minigame");
   await act(page);
   assert.equal((await snap(page)).store.overlay, null);
-  await walkTo(page, "door-exit");
-  await act(page);
-  assert.match((await snap(page)).store.toast, /ห้อง 2 ยังล็อก/);
-  assert.equal((await snap(page)).store.room, 1);
-  log("ห้อง 1: ข้ามลำดับไม่ได้ (สถานี 3 เครื่องฝึก และประตูไปห้อง 2 ยังล็อก)");
+  log("ห้อง 1: ข้ามลำดับไม่ได้ (สถานี 3 และเครื่องฝึกยังล็อก)");
 
   const stations = await listenAll(page, 1, { check: true, shots: true });
   log(`ห้อง 1 บทสนทนา ${stations} สถานี: ข้อความและตารางตรงกับ course.json ทุกหน้า`);
@@ -413,7 +637,7 @@ async function playRoom1(page) {
 
   await page.getByTestId("peek-button").click();
   assert.ok((await page.getByTestId("peek").innerText()).includes(topic1.sections[1].body), "แผงอ้างอิงต้องเป็นข้อความเดิมจาก course.json");
-  await page.getByTestId("peek").getByRole("button", { name: "ปิด" }).click();
+  await page.getByTestId("peek").getByRole("button", { name: "ปิด", exact: true }).click();
   assert.match(await page.getByTestId("peek-button").innerText(), /เหลือ 1/);
 
   await card(page, terms[0].term).click();
@@ -487,7 +711,7 @@ async function playRoom1(page) {
   const setStyle = async (style) => {
     await page.getByRole("button", { name: "สมุดเควส" }).click();
     await page.getByTestId(`style-${style}`).click();
-    await page.getByRole("button", { name: "ปิด" }).click();
+    await page.getByRole("button", { name: "ปิด", exact: true }).click();
   };
   await setStyle("hands");
   await walkTo(page, "station-0");
@@ -526,20 +750,108 @@ async function playRoom1(page) {
   await setStyle("read");
   log("สไตล์การเรียน: ลงมือทำ (ดึงคันโยก พลิกการ์ด) และดูภาพ (เน้นคำ ตารางเป็นการ์ด) แสดงข้อความเดิมจาก course.json");
 
-  // --- กลับโถง: ห้อง 2 เปิด ห้อง 3 ยังล็อก
+  // --- กลับโถง: ได้แกนแล้วแต่ยังไม่ชนะไคจู ห้อง 2 ยังล็อก
   await walkTo(page, "door-entry");
   await act(page);
   await inHall(page);
   await page.waitForTimeout(300);
   assert.match(await page.getByTestId("cores").innerText(), /1\/6/);
-  assert.match(await page.getByTestId("objective").innerText(), /ประตูห้อง 2/);
+  assert.match(await page.getByTestId("objective").innerText(), /โรงเก็บหุ่น.*กลิตช์/);
+  await walkTo(page, "door-3");
+  await act(page);
+  assert.match((await snap(page)).store.toast, /ห้อง 3 ยังล็อก ต้องได้แกน AI/);
+  await walkTo(page, "door-2");
+  await act(page);
+  assert.match((await snap(page)).store.toast, /ห้อง 2 ยังล็อก.*กลิตช์/);
+  assert.equal((await snap(page)).store.screen, "hall");
+  log("เส้นทาง 1→6: ได้แกนห้อง 1 แล้ว ห้อง 2 ยังล็อกจนกว่าจะชนะไคจูของห้อง 1");
+
+  // --- ร้านสหกรณ์แล็บ: เครดิตมาจากความคืบหน้า (สถานี 5 ดาว 2 ทบทวน แกน) = 25 + 20 + 10 + 20
+  await walkTo(page, "shop");
+  await act(page);
+  await page.getByTestId("shop").waitFor();
+  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "75");
+  assert.equal(await page.getByTestId("shop-buy-outfit-engineer").isDisabled(), true, "เครดิตไม่พอ: ซื้อไม่ได้");
+  await shot(page, "07-shop");
+  await page.getByTestId("shop-close").click();
+
+  // --- โรงเก็บหุ่น: ด่านต่อสู้ที่ 1
+  await goToHangar(page);
+  await assertCanvasFits(page, "โรงเก็บหุ่น");
+  await shot(page, "07-hangar");
+  await walkTo(page, "robot");
+  await act(page);
+  assert.match((await snap(page)).store.toast, /ติดตั้งแกน AI แล้ว 1\/6/);
+  await startBattle(page, 1);
+  assert.ok((await page.getByTestId("battle-intro").innerText()).includes("ตอบถูก การ์เดียนโจมตี"), "หน้าเริ่มด่านอธิบายลักษณะของไคจู");
+  await shot(page, "08-battle-intro");
+  await page.getByTestId("battle-start").click();
+  assert.equal((await snap(page)).audio.playing, "battle:0", "ด่านต่อสู้ใช้เพลงต่อสู้");
+  let turn = await battleTurn(page, false);
+  assert.deepEqual([turn.robot, turn.kaiju], [5, 6], "ตอบผิด: ไคจูโจมตี การ์เดียนเสียพลัง 1");
+  assert.match(turn.log, /ยังไม่ถูก.*กลิตช์โจมตี -1/);
+  // ขอข้อมูลจากพี่บิต: เนื้อหาเดิมจาก course.json จำกัดจำนวนครั้ง
+  await page.getByTestId("battle-hint").click();
+  const hint = await page.getByTestId("battle-hint-panel").innerText();
+  assert.ok(hint.includes(topic1.sections[1].body) && hint.includes(topic1.tables[0].rows[0][1]), "ข้อมูลจากพี่บิตคือเนื้อหาที่โจทย์ใช้ จาก course.json");
+  await page.getByTestId("battle-hint-close").click();
+  assert.match(await page.getByTestId("battle-hint").innerText(), /เหลือ 1/);
+  // ถามพี่บิต (ติวเตอร์ AI) ระหว่างสู้ได้ ขอบเขตคือห้องของโจทย์
+  await page.getByTestId("battle-tutor").click();
+  await page.getByTestId("tutor").waitFor();
+  assert.equal((await snap(page)).store.tutorOpen, true);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(150);
+  assert.equal((await snap(page)).store.overlay, "battle", "ปิดหน้าต่างถามพี่บิตแล้วยังอยู่ในด่านต่อสู้");
+  turn = await battleTurn(page, true);
+  assert.deepEqual([turn.robot, turn.kaiju], [5, 5]);
+  turn = await battleTurn(page, true);
+  assert.equal(turn.kaiju, 3, "ตอบถูกสองข้อติดกัน: พี่บิตยิงเสริมอีก 1");
+  assert.match(turn.log, /การ์เดียนโจมตี -1.*พี่บิตยิงเสริม -1/);
+  await shot(page, "08-battle-fight");
+  while ((await page.getByTestId("battle").getAttribute("data-stage")) === "fight") await battleTurn(page, true);
+  await page.getByTestId("battle-won").waitFor();
+  assert.match(await page.getByTestId("battle-credits").innerText(), /\+40/, "ชนะในการออกปฏิบัติการครั้งแรก: 30 + 10 เครดิต");
+  assert.match(await page.getByTestId("battle-won").innerText(), /ประตูห้อง 2 เปิดแล้ว/);
+  await shot(page, "08-battle-won");
+  await page.getByTestId("battle-finish").click();
+  await page.waitForTimeout(350);
+  const battle1 = (await snap(page)).store.progress[1].battle;
+  assert.deepEqual([battle1.won, battle1.sorties, battle1.asked - battle1.correct], [true, 1, 1]);
+  await walkTo(page, "console");
+  await act(page);
+  assert.match((await snap(page)).store.toast, /ยังไม่มีไคจูให้ออกปฏิบัติการ/);
+  log("ด่านต่อสู้ที่ 1 กลิตช์: ตอบผิดเสียพลัง ตอบถูกสองข้อติดพี่บิตยิงเสริม ขอข้อมูลและถามพี่บิตระหว่างสู้ได้ ชนะแล้วได้ 40 เครดิตและห้อง 2 เปิด");
+
+  // --- ตู้เสื้อผ้า: ซื้อชุด สวมทันที เปลี่ยนตัวละครได้
+  await walkTo(page, "wardrobe");
+  await act(page);
+  await page.getByTestId("shop").waitFor();
+  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "115");
+  await page.getByTestId("shop-buy-outfit-engineer").click();
+  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "15");
+  assert.equal(await page.getByTestId("shop-item-outfit-engineer").getAttribute("data-using"), "true");
+  assert.equal((await snap(page)).avatar.texture, "ch_b_engineer", "ซื้อชุดแล้วตัวละครในฉากเปลี่ยนชุดทันที");
+  await page.getByTestId("shop-avatar-a").click();
+  assert.equal((await snap(page)).avatar.texture, "ch_a_engineer");
+  await page.getByTestId("shop-wear-outfit-lab").click();
+  assert.equal((await snap(page)).avatar.texture, "ch_a_lab");
+  await page.getByTestId("shop-wear-outfit-engineer").click();
+  await page.getByTestId("shop-avatar-b").click();
+  assert.equal(await page.getByTestId("shop-buy-supply-shield").isDisabled(), true, "เครดิตเหลือ 15: ซื้อโล่ (20) ไม่ได้");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(350);
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: { "repair-kit": 0, shield: 0 }, outfit: "engineer", paint: "standard" });
+  log("ร้านและตู้เสื้อผ้า: เครดิต 75 + 40 ซื้อชุดช่าง 100 สวมทันที สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
+
+  await backToHall(page);
   await walkTo(page, "door-3");
   await act(page);
   assert.match((await snap(page)).store.toast, /ห้อง 3 ยังล็อก/);
   await walkTo(page, "door-2");
   await act(page);
-  await inRoom(page, 2);
-  log("เส้นทาง 1→6: ได้แกนห้อง 1 แล้วประตูห้อง 2 เปิด ห้อง 3 ยังล็อก");
+  assert.equal((await inRoom(page, 2))?.beat, "room-2");
+  log("เส้นทาง 1→6: ชนะไคจูของห้อง 1 แล้วประตูห้อง 2 เปิด ห้อง 3 ยังล็อก");
 }
 
 // ---------------------------------------------------------------- ห้อง 2–5: ขั้นตอนเดียวกับห้อง 1
@@ -596,10 +908,70 @@ async function playRoom(page, room) {
   await takeCore(page, room);
   log(`ห้อง ${room} ${topic.title}: ${stations} สถานีตรงกับ course.json, เควส ${kinds.join(" + ")} (ระดับ${expected.tier}) 3 ดาว, ทบทวน ${review.count} ช่อง, ได้แกน AI ชิ้นที่ ${room}`);
 
-  await walkTo(page, "door-exit");
-  assert.match((await snap(page)).store.prompt, new RegExp(`ประตูไปห้อง ${room + 1}`));
+  // --- ด่านต่อสู้ของห้อง: ไคจูแต่ละตัวมีลักษณะต่างกัน
+  await goToHangar(page);
+  if (room === 3) {
+    // ซื้อของใช้ในการต่อสู้ก่อนออกปฏิบัติการ
+    await walkTo(page, "wardrobe");
+    await act(page);
+    await page.getByTestId("shop").waitFor();
+    await page.getByTestId("shop-buy-supply-shield").click();
+    await page.getByTestId("shop-buy-supply-repair-kit").click();
+    assert.match(await page.getByTestId("shop-notice").innerText(), /ซื้อชุดซ่อมฉุกเฉินแล้ว/);
+    await page.getByTestId("shop-close").click();
+    await page.waitForTimeout(350);
+    assert.deepEqual((await snap(page)).store.shop.supplies, { "repair-kit": 1, shield: 1 });
+  }
+  const battle = await startBattle(page, room);
+  const intro = await page.getByTestId("battle-intro").innerText();
+  await page.getByTestId("battle-start").click();
+  let detail = "";
+  if (room === 2) {
+    assert.match(intro, /ชาร์จพลัง/);
+    await battleTurn(page, true);
+    await battleTurn(page, false);
+    await page.getByTestId("battle-charging").waitFor();
+    const counter = await battleTurn(page, true);
+    assert.match(counter.log, /สวนกลับ -2/, "ตาที่ไคจูชาร์จพลัง ตอบถูกสวนกลับ 2");
+    detail = "ตาที่สามไคจูชาร์จพลัง ตอบถูกสวนกลับ 2";
+  }
+  if (room === 3) {
+    assert.match(intro, /ฟื้นพลัง/);
+    assert.equal(await page.getByTestId("battle-supply-repair-kit").isDisabled(), true, "พลังเต็ม: ใช้ชุดซ่อมไม่ได้");
+    await battleTurn(page, true);
+    await page.getByTestId("battle-supply-shield").click();
+    const blocked = await battleTurn(page, false);
+    assert.match(blocked.log, /โล่กันการโจมตีไว้ได้.*สแครปฟื้นพลัง \+1/);
+    assert.deepEqual([blocked.robot, blocked.kaiju], [6, 8], "โล่กันการโจมตี แต่ไคจูฟื้นพลังกลับมาเต็ม");
+    const hit = await battleTurn(page, false);
+    assert.equal(hit.robot, 5);
+    await page.getByTestId("battle-supply-repair-kit").click();
+    assert.equal(await page.getByTestId("hp-left").getAttribute("data-hp"), "6", "ชุดซ่อมฟื้นพลังไม่เกินพลังเต็ม");
+    assert.deepEqual((await snap(page)).store.shop.supplies, { "repair-kit": 0, shield: 0 }, "ของใช้แล้วหมดไป");
+    detail = "ตอบผิดแล้วไคจูฟื้นพลัง ใช้โล่และชุดซ่อมจากร้านได้";
+  }
+  if (room === 4) {
+    assert.match(intro, /ยิ่งโจมตีแรง/);
+    const hits = [];
+    for (let i = 0; i < 3; i++) hits.push((await battleTurn(page, true)).log.match(/การ์เดียนโจมตี -(\d)/)[1]);
+    assert.deepEqual(hits, ["1", "2", "3"], "คอมโบ: ถูกติดต่อกันโจมตีแรงขึ้น");
+    detail = "ตอบถูกติดต่อกันโจมตีแรงขึ้น 1, 2, 3";
+  }
+  if (room === 5) {
+    assert.match(intro, /ฝูง/);
+    const swarm = await battleTurn(page, false);
+    assert.match(swarm.log, /ฝูงมิมิกโจมตีหนัก -2/);
+    detail = "ฝูงเหลือเยอะโจมตีหนัก 2";
+  }
+  if (room === 2) await shot(page, `1${room}-battle${room}`);
+  const fight = await winBattle(page, room);
+  assert.equal(await battle.count(), 0);
+  log(`ด่านต่อสู้ที่ ${room} ${KAIJU[room - 1]}: ${detail} ชนะแล้ว ${fight.credits}`);
+
+  await backToHall(page);
+  await walkTo(page, `door-${room + 1}`);
   await act(page);
-  await inRoom(page, room + 1);
+  assert.equal((await inRoom(page, room + 1))?.beat, `room-${room + 1}`);
 }
 
 // ---------------------------------------------------------------- ห้อง 6: ภารกิจภาคสนาม + ใบประกาศ
@@ -683,8 +1055,16 @@ async function playField(page) {
   const preForm = state.pretest.form;
   const postForm = await takeAssessment(page, "posttest", (topic, nth) => topic !== 6 || nth === 1);
   assert.notEqual(postForm, preForm, "หลังเรียนต้องเป็นชุดคู่ขนานคนละชุดกับก่อนเรียน");
+  // ทำเสร็จได้แกนชิ้นสุดท้าย: หน้ารับแกนบอกภารกิจสุดท้าย และเปิดใบประกาศได้เลย
+  await page.getByTestId("reward").waitFor();
+  assert.match(await page.getByTestId("reward-title").innerText(), /ได้รับแกน AI ชิ้นที่ 6/);
+  assert.ok((await page.getByTestId("reward-next").innerText()).includes(KAIJU[5]));
+  await shot(page, "16-reward-final");
+  await page.getByTestId("reward-certificate").click();
   const certificate = page.getByTestId("certificate");
   await certificate.waitFor();
+  assert.equal((await snap(page)).audio.playing, "victory:0");
+  assert.match(await page.getByTestId("certificate-guardian").innerText(), /ปราบไคจู 5\/6/);
   state = (await snap(page)).store;
   assert.deepEqual(state.posttest.correctByTopic, { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 1 });
   assert.deepEqual(
@@ -732,21 +1112,51 @@ async function playField(page) {
   assert.equal(room1.tutor.ai + room1.tutor.hints, 1, "ถามพี่บิต 1 ครั้งในห้อง 1");
   assert.ok(Object.values(saved.progress).every((p) => p.timeMs > 0), "ทุกห้องมีเวลาที่บันทึกไว้");
   assert.ok(saved.progress[6].field.evidence.image.startsWith("data:image/jpeg"));
-  assert.match(await page.getByTestId("objective").innerText(), /เก็บแกน AI ครบแล้ว/);
+  assert.match(await page.getByTestId("objective").innerText(), /โรงเก็บหุ่น.*โอเมก้า/);
   await page.getByRole("button", { name: "สมุดเควส" }).click();
   const profile = page.getByTestId("questlog");
   assert.match(await page.getByTestId("profile-cores").innerText(), /6\/6/);
   assert.equal(await profile.locator('[data-collected="true"]').count(), 6);
   assert.equal(await profile.locator('li[data-passed="true"]').count(), 6);
   await shot(page, "18-profile-complete");
-  await page.getByRole("button", { name: "ปิด" }).click();
+  await page.getByRole("button", { name: "ปิด", exact: true }).click();
   await assertCanvasFits(page, "โถงทางเดินหลังจบเกม");
   log("โหลดหน้าใหม่แล้วความคืบหน้าทั้ง 6 ห้องยังอยู่ หน้าโปรไฟล์แสดงแกน 6/6 และสมรรถนะผ่าน 6 ข้อ ข้อมูลสำหรับครู (ชิ้นที่ผิด ติวเตอร์ เวลา) ถูกบันทึก");
+
+  // --- ด่านสุดท้าย: โอเมก้า 6 เฟส แต่ละเฟสใช้โจทย์ของห้อง 1 ถึง 6 ตามลำดับ ชนะแล้วเห็นบทส่งท้ายและใบประกาศ
+  await goToHangar(page);
+  await startBattle(page, 6);
+  assert.match(await page.getByTestId("battle-intro").innerText(), /หลายเฟส/);
+  await page.getByTestId("battle-start").click();
+  assert.equal((await snap(page)).audio.playing, "boss:0", "ด่านสุดท้ายใช้เพลงของตัวเอง");
+  assert.match(await page.getByTestId("battle-phase").innerText(), /เฟส 1\/6/);
+  await shot(page, "18-battle-final");
+  const boss = [];
+  while ((await page.getByTestId("battle").getAttribute("data-stage")) === "fight") boss.push(await battleTurn(page, true));
+  const sources = boss.map((turn) => turn.source);
+  assert.deepEqual(sources, [...sources].sort((a, b) => a - b), `เฟสไล่จากห้อง 1 ไปห้อง 6: ${sources}`);
+  assert.deepEqual([sources[0], sources.at(-1)], [1, 6]);
+  assert.ok(boss.some((turn) => /ผ่านเฟสแล้ว/.test(turn.log)));
+  await page.getByTestId("battle-won").waitFor();
+  assert.match(await page.getByTestId("battle-won").innerText(), /เมืองปลอดภัยแล้ว/);
+  await page.getByTestId("battle-finish").click();
+  const ending = await readStory(page);
+  assert.equal(ending?.beat, "ending", "ชนะครบทุกด่าน: เห็นบทส่งท้าย");
+  assert.ok(ending.lines.some((line) => line.includes("นักทดสอบ")));
+  await page.getByTestId("certificate").waitFor();
+  assert.match(await page.getByTestId("certificate-guardian").innerText(), /ปราบไคจู 6\/6/);
+  await page.getByTestId("certificate-back").click();
+  await page.waitForTimeout(350);
+  assert.equal((await readStory(page)), null, "บทส่งท้ายไม่แสดงซ้ำ");
+  assert.match(await page.getByTestId("objective").innerText(), /ปกป้องเมืองสำเร็จแล้ว/);
+  await backToHall(page);
+  assert.match(await page.getByTestId("objective").innerText(), /ปกป้องเมืองสำเร็จแล้ว/);
+  log(`ด่านสุดท้าย โอเมก้า: ${boss.length} ตา ไล่โจทย์ห้อง ${[...new Set(sources)].join(", ")} ชนะแล้วเห็นบทส่งท้าย ใบประกาศแสดงปราบไคจู 6/6`);
 
   // แท่นห้อง 6 หลังจบเกม: เปิดใบประกาศได้ทันที ไม่ต้องทำแบบทดสอบซ้ำ
   await walkTo(page, "door-6");
   await act(page);
-  await inRoom(page, 6);
+  assert.equal(await inRoom(page, 6), null, "บรรยายสรุปของห้องแสดงครั้งเดียว");
   await walkTo(page, "core");
   await act(page);
   await page.getByTestId("certificate").waitFor();
@@ -810,7 +1220,7 @@ async function playTeacher(page) {
   assert.deepEqual(await page.getByTestId("teacher-student").evaluateAll((rows) => rows.map((row) => row.dataset.name)), ["=เพิ่งเริ่ม", "นักทดสอบ"]);
   const done = page.locator('[data-testid="teacher-student"][data-name="นักทดสอบ"]');
   const cells = await done.locator("th, td").allInnerTexts();
-  assert.deepEqual(cells.slice(1, 10), ["PVC1", "6", "6/6", "14/15", "5/5", "83.3%", "1/12", "11/12", "+10"], `แถวของผู้เรียนที่เล่นจบ: ${cells.join(" | ")}`);
+  assert.deepEqual(cells.slice(1, 11), ["PVC1", "6", "6/6", "14/15", "5/5", "6/6", "83.3%", "1/12", "11/12", "+10"], `แถวของผู้เรียนที่เล่นจบ: ${cells.join(" | ")}`);
   await done.getByTestId("teacher-details").click();
   const answers = await page.getByTestId("teacher-answers").innerText();
   assert.ok(answers.includes(`${LONG_ANSWER} 5-9`) && answers.includes(course.topics[0].reviewQuestions[0].question) && answers.includes(course.finalQuest.notes.prompts[0]), "ครูอ่านคำตอบทบทวนและบันทึกภาคสนามพร้อมคำถามจาก course.json ได้");
@@ -849,6 +1259,8 @@ async function playTeacher(page) {
   assert.equal(lines.length, 3);
   assert.ok(lines.some((line) => line.startsWith("PVC1,นักทดสอบ,false,")) && lines.some((line) => line.startsWith("PVC1,'=เพิ่งเริ่ม,false,")), "ชื่อที่ขึ้นต้นด้วย = ต้องไม่ถูก Excel ตีความเป็นสูตร");
   assert.ok(lines.find((line) => line.includes("นักทดสอบ")).includes(",6,6,14,5,83.3,true,"), "CSV มีห้องที่ถึง แกน ดาว ทบทวน Accuracy ภาคสนาม");
+  const column = lines[0].replace("\ufeff", "").split(",").indexOf("kaiju_defeated");
+  assert.equal(lines.find((line) => line.includes("นักทดสอบ")).split(",")[column], "6", "CSV มีจำนวนไคจูที่ปราบได้");
   const answersFile = await download("teacher-export-answers");
   assert.ok(answersFile.text.includes(`${LONG_ANSWER} 5-9`));
   assert.equal((await download("teacher-export-items")).text.trim().split("\r\n").length, 25);
@@ -864,7 +1276,7 @@ async function playTeacher(page) {
   await page.getByTestId("teacher-tab-students").click();
   assert.deepEqual(await page.getByTestId("teacher-student").evaluateAll((rows) => rows.map((row) => row.dataset.name)), ["ห้องอื่น"]);
   await page.unroute("**/api/teacher");
-  log("แดชบอร์ดผู้สอน: รหัสผ่านผิดเข้าไม่ได้ ตารางนักเรียน (ห้องที่ถึง แกน ดาว ทบทวน Accuracy ก่อน–หลัง) สรุปรายห้อง พัฒนาการรายสมรรถนะและรายข้อ ส่งออก CSV 3 ไฟล์ ลบข้อมูลรายห้องแบบยืนยัน");
+  log("แดชบอร์ดผู้สอน: รหัสผ่านผิดเข้าไม่ได้ ตารางนักเรียน (ห้องที่ถึง แกน ดาว ทบทวน ปราบไคจู Accuracy ก่อน–หลัง) สรุปรายห้อง พัฒนาการรายสมรรถนะและรายข้อ ส่งออก CSV 3 ไฟล์ ลบข้อมูลรายห้องแบบยืนยัน");
 }
 
 // ---------------------------------------------------------------- ระดับท้าทาย: ตรวจทั้งรอบ
@@ -884,6 +1296,8 @@ async function playChallenge(page) {
   await page.getByTestId("onboarding").waitFor();
   assert.equal(await page.evaluate(() => localStorage.getItem("ai-trainer-quest-save")), null, "ยืนยันเริ่มใหม่: ลบความคืบหน้าเดิม");
   await onboard(page, { name: "ท้าทาย", topic1Correct: 2, started: true });
+  const fresh = (await snap(page)).store;
+  assert.deepEqual([fresh.shop.owned, fresh.shop.outfit, fresh.story], [[], "lab", ["prologue"]], "เริ่มใหม่: ร้านค้าและเนื้อเรื่องเริ่มใหม่ด้วย");
   await walkTo(page, "door-1");
   await act(page);
   await inRoom(page, 1);
@@ -920,24 +1334,7 @@ async function playChallenge(page) {
 // ---------------------------------------------------------------- ผู้เรียนที่ตอบผิดมาก: ห้องซ่อมแบบบังคับในห้อง 2–3 ข้อเสนอเปลี่ยนสไตล์ และโจทย์คำนวณห้อง 4
 
 /** คำตอบที่ถูกของโจทย์ฝึกในห้องซ่อม คิดจากชุดสำรองใน quests.json และ course.json */
-function repairAnswer(room, cardText, options) {
-  const topic = topicOf(room);
-  for (const pool of questOf(room).backup) {
-    const table = pool.table === undefined ? null : topic.tables[pool.table];
-    if (pool.kind === "match-table-cells") {
-      const row = table.rows.find((r) => pool.columns.some((column) => r[column] === cardText));
-      if (row) return row[0];
-    }
-    if (pool.kind === "sort-table-cells") {
-      for (const row of table.rows) for (const column of pool.columns) if (row[column] === cardText) return table.headers[column];
-    }
-    if (pool.kind === "step-pairs" && !cardText) {
-      const order = topic.sections.map((section) => strip(section.heading));
-      return [...options].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
-    }
-  }
-  throw new Error(`ห้อง ${room}: ไม่พบเฉลยของโจทย์ห้องซ่อม "${cardText}" ${JSON.stringify(options)}`);
-}
+const repairAnswer = (room, cardText, options) => poolAnswer(room, questOf(room).backup, cardText, options);
 
 /** เข้าห้องซ่อมจากปุ่มในมินิเกม ทบทวน แล้วฝึกจนถูก 2 ข้อติดต่อกัน */
 async function passRepair(page, room) {
@@ -974,17 +1371,19 @@ async function finishRoomAfterQuest(page, room) {
 
 async function playStruggle(page) {
   const stations = (room) => topicOf(room).sections.length + (topicOf(room).intro ? 1 : 0);
-  const blank = (patch) => ({ stationsSeen: 0, minigameDone: false, stars: 0, outcome: null, summary: null, missed: {}, reviewAnswers: [], reviewDone: false, field: null, core: false, coreAt: null, timeMs: 0, tutor: { ai: 0, hints: 0 }, ...patch });
+  const blank = (patch) => ({ stationsSeen: 0, minigameDone: false, stars: 0, outcome: null, summary: null, missed: {}, reviewAnswers: [], reviewDone: false, field: null, core: false, coreAt: null, timeMs: 0, tutor: { ai: 0, hints: 0 }, battle: { won: false, sorties: 0, asked: 0, correct: 0 }, ...patch });
   const now = new Date().toISOString();
   // ผู้เล่นที่จบห้อง 1 แล้วและฟังสถานีของห้อง 2–4 ครบ: หัวข้อ 2 และ 4 ก่อนเรียนถูก 2/2 (ท้าทาย) หัวข้อ 3 ถูก 0/2 (ประคอง)
   const save = {
-    version: 3,
+    version: 4,
     updatedAt: now,
-    profile: { name: "ฝึกหนัก", style: "read", classCode: "" },
+    story: ["prologue", "room-1"],
+    shop: { spent: 0, owned: [], supplies: { "repair-kit": 0, shield: 0 }, outfit: "lab", paint: "standard" },
+    profile: { name: "ฝึกหนัก", style: "read", classCode: "", avatar: "a" },
     pretest: { form: "A", correctByTopic: { 1: 1, 2: 2, 3: 0, 4: 2, 5: 1, 6: 0 }, items: [], completedAt: now },
     posttest: null,
     rooms: {
-      1: blank({ stationsSeen: stations(1), minigameDone: true, stars: 2, outcome: { totalMisses: 1, requiredRepair: false }, reviewDone: true, core: true, coreAt: now }),
+      1: blank({ stationsSeen: stations(1), minigameDone: true, stars: 2, outcome: { totalMisses: 1, requiredRepair: false }, reviewDone: true, core: true, coreAt: now, battle: { won: true, sorties: 1, asked: 5, correct: 5 } }),
       2: blank({ stationsSeen: stations(2) }),
       3: blank({ stationsSeen: stations(3) }),
       4: blank({ stationsSeen: stations(4) }),
@@ -994,7 +1393,7 @@ async function playStruggle(page) {
   await page.waitForFunction(() => window.__aitq?.snapshot().store.ready);
   await page.evaluate((data) => localStorage.setItem("ai-trainer-quest-save", JSON.stringify(data)), save);
   await page.reload();
-  await page.getByTestId("menu-continue").click();
+  await page.locator('[data-testid="menu-continue"]:not([disabled])').click();
   await inHall(page);
   await page.waitForTimeout(300);
   await walkTo(page, "door-2");
@@ -1046,10 +1445,31 @@ async function playStruggle(page) {
   await page.getByTestId("review-save").click();
   await page.waitForTimeout(350);
   await takeCore(page, 2);
-  await walkTo(page, "door-exit");
+  log("ห้อง 2 ระดับท้าทาย: คัดแยกแบบส่งทั้งรอบ ผิด 2 รอบลดระดับ ผิดสะสม 4 ครั้งถูกบังคับเข้าห้องซ่อม ผ่านด้วย 1 ดาว บันทึกชิ้นที่ผิด");
+
+  // --- ด่านต่อสู้ที่ 2: ตอบผิดจนการ์เดียนพลังหมด ต้องถอยกลับมาซ่อม ออกใหม่แล้วไคจูเหลือพลังเท่าเดิม จึงชนะได้เสมอ
+  await goToHangar(page);
+  await startBattle(page, 2);
+  await page.getByTestId("battle-start").click();
+  const hit = await battleTurn(page, true);
+  assert.equal(hit.kaiju, 7);
+  let lastTurn = hit;
+  for (let guard = 0; guard < 10 && (await page.getByTestId("battle").getAttribute("data-stage")) === "fight"; guard++) lastTurn = await battleTurn(page, false);
+  await page.getByTestId("battle-lost").waitFor();
+  assert.equal(lastTurn.robot, 0);
+  assert.match(await page.getByTestId("battle-lost").innerText(), /ไตรฮอร์นยังเหลือพลัง 7/);
+  await shot(page, "28-battle-lost");
+  let record = (await snap(page)).store.progress[2].battle;
+  assert.deepEqual([record.won, record.sorties, record.correct], [false, 1, 1]);
+  await page.getByTestId("battle-retry").click();
+  assert.deepEqual([await page.getByTestId("hp-left").getAttribute("data-hp"), await page.getByTestId("hp-right").getAttribute("data-hp")], ["6", "7"], "ออกปฏิบัติการใหม่: การ์เดียนพลังเต็ม ไคจูเหลือพลังเท่าที่ตีไว้");
+  const second = await winBattle(page, 2);
+  assert.deepEqual([second.record.sorties, second.credits], [2, "เครดิตวิจัย +30"], "ชนะในครั้งที่สอง: ไม่ได้โบนัสครั้งแรก");
+  await backToHall(page);
+  await walkTo(page, "door-3");
   await act(page);
   await inRoom(page, 3);
-  log("ห้อง 2 ระดับท้าทาย: คัดแยกแบบส่งทั้งรอบ ผิด 2 รอบลดระดับ ผิดสะสม 4 ครั้งถูกบังคับเข้าห้องซ่อม ผ่านด้วย 1 ดาว บันทึกชิ้นที่ผิด");
+  log("ด่านต่อสู้ที่ 2 ของผู้เรียนที่ตอบผิดมาก: การ์เดียนพลังหมดต้องถอยกลับ ออกใหม่แล้วไคจูเหลือพลังเท่าเดิม ชนะได้ ได้ 30 เครดิต");
 
   // --- ห้อง 3: เริ่มที่ระดับประคอง (ก่อนเรียน 0/2 และห้องก่อนถูกบังคับเข้าห้องซ่อม) ถูกบังคับเข้าห้องซ่อมอีกห้อง → เสนอเปลี่ยนสไตล์
   await walkTo(page, "minigame");
@@ -1077,7 +1497,8 @@ async function playStruggle(page) {
   await page.getByTestId("review-save").click();
   await page.waitForTimeout(350);
   await takeCore(page, 3);
-  await walkTo(page, "door-exit");
+  await clearBattle(page, 3);
+  await walkTo(page, "door-4");
   await act(page);
   await inRoom(page, 4);
   log(`ห้อง 3: ถูกบังคับเข้าห้องซ่อมเป็นห้องที่ 2 ติดกัน พี่บิตเสนอเปลี่ยนสไตล์ รับแล้วเปลี่ยนเป็น ${style}`);
@@ -1115,7 +1536,8 @@ async function tabTo(page, selector, limit = 60) {
     await page.keyboard.press("Tab");
     if (await page.evaluate((sel) => document.activeElement?.matches(sel) ?? false, selector)) return presses;
   }
-  throw new Error(`กด Tab ${limit} ครั้งแล้วโฟกัสยังไปไม่ถึง ${selector}`);
+  const where = await page.evaluate(() => `${document.activeElement?.tagName} ${document.activeElement?.dataset?.testid ?? ""} / หน้าต่าง: ${window.__aitq?.snapshot().store.overlay ?? "-"} ${window.__aitq?.snapshot().store.storyBeat ?? ""} ${JSON.stringify(window.__aitq?.snapshot().store.story)} ${window.__aitq?.snapshot().store.screen}`);
+  throw new Error(`กด Tab ${limit} ครั้งแล้วโฟกัสยังไปไม่ถึง ${selector} (โฟกัสอยู่ที่ ${where})`);
 }
 const focusInside = (page, testId) => page.evaluate((id) => document.activeElement?.closest(`[data-testid="${id}"]`) !== null, testId);
 
@@ -1132,6 +1554,9 @@ async function playKeyboard(page) {
   await page.getByTestId("onboarding").waitFor();
   await tabTo(page, '[data-testid="player-name"]');
   await page.keyboard.type("คีย์บอร์ด one");
+  await tabTo(page, '[data-testid="avatar-b"]');
+  await page.keyboard.press("Enter");
+  assert.equal(await page.getByTestId("avatar-b").getAttribute("aria-checked"), "true");
   await tabTo(page, '[data-testid="style-visual"]');
   await page.keyboard.press("Space");
   assert.equal(await page.getByTestId("style-visual").getAttribute("aria-checked"), "true");
@@ -1147,13 +1572,29 @@ async function playKeyboard(page) {
   await tabTo(page, '[data-testid="assessment-finish"]');
   await page.keyboard.press("Enter");
   await inHall(page);
-  assert.equal((await snap(page)).store.profile.name, "คีย์บอร์ด one", "พิมพ์ตัวอักษรที่เป็นปุ่มของเกม (e, o, n และเว้นวรรค) ในช่องชื่อได้");
-  log("คีย์บอร์ดอย่างเดียว: เมนู ลงทะเบียน เลือกสไตล์ และแบบทดสอบก่อนเรียน 12 ข้อ ทำได้ด้วย Tab / Enter / Space");
+  assert.deepEqual([(await snap(page)).store.profile.name, (await snap(page)).store.profile.avatar], ["คีย์บอร์ด one", "b"], "พิมพ์ตัวอักษรที่เป็นปุ่มของเกม (e, o, n และเว้นวรรค) ในช่องชื่อได้");
+  // บทนำของเนื้อเรื่อง: โฟกัสอยู่ในหน้าต่าง อ่านต่อด้วย Enter จนจบ
+  await page.getByTestId("story").waitFor();
+  assert.ok(await focusInside(page, "story"), "ฉากเนื้อเรื่อง: โฟกัสย้ายเข้าหน้าต่าง");
+  await tabTo(page, '[data-testid="story-next"]');
+  for (let guard = 0; guard < 10 && (await page.getByTestId("story").count()); guard++) {
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(120);
+  }
+  assert.deepEqual((await snap(page)).store.story, ["prologue"]);
+  log("คีย์บอร์ดอย่างเดียว: เมนู ลงทะเบียน เลือกตัวละครและสไตล์ แบบทดสอบก่อนเรียน 12 ข้อ และบทนำของเนื้อเรื่อง ทำได้ด้วย Tab / Enter / Space");
 
   // HUD: เปิดสมุดเควสด้วยคีย์บอร์ด โฟกัสอยู่ในหน้าต่าง วน Tab ไม่หลุด ปิดด้วย Esc แล้วโฟกัสกลับที่เดิม
   await page.waitForTimeout(300);
   const before = (await snap(page)).player;
-  await tabTo(page, 'header button:nth-of-type(1)');
+  await tabTo(page, '[data-testid="hud-sound"]');
+  await page.keyboard.press("Space");
+  assert.equal(await page.getByTestId("hud-sound").getAttribute("aria-pressed"), "false", "ปิดเสียงด้วยคีย์บอร์ดได้");
+  // ปุ่มบน HUD ปล่อยโฟกัสหลังกด (Space ถัดไปเป็นของเกม) จึง Tab กลับไปที่ปุ่มอีกครั้ง
+  await tabTo(page, '[data-testid="hud-sound"]');
+  await page.keyboard.press("Space");
+  assert.equal(await page.getByTestId("hud-sound").getAttribute("aria-pressed"), "true");
+  await tabTo(page, '[data-testid="hud-questlog"]');
   await page.keyboard.press("Space");
   await page.getByTestId("questlog").waitFor();
   assert.equal((await snap(page)).store.screen, "hall", "Space บนปุ่มของ HUD ต้องไม่ไปสั่งโต้ตอบในฉากเกม");
@@ -1170,7 +1611,10 @@ async function playKeyboard(page) {
   await page.evaluate(() => document.activeElement?.blur());
   await walkTo(page, "door-1");
   await act(page);
-  await inRoom(page, 1);
+  // บรรยายสรุปของห้อง: ข้ามด้วย Esc ได้ และถูกบันทึกว่าดูแล้ว
+  const skipped = await inRoom(page, 1, () => page.keyboard.press("Escape"));
+  assert.equal(skipped?.beat, "room-1");
+  assert.ok((await snap(page)).store.story.includes("room-1"));
   await walkTo(page, "station-0");
   await page.keyboard.press("Enter");
   await page.getByTestId("dialogue").waitFor();
@@ -1239,6 +1683,37 @@ async function playKeyboard(page) {
   await page.keyboard.press("Escape");
   assert.equal((await snap(page)).store.progress[1].core, true);
   log("คีย์บอร์ดอย่างเดียว: เดิน โต้ตอบ บทสนทนา (ลูกศร/Enter/Space/Esc) เควสจับคู่ คำถามทบทวน และรับแกน AI โฟกัสไม่หลุดจากหน้าต่างที่เปิดอยู่");
+
+  // ด่านต่อสู้ด้วยคีย์บอร์ด: Tab ไปที่ตัวเลือก Enter เพื่อตอบ โฟกัสย้ายไปปุ่มข้อต่อไปเอง
+  await page.waitForTimeout(400);
+  await goToHangar(page);
+  await walkTo(page, "console");
+  await page.keyboard.press("e");
+  await page.getByTestId("battle").waitFor();
+  assert.ok(await focusInside(page, "battle"), "เปิดด่านต่อสู้: โฟกัสย้ายเข้าหน้าต่าง");
+  await tabTo(page, '[data-testid="battle-start"]');
+  await page.keyboard.press("Enter");
+  let turns = 0;
+  for (; turns < 20 && (await page.getByTestId("battle").getAttribute("data-stage")) === "fight"; turns++) {
+    const cardText = (await page.getByTestId("choice-card").count()) ? await page.getByTestId("choice-card").innerText() : "";
+    const options = await page.getByTestId("choice-option").allInnerTexts();
+    const right = poolAnswer(1, quests.battles[0].pools, cardText, options);
+    for (let presses = 0; presses < 30; presses++) {
+      await page.keyboard.press("Tab");
+      if (await page.evaluate((text) => document.activeElement?.dataset.testid === "choice-option" && document.activeElement.innerText === text, right)) break;
+    }
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(80);
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset.testid), "battle-next", "ตอบแล้วโฟกัสย้ายไปปุ่มข้อต่อไป");
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(80);
+  }
+  await page.getByTestId("battle-won").waitFor();
+  await tabTo(page, '[data-testid="battle-finish"]');
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(350);
+  assert.equal((await snap(page)).store.progress[1].battle.won, true);
+  log(`คีย์บอร์ดอย่างเดียว: เดินไปโรงเก็บหุ่นและชนะด่านต่อสู้ที่ 1 ใน ${turns} ตา ด้วย Tab / Enter`);
 }
 
 // ---------------------------------------------------------------- มือถือ
@@ -1268,8 +1743,19 @@ async function playTouch(browser) {
   await assertCanvasFits(page, "มือถือแนวนอน");
   await shot(page, "19-touch-landscape");
   await hold(page.getByRole("button", { name: "แตะ" }), 60);
-  await inRoom(page, 1);
-  log("มือถือแนวนอน: ทำขั้นเริ่มเกมด้วยการแตะ ปุ่มทิศทางและปุ่ม A ใช้เดินและเข้าห้องได้");
+  assert.equal((await inRoom(page, 1, (locator) => locator.tap()))?.beat, "room-1");
+  log("มือถือแนวนอน: ทำขั้นเริ่มเกมและอ่านเนื้อเรื่องด้วยการแตะ ปุ่มทิศทางและปุ่ม A ใช้เดินและเข้าห้องได้");
+
+  // ด่านต่อสู้บนจอมือถือแนวนอน: ฉาก โจทย์ และปุ่มต้องอยู่ในจอโดยไม่ล้นแนวนอน
+  await page.evaluate(() => window.__aitq.store.getState().openBattle(1));
+  await page.getByTestId("battle-start").tap();
+  await page.getByTestId("choice-option").first().waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "ด่านต่อสู้ไม่ล้นจอแนวนอน");
+  await shot(page, "19-touch-battle");
+  await page.getByTestId("choice-option").first().tap();
+  await page.getByTestId("battle-next").tap();
+  await page.getByTestId("battle-retreat").tap();
+  await page.waitForTimeout(350);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(500);
@@ -1282,7 +1768,7 @@ async function playTouch(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(500);
   await assertCanvasFits(page, "หมุนเป็นแนวตั้งอีกครั้ง");
-  await hold(page.getByRole("button", { name: "เดินขวา" }), 400);
+  await hold(page.getByRole("button", { name: "เดินขวา" }), 600);
   await hold(page.getByRole("button", { name: "แตะ" }), 60);
   await page.getByTestId("dialogue").waitFor();
   await shot(page, "20-touch-portrait-dialogue");

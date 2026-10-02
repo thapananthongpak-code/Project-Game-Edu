@@ -87,3 +87,24 @@ export function resolveRefs(room: number, refs: ContentRef[]): Station[] {
     return { title: topic.sections[table.sectionIndex ?? 0].heading, pages: [{ kind: "table", table }] };
   });
 }
+
+/** เนื้อหาที่โจทย์ของด่านต่อสู้ของห้องนี้ใช้ ในรูปหน้ากล่องสนทนา (แผง "ข้อมูลจากพี่บิต" ระหว่างสู้ GDD ข้อ 12) */
+export function battleReference(room: number): Station[] {
+  const topic = topicOf(room);
+  const pools = quests.battles.find((b) => b.room === room)?.pools ?? [];
+  return pools.flatMap((pool): Station[] => {
+    switch (pool.kind) {
+      case "match-table-cells":
+      case "sort-table-cells":
+        return resolveRefs(room, [{ table: pool.table }]);
+      case "term-definitions":
+      case "accuracy-example":
+        return resolveRefs(room, [{ section: pool.section }]);
+      case "step-pairs":
+        // ลำดับของหัวข้อย่อยตามต้นฉบับ (ชื่อหัวข้อย่อยมีเลขลำดับอยู่แล้ว)
+        return [{ title: topic.title, pages: [{ kind: "text", text: topic.sections.map((section) => section.heading).join("\n") }] }];
+      case "quest-step-pairs":
+        return [{ title: topic.sections[0].heading, pages: [{ kind: "text", text: course.finalQuest.steps.map((step, i) => `${i + 1}. ${step}`).join("\n") }] }];
+    }
+  });
+}

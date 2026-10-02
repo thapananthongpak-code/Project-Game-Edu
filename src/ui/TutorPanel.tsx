@@ -5,6 +5,7 @@ import { roomProgress, useGameStore } from "../state/gameStore";
 import { askTutor, recordTutorUse, type TutorTurn, tutorUsed } from "../tutor/client";
 import { TUTOR } from "../tutor/config";
 import { fallbackHint } from "../tutor/fallback";
+import { art } from "./art";
 import { PageView } from "./ContentView";
 import { useDialog } from "./useDialog";
 
@@ -37,7 +38,7 @@ function apiHistory(entries: Entry[]): TutorTurn[] {
  * จำกัดจำนวนคำถามต่อเซสชัน และใช้คำใบ้สำเร็จรูปเมื่อเรียก API ไม่ได้หรือถามครบโควตาแล้ว
  */
 export function TutorPanel() {
-  const room = useGameStore((s) => s.room) as number;
+  const room = useGameStore((s) => s.tutorRoom) as number;
   const progress = useGameStore((s) => roomProgress(s, room));
   const setTutorOpen = useGameStore((s) => s.setTutorOpen);
   const recordTutor = useGameStore((s) => s.recordTutor);
@@ -91,7 +92,7 @@ export function TutorPanel() {
       <div ref={dialog} role="dialog" aria-modal="true" aria-label={ui.tutor.title} tabIndex={-1} className="panel flex max-h-[90dvh] w-full max-w-xl flex-col gap-2 p-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-lg font-extrabold text-teal-dark">
-            <img src="assets/characters/ch_mentor_south.png" alt="" className="pixelated h-9 w-9" />
+            <img src={art.mentor} alt="" className="pixelated h-9 w-9" />
             {ui.tutor.title}
           </h2>
           <div className="flex items-center gap-2">

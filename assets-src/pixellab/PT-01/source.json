@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "portrait bust of a kind middle-aged scientist professor with gray hair and round glasses, white lab coat, one arm in a sling and a small bandage on the forehead, gentle determined smile, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "cbe591ac-7d85-46c2-8f94-3617b85d4fda",
+  "generatedAt": "2026-10-02T04:35:36.190Z"
+}

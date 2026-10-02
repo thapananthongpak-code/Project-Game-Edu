@@ -6,6 +6,7 @@ import { BASE_HEIGHT, BASE_WIDTH, SCENE } from "./constants";
 import { installDebugHook } from "./debug";
 import { BootScene } from "./scenes/BootScene";
 import { HallScene } from "./scenes/HallScene";
+import { HangarScene } from "./scenes/HangarScene";
 import { RoomScene } from "./scenes/RoomScene";
 
 /** ตัวเกม Phaser: สร้างครั้งเดียว แล้วสลับฉากตาม screen ใน store */
@@ -23,7 +24,7 @@ export function PhaserGame() {
       banner: false,
       physics: { default: "arcade", arcade: { gravity: { x: 0, y: 0 } } },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-      scene: [BootScene, HallScene, RoomScene],
+      scene: [BootScene, HallScene, HangarScene, RoomScene],
     });
     if (import.meta.env.DEV) installDebugHook(game);
 
@@ -42,13 +43,14 @@ export function PhaserGame() {
       // สลับฉากหลังจบเฟรมปัจจุบัน: การเปลี่ยนหน้าจออาจถูกสั่งจากใน update ของฉาก (เช่น กดประตู)
       // ถ้าหยุดฉากทันที วัตถุของฉากจะถูกทำลายขณะที่ update ยังทำงานไม่จบ
       queueMicrotask(() => {
-        if (state.screen === "room" && state.room !== null) {
-          game.scene.stop(SCENE.hall);
-          game.scene.start(SCENE.room, { room: state.room });
-        } else if (previous.screen === "room" || state.screen === "hall") {
-          game.scene.stop(SCENE.room);
-          game.scene.start(SCENE.hall, { fromRoom: previous.room ?? 1 });
-        }
+        const start = (key: string, data?: object) => {
+          for (const other of [SCENE.hall, SCENE.hangar, SCENE.room]) if (other !== key) game.scene.stop(other);
+          game.scene.start(key, data);
+        };
+        if (state.screen === "room" && state.room !== null) start(SCENE.room, { room: state.room });
+        else if (state.screen === "hangar") start(SCENE.hangar);
+        // กลับเมนูจากห้องหรือโรงเก็บหุ่น: ใช้โถงเป็นฉากหลังของเมนู
+        else if (state.screen === "hall" || previous.screen === "room" || previous.screen === "hangar") start(SCENE.hall, { fromRoom: previous.room ?? 1, fromHangar: previous.screen === "hangar" });
       });
     });
 

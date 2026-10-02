@@ -104,6 +104,9 @@ export function Certificate() {
           <p className="text-sm text-slate">
             {ui.certificate.date} {date}
           </p>
+          <p className="mt-1 text-sm font-bold text-teal-dark" data-testid="certificate-guardian">
+            ⚔ {fmt(ui.certificate.guardian, { n: course.topics.filter((topic) => roomProgress({ progress }, topic.id).battle.won).length, total: ROOM_COUNT })}
+          </p>
         </header>
 
         <section>

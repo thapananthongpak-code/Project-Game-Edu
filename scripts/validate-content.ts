@@ -190,6 +190,15 @@ function checkPool(pool: BackupPool, topic: Topic, at: string): number {
     case "accuracy-example":
       check(topic.sections[pool.section]?.accuracyCase?.percent !== undefined, `${at} sections[${pool.section}] ไม่มีตัวอย่างคำนวณ`);
       return 1;
+    case "term-definitions": {
+      const terms = topic.sections[pool.section]?.terms ?? [];
+      check(terms.length >= 2, `${at} sections[${pool.section}] ไม่มี terms`);
+      return terms.length;
+    }
+    case "quest-step-pairs":
+      check(topic.id === topics.length, `${at} ใช้ขั้นตอนของภารกิจภาคสนาม จึงต้องเป็นหัวข้อสุดท้าย`);
+      check(fq.steps.length >= 2, `${at} ต้องมี finalQuest.steps อย่างน้อย 2 ข้อ`);
+      return (fq.steps.length * (fq.steps.length - 1)) / 2;
     default:
       errors.push(`${at}.kind ไม่รู้จัก: ${(pool as { kind: string }).kind}`);
       return 0;
@@ -301,6 +310,20 @@ rooms.forEach((r, i) => {
   checkRefs(r.selfCheck, topic, `${at}.selfCheck`);
 });
 
+// ด่านต่อสู้ไคจู: ทุกหัวข้อมีชุดโจทย์ และแต่ละชุดสร้างโจทย์เลือกตอบได้พอสำหรับหนึ่งด่าน
+const MIN_BATTLE_ITEMS = 4;
+const battles = Array.isArray(quests.data.battles) ? quests.data.battles : [];
+check(battles.length === topics.length, `quests.battles ต้องมี ${topics.length} ด่าน แต่พบ ${battles.length}`);
+battles.forEach((battle, i) => {
+  const at = `quests.battles[${i}]`;
+  check(battle.room === i + 1, `${at}.room ต้องเป็น ${i + 1}`);
+  const topic = topics[i];
+  if (!topic) return;
+  check(Array.isArray(battle.pools) && battle.pools.length > 0, `${at}.pools ว่าง`);
+  const items = (battle.pools ?? []).reduce((n, pool, j) => n + (pool.kind === "accuracy-example" ? 0 : checkPool(pool, topic, `${at}.pools[${j}]`)), 0);
+  check(items >= MIN_BATTLE_ITEMS, `${at} สร้างโจทย์ได้ ${items} ข้อ ต้องมีอย่างน้อย ${MIN_BATTLE_ITEMS}`);
+});
+
 if (errors.length > 0) {
   console.error(`เนื้อหาไม่ผ่าน (${errors.length} ข้อ)`);
   for (const e of errors) console.error(`  - ${e}`);
@@ -310,5 +333,5 @@ console.log(
   `course.json ผ่าน: ${topics.length} topics, finalQuest ${fq.steps.length} ขั้นตอน, เกณฑ์ประเมิน ${fq.gradingCriteria.length} ข้อ`,
 );
 console.log(
-  `quests.json ผ่าน: ${rooms.length} ห้อง, มินิเกม ${rooms.reduce((n, r) => n + r.minigames.length, 0)} เกม, แบบทดสอบคู่ขนาน 2 ชุด ชุดละ ${forms.A.length} ข้อ`,
+  `quests.json ผ่าน: ${rooms.length} ห้อง, มินิเกม ${rooms.reduce((n, r) => n + r.minigames.length, 0)} เกม, แบบทดสอบคู่ขนาน 2 ชุด ชุดละ ${forms.A.length} ข้อ, ด่านต่อสู้ ${battles.length} ด่าน`,
 );

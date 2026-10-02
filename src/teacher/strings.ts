@@ -48,6 +48,7 @@ export const t = {
     cores: "แกน AI",
     stars: "ดาวเควส",
     review: "ทบทวน",
+    battles: "ปราบไคจู",
     accuracy: "Accuracy ภาคสนาม",
     pre: "ก่อน",
     post: "หลัง",
@@ -103,7 +104,7 @@ export const t = {
     items: "ส่งออก CSV รายข้อ",
   },
   csv: {
-    students: ["class_code", "display_name", "archived", "updated_at", "room_reached", "ai_cores", "quest_stars", "reviews_done", "field_accuracy_percent", "field_done", "pretest_form", "pre_total", "post_total", "gain", "normalized_gain", "tutor_ai", "tutor_hints", "forced_repairs", "minutes_total"],
+    students: ["class_code", "display_name", "archived", "updated_at", "room_reached", "ai_cores", "quest_stars", "reviews_done", "field_accuracy_percent", "field_done", "pretest_form", "pre_total", "post_total", "gain", "normalized_gain", "tutor_ai", "tutor_hints", "forced_repairs", "minutes_total", "kaiju_defeated", "battle_answers", "battle_correct"],
     pre: "pre_topic",
     post: "post_topic",
     stars: "stars_room",

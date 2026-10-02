@@ -1,4 +1,5 @@
-// ตรวจว่าทุกหัวข้อใน course.json มีส่วนของเกมรองรับครบ: บทสนทนา มินิเกม คำถามทบทวน ห้องซ่อม แบบทดสอบก่อนเรียน และภาพ
+// ตรวจว่าทุกหัวข้อใน course.json มีส่วนของเกมรองรับครบ: บทสนทนา มินิเกม คำถามทบทวน ห้องซ่อม แบบทดสอบก่อนเรียน ด่านต่อสู้ และภาพ
+// (ผังห้องและจุดโต้ตอบของแต่ละห้องตรวจใน src/game/maps.test.ts)
 // รัน: npm run check:coverage   (ออกด้วยรหัส 1 เมื่อพบหัวข้อที่ยังไม่ครบ)
 import { readFileSync } from "node:fs";
 import type { Course, Quests } from "../src/content/schema.ts";
@@ -7,10 +8,10 @@ import { IMPLEMENTED_MINIGAMES, PLAYABLE_ROOMS } from "../src/state/rules.ts";
 const read = <T>(path: string): T => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 const course = read<Course>("../src/content/course.json");
 const quests = read<Quests>("../src/content/quests.json");
-const manifest = read<{ assets: { id: string; status: string; files: Record<string, string> }[] }>("../public/assets/assets-manifest.json");
+const manifest = read<{ assets: { id: string; status: string; files: Record<string, string>; web?: Record<string, string> }[] }>("../public/assets/assets-manifest.json");
 
 const implemented: readonly string[] = IMPLEMENTED_MINIGAMES;
-const imageKeys = new Map(manifest.assets.flatMap((asset) => Object.keys(asset.files).map((key) => [key, asset.status] as const)));
+const imageKeys = new Map(manifest.assets.flatMap((asset) => Object.keys({ ...asset.files, ...asset.web }).map((key) => [key, asset.status] as const)));
 const last = course.topics.length;
 let gaps = 0;
 
@@ -51,6 +52,9 @@ for (const topic of course.topics) {
   const tileset = imageKeys.get(`ts_r${room}`) ?? (imageKeys.has(`ts_r${room}_floor`) && imageKeys.has(`ts_r${room}_wall`) ? imageKeys.get(`ts_r${room}_floor`) : undefined);
   add(tileset !== undefined, `ไทล์เซตของห้อง (${tileset ?? "ไม่มี"})`);
   add(imageKeys.has(`core_${room}`), `ไอคอนแกน AI (${imageKeys.get(`core_${room}`) ?? "ไม่มี"})`);
+  const battle = quests.battles?.find((b) => b.room === room);
+  add((battle?.pools.length ?? 0) > 0, `ด่านต่อสู้: ชุดโจทย์ ${battle?.pools.map((pool) => pool.kind).join(" + ") ?? "ไม่มี"}`);
+  add(imageKeys.has(`bt_kaiju_${room}`) && imageKeys.has(`bg_battle_${room}`), `ภาพไคจูและฉากต่อสู้ (${imageKeys.get(`bt_kaiju_${room}`) ?? "ไม่มี"})`);
 
   const missing = lines.filter((line) => !line.ok).length;
   gaps += missing;

@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { course } from "../content";
 import { emptyField } from "./field";
 import {
+  type AccountInfo,
   CLASS_CODE_PATTERN,
   emptyRoom,
   emptySave,
+  emptyShop,
   LocalProgressStore,
   migrateSave,
   normalizeClassCode,
@@ -26,13 +28,17 @@ function fakeStorage(initial: Record<string, string> = {}) {
   };
 }
 
+const won = { won: true, sorties: 1, asked: 5, correct: 4 };
+
 const sample: SaveData = {
-  version: 3,
+  version: 4,
   updatedAt: "2026-10-02T01:00:00.000Z",
-  profile: { name: "ทดสอบ", style: "visual", classCode: "PVC1-67" },
+  profile: { name: "ทดสอบ", style: "visual", classCode: "PVC1-67", avatar: "b" },
   pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
   posttest: null,
-  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false } } },
+  rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 2, core: true, outcome: { totalMisses: 1, requiredRepair: false }, battle: won } },
+  story: ["prologue", "room-1"],
+  shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
 };
 
 const withImage = (data: SaveData, image: string | null): SaveData => ({
@@ -84,7 +90,7 @@ describe("migrateSave", () => {
     const v1 = { state: { progress: { 1: { stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } } }, version: 1 };
     expect(migrateSave(v1)).toEqual({
       ...emptySave(),
-      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } },
+      rooms: { 1: { ...emptyRoom(), stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true, battle: { ...emptyRoom().battle, won: true } } },
     });
   });
 
@@ -97,15 +103,44 @@ describe("migrateSave", () => {
     };
     expect(migrateSave(v2)).toEqual({
       ...emptySave(),
-      profile: { name: "ทดสอบ", style: "hands", classCode: "" },
+      profile: { name: "ทดสอบ", style: "hands", classCode: "", avatar: "a" },
       pretest: { form: "A", correctByTopic: { 1: 1 }, items: [], completedAt: "2026-09-01T00:00:00.000Z" },
       rooms: { 1: { ...emptyRoom(), stationsSeen: 2 } },
     });
   });
 
+  it("รุ่น 3 (ก่อนมีเนื้อเรื่อง ด่านต่อสู้ และร้านค้า): ห้องที่ได้แกน AI แล้วถือว่าผ่านด่านต่อสู้ ห้องถัดไปจึงไม่ถูกล็อกย้อนหลัง", () => {
+    const v3 = {
+      version: 3,
+      updatedAt: "2026-10-01T00:00:00.000Z",
+      profile: { name: "ทดสอบ", style: "read", classCode: "PVC1" },
+      pretest: sample.pretest,
+      posttest: null,
+      rooms: { 1: { ...emptyRoom(), battle: undefined, core: true }, 2: { ...emptyRoom(), battle: undefined, stationsSeen: 2 } },
+    };
+    const save = migrateSave(JSON.parse(JSON.stringify(v3))) as SaveData;
+    expect(save.version).toBe(4);
+    expect(save.updatedAt).toBe(v3.updatedAt);
+    expect(save.profile).toEqual({ name: "ทดสอบ", style: "read", classCode: "PVC1", avatar: "a" });
+    expect(save.pretest).toEqual(sample.pretest);
+    expect([save.rooms[1].battle.won, save.rooms[2].battle.won]).toEqual([true, false]);
+    expect(save.story).toEqual([]);
+    expect(save.shop).toEqual(emptyShop());
+  });
+
+  it("ร้านค้าที่ผิดรูป: ตัดสินค้าที่ไม่มีในร้าน จำกัดจำนวนของใช้ และไม่ให้สวมของที่ยังไม่ได้ซื้อ", () => {
+    const save = migrateSave({
+      ...JSON.parse(JSON.stringify(sample)),
+      story: ["prologue", 5, "prologue", "x".repeat(99)],
+      shop: { spent: -5, owned: ["outfit-pilot", "outfit-pilot", "free-everything", "supply-shield", 7], supplies: { "repair-kit": 99, shield: "x" }, outfit: "guardian", paint: "gold" },
+    }) as SaveData;
+    expect(save.story).toEqual(["prologue"]);
+    expect(save.shop).toEqual({ spent: 0, owned: ["outfit-pilot"], supplies: { "repair-kit": 3, shield: 0 }, outfit: "lab", paint: "standard" });
+  });
+
   it("ข้อมูลผิดรูป (ไฟล์เสีย หรือถูกแก้จากนอกเกม): เติมค่าเริ่มต้นทีละช่อง ไม่ปล่อยค่าผิดชนิดเข้าเกมหรือแดชบอร์ดครู", () => {
     const hostile = {
-      version: 3,
+      version: 4,
       updatedAt: 5,
       profile: { name: "ก".repeat(200), style: "telepathy", classCode: 7 },
       pretest: { form: "Z", correctByTopic: { 1: "สอง", 2: 2 }, items: [{ id: "A1a", topic: 1, correct: "yes" }, "junk", null], completedAt: {} },
@@ -119,7 +154,9 @@ describe("migrateSave", () => {
     };
     const save = migrateSave(hostile) as SaveData;
     expect(save.updatedAt).toBe(emptySave().updatedAt);
-    expect(save.profile).toEqual({ name: "ก".repeat(40), style: "read", classCode: "" });
+    expect(save.profile).toEqual({ name: "ก".repeat(40), style: "read", classCode: "", avatar: "a" });
+    expect(save.story).toEqual([]);
+    expect(save.shop).toEqual(emptyShop());
     expect(save.pretest).toEqual({ form: "A", correctByTopic: { 1: 0, 2: 2 }, items: [{ id: "A1a", topic: 1, correct: false, timeMs: 0 }], completedAt: "" });
     expect(save.posttest).toBeNull();
     expect(Object.keys(save.rooms)).toEqual(["1", "2"]);
@@ -217,7 +254,7 @@ describe("SyncedProgressStore", () => {
   it("ไม่มีรหัสห้องเรียน: ไม่ส่งออกจากเครื่อง", async () => {
     const remote = fakeRemote();
     const { store, local } = make(remote.backend);
-    await store.save({ ...sample, profile: { name: "ทดสอบ", style: "read", classCode: "" } });
+    await store.save({ ...sample, profile: { name: "ทดสอบ", style: "read", classCode: "", avatar: "a" } });
     await vi.advanceTimersByTimeAsync(10000);
     expect(remote.state.saves).toHaveLength(0);
     expect(await local.load()).not.toBeNull();
@@ -324,5 +361,107 @@ describe("SyncedProgressStore", () => {
     expect(await store.claim("ABCDE12345")).toEqual(sample);
     expect(await local.load()).toEqual(sample);
     expect(statuses.at(-1)).toEqual(["synced", "ABCDE12345"]);
+  });
+
+  describe("เข้าสู่ระบบด้วย Google", () => {
+    const solo: SaveData = { ...sample, profile: { name: "เล่นคนเดียว", style: "read", classCode: "", avatar: "a" } };
+    /** ฐานข้อมูลกลางจำลองที่มีระบบบัญชี: จำว่าเครื่องนี้ใช้บัญชีอะไร และถูกสั่งให้ไปล็อกอินแบบไหน */
+    function googleRemote(account: AccountInfo | null, record: RemoteRecord | null = null, authError: string | null = null) {
+      const remote = fakeRemote(record);
+      const auth = { account, calls: [] as string[] };
+      const backend: RemoteBackend = {
+        ...remote.backend,
+        authError,
+        account: async () => auth.account,
+        signInWithGoogle: async (link) => void auth.calls.push(link ? "link" : "signin"),
+        signOut: async () => {
+          auth.calls.push("signout");
+          auth.account = null;
+        },
+      };
+      return { ...remote, auth, backend };
+    }
+    const makeWith = (backend: RemoteBackend, flags = fakeStorage(), local = new LocalProgressStore(fakeStorage())) => {
+      const accounts: (AccountInfo | null)[] = [];
+      const store = new SyncedProgressStore(local, backend, { delayMs: 1000, retryMs: 5000, loadTimeoutMs: 3000, flags, onAccount: (account) => accounts.push(account), onStatus: (status, code) => statuses.push([status, code]) });
+      return { store, local, flags, accounts };
+    };
+    const google: AccountInfo = { provider: "google", email: "kaew@example.com" };
+
+    it("บัญชี Google: ส่งความคืบหน้าขึ้นฐานข้อมูลกลางแม้ไม่มีรหัสห้องเรียน", async () => {
+      const remote = googleRemote(google);
+      const { store, accounts } = makeWith(remote.backend);
+      await store.load();
+      expect(accounts).toEqual([google]);
+      await store.save(solo);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(remote.state.saves).toHaveLength(1);
+    });
+
+    it("เครื่องที่ยังไม่มีบัญชี: ไปเข้าสู่ระบบ กลับมาแล้วใช้ความคืบหน้าของบัญชี ไม่ให้สำเนาในเครื่องที่ใหม่กว่าไปทับ", async () => {
+      const mine: SaveData = { ...sample, updatedAt: "2026-10-01T00:00:00.000Z", profile: { ...solo.profile!, name: "เจ้าของบัญชี" } };
+      const other: SaveData = { ...solo, updatedAt: "2026-10-05T00:00:00.000Z" };
+      const flags = fakeStorage();
+      const local = new LocalProgressStore(fakeStorage());
+      await local.save(other);
+      const before = googleRemote(null);
+      const first = makeWith(before.backend, flags, local);
+      await first.store.load();
+      await first.store.signInWithGoogle();
+      expect(before.auth.calls).toEqual(["signin"]);
+
+      // หน้าเกมเปิดใหม่หลังถูกพากลับมา ตอนนี้เป็นบัญชี Google ที่มีความคืบหน้าอยู่แล้ว
+      const after = googleRemote(google, { data: mine, resumeCode: "GOOGLE0001" });
+      const second = makeWith(after.backend, flags, local);
+      expect((await second.store.load())?.profile?.name).toBe("เจ้าของบัญชี");
+      expect((await local.load())?.profile?.name).toBe("เจ้าของบัญชี");
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(after.state.saves).toHaveLength(0);
+      // ธงใช้ได้ครั้งเดียว: เปิดครั้งถัดไปกลับไปใช้กติกาปกติ (สำเนาที่ใหม่กว่าชนะ)
+      await local.save(other);
+      const third = makeWith(after.backend, flags, local);
+      expect((await third.store.load())?.profile?.name).toBe("เล่นคนเดียว");
+    });
+
+    it("บัญชี Google ที่ยังไม่มีความคืบหน้า: ความคืบหน้าในเครื่องกลายเป็นของบัญชีนั้น", async () => {
+      const flags = fakeStorage({ "ai-trainer-quest-google-signin": "1" });
+      const local = new LocalProgressStore(fakeStorage());
+      await local.save(solo);
+      const remote = googleRemote(google);
+      const { store } = makeWith(remote.backend, flags, local);
+      expect((await store.load())?.profile?.name).toBe("เล่นคนเดียว");
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(remote.state.saves.map((data) => data.profile?.name)).toEqual(["เล่นคนเดียว"]);
+    });
+
+    it("เครื่องที่มีบัญชีไม่ระบุตัวตน: ผูก Google เข้ากับบัญชีเดิม ถ้าบัญชี Google นั้นมีเจ้าของแล้ว ครั้งถัดไปจึงออกจากบัญชีเดิมแล้วเข้าสู่ระบบแทน", async () => {
+      const flags = fakeStorage();
+      const linking = googleRemote({ provider: "anonymous", email: null }, { data: sample, resumeCode: "ABCDE12345" });
+      const first = makeWith(linking.backend, flags);
+      await first.store.load();
+      await first.store.signInWithGoogle();
+      expect(linking.auth.calls).toEqual(["link"]);
+
+      const refused = googleRemote({ provider: "anonymous", email: null }, { data: sample, resumeCode: "ABCDE12345" }, "identity_already_exists");
+      const second = makeWith(refused.backend, flags);
+      await second.store.load();
+      expect([second.store.googleInUse, second.store.googleFailed]).toEqual([true, false]);
+      await second.store.signInWithGoogle();
+      expect(refused.auth.calls).toEqual(["signout", "signin"]);
+      expect(refused.state.resets).toBe(0);
+    });
+
+    it("ออกจากระบบ: ส่งความคืบหน้าที่ค้างอยู่ก่อน ลบสำเนาในเครื่อง ข้อมูลในฐานข้อมูลกลางไม่ถูกเก็บถาวร", async () => {
+      const remote = googleRemote(google);
+      const { store, local, accounts } = makeWith(remote.backend);
+      await store.load();
+      await store.save(solo);
+      await store.signOut();
+      expect(remote.state.log).toEqual(["save"]);
+      expect(remote.auth.calls).toEqual(["signout"]);
+      expect(await local.load()).toBeNull();
+      expect(accounts.at(-1)).toBeNull();
+      expect(statuses.at(-1)).toEqual(["local", null]);
+    });
   });
 });

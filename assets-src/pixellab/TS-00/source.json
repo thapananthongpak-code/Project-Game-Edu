@@ -1,0 +1,20 @@
+{
+  "tool": "create_topdown_tileset",
+  "arguments": {
+    "lower_description": "seamless floor tile of smooth blue-gray lab floor panels with thin dark seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "upper_description": "seamless wall tile of dark navy lab wall panels with a thin yellow caution stripe, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "tile_size": {
+      "width": 32,
+      "height": 32
+    },
+    "mode": "standard",
+    "transition_size": 0,
+    "view": "low top-down",
+    "outline": "lineless",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_topdown_tileset",
+  "id": "932c6408-78be-4357-8a37-ae30af482457",
+  "generatedAt": "2026-10-02T04:53:45.514Z"
+}

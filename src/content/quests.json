@@ -217,5 +217,13 @@
         }
       ]
     }
+  ],
+  "battles": [
+    {"room": 1, "pools": [{"kind": "term-definitions", "section": 1}, {"kind": "match-table-cells", "table": 0, "columns": [1, 2]}]},
+    {"room": 2, "pools": [{"kind": "match-table-cells", "table": 0, "columns": [1, 2]}]},
+    {"room": 3, "pools": [{"kind": "sort-table-cells", "table": 0, "columns": [1, 2]}]},
+    {"room": 4, "pools": [{"kind": "step-pairs"}]},
+    {"room": 5, "pools": [{"kind": "match-table-cells", "table": 0, "columns": [1, 2], "sample": 4}]},
+    {"room": 6, "pools": [{"kind": "quest-step-pairs"}]}
   ]
 }

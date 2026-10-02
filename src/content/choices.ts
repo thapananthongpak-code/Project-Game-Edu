@@ -1,5 +1,5 @@
 // สร้างโจทย์แบบเลือกตอบจากเนื้อหาใน course.json ตามชุดโจทย์ที่ quests.json อ้าง (ฟังก์ชันล้วน)
-// ใช้กับแบบทดสอบก่อนเรียน/หลังเรียน (GDD ข้อ 7.1) และการฝึกในห้องซ่อม (GDD ข้อ 7.3)
+// ใช้กับแบบทดสอบก่อนเรียน/หลังเรียน (GDD ข้อ 7.1) การฝึกในห้องซ่อม (GDD ข้อ 7.3) และด่านต่อสู้ไคจู (GDD ข้อ 12)
 // ข้อความบนบัตรและตัวเลือกทุกชิ้นเป็นข้อความจาก course.json ตรงตัว ไม่มีข้อความใหม่
 import { course, quests, stripNumber, topicOf } from "./index";
 import type { AssessmentItem, BackupPool, FormId } from "./schema";
@@ -102,6 +102,31 @@ export function buildChoiceItems(topicId: number, pool: BackupPool, rng: Rng = M
     case "accuracy-example":
       // โจทย์คำนวณไม่ใช่โจทย์เลือกตอบ ยังไม่มีห้องที่เล่นได้ใช้ชุดนี้
       break;
+    case "term-definitions": {
+      const section = topic.sections[pool.section];
+      const terms = section.terms ?? [];
+      terms.forEach((term, answer) => {
+        items.push({
+          topic: topicId,
+          caption: "",
+          card: term.definition,
+          ask: { type: "pick", label: stripNumber(section.heading) },
+          options: terms.map((t) => t.term),
+          answer,
+        });
+      });
+      break;
+    }
+    case "quest-step-pairs": {
+      const steps = course.finalQuest.steps;
+      for (let first = 0; first < steps.length; first++) {
+        for (let second = first + 1; second < steps.length; second++) {
+          const order = shuffled([first, second], rng);
+          items.push({ topic: topicId, caption: "", card: "", ask: { type: "first" }, options: order.map((i) => steps[i]), answer: order.indexOf(first) });
+        }
+      }
+      break;
+    }
   }
   return shuffled(items, rng);
 }
@@ -150,4 +175,10 @@ export function buildAssessment(form: FormId, rng: Rng = Math.random): ChoiceIte
 export function buildRepairItems(room: number, rng: Rng = Math.random): ChoiceItem[] {
   const backup = quests.rooms.find((r) => r.room === room)?.backup ?? [];
   return backup.flatMap((pool) => buildChoiceItems(room, pool, rng));
+}
+
+/** โจทย์ของด่านต่อสู้ไคจูจากชุดของห้องนั้น (GDD ข้อ 12) */
+export function buildBattleItems(room: number, rng: Rng = Math.random): ChoiceItem[] {
+  const pools = quests.battles.find((b) => b.room === room)?.pools ?? [];
+  return shuffled(pools.flatMap((pool) => buildChoiceItems(room, pool, rng)), rng);
 }

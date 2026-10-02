@@ -55,7 +55,14 @@ ICON_SETTINGS = {
     "width": 32, "height": 32, "no_background": True,
     "outline": "single color outline", "shading": "basic shading", "detail": "low detail",
 }
-OBJECT_SETTINGS = {"view": "low top-down", "outline": "single color outline", "shading": "basic shading", "detail": "medium detail"}
+OBJECT_SETTINGS = {"no_background": True, "view": "low top-down", "outline": "single color outline", "shading": "basic shading", "detail": "medium detail"}
+# ภาพของฉากต่อสู้ (แสดงใน HTML) เป็นมุมมองด้านข้าง
+BATTLE_SETTINGS = {"no_background": True, "view": "side", "outline": "single color black outline", "shading": "medium shading", "detail": "medium detail"}
+BACKDROP_SETTINGS = {"no_background": False, "view": "side", "outline": "lineless", "shading": "medium shading", "detail": "medium detail"}
+DIRECTIONS = ("south", "north", "east", "west")
+# แอนิเมชันเดิน: แม่แบบของ Pixel Lab ทิศละ 1 generation แผ่นสไปรต์ของตัวละคร = 4 แถว (ทิศ) × (ยืน 1 + เดิน WALK_FRAMES) คอลัมน์
+WALK_FRAMES = 6
+WALK_ANIMATION = {"template_animation_id": "walking-6-frames", "animation_name": "walk"}
 
 
 def canvas(w, h, fill=(0, 0, 0, 0)):
@@ -69,7 +76,7 @@ def box(d, xy, fill, radius=0):
 
 # ---------------------------------------------------------------- ตัวละคร
 
-def draw_player(direction):
+def draw_player(direction, coat=PAPER, shirt=TEAL, long_hair=False):
     img, d = canvas(64, 64)
     side = direction in ("east", "west")
     # ขาและรองเท้า
@@ -78,21 +85,21 @@ def draw_player(direction):
         box(d, (x[0] - (0 if side else 0), 56, x[1] + (2 if side else 0), 60), PAPER)
     # ลำตัว: เสื้อกาวน์
     body = (25, 33, 39, 51) if side else (21, 33, 43, 51)
-    box(d, body, PAPER, 2)
+    box(d, body, coat, 2)
     if direction == "south":
-        d.rectangle((29, 34, 35, 44), fill=TEAL)          # เสื้อโปโล
+        d.rectangle((29, 34, 35, 44), fill=shirt)         # เสื้อโปโล
         d.line((32, 45, 32, 50), fill=MIST)                # สาบเสื้อกาวน์
         d.rectangle((37, 40, 40, 43), fill=TEAL_D)         # บัตรพนักงาน
-        box(d, (18, 35, 22, 47), PAPER, 1)
-        box(d, (42, 35, 46, 47), PAPER, 1)
+        box(d, (18, 35, 22, 47), coat, 1)
+        box(d, (42, 35, 46, 47), coat, 1)
         d.rectangle((19, 46, 21, 48), fill=SKIN)
         d.rectangle((43, 46, 45, 48), fill=SKIN)
     elif direction == "north":
         d.line((32, 34, 32, 50), fill=MIST)
-        box(d, (18, 35, 22, 47), PAPER, 1)
-        box(d, (42, 35, 46, 47), PAPER, 1)
+        box(d, (18, 35, 22, 47), coat, 1)
+        box(d, (42, 35, 46, 47), coat, 1)
     else:
-        box(d, (30, 36, 35, 47), PAPER, 1)                 # แขนด้านที่เห็น
+        box(d, (30, 36, 35, 47), coat, 1)                  # แขนด้านที่เห็น
         d.rectangle((31, 46, 34, 48), fill=SKIN)
     # หัว
     box(d, (20, 11, 44, 34), SKIN, 6)
@@ -110,7 +117,43 @@ def draw_player(direction):
         d.rectangle((21, 18, 30, 30), fill=SLATE)          # ผมด้านหลังศีรษะ
         d.rectangle((38, 24, 39, 27), fill=INK)
         d.line((40, 30, 42, 30), fill=SKIN_D)
+    if long_hair and direction != "south":
+        d.rectangle((22, 30, 27, 40) if direction != "north" else (29, 30, 35, 42), fill=SLATE, outline=INK)   # หางม้า
     return img.transpose(Image.FLIP_LEFT_RIGHT) if direction == "west" else img
+
+
+def draw_player_sheet(**look):
+    """แผ่นสไปรต์ชั่วคราว: ทุกเฟรมเป็นท่ายืน เฟรมเดินคู่ขยับขึ้น 1 px"""
+    sheet = Image.new("RGBA", (SPRITE_SIZE * (1 + WALK_FRAMES), SPRITE_SIZE * len(DIRECTIONS)), (0, 0, 0, 0))
+    for row, direction in enumerate(DIRECTIONS):
+        pose = draw_player(direction, **look)
+        for col in range(1 + WALK_FRAMES):
+            sheet.alpha_composite(pose, (col * SPRITE_SIZE, row * SPRITE_SIZE - (1 if col % 2 == 0 and col > 0 else 0)))
+    return sheet
+
+
+def draw_block(width, height, fill, accent=None):
+    """วัตถุชั่วคราว: กล่องมนฐานชิดขอบล่าง"""
+    img, d = canvas(width, height)
+    box(d, (2, max(2, height // 4), width - 3, height - 2), fill, 4)
+    if accent:
+        d.rectangle((width // 4, height // 2, width - width // 4 - 1, height // 2 + 4), fill=accent)
+    return img
+
+
+def draw_blob(size, fill, eye):
+    """ตัวละครฉากต่อสู้ชั่วคราว: ก้อนกลมมีตา"""
+    img, d = canvas(size, size)
+    d.ellipse((size // 8, size // 5, size - size // 8, size - 4), fill=fill, outline=INK, width=3)
+    d.ellipse((size // 3, size // 2 - 8, size // 3 + 12, size // 2 + 4), fill=eye, outline=INK)
+    return img
+
+
+def draw_backdrop(sky, ground):
+    img, d = canvas(320, 180, sky)
+    d.rectangle((0, 128, 319, 179), fill=ground)
+    d.line((0, 128, 319, 128), fill=INK)
+    return img
 
 
 def draw_mentor(direction):
@@ -256,6 +299,37 @@ def normalize_sprite(img, postprocess=None):
     return out
 
 
+def anchor_bottom(img, width, height):
+    """วางวัตถุลงภาพขนาดที่เกมใช้ ให้ฐานชิดขอบล่างและอยู่กึ่งกลางแนวนอน โดยไม่ย่อขยายพิกเซล"""
+    img = img.convert("RGBA")
+    box_ = img.getbbox()
+    if box_ is None:
+        raise SystemExit("ภาพว่าง")
+    content = img.crop(box_)
+    if content.width > width or content.height > height:
+        raise SystemExit(f"วัตถุใหญ่เกินกรอบ {width}×{height}: {content.size}")
+    out = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    out.alpha_composite(content, ((width - content.width) // 2, height - content.height))
+    return out
+
+
+def character_sheet(folder):
+    """แผ่นสไปรต์ 64×64 ต่อเฟรม: แถว = ทิศ คอลัมน์ 0 = ยืน คอลัมน์ 1.. = เดิน ทุกเฟรมของทิศเดียวกันเลื่อนเท่ากับท่ายืน เท้าจึงไม่กระตุก"""
+    sheet = Image.new("RGBA", (SPRITE_SIZE * (1 + WALK_FRAMES), SPRITE_SIZE * len(DIRECTIONS)), (0, 0, 0, 0))
+    for row, direction in enumerate(DIRECTIONS):
+        idle = Image.open(folder / f"{direction}.png").convert("RGBA")
+        left, top, right, bottom = idle.getbbox()
+        if right - left > SPRITE_SIZE or bottom - top > FEET_Y:
+            raise SystemExit(f"ตัวละครใหญ่เกินกรอบ {SPRITE_SIZE}×{SPRITE_SIZE}: {(right - left, bottom - top)}")
+        dx, dy = FEET_X - (right - left) // 2 - left, FEET_Y - bottom
+        frames = [idle] + [Image.open(folder / "walk" / f"{direction}_{i}.png").convert("RGBA") for i in range(WALK_FRAMES)]
+        for col, frame in enumerate(frames):
+            cell = Image.new("RGBA", (SPRITE_SIZE, SPRITE_SIZE), (0, 0, 0, 0))
+            cell.paste(frame, (dx, dy), frame)
+            sheet.alpha_composite(cell, (col * SPRITE_SIZE, row * SPRITE_SIZE))
+    return sheet
+
+
 def import_generated(asset, source):
     """คืน dict ของ key -> ภาพ จากไฟล์ต้นฉบับใน assets-src/pixellab/<ASSET-ID>/"""
     folder = SOURCES / asset["id"]
@@ -276,13 +350,39 @@ def import_generated(asset, source):
         asset["files"] = {key: f"tiles/{key}.png"}
         asset["wang"] = {"tileSize": size, "frames": dict(sorted(wang.items()))}
         images[key] = sheet
-    elif asset["kind"] == "icon":
-        # ไอคอนใช้ภาพตามที่เจนมา ต้องได้ขนาดตรงกับที่เกมใช้
+    elif asset["kind"] == "character":
         key = next(iter(asset["files"]))
+        sheet = character_sheet(folder)
+        images[key] = sheet
+        # ภาพยืนหันหน้าสำหรับหน้าจอ HTML (โปรไฟล์ ร้านค้า หน้าเลือกตัวละคร)
+        images[f"{key}_south"] = sheet.crop((0, 0, SPRITE_SIZE, SPRITE_SIZE))
+    elif asset["kind"] == "backdrop":
+        key = next(iter(asset["web"]))
+        scene = Image.open(folder / "image.png").convert("RGB")
+        if list(scene.size) != asset["size"]:
+            raise SystemExit(f"{asset['id']}: ภาพต้องมีขนาด {asset['size']} แต่ได้ {scene.size}")
+        # ฉากที่เจนมาบางภาพมีแถบดำบนล่าง ตัดออก (หน้าเกมขยายฉากให้เต็มกรอบเอง)
+        dark = lambda y: max(max(scene.getpixel((x, y))) for x in range(0, scene.width, 4)) < 48
+        top, bottom = 0, scene.height
+        while top < bottom - 1 and dark(top):
+            top += 1
+        while bottom > top + 1 and dark(bottom - 1):
+            bottom -= 1
+        images[key] = scene.crop((0, top, scene.width, bottom))
+        asset["size"] = [scene.width, bottom - top]
+    elif asset["kind"] in ("icon", "portrait"):
+        # ใช้ภาพตามที่เจนมา ต้องได้ขนาดตรงกับที่เกมใช้
+        key = next(iter({**asset["files"], **asset.get("web", {})}))
         icon = Image.open(folder / "image.png").convert("RGBA")
         if list(icon.size) != asset["size"]:
-            raise SystemExit(f"{asset['id']}: ไอคอนต้องมีขนาด {asset['size']} แต่ได้ {icon.size}")
+            raise SystemExit(f"{asset['id']}: ภาพต้องมีขนาด {asset['size']} แต่ได้ {icon.size}")
         images[key] = icon
+    elif asset["kind"] in ("prop", "battle"):
+        key = next(iter({**asset["files"], **asset.get("web", {})}))
+        try:
+            images[key] = anchor_bottom(Image.open(folder / "image.png"), *asset["size"])
+        except SystemExit as error:
+            raise SystemExit(f"{asset['id']}: {error}")
     else:
         for key in list(asset["files"]):
             direction = key.rsplit("_", 1)[1]
@@ -302,19 +402,60 @@ def art_guide_prompts():
     return prompts
 
 
+# สีชุดของตัวละครชั่วคราว (ใช้เมื่อยังไม่มีภาพจริง)
+OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57"}
+# ตัวละครผู้เล่น: (รหัส, แบบ, ชุด) แบบ a = ผมสั้น แบบ b = ผมหางม้า
+PLAYER_CHARACTERS = [
+    ("CH-01", "a", "lab"), ("CH-07", "b", "lab"),
+    ("CH-08", "a", "engineer"), ("CH-09", "a", "pilot"), ("CH-10", "a", "guardian"),
+    ("CH-11", "b", "engineer"), ("CH-12", "b", "pilot"), ("CH-13", "b", "guardian"),
+]
+KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
+# วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
+ROOM_PROPS = [
+    ("PR-101", "pr_r1_rule_machine", (64, 64)), ("PR-103", "pr_r1_mail_sorter", (64, 32)), ("PR-104", "pr_r1_photo_board", (64, 32)),
+    ("PR-201", "pr_r2_basket_supervised", (64, 64)), ("PR-202", "pr_r2_basket_unsupervised", (64, 64)), ("PR-203", "pr_r2_basket_reinforcement", (64, 64)),
+    ("PR-204", "pr_r2_flashcard_desk", (64, 64)), ("PR-206", "pr_r2_maze_arena", (64, 64)),
+    ("PR-301", "pr_r3_cabinet_structured", (64, 64)), ("PR-302", "pr_r3_crate_unstructured", (64, 64)), ("PR-303", "pr_r3_server_rack", (32, 64)),
+    ("PR-305", "pr_r3_quality_scanner", (64, 64)),
+    ("PR-411", "pr_r4_station_collect", (64, 64)), ("PR-412", "pr_r4_station_prepare", (64, 64)), ("PR-413", "pr_r4_station_split", (64, 64)),
+    ("PR-414", "pr_r4_station_train", (64, 64)), ("PR-415", "pr_r4_station_evaluate", (64, 64)), ("PR-416", "pr_r4_station_deploy", (64, 64)),
+    ("PR-420", "pr_r4_calculator", (64, 64)),
+    ("PR-501", "pr_r5_tv", (64, 64)), ("PR-502", "pr_r5_face_phone", (64, 64)), ("PR-503", "pr_r5_speaker", (64, 64)),
+    ("PR-504", "pr_r5_shop_kiosk", (64, 64)), ("PR-505", "pr_r5_mailbox", (64, 64)), ("PR-506", "pr_r5_dictation", (64, 64)),
+    ("PR-508", "pr_r5_notice_board", (32, 64)),
+    ("PR-601", "pr_r6_portal_pc", (64, 64)), ("PR-602", "pr_r6_webcam", (32, 64)), ("PR-606", "pr_r6_result_board", (64, 64)),
+    ("PR-607", "pr_r6_checklist_stand", (32, 64)), ("PR-608", "pr_r6_cert_printer", (64, 64)),
+]
+
+def art_guide_names():
+    """ไฟล์ -> ชื่อชิ้นงานตามตารางใน docs/ART_GUIDE.md"""
+    names = {}
+    for line in ART_GUIDE.read_text(encoding="utf-8").splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 4 and re.fullmatch(r"`[a-z0-9_]+`", cells[1]):
+            names[cells[1].strip("`")] = cells[2]
+    return names
+
+
 def main():
     prompts = art_guide_prompts()
-    directions = ("south", "north", "east", "west")
+    names = art_guide_names()
 
-    def character(asset_id, base, name, draw):
+    def player(asset_id, who, outfit):
+        base = f"ch_{who}_{outfit}"
+        look = {"coat": OUTFIT_COLORS[outfit], "long_hair": who == "b"}
         return {
-            "id": asset_id, "kind": "character", "name": name, "requested": True, "size": [64, 64],
-            "files": {f"{base}_{d}": f"characters/{base}_{d}.png" for d in directions},
-            "draw": {f"{base}_{d}": (lambda d=d: draw(d)) for d in directions},
+            "id": asset_id, "kind": "character", "name": names[base], "requested": True, "size": [64, 64],
+            "files": {base: f"characters/{base}.png"},
+            "web": {f"{base}_south": f"characters/{base}_south.png"},
+            "sheet": {"frameWidth": SPRITE_SIZE, "frameHeight": SPRITE_SIZE, "directions": list(DIRECTIONS), "walkFrames": WALK_FRAMES},
+            "draw": {base: lambda: draw_player_sheet(**look), f"{base}_south": lambda: draw_player("south", **look)},
             "pixellab": {
                 "tool": "create_character",
-                "arguments": {"description": prompts[base], "name": name, **CHARACTER_SETTINGS},
+                "arguments": {"description": prompts[base], "name": names[base], **CHARACTER_SETTINGS},
                 "fetchTool": "get_character",
+                "animate": WALK_ANIMATION,
             },
         }
 
@@ -334,17 +475,22 @@ def main():
             },
         }
 
-    def prop(asset_id, base, name, size, draw, folder="props"):
+    def image(asset_id, base, size, draw, kind, settings, folder, web=False, name=None):
+        """ภาพเดี่ยวจาก create_image_pixflux (1 generation) web = ใช้ในหน้า HTML อย่างเดียว ฉากเกมไม่โหลด"""
+        files = {base: f"{folder}/{base}.png"}
         return {
-            "id": asset_id, "kind": "prop", "name": name, "requested": False, "size": list(size),
-            "files": {base: f"{folder}/{base}.png"},
+            "id": asset_id, "kind": kind, "name": name or names[base], "requested": True, "size": list(size),
+            "files": {} if web else files, **({"web": files} if web else {}),
             "draw": {base: draw},
             "pixellab": {
-                "tool": "create_map_object",
-                "arguments": {"description": prompts[base], "width": size[0], "height": size[1], **OBJECT_SETTINGS},
-                "fetchTool": "get_map_object",
+                "tool": "create_image_pixflux",
+                "arguments": {"description": prompts[base], "width": size[0], "height": size[1], **settings},
+                "fetchTool": "get_image",
             },
         }
+
+    def prop(asset_id, base, size, draw=None, name=None):
+        return image(asset_id, base, size, draw or (lambda: draw_block(size[0], size[1], MIST, STEEL)), "prop", OBJECT_SETTINGS, "props", name=name)
 
     def room_tileset(room):
         dark, base, light = ROOM_COLORS[room]
@@ -364,6 +510,14 @@ def main():
             },
         }
 
+    def kaiju(n):
+        return image(f"BT-0{n}", f"bt_kaiju_{n}", (128, 128), lambda: draw_blob(128, KAIJU_COLORS[n], YELLOW), "battle",
+                     {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True)
+
+    def backdrop(n):
+        dark, base, light = ROOM_COLORS[n]
+        return image(f"BG-0{n}", f"bg_battle_{n}", (320, 180), lambda: draw_backdrop(light, dark), "backdrop", BACKDROP_SETTINGS, "battle", web=True)
+
     # พี่บิตเป็นหุ่นยนต์ทรงกลม เครื่องมือ create_character ใช้โครงร่างมนุษย์เสมอ (ได้หุ่นมีขายาว)
     # จึงเจนเป็นภาพเดี่ยวหันหน้าตรงด้วย create_image_pixflux เกมใช้พี่บิตทิศเดียว
     mentor = {
@@ -378,46 +532,64 @@ def main():
     }
 
     assets = [
-        character("CH-01", "ch_player", "นักฝึกงาน (ผู้เล่น) 4 ทิศ", draw_player),
+        *[player(*spec) for spec in PLAYER_CHARACTERS],
         mentor,
         *[room_tileset(room) for room in ROOM_COLORS],
-        tileset("TS-00", "ts_common", "ไทล์เซตส่วนกลาง (โถงทางเดิน)", False,
+        tileset("TS-00", "ts_common", "ไทล์เซตส่วนกลาง (โถงทางเดิน)", True,
                 lambda: draw_floor("#C9D6E0", MIST), lambda: draw_wall(SLATE, INK, stripe=YELLOW)),
-        prop("PR-C01", "pr_door_locked", "ประตูล็อก", (32, 64), lambda: draw_door(False)),
-        prop("PR-C02", "pr_door_open", "ประตูเปิด", (32, 64), lambda: draw_door(True)),
-        prop("PR-C03", "pr_core_pedestal", "แท่นวางแกน AI", (32, 64), draw_pedestal),
-        prop("PR-C04", "pr_station_terminal", "เสาสถานี", (32, 64), draw_terminal),
-        prop("PR-C05", "pr_notebook_desk", "โต๊ะสมุดบันทึก", (64, 64), draw_notebook_desk),
-        prop("PR-102", "pr_r1_learning_machine", "เครื่อง Machine Learning (เครื่องฝึกของมินิเกม ใช้ทุกห้อง)", (64, 64), draw_learning_machine),
+        tileset("TS-07", "ts_hangar", "ไทล์เซตโรงเก็บหุ่น", True,
+                lambda: draw_floor(STEEL, SLATE), lambda: draw_wall(SLATE, INK, stripe=YELLOW)),
+        prop("PR-C01", "pr_door_locked", (32, 64), lambda: draw_door(False)),
+        prop("PR-C02", "pr_door_open", (32, 64), lambda: draw_door(True)),
+        prop("PR-C03", "pr_core_pedestal", (32, 64), draw_pedestal),
+        prop("PR-C04", "pr_station_terminal", (32, 64), draw_terminal),
+        prop("PR-C05", "pr_notebook_desk", (64, 64), draw_notebook_desk),
+        prop("PR-102", "pr_r1_learning_machine", (64, 64), draw_learning_machine),
+        *[prop(asset_id, base, size) for asset_id, base, size in ROOM_PROPS],
+        prop("PR-H01", "pr_shop", (64, 64), lambda: draw_block(64, 64, YELLOW, SLATE)),
+        prop("PR-H02", "pr_hangar_gate", (64, 64), lambda: draw_block(64, 64, STEEL, YELLOW)),
+        prop("PR-H03", "pr_hall_plant", (32, 64), lambda: draw_block(32, 64, GREEN, PAPER)),
+        prop("PR-H04", "pr_hall_bench", (64, 32), lambda: draw_block(64, 32, TEAL, SLATE)),
+        prop("PR-G01", "pr_robot_dock", (96, 96), lambda: draw_block(96, 96, PAPER, TEAL)),
+        prop("PR-G02", "pr_mission_console", (64, 64), lambda: draw_block(64, 64, SLATE, SCREEN)),
+        prop("PR-G03", "pr_wardrobe", (32, 64), lambda: draw_block(32, 64, MIST, SLATE)),
+        prop("PR-G04", "pr_hologram", (32, 64), lambda: draw_block(32, 64, SCREEN, TEAL)),
         *[core(room) for room in ROOM_COLORS],
+        image("BT-00", "bt_robot", (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "battle", {**BATTLE_SETTINGS, "direction": "east"}, "battle", web=True),
+        *[kaiju(n) for n in KAIJU_COLORS],
+        *[backdrop(n) for n in ROOM_COLORS],
+        image("PT-01", "pt_professor", (64, 64), lambda: draw_block(64, 64, SKIN, PAPER), "portrait",
+              {"no_background": True, "outline": "single color outline", "shading": "basic shading", "detail": "medium detail"}, "portraits", web=True),
     ]
 
     out = []
     for asset in assets:
         draw = asset.pop("draw")
+        outputs = {**asset["files"], **asset.get("web", {})}
         source_file = SOURCES / asset["id"] / "source.json"
         if source_file.exists():
             source = json.loads(source_file.read_text(encoding="utf-8"))
             images = import_generated(asset, source)
+            outputs = {**asset["files"], **asset.get("web", {})}
             asset["status"] = "generated"
             # บันทึกเครื่องมือและ arguments ที่ใช้เจนจริง ไม่ใช่ค่าตั้งต้นของสคริปต์
-            asset["pixellab"] = {k: source[k] for k in ("tool", "arguments", "fetchTool", "id", "generatedAt")}
+            asset["pixellab"] = {k: source[k] for k in ("tool", "arguments", "fetchTool", "animate", "id", "generatedAt") if k in source}
             for extra in ("postprocess", "rejected", "note"):
                 if source.get(extra):
                     asset[extra] = source[extra]
         else:
-            images = {key: draw[key]() for key in asset["files"]}
+            images = {key: draw[key]() for key in outputs}
             asset["status"] = "placeholder"
             asset["pixellab"]["id"] = None
             asset["pixellab"]["generatedAt"] = None
-        for key, path in asset["files"].items():
+        for key, path in outputs.items():
             target = ASSETS / path
             target.parent.mkdir(parents=True, exist_ok=True)
             images[key].save(target)
         out.append(asset)
 
     # ลบไฟล์ภาพที่ไม่มีแอสเซตใดใช้แล้ว
-    wanted = {ASSETS / path for a in out for path in a["files"].values()}
+    wanted = {ASSETS / path for a in out for path in [*a["files"].values(), *a.get("web", {}).values()]}
     for stale in ASSETS.rglob("*.png"):
         if stale not in wanted:
             stale.unlink()
@@ -426,11 +598,14 @@ def main():
     MANIFEST.write_text(json.dumps({
         "generator": "Pixel Lab MCP (https://api.pixellab.ai/mcp)",
         "styleSuffix": style,
-        "note": "สร้างโดย scripts/build-assets.py ห้ามแก้ด้วยมือ status placeholder = ภาพชั่วคราวที่สคริปต์วาด, generated = ภาพจริงจาก Pixel Lab (ต้นฉบับอยู่ใน assets-src/pixellab/<id>/ และ pixellab.id คือ id ที่ใช้ดึงซ้ำ)",
+        "note": "สร้างโดย scripts/build-assets.py ห้ามแก้ด้วยมือ status placeholder = ภาพชั่วคราวที่สคริปต์วาด, generated = ภาพจริงจาก Pixel Lab (ต้นฉบับอยู่ใน assets-src/pixellab/<id>/ และ pixellab.id คือ id ที่ใช้ดึงซ้ำ) files = ภาพที่ฉากเกมโหลด, web = ภาพที่หน้า HTML ใช้อย่างเดียว",
         "assets": out,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     generated = [a["id"] for a in out if a["status"] == "generated"]
-    print(f"เขียน {MANIFEST.relative_to(ROOT)}: {len(out)} แอสเซต, {sum(len(a['files']) for a in out)} ไฟล์ภาพ, ภาพจริงจาก Pixel Lab: {', '.join(generated) or '-'}")
+    placeholders = [a["id"] for a in out if a["status"] == "placeholder"]
+    print(f"เขียน {MANIFEST.relative_to(ROOT)}: {len(out)} แอสเซต, {sum(len(a['files']) + len(a.get('web', {})) for a in out)} ไฟล์ภาพ")
+    print(f"ภาพจริงจาก Pixel Lab ({len(generated)}): {', '.join(generated) or '-'}")
+    print(f"ภาพชั่วคราว ({len(placeholders)}): {', '.join(placeholders) or '-'}")
 
 
 if __name__ == "__main__":

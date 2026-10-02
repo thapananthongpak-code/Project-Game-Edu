@@ -72,6 +72,10 @@ export interface StudentSummary {
   timeMs: number;
   /** จำนวนห้องที่ถูกบังคับเข้าห้องซ่อม */
   forcedRepairs: number;
+  /** ด่านต่อสู้ไคจูที่ชนะแล้ว และโจทย์ในด่านต่อสู้ที่ตอบทั้งหมดกับที่ตอบถูก */
+  battlesWon: number;
+  battleAsked: number;
+  battleCorrect: number;
 }
 
 export function summarizeStudent(player: Player): StudentSummary {
@@ -104,6 +108,9 @@ export function summarizeStudent(player: Player): StudentSummary {
     tutorHints: rooms.reduce((sum, room) => sum + room.tutor.hints, 0),
     timeMs: rooms.reduce((sum, room) => sum + room.timeMs, 0),
     forcedRepairs: rooms.filter((room) => room.outcome?.requiredRepair).length,
+    battlesWon: rooms.filter((room) => room.battle.won).length,
+    battleAsked: rooms.reduce((sum, room) => sum + room.battle.asked, 0),
+    battleCorrect: rooms.reduce((sum, room) => sum + room.battle.correct, 0),
   };
 }
 
@@ -294,6 +301,9 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
       s.tutorHints,
       s.forcedRepairs,
       minutes(s.timeMs),
+      s.battlesWon,
+      s.battleAsked,
+      s.battleCorrect,
       ...topics.map((id) => save.pretest?.correctByTopic[id] ?? null),
       ...topics.map((id) => save.posttest?.correctByTopic[id] ?? null),
       ...lessons.map((id) => (save.rooms[id]?.minigameDone ? save.rooms[id].stars : null)),

@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "giant three-headed serpent kaiju facing left, violet scaly body, three long necks with horned heads, glowing pink eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 128,
+    "height": 128,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "west"
+  },
+  "fetchTool": "get_image",
+  "id": "2c4322f2-49b1-409a-84cd-cdde0985e1f5",
+  "generatedAt": "2026-10-02T04:29:30.470Z"
+}

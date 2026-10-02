@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide industrial factory district at sunset with glowing orange furnaces, chimneys and conveyor bridges, empty road in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "fe140d03-1db0-4350-825e-f5b8b3e7f2aa",
+  "generatedAt": "2026-10-02T04:34:05.853Z"
+}

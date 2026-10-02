@@ -9,8 +9,9 @@ import type { FormId } from "../content/schema";
 import { LEARNING_STYLES, type LearningStyle } from "./adaptive.config";
 import { emptyField, type FieldProgress } from "./field";
 import { MAX_ANSWER_CHARS, MAX_NAME_CHARS } from "./rules";
+import { AVATARS, type Avatar, CATALOG, OUTFITS, type Outfit, PAINTS, type Paint, type Supply } from "./shop.config";
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface Profile {
   /** ชื่อที่แสดง แนะนำให้ใช้ชื่อเล่นหรือเลขที่ ไม่ใช้ชื่อจริง */
@@ -18,6 +19,29 @@ export interface Profile {
   style: LearningStyle;
   /** รหัสห้องเรียนที่ครูกำหนด ว่าง = เล่นคนเดียว ไม่ส่งข้อมูลให้ครู */
   classCode: string;
+  /** ตัวละครที่เลือก (รูปลักษณ์ในเกมเท่านั้น ไม่ใช่ข้อมูลเพศของผู้เรียน และไม่แสดงในแดชบอร์ดผู้สอน) */
+  avatar: Avatar;
+}
+
+/** ผลของด่านต่อสู้ไคจูของห้อง (GDD ข้อ 12) */
+export interface BattleRecord {
+  won: boolean;
+  /** จำนวนครั้งที่ออกปฏิบัติการ (รวมครั้งที่ถอยกลับมาซ่อม) */
+  sorties: number;
+  /** โจทย์ที่ตอบทั้งหมด และที่ตอบถูก สะสมทุกครั้ง */
+  asked: number;
+  correct: number;
+}
+
+/** ร้านสหกรณ์แล็บ (GDD ข้อ 13) เครดิตคงเหลือ = เครดิตที่ได้จากความคืบหน้า - spent */
+export interface ShopState {
+  spent: number;
+  /** รหัสสินค้าที่ซื้อแล้ว (ชุดและสีหุ่น) */
+  owned: string[];
+  /** ของใช้ในด่านต่อสู้ที่ถืออยู่ */
+  supplies: Record<Supply, number>;
+  outfit: Outfit;
+  paint: Paint;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -53,6 +77,7 @@ export interface RoomProgress {
   timeMs: number;
   /** จำนวนครั้งที่ถามพี่บิตในห้องนี้: ได้คำตอบจาก AI และได้คำใบ้สำเร็จรูป */
   tutor: { ai: number; hints: number };
+  battle: BattleRecord;
 }
 
 export interface SaveData {
@@ -63,6 +88,9 @@ export interface SaveData {
   pretest: AssessmentResult | null;
   posttest: AssessmentResult | null;
   rooms: Record<number, RoomProgress>;
+  /** ฉากเนื้อเรื่องที่ดูจบแล้ว (รหัสใน src/content/story.ts) */
+  story: string[];
+  shop: ShopState;
 }
 
 export interface ProgressStore {
@@ -86,9 +114,12 @@ export const emptyRoom = (): RoomProgress => ({
   coreAt: null,
   timeMs: 0,
   tutor: { ai: 0, hints: 0 },
+  battle: { won: false, sorties: 0, asked: 0, correct: 0 },
 });
 
-export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {} });
+export const emptyShop = (): ShopState => ({ spent: 0, owned: [], supplies: { "repair-kit": 0, shield: 0 }, outfit: "lab", paint: "standard" });
+
+export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, story: [], shop: emptyShop() });
 
 // ---------------------------------------------------------------- อ่านข้อมูลที่บันทึกไว้
 // ข้อมูลที่อ่านกลับมาอาจไม่ครบหรือผิดรูป (รุ่นเก่า ไฟล์เสีย หรือถูกแก้จากนอกเกม) ทุกช่องจึงถูกตรวจชนิดและเติมค่าเริ่มต้น
@@ -139,12 +170,43 @@ function roomOf(raw: unknown): RoomProgress {
     coreAt: typeof data.coreAt === "string" ? data.coreAt : null,
     timeMs: count(data.timeMs),
     tutor: { ai: count(object(data.tutor).ai), hints: count(object(data.tutor).hints) },
+    battle: { won: object(data.battle).won === true, sorties: count(object(data.battle).sorties), asked: count(object(data.battle).asked), correct: count(object(data.battle).correct) },
   };
 }
+
+function shopOf(raw: unknown): ShopState {
+  const data = object(raw);
+  const base = emptyShop();
+  const items = new Map(CATALOG.map((item) => [item.id, item]));
+  const owned = [...new Set(Array.isArray(data.owned) ? data.owned.filter((id): id is string => typeof id === "string" && items.has(id) && items.get(id)?.kind !== "supply") : [])];
+  const has = (kind: "outfit" | "paint", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
+  const supplies = { ...base.supplies };
+  for (const item of CATALOG) if (item.kind === "supply") supplies[item.value] = Math.min(item.max, Math.floor(count(object(data.supplies)[item.value])));
+  const outfit = OUTFITS.find((o) => o === data.outfit) ?? base.outfit;
+  const paint = PAINTS.find((c) => c === data.paint) ?? base.paint;
+  return {
+    spent: Math.floor(count(data.spent)),
+    owned,
+    supplies,
+    // สวมได้เฉพาะของเริ่มต้นหรือของที่ซื้อแล้ว
+    outfit: outfit === base.outfit || has("outfit", outfit) ? outfit : base.outfit,
+    paint: paint === base.paint || has("paint", paint) ? paint : base.paint,
+  };
+}
+
+const MAX_STORY_BEATS = 40;
+const storyOf = (raw: unknown): string[] => [...new Set(Array.isArray(raw) ? raw.filter((beat): beat is string => typeof beat === "string" && beat.length <= 40) : [])].slice(0, MAX_STORY_BEATS);
 
 const roomsOf = (raw: unknown): Record<number, RoomProgress> => {
   const rooms: Record<number, RoomProgress> = {};
   for (const [room, value] of Object.entries(object(raw))) if (Number.isInteger(Number(room)) && Number(room) >= 1 && Number(room) <= course.topics.length) rooms[Number(room)] = roomOf(value);
+  return rooms;
+};
+
+/** ห้องจากรุ่นที่ยังไม่มีด่านต่อสู้: ห้องที่ได้แกน AI แล้วถือว่าผ่านด่านต่อสู้ */
+const legacyRooms = (raw: unknown): Record<number, RoomProgress> => {
+  const rooms = roomsOf(raw);
+  for (const room of Object.values(rooms)) if (room.core) room.battle = { ...room.battle, won: true };
   return rooms;
 };
 
@@ -153,7 +215,7 @@ function profileOf(raw: unknown): Profile | null {
   const name = text(data.name, MAX_NAME_CHARS).trim();
   if (!name) return null;
   const style = LEARNING_STYLES.find((candidate) => candidate === data.style) ?? "read";
-  return { name, style, classCode: text(data.classCode, 20) };
+  return { name, style, classCode: text(data.classCode, 20), avatar: AVATARS.find((candidate) => candidate === data.avatar) ?? "a" };
 }
 
 function assessmentOf(raw: unknown): AssessmentResult | null {
@@ -183,16 +245,30 @@ export function migrateSave(raw: unknown): SaveData | null {
       pretest: assessmentOf(data.pretest),
       posttest: assessmentOf(data.posttest),
       rooms: roomsOf(data.rooms),
+      story: storyOf(data.story),
+      shop: shopOf(data.shop),
+    };
+  }
+  // รุ่น 3: ยังไม่มีเนื้อเรื่อง ด่านต่อสู้ และร้านค้า ห้องที่ได้แกน AI แล้วถือว่าผ่านด่านต่อสู้ของห้องนั้น ห้องถัดไปจึงไม่ถูกล็อกย้อนหลัง
+  if (data.version === 3 && hasRooms) {
+    const rooms = legacyRooms(data.rooms);
+    return {
+      ...emptySave(),
+      updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : emptySave().updatedAt,
+      profile: profileOf(data.profile),
+      pretest: assessmentOf(data.pretest),
+      posttest: assessmentOf(data.posttest),
+      rooms,
     };
   }
   // รุ่น 2: ยังไม่มีรหัสห้องเรียน แบบทดสอบหลังเรียน และรหัสข้อ ผลก่อนเรียนเดิมสุ่มโจทย์ จึงเก็บไว้เฉพาะคะแนนรายหัวข้อ
   if (data.version === 2 && hasRooms) {
     const pretest = assessmentOf(data.pretest);
-    return { ...emptySave(), profile: profileOf(data.profile), pretest: pretest && { ...pretest, form: "A", items: [] }, rooms: roomsOf(data.rooms) };
+    return { ...emptySave(), profile: profileOf(data.profile), pretest: pretest && { ...pretest, form: "A", items: [] }, rooms: legacyRooms(data.rooms) };
   }
   // รุ่น 1 (ต้นแบบห้อง 1): { state: { progress }, version: 1 }
   const legacy = object(data.state).progress;
-  if (legacy && typeof legacy === "object") return { ...emptySave(), rooms: roomsOf(legacy) };
+  if (legacy && typeof legacy === "object") return { ...emptySave(), rooms: legacyRooms(legacy) };
   return null;
 }
 
@@ -251,8 +327,21 @@ export interface RemoteRecord {
   resumeCode: string;
 }
 
+/** บัญชีที่เครื่องนี้ใช้กับฐานข้อมูลกลาง anonymous = บัญชีไม่ระบุตัวตนต่ออุปกรณ์, google = เข้าสู่ระบบด้วย Google */
+export interface AccountInfo {
+  provider: "anonymous" | "google";
+  /** อีเมลของบัญชี Google แสดงให้เจ้าของเห็นบนเครื่องของตัวเองเท่านั้น ไม่ถูกบันทึกลงความคืบหน้า */
+  email: string | null;
+}
+
 /** สิ่งที่ SyncedProgressStore ต้องการจากฐานข้อมูลกลาง ตัวจริงคือ Supabase (src/state/supabaseBackend.ts) */
 export interface RemoteBackend {
+  /** รหัสข้อผิดพลาดจากการล็อกอินกับ Google ครั้งล่าสุด (ถ้ามี) */
+  authError?: string | null;
+  account?(): Promise<AccountInfo | null>;
+  /** พาไปหน้าล็อกอินของ Google link = ผูกกับบัญชีไม่ระบุตัวตนที่มีอยู่ (ความคืบหน้าตามมาด้วย) */
+  signInWithGoogle?(link: boolean): Promise<void>;
+  signOut?(): Promise<void>;
   load(): Promise<RemoteRecord | null>;
   /** บันทึกความคืบหน้าของผู้เล่นคนนี้ คืนรหัสเล่นต่อ */
   save(data: SaveData): Promise<string>;
@@ -274,10 +363,19 @@ interface SyncOptions {
   /** รอฐานข้อมูลกลางตอนเปิดเกมไม่เกินเวลานี้ เกินแล้วเริ่มจากสำเนาในเครื่อง */
   loadTimeoutMs?: number;
   onStatus?: (status: SyncStatus, resumeCode: string | null) => void;
+  onAccount?: (account: AccountInfo | null) => void;
+  /** ที่เก็บธงข้ามการพาไปล็อกอิน (ค่าเริ่มต้น = localStorage ของเบราว์เซอร์) */
+  flags?: Pick<Storage, "getItem" | "setItem" | "removeItem">;
 }
 
-/** มีชื่อและรหัสห้องเรียนแล้วจึงส่งขึ้นฐานข้อมูลกลาง ผู้เล่นที่ไม่ใส่รหัสห้องเรียนเก็บในเครื่องอย่างเดียว */
-const sharable = (data: SaveData): boolean => Boolean(data.profile?.name && data.profile.classCode);
+/** ธงที่ตั้งก่อนพาไปล็อกอินกับ Google: กลับมาแล้วให้ใช้ความคืบหน้าของบัญชีนั้นแทนสำเนาในเครื่อง */
+const SIGNIN_FLAG = "ai-trainer-quest-google-signin";
+/** ธงที่ตั้งเมื่อผูกบัญชีไม่ได้เพราะบัญชี Google นั้นมีความคืบหน้าอยู่แล้ว: ครั้งถัดไปให้เข้าสู่ระบบบัญชีนั้นตรง ๆ */
+const FORCE_SIGNIN_FLAG = "ai-trainer-quest-google-force";
+const ALREADY_LINKED = "identity_already_exists";
+
+/** มีชื่อและรหัสห้องเรียนแล้วจึงส่งขึ้นฐานข้อมูลกลาง ผู้เล่นที่ไม่ใส่รหัสห้องเรียนเก็บในเครื่องอย่างเดียว เว้นแต่เข้าสู่ระบบด้วย Google */
+const sharable = (data: SaveData, account: AccountInfo | null): boolean => Boolean(data.profile?.name && (data.profile.classCode || account?.provider === "google"));
 
 /**
  * เก็บในเครื่องทันที แล้วส่งขึ้นฐานข้อมูลกลางแบบหน่วง ถ้าเครือข่ายล่มเกมยังเล่นต่อได้จากสำเนาในเครื่อง
@@ -292,6 +390,9 @@ export class SyncedProgressStore implements ProgressStore {
   /** คิวของคำสั่งที่ส่งไปฐานข้อมูลกลาง ให้ทำทีละคำสั่งตามลำดับ (เช่น เริ่มใหม่ต้องไม่แซงการบันทึกที่ค้างอยู่) */
   private chain: Promise<void> = Promise.resolve();
   private readonly onStatus: NonNullable<SyncOptions["onStatus"]>;
+  private readonly onAccount: NonNullable<SyncOptions["onAccount"]>;
+  private readonly flags: NonNullable<SyncOptions["flags"]> | null;
+  private account: AccountInfo | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private queued: SaveData | null = null;
   private resumeCode: string | null = null;
@@ -303,12 +404,64 @@ export class SyncedProgressStore implements ProgressStore {
     this.retryMs = options.retryMs ?? 15000;
     this.loadTimeoutMs = options.loadTimeoutMs ?? 6000;
     this.onStatus = options.onStatus ?? (() => {});
+    this.onAccount = options.onAccount ?? (() => {});
+    this.flags = options.flags ?? (typeof window === "undefined" ? null : window.localStorage);
+  }
+
+  /** เข้าสู่ระบบด้วย Google ได้หรือไม่ (ฐานข้อมูลกลางรองรับ) */
+  get supportsGoogle(): boolean {
+    return typeof this.remote.signInWithGoogle === "function";
+  }
+
+  /** ผูกบัญชีครั้งก่อนไม่สำเร็จเพราะบัญชี Google นั้นมีความคืบหน้าอยู่แล้ว */
+  get googleInUse(): boolean {
+    return this.remote.authError === ALREADY_LINKED;
+  }
+
+  get googleFailed(): boolean {
+    return Boolean(this.remote.authError) && !this.googleInUse;
+  }
+
+  /**
+   * พาไปหน้าล็อกอินของ Google (หน้าเกมจะถูกเปิดใหม่เมื่อกลับมา)
+   * เครื่องที่มีบัญชีไม่ระบุตัวตนอยู่แล้วจะผูก Google เข้ากับบัญชีเดิม เครื่องอื่นเข้าสู่ระบบแล้วใช้ความคืบหน้าของบัญชีนั้น
+   */
+  async signInWithGoogle(): Promise<void> {
+    if (!this.remote.signInWithGoogle) return;
+    await this.flush();
+    const force = this.flags?.getItem(FORCE_SIGNIN_FLAG) === "1";
+    const link = !force && this.account?.provider === "anonymous";
+    if (!link) {
+      // ออกจากบัญชีไม่ระบุตัวตนของเครื่องนี้ก่อน ความคืบหน้าของบัญชีนั้นยังอยู่ในฐานข้อมูลและเล่นต่อได้ด้วยรหัสเล่นต่อ
+      if (this.account) await this.remote.signOut?.();
+      this.flags?.setItem(SIGNIN_FLAG, "1");
+    }
+    this.flags?.removeItem(FORCE_SIGNIN_FLAG);
+    await this.remote.signInWithGoogle(link);
+  }
+
+  /** ออกจากระบบที่เครื่องนี้: ส่งความคืบหน้าที่ค้างอยู่ขึ้นไปก่อน แล้วลบสำเนาในเครื่อง (เครื่องที่ใช้ร่วมกัน) */
+  async signOut(): Promise<void> {
+    await this.flush();
+    this.queued = null;
+    this.resumeCode = null;
+    await this.local.clear();
+    await this.remote.signOut?.();
+    this.account = null;
+    this.onAccount(null);
+    this.onStatus("local", null);
   }
 
   async load(): Promise<SaveData | null> {
     const local = await this.local.load();
     let record: RemoteRecord | null = null;
+    // เพิ่งกลับจากการเข้าสู่ระบบด้วย Google: ถ้าบัญชีนั้นมีความคืบหน้าอยู่แล้ว ใช้ของบัญชี ไม่ให้สำเนาในเครื่อง (ที่อาจเป็นของคนอื่น) ไปทับ
+    const signingIn = this.flags?.getItem(SIGNIN_FLAG) === "1";
+    this.flags?.removeItem(SIGNIN_FLAG);
+    if (this.googleInUse) this.flags?.setItem(FORCE_SIGNIN_FLAG, "1");
     try {
+      this.account = (await withTimeout(this.remote.account?.() ?? Promise.resolve(null), this.loadTimeoutMs)) ?? null;
+      this.onAccount(this.account);
       record = await withTimeout(this.remote.load(), this.loadTimeoutMs);
     } catch {
       // เครือข่ายช้าหรือล่ม: เล่นจากสำเนาในเครื่อง แล้วส่งขึ้นเมื่อบันทึกครั้งถัดไป
@@ -317,26 +470,27 @@ export class SyncedProgressStore implements ProgressStore {
     }
     if (!record) {
       // ยังไม่มีในฐานข้อมูลกลาง: ใช้สำเนาในเครื่อง และส่งขึ้นถ้ามีรหัสห้องเรียนแล้ว
-      if (local && sharable(local)) this.schedule(local);
+      if (local && sharable(local, this.account)) this.schedule(local);
       else this.onStatus("local", null);
       return local;
     }
     this.resumeCode = record.resumeCode;
     const remote = migrateSave(record.data);
-    if (local && (!remote || local.updatedAt > remote.updatedAt)) {
+    const takeRemote = signingIn && this.account?.provider === "google" && remote !== null;
+    if (!takeRemote && local && (!remote || local.updatedAt > remote.updatedAt)) {
       this.schedule(local);
       return local;
     }
     this.onStatus("synced", this.resumeCode);
     if (!remote) return local;
-    const merged = restoreEvidenceImage(remote, local);
+    const merged = takeRemote ? remote : restoreEvidenceImage(remote, local);
     await this.local.save(merged);
     return merged;
   }
 
   async save(data: SaveData): Promise<void> {
     await this.local.save(data);
-    if (sharable(data)) this.schedule(data);
+    if (sharable(data, this.account)) this.schedule(data);
   }
 
   async clear(): Promise<void> {
@@ -366,7 +520,12 @@ export class SyncedProgressStore implements ProgressStore {
     await this.local.clear();
     await this.enqueue(async () => {
       try {
+        const google = this.account?.provider === "google";
         await this.remote.detach();
+        if (google) {
+          this.account = null;
+          this.onAccount(null);
+        }
         this.onStatus("local", null);
       } catch {
         this.onStatus("error", null);
@@ -397,6 +556,10 @@ export class SyncedProgressStore implements ProgressStore {
       if (!data) return;
       try {
         this.resumeCode = await this.remote.save(withoutEvidenceImage(data));
+        if (!this.account) {
+          this.account = (await this.remote.account?.()) ?? { provider: "anonymous", email: null };
+          this.onAccount(this.account);
+        }
         this.onStatus(this.queued ? "pending" : "synced", this.resumeCode);
       } catch {
         // สำเนาในเครื่องยังครบ เก็บรายการไว้แล้วลองส่งใหม่ภายหลัง

@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { setAudioSettings } from "../audio/engine";
+import { useAudioSettings } from "../audio/useAudio";
 import { course } from "../content";
 import { fmt, ui } from "../content/ui-strings";
-import { claimProgress, cloudEnabled, hasSave as hasSaveData, startNewGame, useGameStore } from "../state/gameStore";
+import { claimProgress, cloudEnabled, googleLoginEnabled, googleNotice, hasSave as hasSaveData, signInWithGoogle, signOutAccount, startNewGame, useGameStore } from "../state/gameStore";
+import { art } from "./art";
 
 /** เล่นต่อจากเครื่องอื่น: ใส่รหัสเล่นต่อที่แสดงในสมุดเควสของเครื่องเดิม */
 function ResumeForm({ onClose }: { onClose: () => void }) {
@@ -85,13 +88,62 @@ function ResetConfirm({ name, shared, onClose }: { name: string; shared: boolean
   );
 }
 
+/** เข้าสู่ระบบด้วย Google (ทางเลือก): เล่นต่อได้จากทุกเครื่องโดยไม่ต้องจดรหัสเล่นต่อ */
+function GoogleAccount() {
+  const account = useGameStore((s) => s.account);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(googleNotice() === "failed");
+  const inUse = googleNotice() === "in-use";
+
+  const run = (action: () => Promise<void>) => async () => {
+    setBusy(true);
+    setFailed(false);
+    try {
+      await action();
+    } catch {
+      setFailed(true);
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div className="mt-3 rounded-md border-2 border-ink bg-paper p-3 text-left text-sm" data-testid="google-account" data-provider={account?.provider ?? "none"}>
+      {account?.provider === "google" ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="min-w-0 break-all font-semibold" data-testid="google-email">
+            {fmt(ui.menu.googleAccount, { email: account.email ?? "" })}
+          </span>
+          <button type="button" className="btn btn-ghost !min-h-9 text-sm" disabled={busy} data-testid="google-signout" onClick={run(signOutAccount)}>
+            {ui.menu.googleSignOut}
+          </button>
+        </div>
+      ) : (
+        <>
+          <button type="button" className="btn btn-ghost w-full" disabled={busy} data-testid="google-signin" onClick={run(signInWithGoogle)}>
+            {ui.menu.google}
+          </button>
+          <p className="mt-2 text-slate">{ui.menu.googleNote}</p>
+        </>
+      )}
+      {(inUse || failed) && (
+        <p className="mt-2 font-semibold text-wrong" role="alert" data-testid="google-notice">
+          {inUse ? ui.menu.googleInUse : ui.menu.googleFailed}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function MainMenu() {
   const ready = useGameStore((s) => s.ready && s.hydrated);
   const hasSave = useGameStore(hasSaveData);
   const profile = useGameStore((s) => s.profile);
   const continueGame = useGameStore((s) => s.continueGame);
+  const account = useGameStore((s) => s.account);
+  const audio = useAudioSettings();
   const [panel, setPanel] = useState<null | "resume" | "reset">(null);
   const name = profile?.name ?? "";
+  const soundOn = audio.music || audio.sfx;
 
   const startNew = () => {
     if (hasSave) setPanel("reset");
@@ -101,7 +153,11 @@ export function MainMenu() {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-ink/80 p-4">
       <div className="panel w-full max-w-md p-6 text-center">
-        <img src="assets/characters/ch_mentor_south.png" alt="" className="pixelated mx-auto h-24 w-24" />
+        <div className="flex items-end justify-center gap-1">
+          <img src={art.player("a", "lab")} alt="" className="pixelated h-20 w-20" />
+          <img src={art.mentor} alt="" className="pixelated h-24 w-24" />
+          <img src={art.player("b", "lab")} alt="" className="pixelated h-20 w-20" />
+        </div>
         <h1 className="mt-2 text-3xl font-extrabold text-teal-dark">{ui.gameTitle}</h1>
         <p className="mt-1 font-semibold text-slate">{ui.menu.tagline}</p>
         {course.course && (
@@ -127,7 +183,17 @@ export function MainMenu() {
           )}
         </div>
         {panel === "resume" && <ResumeForm onClose={() => setPanel(null)} />}
-        {panel === "reset" && <ResetConfirm name={name || ui.questLog.name} shared={cloudEnabled() && Boolean(profile?.classCode)} onClose={() => setPanel(null)} />}
+        {panel === "reset" && <ResetConfirm name={name || ui.questLog.name} shared={cloudEnabled() && (Boolean(profile?.classCode) || account?.provider === "google")} onClose={() => setPanel(null)} />}
+        {ready && googleLoginEnabled() && <GoogleAccount />}
+        <button
+          type="button"
+          className="btn btn-ghost mt-3 !min-h-10 text-sm"
+          aria-pressed={soundOn}
+          data-testid="menu-sound"
+          onClick={() => setAudioSettings({ music: !soundOn, sfx: !soundOn })}
+        >
+          <span aria-hidden="true">{soundOn ? "🔊" : "🔇"}</span> {soundOn ? ui.hud.soundOn : ui.hud.soundOff}
+        </button>
         <p className="mt-4 text-xs text-slate">{ui.menu.prototype}</p>
       </div>
     </div>

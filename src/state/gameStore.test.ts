@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { evaluateMinigame } from "./adaptive";
-import { isRoomUnlocked, startTierOf, useGameStore } from "./gameStore";
+import { allBattlesWon, isRoomUnlocked, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
+import { emptyShop } from "./progressStore";
+import { creditBalance, earnedCredits } from "./shop";
+import { REWARDS } from "./shop.config";
 
 const miss = { type: "check", correct: false, timeMs: 1000 } as const;
 const ok = { type: "check", correct: true, timeMs: 1000 } as const;
@@ -14,10 +17,11 @@ function finishRoom(room: number, result = perfect) {
   store.enterRoom(room);
   useGameStore.getState().completeMinigame(result);
   useGameStore.getState().collectCore();
+  useGameStore.getState().recordBattle(room, { won: true, asked: 4, correct: 4 });
 }
 
 beforeEach(() => {
-  useGameStore.setState({ progress: {}, pretest: null, posttest: null, profile: { name: "ทดสอบ", style: "read", classCode: "" }, styleSuggestion: false, room: null, screen: "hall", overlay: null });
+  useGameStore.setState({ progress: {}, pretest: null, posttest: null, story: [], shop: emptyShop(), profile: { name: "ทดสอบ", style: "read", classCode: "", avatar: "a" }, styleSuggestion: false, room: null, screen: "hall", overlay: null });
 });
 
 describe("เส้นทางปลดล็อกเชิงเส้น 1→6 (GDD 4.4)", () => {
@@ -38,6 +42,23 @@ describe("เส้นทางปลดล็อกเชิงเส้น 1�
   it("ผลแบบทดสอบก่อนเรียนไม่ปลดล็อกห้อง แม้ถูกทุกข้อ", () => {
     useGameStore.setState({ pretest: pretest({ 1: 2, 2: 2, 3: 2, 4: 2, 5: 2 }) });
     expect(isRoomUnlocked(useGameStore.getState(), 2)).toBe(false);
+  });
+
+  it("ได้แกน AI แล้วแต่ยังไม่ชนะไคจูของห้องนั้น: ห้องถัดไปยังล็อก และมีด่านต่อสู้รออยู่ (GDD 12)", () => {
+    const store = useGameStore.getState();
+    expect(pendingBattle(store)).toBeNull();
+    store.enterRoom(1);
+    useGameStore.getState().collectCore();
+    expect(isRoomUnlocked(useGameStore.getState(), 2)).toBe(false);
+    expect(pendingBattle(useGameStore.getState())).toBe(1);
+    // แพ้แล้วยังล็อก จำนวนครั้งที่ออกปฏิบัติการและโจทย์ที่ตอบสะสมต่อ
+    useGameStore.getState().recordBattle(1, { won: false, asked: 6, correct: 2 });
+    expect(isRoomUnlocked(useGameStore.getState(), 2)).toBe(false);
+    useGameStore.getState().recordBattle(1, { won: true, asked: 3, correct: 3 });
+    expect(useGameStore.getState().progress[1].battle).toEqual({ won: true, sorties: 2, asked: 9, correct: 5 });
+    expect(isRoomUnlocked(useGameStore.getState(), 2)).toBe(true);
+    expect(pendingBattle(useGameStore.getState())).toBeNull();
+    expect(allBattlesWon(useGameStore.getState())).toBe(false);
   });
 
   it("ผ่านมินิเกมแต่ยังไม่รับแกน: ห้องถัดไปยังล็อก", () => {
@@ -122,5 +143,84 @@ describe("เริ่มเกมใหม่", () => {
     useGameStore.getState().newGame();
     const state = useGameStore.getState();
     expect([state.profile, state.pretest, state.posttest, state.progress, state.screen]).toEqual([null, null, null, {}, "onboarding"]);
+  });
+});
+
+describe("เนื้อเรื่อง (GDD 2)", () => {
+  it("บทนำแสดงเมื่อเข้าแล็บครั้งแรกหลังทำแบบทดสอบก่อนเรียน และไม่แสดงซ้ำเมื่อดูจบแล้ว", () => {
+    expect(pendingStory(useGameStore.getState())).toBeNull();
+    useGameStore.setState({ pretest: pretest({}) });
+    expect(pendingStory(useGameStore.getState())).toBe("prologue");
+    useGameStore.getState().openStory("prologue");
+    useGameStore.getState().finishStory();
+    expect(useGameStore.getState().story).toEqual(["prologue"]);
+    expect(pendingStory(useGameStore.getState())).toBeNull();
+  });
+
+  it("บรรยายสรุปของห้องแสดงเมื่อเข้าห้องนั้นครั้งแรก", () => {
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue"] });
+    useGameStore.getState().enterRoom(1);
+    expect(pendingStory(useGameStore.getState())).toBe("room-1");
+    useGameStore.getState().openStory("room-1");
+    useGameStore.getState().finishStory();
+    expect(pendingStory(useGameStore.getState())).toBeNull();
+  });
+
+  it("บทส่งท้ายแสดงเมื่อชนะครบทุกด่าน ไม่แสดงบนหน้าเมนู", () => {
+    useGameStore.setState({ pretest: pretest({}), story: ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6"] });
+    for (let room = 1; room <= 6; room++) finishRoom(room);
+    useGameStore.getState().exitToHall();
+    expect(allBattlesWon(useGameStore.getState())).toBe(true);
+    expect(pendingStory(useGameStore.getState())).toBe("ending");
+    useGameStore.getState().toMenu();
+    expect(pendingStory(useGameStore.getState())).toBeNull();
+  });
+});
+
+describe("เครดิตวิจัยและร้านสหกรณ์แล็บ (GDD 13)", () => {
+  const earning = () => ({ rooms: useGameStore.getState().progress, posttest: useGameStore.getState().posttest });
+
+  it("เครดิตคำนวณจากความคืบหน้า เล่นด่านเดิมซ้ำไม่ได้เครดิตเพิ่ม", () => {
+    expect(earnedCredits(earning())).toBe(0);
+    finishRoom(1);
+    const once = REWARDS.star * 3 + REWARDS.core + REWARDS.battle + REWARDS.firstSortie;
+    expect(earnedCredits(earning())).toBe(once);
+    useGameStore.getState().completeMinigame(perfect);
+    useGameStore.getState().recordBattle(1, { won: true, asked: 4, correct: 4 });
+    // ออกปฏิบัติการครั้งที่สองแล้ว: โบนัสชนะในครั้งแรกหายไป ส่วนอื่นเท่าเดิม
+    expect(earnedCredits(earning())).toBe(once - REWARDS.firstSortie);
+  });
+
+  it("ซื้อชุดแล้วสวมให้ทันที เครดิตไม่พอซื้อไม่ได้ ของที่มีแล้วซื้อซ้ำไม่ได้", () => {
+    expect(useGameStore.getState().buy("outfit-engineer")).toBe("credits");
+    for (let room = 1; room <= 2; room++) finishRoom(room);
+    const before = creditBalance(earning(), useGameStore.getState().shop);
+    expect(useGameStore.getState().buy("outfit-engineer")).toBeNull();
+    expect(useGameStore.getState().shop).toMatchObject({ outfit: "engineer", owned: ["outfit-engineer"], spent: 100 });
+    expect(creditBalance(earning(), useGameStore.getState().shop)).toBe(before - 100);
+    expect(useGameStore.getState().buy("outfit-engineer")).toBe("owned");
+    expect(useGameStore.getState().buy("no-such-item")).toBe("unknown");
+    // สลับกลับชุดเริ่มต้นได้ แต่สวมชุดที่ยังไม่ได้ซื้อไม่ได้
+    useGameStore.getState().equip("outfit", "lab");
+    expect(useGameStore.getState().shop.outfit).toBe("lab");
+    useGameStore.getState().equip("outfit", "guardian");
+    expect(useGameStore.getState().shop.outfit).toBe("lab");
+  });
+
+  it("ของใช้ในการต่อสู้: ซื้อได้จนถึงจำนวนสูงสุด ใช้แล้วหมดไป", () => {
+    for (let room = 1; room <= 2; room++) finishRoom(room);
+    for (let i = 0; i < 3; i++) expect(useGameStore.getState().buy("supply-shield")).toBeNull();
+    expect(useGameStore.getState().buy("supply-shield")).toBe("owned");
+    expect(useGameStore.getState().consumeSupply("shield")).toBe(true);
+    expect(useGameStore.getState().shop.supplies.shield).toBe(2);
+    expect(useGameStore.getState().consumeSupply("repair-kit")).toBe(false);
+  });
+
+  it("เริ่มเกมใหม่: เนื้อเรื่องและร้านค้ากลับเป็นค่าเริ่มต้น", () => {
+    finishRoom(1);
+    useGameStore.getState().buy("supply-shield");
+    useGameStore.setState({ story: ["prologue"] });
+    useGameStore.getState().newGame();
+    expect(useGameStore.getState()).toMatchObject({ story: [], shop: emptyShop(), progress: {} });
   });
 });

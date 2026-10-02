@@ -3,7 +3,10 @@
 -- ต้องเปิด Authentication > Sign In / Providers > Allow anonymous sign-ins ด้วย
 --
 -- หลักการ
---   * ผู้เรียนไม่มีบัญชี ไม่มีอีเมล เกมล็อกอินแบบไม่ระบุตัวตน (anonymous sign-in) ต่ออุปกรณ์
+--   * ค่าเริ่มต้น: ผู้เรียนไม่มีบัญชี ไม่มีอีเมล เกมล็อกอินแบบไม่ระบุตัวตน (anonymous sign-in) ต่ออุปกรณ์
+--   * ทางเลือก (VITE_GOOGLE_LOGIN=1 และเปิดผู้ให้บริการ Google ใน Authentication): ผู้เรียนเข้าสู่ระบบด้วย Google ได้
+--     อีเมลของบัญชีอยู่ใน auth.users ของ Supabase เท่านั้น ตารางในไฟล์นี้ไม่เก็บอีเมล และครูไม่เห็นอีเมลในแดชบอร์ด
+--     ผู้เล่นที่เข้าสู่ระบบด้วย Google โดยไม่มีรหัสห้องเรียนถูกบันทึกใต้รหัสห้อง SOLO
 --   * ข้อมูลส่วนบุคคลที่เก็บมีแค่ชื่อที่แสดง (แนะนำชื่อเล่นหรือเลขที่) กับรหัสห้องเรียน
 --   * ผู้เรียนอ่านได้เฉพาะแถวของตัวเอง (RLS) และเขียนได้ผ่านฟังก์ชันด้านล่างเท่านั้น
 --   * ครูอ่านข้อมูลทั้งห้องผ่าน /api/teacher ซึ่งใช้ service role key ฝั่งเซิร์ฟเวอร์ (ข้าม RLS)
@@ -24,7 +27,7 @@ create table if not exists public.players (
 
 create index if not exists players_class_code_idx on public.players (class_code);
 
--- อุปกรณ์ (การล็อกอินแบบไม่ระบุตัวตน) ที่เข้าถึงผู้เล่นแต่ละคนได้ หนึ่งอุปกรณ์ต่อหนึ่งผู้เล่น
+-- บัญชี (การล็อกอินแบบไม่ระบุตัวตนของอุปกรณ์ หรือบัญชี Google) ที่เข้าถึงผู้เล่นแต่ละคนได้ หนึ่งบัญชีต่อหนึ่งผู้เล่น
 create table if not exists public.player_devices (
   user_id uuid primary key references auth.users (id) on delete cascade,
   player_id uuid not null references public.players (id) on delete cascade,

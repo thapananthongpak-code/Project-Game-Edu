@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide container port yard with stacked green shipping containers and tall cranes under an overcast sky, empty concrete ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "477bdf05-8f54-454f-89bb-4b0b56fbb309",
+  "generatedAt": "2026-10-02T04:33:35.694Z"
+}

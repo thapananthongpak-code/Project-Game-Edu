@@ -27,7 +27,8 @@
 
 - top-down แบบเฉียง 3/4 (ใน Pixel Lab คือ `low top-down`): พื้นมองจากด้านบน วัตถุและตัวละครเห็นด้านหน้ากับด้านบน ผนังด้านบนของห้องเห็นหน้าผนังสูง 2 ไทล์
 - ใช้มุมเดียวกันทุกชิ้น ทั้งตัวละคร วัตถุ และไทล์
-- ผู้เล่นมี 4 ทิศ: ใต้ (หันหาจอ) เหนือ ตะวันออก ตะวันตก ไม่ใช้การกลับภาพซ้ายขวาแทนทิศตะวันตก เพราะบัตรพนักงานอยู่ข้างเดียว ส่วนพี่บิตมีทิศเดียว (หันหาจอ)
+- ผู้เล่นมี 4 ทิศ: ใต้ (หันหาจอ) เหนือ ตะวันออก ตะวันตก ไม่ใช้การกลับภาพซ้ายขวาแทนทิศตะวันตก เพราะบัตรพนักงานอยู่ข้างเดียว ส่วนพี่บิตมีทิศเดียว (หันหาจอ) ตอนลอยตามผู้เล่นใช้การกลับภาพซ้ายขวา
+- ฉากต่อสู้ (ข้อ 5.6) เป็นข้อยกเว้นเดียว: มุมมองด้านข้าง แสดงในหน้า HTML ไม่อยู่ในฉากเดินสำรวจ
 - แสงมาจากซ้ายบนทุกชิ้น เงาตกขวาล่าง
 - ลำดับชั้นภาพ: พื้นและผนังไม่มีเส้นขอบ วัตถุและตัวละครมีเส้นขอบสีเดียว ของที่โต้ตอบได้จึงเด่นจากฉาก
 
@@ -97,7 +98,9 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 | ผู้เล่น | Create character (`create_character`), 4 directions, proportions `chibi` | size 48 | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
 | พี่บิต | Create image (`create_image_pixflux`), ไม่มีพื้นหลัง, direction `south` | 64×64 | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
 | ไทล์พื้นและผนัง | Top-down tileset (`create_topdown_tileset`, พื้น = lower, ผนัง = upper, transition 0) | tile 32 | `low top-down` | `lineless` | `basic shading` | `low detail` |
-| วัตถุในห้อง | Map object | ตามตาราง | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
+| วัตถุในห้อง | Create image (`create_image_pixflux`), ไม่มีพื้นหลัง | ตามตาราง | `low top-down` | `single color outline` | `basic shading` | `medium detail` |
+| ฉากต่อสู้: หุ่น ไคจู | Create image (`create_image_pixflux`), ไม่มีพื้นหลัง | 128×128 | `side` | `single color black outline` | `medium shading` | `medium detail` |
+| ฉากต่อสู้: ฉากหลัง | Create image (`create_image_pixflux`) | 320×180 | `side` | `lineless` | `medium shading` | `medium detail` |
 | ไอคอนและภาพหน้า | Create image, ไม่มีพื้นหลัง | 32×32 / 64×64 | ไม่ระบุ | `single color outline` | `basic shading` | `low detail` |
 | กรอบ UI | Create UI asset | 192×192 ขึ้นไป | ไม่ระบุ | — | — | — |
 
@@ -106,6 +109,11 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 - `create_character` ใช้โครงร่างมนุษย์เสมอ ใช้กับพี่บิต (หุ่นยนต์ทรงกลม) ไม่ได้ จะได้หุ่นยนต์ตัวสูงมีขา พี่บิตจึงเจนเป็นภาพเดี่ยวด้วย `create_image_pixflux` (ขนาด 16–400 px ใช้ 1 generation)
 - ไทล์เซตที่ได้เป็นชุด Wang 16 ไทล์ (แผ่น 128×128) เลือกไทล์จากชนิดพื้นผิวที่มุมทั้งสี่ ผนังเป็นพื้นผิวมองจากด้านบน ไม่มีหน้าผนังตั้ง เกมวาดชุดนี้เลื่อนครึ่งไทล์เพื่อให้ขอบพื้นตรงกับกริด ชุดหนึ่งใช้ราว 3 generations
 - ภาพเดี่ยวอาจมีเงาพื้นติดมา ให้บันทึกสีเงาใน `postprocess` ของ `assets-src/pixellab/<id>/source.json` เพื่อให้ `assets:build` ลบออก
+- แอนิเมชันเดินของตัวละครใช้ `animate_character` แม่แบบ `walking-6-frames` (ทิศละ 1 generation ได้ 6 เฟรมต่อทิศ บนผืนภาพเดียวกับท่ายืน) `assets:build` รวมเป็นแผ่นสไปรต์ 7 คอลัมน์ × 4 แถว โดยเลื่อนทุกเฟรมของทิศเดียวกันเท่ากับท่ายืน เท้าจึงไม่กระตุก
+- ชุดของตัวละครเจนเป็นตัวละครใหม่ด้วย `create_character` โหมด standard (1 generation) ทรงผมและใบหน้าจึงต่างจากชุดกาวน์เล็กน้อย ถ้าต้องการให้เหมือนกันทุกชุดต้องใช้ `create_character_state` (20–40 generations ต่อชุด)
+- `create_image_pixflux` ให้ภาพผิดเรื่องได้ (เคยได้ภาพคนแทนไคจู) และใส่ตัวอักษรลงในฉากได้ (เคยได้ธงที่มีตัวอักษร) ต้องเปิดดูทุกชิ้น ชิ้นที่ไม่รับถูกบันทึกใน `rejected` ของ `source.json`
+- ฉากหลังบางภาพมีแถบดำบนล่าง `assets:build` ตัดออกให้ ขนาดจริงของฉากจึงอยู่ใน manifest
+- วัตถุในห้องหลายชิ้นได้มุมมองเฉียงแบบ isometric มากกว่า `low top-down` ยอมรับได้เพราะวัตถุตั้งเดี่ยว ไม่ต้องต่อกับชิ้นอื่น
 
 การใช้ตัวละครเป็นภาพอ้างอิงสไตล์ของ `create_character` ทำได้เฉพาะโหมด pro (20–40 generations ต่อชิ้น) โหมด standard พึ่งคำบรรยายสไตล์ท้าย prompt อย่างเดียว
 
@@ -117,7 +125,7 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 
 | รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
 |---|---|---|---|---|
-| CH-01 | `ch_player` | นักฝึกงาน (ผู้เล่น) 4 ทิศ | 64×64 | teenage lab intern with short dark hair, white lab coat over a teal polo shirt, small ID badge on the chest, dark navy trousers, white sneakers, friendly calm face, gender-neutral, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-01 | `ch_a_lab` | นักฝึกงานแบบ ก ชุดกาวน์ (ชุดเริ่มต้น) 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage lab intern with short dark hair, white lab coat over a teal polo shirt, small ID badge on the chest, dark navy trousers, white sneakers, friendly calm face, gender-neutral, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | CH-02 | `ch_mentor` | พี่บิต พี่เลี้ยงหุ่นยนต์ (ทิศเดียว หันหาจอ) | 64×64 | small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | CH-03 | `ch_mentor_face_neutral` | หน้าพี่บิต: ปกติ | 64×64 | close-up portrait of a small round white mentor robot, cyan screen face with two dot eyes and a calm small smile, antenna with a yellow light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | CH-04 | `ch_mentor_face_happy` | หน้าพี่บิต: ดีใจ (ตอบถูก) | 64×64 | close-up portrait of a small round white mentor robot, cyan screen face with eyes curved in a big happy smile, antenna glowing bright yellow, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
@@ -130,8 +138,8 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 
 | รหัส | ไฟล์ | ห้อง | ส่วน | Prompt |
 |---|---|---|---|---|
-| TS-00 | `ts_common_floor` | ส่วนกลาง (โถงต้อนรับ + ห้องซ่อม) | พื้น | seamless floor tile of smooth light gray lab floor panels with thin dark seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
-| TS-00 | `ts_common_wall` | ส่วนกลาง (โถงต้อนรับ + ห้องซ่อม) | ผนัง | seamless wall tile of white lab wall panels with a dark navy base trim and a thin yellow caution stripe, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-00 | `ts_common_floor` | ส่วนกลาง (โถงต้อนรับ + ห้องซ่อม) | พื้น | seamless floor tile of smooth blue-gray lab floor panels with thin dark seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-00 | `ts_common_wall` | ส่วนกลาง (โถงต้อนรับ + ห้องซ่อม) | ผนัง | seamless wall tile of dark navy lab wall panels with a thin yellow caution stripe, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | TS-01 | `ts_r1_floor` | ห้อง 1 ห้องปฐมนิเทศ (teal) | พื้น | seamless floor tile of clean pale teal lab floor tiles with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | TS-01 | `ts_r1_wall` | ห้อง 1 ห้องปฐมนิเทศ (teal) | ผนัง | seamless wall tile of white lab wall panels with a teal trim band and small round status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | TS-02 | `ts_r2_floor` | ห้อง 2 โรงฝึกสามสาย (violet) | พื้น | seamless floor tile of soft violet padded training mats with square seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
@@ -326,19 +334,77 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 | UI-37 | `ui_ic_hand_open` | เคอร์เซอร์มือ | icon of an open pointing hand cursor, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 | UI-38 | `ui_ic_hand_grab` | เคอร์เซอร์มือจับ | icon of a closed grabbing hand cursor, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
 
-### 5.6 สรุปจำนวน
+### 5.6 เนื้อเรื่อง ชุดตัวละคร และฉากต่อสู้
+
+แอสเซตของเนื้อเรื่อง "ปฏิบัติการการ์เดียน" (GDD ข้อ 2 และข้อ 12): ผู้เล่นเลือกตัวละครได้ 2 แบบ ซื้อชุดได้ 3 ชุดจากร้านสหกรณ์แล็บ และนำหุ่นการ์เดียนออกสู้กับไคจู 6 ตัว
+
+**ตัวละครผู้เล่น** ใช้ค่าตั้งเดียวกับ CH-01 (`create_character` โหมด standard 1 generation) แล้วทำแอนิเมชันเดินด้วย `animate_character` แม่แบบ `walking-6-frames` (ทิศละ 1 generation) ชุดแต่ละชุดเจนเป็นตัวละครใหม่ จึงคุมทรงผมด้วยคำบรรยายเดียวกันทุกชุด
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| CH-07 | `ch_b_lab` | นักฝึกงานแบบ ข ชุดกาวน์ (ชุดเริ่มต้น) 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage girl lab intern with dark hair tied in a high ponytail, white lab coat over a teal polo shirt, small ID badge on the chest, dark navy trousers, white sneakers, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-08 | `ch_a_engineer` | นักฝึกงานแบบ ก ชุดช่างสีส้ม 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage lab intern with short dark hair, orange mechanic jumpsuit with a gray tool belt, work gloves, safety goggles pushed up on the forehead, dark boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-09 | `ch_a_pilot` | นักฝึกงานแบบ ก แจ็กเก็ตนักบิน 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage lab intern with short dark hair, navy blue pilot jacket with yellow shoulder stripes over a white shirt, gray cargo trousers, white sneakers, small headset on one ear, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-10 | `ch_a_guardian` | นักฝึกงานแบบ ก ชุดเกราะผู้พิทักษ์ 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage lab intern with short dark hair, sleek black and teal defense force armor suit with a glowing teal chest light, armored gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-11 | `ch_b_engineer` | นักฝึกงานแบบ ข ชุดช่างสีส้ม 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage girl lab intern with dark hair tied in a high ponytail, orange mechanic jumpsuit with a gray tool belt, work gloves, safety goggles pushed up on the forehead, dark boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-12 | `ch_b_pilot` | นักฝึกงานแบบ ข แจ็กเก็ตนักบิน 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage girl lab intern with dark hair tied in a high ponytail, navy blue pilot jacket with yellow shoulder stripes over a white shirt, gray cargo trousers, white sneakers, small headset on one ear, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| CH-13 | `ch_b_guardian` | นักฝึกงานแบบ ข ชุดเกราะผู้พิทักษ์ 4 ทิศ + เดิน 6 เฟรม | 64×64 | teenage girl lab intern with dark hair tied in a high ponytail, sleek black and teal defense force armor suit with a glowing teal chest light, armored gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**ฉากต่อสู้** แสดงใน HTML ไม่อยู่ในฉาก Phaser เป็นมุมมองด้านข้าง ใช้คำบรรยายสไตล์ของฉากต่อสู้ต่อท้ายแทนสไตล์หลัก เจนด้วย `create_image_pixflux` (view `side`, outline `single color black outline`, shading `medium shading`, detail `medium detail`)
+
+```text
+retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text
+```
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| BT-00 | `bt_robot` | หุ่นการ์เดียน (หันขวา) | 128×128 | giant friendly guardian mech robot standing in a heroic pose facing right, white and teal armor plates, glowing cyan visor, round chest reactor with six small sockets, broad shoulders, big fists, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BT-01 | `bt_kaiju_1` | ไคจูด่าน 1 กลิตช์ (หันซ้าย) | 128×128 | giant glitch lizard kaiju facing left, teal and dark gray scaly body covered with patches of pixelated static noise, jagged flickering spikes on its back, angry glowing yellow eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BT-02 | `bt_kaiju_2` | ไคจูด่าน 2 ไตรฮอร์น (หันซ้าย) | 128×128 | giant three-headed serpent kaiju facing left, violet scaly body, three long necks with horned heads, glowing pink eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BT-03 | `bt_kaiju_3` | ไคจูด่าน 3 สแครป (หันซ้าย) | 128×128 | giant junk heap golem kaiju facing left, body made of rusty green metal scrap, broken crates and tangled cables, one glowing green eye, heavy arms, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BT-04 | `bt_kaiju_4` | ไคจูด่าน 4 เกียร์แครบ (หันซ้าย) | 128×128 | giant robot crab monster facing left, orange metal shell covered with gears and exhaust pipes, six mechanical legs, two huge steel claws, small glowing red eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BT-05 | `bt_kaiju_5` | ไคจูด่าน 5 ฝูงมิมิก (หันซ้าย) | 128×128 | group of five small round coral pink blob monsters with sharp teeth and angry eyes hopping together, facing left, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BT-06 | `bt_kaiju_6` | ไคจูด่านสุดท้าย โอเมก้า (หันซ้าย) | 128×128 | colossal final boss kaiju facing left, towering dark blue dragon beast with glowing azure cracks across its armored body, huge horns, tattered wings, sharp claws, menacing glowing white eyes, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BG-01 | `bg_battle_1` | ฉากต่อสู้ 1 หน้าแล็บ | 320×180 | wide city street at dusk in front of a white research laboratory building, teal evening sky, low skyline, empty road in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BG-02 | `bg_battle_2` | ฉากต่อสู้ 2 สนามฝึก | 320×180 | wide training stadium arena at night with plain violet flags and bright floodlights, no letters, no signs, empty arena floor in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BG-03 | `bg_battle_3` | ฉากต่อสู้ 3 ท่าเรือคลังสินค้า | 320×180 | wide container port yard with stacked green shipping containers and tall cranes under an overcast sky, empty concrete ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BG-04 | `bg_battle_4` | ฉากต่อสู้ 4 เขตโรงงาน | 320×180 | wide industrial factory district at sunset with glowing orange furnaces, chimneys and conveyor bridges, empty road in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BG-05 | `bg_battle_5` | ฉากต่อสู้ 5 ลานกลางเมือง | 320×180 | wide town plaza in the evening with small shops, street lamps and a fountain, coral pink sky, empty paved ground in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+| BG-06 | `bg_battle_6` | ฉากต่อสู้ 6 ใจกลางเมือง | 320×180 | wide ruined downtown skyline under a stormy dark blue sky with lightning and searchlights, cracked empty road in the foreground, side view background scene, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text |
+
+**โถง โรงเก็บหุ่น และภาพหน้า** เจนด้วย `create_image_pixflux` ค่าตั้งเดียวกับวัตถุในห้อง
+
+| รหัส | ไฟล์ | ชิ้นงาน | ขนาด | Prompt |
+|---|---|---|---|---|
+| PT-01 | `pt_professor` | ภาพหน้าอาจารย์วิน | 64×64 | portrait bust of a kind middle-aged scientist professor with gray hair and round glasses, white lab coat, one arm in a sling and a small bandage on the forehead, gentle determined smile, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-H01 | `pr_shop` | ร้านสหกรณ์แล็บ (โถง) | 64×64 | small lab supply shop kiosk with a yellow striped awning, a counter with a cash register and shelves of gadgets and folded uniforms, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-H03 | `pr_hall_plant` | กระถางต้นไม้ (โถง) | 32×64 | tall potted green plant in a white pot, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-H04 | `pr_hall_bench` | ม้านั่ง (โถง) | 64×32 | low waiting bench with teal cushions seen from the front, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-H02 | `pr_hangar_gate` | ประตูโรงเก็บหุ่น (โถง) | 64×64 | large steel hangar blast door with yellow and black hazard stripes and a robot head emblem above it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-G01 | `pr_robot_dock` | หุ่นการ์เดียนในแท่นซ่อม (โรงเก็บหุ่น) | 96×96 | giant guardian mech robot standing in a maintenance dock seen from the front, white and teal armor plates, glowing cyan visor, round chest reactor, steel scaffold arms holding its shoulders, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-G02 | `pr_mission_console` | แผงสั่งปฏิบัติการ (โรงเก็บหุ่น) | 64×64 | mission control console desk with a large holographic city map display showing one red monster blip, a keyboard panel with colored buttons, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-G03 | `pr_wardrobe` | ตู้เสื้อผ้า (โรงเก็บหุ่น) | 32×64 | tall metal locker wardrobe with one door open showing hanging uniforms, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| PR-G04 | `pr_hologram` | เครื่องฉายภาพอาจารย์ (โรงเก็บหุ่น) | 32×64 | holographic projector pedestal projecting a translucent blue hologram of a scientist bust, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-07 | `ts_hangar_floor` | โรงเก็บหุ่น: พื้น | 32×32 | seamless floor tile of dark steel hangar deck plates with thin yellow guide lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+| TS-07 | `ts_hangar_wall` | โรงเก็บหุ่น: ผนัง | 32×32 | seamless wall tile of heavy riveted steel hangar wall panels with pipes and small warning lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text |
+
+วัตถุในห้อง (ข้อ 5.3) เจนด้วย `create_image_pixflux` เช่นกัน (1 generation ต่อชิ้น) แล้ว `npm run assets:build` จัดให้ฐานของวัตถุชิดขอบล่างของภาพ
+
+### 5.7 สรุปจำนวน
 
 | กลุ่ม | จำนวน prompt |
 |---|---|
-| ตัวละคร (ผู้เล่น 4 ทิศ, พี่บิตทิศเดียว) | 2 |
+| ตัวละคร (ผู้เล่น 2 แบบ × 4 ชุด, พี่บิตทิศเดียว) | 9 |
+| ฉากต่อสู้ (หุ่น ไคจู 6 ตัว ฉากหลัง 6 ฉาก) | 13 |
+| โถง โรงเก็บหุ่น และภาพหน้าอาจารย์ | 7 |
 | ภาพหน้าพี่บิต | 4 |
-| ไทล์เซต (7 ชุด × พื้นและผนัง) | 14 |
+| ไทล์เซต (8 ชุด × พื้นและผนัง) | 16 |
 | วัตถุในห้อง | 52 |
 | ไอคอนมินิเกม | 26 |
 | แกน AI | 8 |
 | กรอบ UI | 8 |
 | ไอคอน UI | 29 |
-| **รวม** | **143** |
+| **รวม** | **172** |
 
 ---
 
@@ -349,7 +415,7 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 | ชิ้นงาน | แอนิเมชัน | ทิศ | เฟรม | คำสั่ง |
 |---|---|---|---|---|
 | CH-01 | ยืนนิ่ง | 4 ทิศ | 4 | `idle, gentle breathing` |
-| CH-01 | เดิน | 4 ทิศ | 6 | `walking` |
+| CH-01, CH-07..13 | เดิน (ทำแล้ว ใช้ในเกม) | 4 ทิศ | 6 | แม่แบบ `walking-6-frames` |
 | CH-01 | ดีใจ (รับแกน AI) | ใต้ | 6 | `cheering with both arms raised` |
 | CH-02 | ยืนนิ่ง | ใต้ | 4 | `idle, gentle bobbing` |
 | CH-02 | พูด | ใต้ | 4 | `talking, screen eyes blinking, hands gesturing` |
@@ -376,6 +442,6 @@ cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, fla
 ## 8. การตั้งชื่อและจัดเก็บไฟล์
 
 - ไฟล์ PNG ชื่อตามคอลัมน์ "ไฟล์" ตัวพิมพ์เล็กคั่นด้วยขีดล่าง
-- โฟลเดอร์: `assets/characters/`, `assets/tiles/`, `assets/props/`, `assets/icons/`, `assets/cores/`, `assets/ui/`
-- แอนิเมชันต่อท้ายชื่อด้วยชื่อท่าและทิศ เช่น `ch_player_walk_south.png` เป็นแถบเฟรมเรียงแนวนอน
+- โฟลเดอร์: `assets/characters/`, `assets/tiles/`, `assets/props/`, `assets/cores/`, `assets/battle/`, `assets/portraits/` (ยังไม่มี `assets/icons/` และ `assets/ui/` เพราะไอคอนและกรอบ UI ยังไม่ได้เจน)
+- ตัวละครผู้เล่นเป็นแผ่นสไปรต์ไฟล์เดียวต่อตัว เช่น `ch_a_lab.png`: แถว = ทิศ (ใต้ เหนือ ตะวันออก ตะวันตก) คอลัมน์ 0 = ยืน คอลัมน์ 1–6 = เดิน และมีภาพยืนหันหน้า `ch_a_lab_south.png` สำหรับหน้า HTML
 - เก็บ prompt ที่ใช้จริงและค่า seed ของแต่ละชิ้นไว้ใน `assets/PROMPTS_LOG.md` เพื่อสร้างซ้ำได้ ถ้า prompt ที่ใช้ต่างจากเอกสารนี้ ให้แก้เอกสารนี้ด้วย

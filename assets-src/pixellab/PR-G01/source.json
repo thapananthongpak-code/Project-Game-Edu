@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "giant guardian mech robot standing in a maintenance dock seen from the front, white and teal armor plates, glowing cyan visor, round chest reactor, steel scaffold arms holding its shoulders, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 96,
+    "height": 96,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "0b4e30cf-4c6b-4387-bbf5-47bb9294c612",
+  "generatedAt": "2026-10-02T04:37:04.862Z"
+}

@@ -1,0 +1,22 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage girl lab intern with dark hair tied in a high ponytail, sleek black and teal defense force armor suit with a glowing teal chest light, armored gloves and boots, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงานแบบ ข ชุดเกราะผู้พิทักษ์ 4 ทิศ + เดิน 6 เฟรม",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "animate": {
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk"
+  },
+  "id": "a0467421-aeb5-459d-9c46-75c480eb5128",
+  "generatedAt": "2026-10-02T04:46:01.895Z"
+}
