@@ -18,5 +18,20 @@
     "animation_name": "walk"
   },
   "id": "0dc678a6-1a16-42fd-bd6d-882ea165aace",
-  "generatedAt": "2026-10-02T14:44:14.960Z"
+  "generatedAt": "2026-10-02T14:44:14.960Z",
+  "postprocess": {
+    "synthWalk": [
+      "north"
+    ]
+  },
+  "edits": [
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "text",
+      "file": "north.png",
+      "jobId": "96472005-0a44-4437-8501-847feecd65b6",
+      "description": "the same chibi boy seen from behind: a long dark red cape hangs from both shoulders and covers his whole back down to the knees, only the back of his head and the cape are visible, no chest armor, no collar, white boots with teal trim below the cape"
+    }
+  ],
+  "note": "ภาพยืนทิศเหนือเดิมเป็นด้านหน้าของชุด (เห็นอกเสื้อ หรือแกนเรืองแสงที่อก ผู้ใช้แจ้งรอบที่ 7) แก้ด้วย edit_image_pro_flash ให้เป็นด้านหลัง ภาพเดิมคือ north-original.png และสร้างเฟรมเดินทิศเหนือจากภาพที่แก้แล้ว (postprocess.synthWalk)"
 }

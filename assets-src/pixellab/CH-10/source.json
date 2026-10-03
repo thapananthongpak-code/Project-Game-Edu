@@ -18,5 +18,20 @@
     "animation_name": "walk"
   },
   "id": "1a124bd0-d315-4a0a-bfc4-fea77da9ddc3",
-  "generatedAt": "2026-10-02T04:36:52.590Z"
+  "generatedAt": "2026-10-02T04:36:52.590Z",
+  "postprocess": {
+    "synthWalk": [
+      "north"
+    ]
+  },
+  "edits": [
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "text",
+      "file": "north.png",
+      "jobId": "bba8cdb6-3921-4deb-a198-589f87d8ed97",
+      "description": "the same chibi boy seen from behind: plain black bodysuit back with thin teal seam lines, no glowing circle, no light on the back, back of the head with short black hair"
+    }
+  ],
+  "note": "ภาพยืนทิศเหนือเดิมเป็นด้านหน้าของชุด (เห็นอกเสื้อ หรือแกนเรืองแสงที่อก ผู้ใช้แจ้งรอบที่ 7) แก้ด้วย edit_image_pro_flash ให้เป็นด้านหลัง ภาพเดิมคือ north-original.png และสร้างเฟรมเดินทิศเหนือจากภาพที่แก้แล้ว (postprocess.synthWalk)"
 }
