@@ -62,7 +62,7 @@ export class HangarScene extends WorldScene {
     const [console_] = this.objectsOf("console");
     this.addInteractable(console_, "console", () => ui.prompt.missionConsole, () => store().openOverlay("missions"));
     const [hologram] = this.objectsOf("hologram");
-    this.addInteractable(hologram, "hologram", () => ui.prompt.hologram, () => store().openStory("prologue"));
+    this.addInteractable(hologram, "hologram", () => ui.prompt.hologram, () => store().openOverlay("archive"));
     const [wardrobe] = this.objectsOf("wardrobe");
     this.addInteractable(wardrobe, "wardrobe", () => ui.prompt.wardrobe, () => store().openOverlay("wardrobe"));
     const [bitpad] = this.objectsOf("bitpad");

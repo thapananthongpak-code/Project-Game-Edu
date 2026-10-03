@@ -12,5 +12,20 @@
   },
   "fetchTool": "get_image",
   "id": "01db8e3e-857e-4ee1-ba41-026f718b1d0e",
-  "generatedAt": "2026-10-02T07:17:02.093Z"
+  "generatedAt": "2026-10-02T07:17:02.093Z",
+  "edits": [
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "reference",
+      "box": [
+        0,
+        10,
+        200,
+        160
+      ],
+      "jobId": "e736dc94-cd50-4479-b5c5-1d04943b7102",
+      "description": "replace the small round white robot standing on the bed with the reference robot, same size and position, standing and listening, keep the bed, the old man and the background unchanged"
+    }
+  ],
+  "note": "หุ่นในภาพเดิมหน้าตาไม่ตรงกับในเกม (ผู้ใช้แจ้งรอบที่ 7) จึงแก้ส่วนที่มีหุ่นด้วย edit_image_pro_flash โดยใช้ภาพในเกมเป็นภาพอ้างอิง (พี่บิต CH-02, การ์เดียน BT-00) แล้ววางกลับ ภาพก่อนแก้คือ original.png"
 }

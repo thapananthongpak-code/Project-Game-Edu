@@ -89,11 +89,11 @@ export interface BattleState {
 
 export type BattleEvent =
   /** crit = คริติคอลของดาบและหอก, quake = ค้อนทุบสะเทือน, advantage = อาวุธได้เปรียบร่างนี้, opening = ชิปเร่งพลัง, final = การโจมตีที่ปิดฉากร่างสุดท้าย */
-  | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean; crit: boolean; quake: boolean; advantage: boolean; opening: boolean; final: boolean }
+  | { type: "robot-hit"; damage: number; counter: boolean; boosted: boolean; crit: boolean; quake: boolean; advantage: boolean; opening: boolean; final: boolean; wasted?: number }
   /** pierced = ค้อนทุบทะลุเกราะ: เกราะแตกและโจมตีเข้าในการตอบถูกครั้งเดียวกัน */
   | { type: "armor-break"; pierced?: true }
   | { type: "stun" }
-  | { type: "bit-assist"; damage: number }
+  | { type: "bit-assist"; damage: number; wasted?: number }
   | { type: "bit-heal"; amount: number }
   /** by = สิ่งที่กันการโจมตีไว้ (เมื่อ blocked) */
   | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean; by?: "guard" | "shield" | "dodge" }
@@ -275,8 +275,10 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
         armored = false;
         events.push({ type: "armor-break", pierced: true });
       }
+      // พลังที่เกินพลังที่คู่ต่อสู้เหลือไม่ทบไปร่างถัดไป (wasted) บันทึกเหตุการณ์จึงบอกได้ว่าทำไมแถบพลังลดน้อยกว่าตัวเลข
+      const wasted = Math.max(0, strike.damage - Math.max(0, kaijuHp));
       kaijuHp -= strike.damage;
-      events.push({ type: "robot-hit", damage: strike.damage, counter: strike.counter, boosted: strike.boosted, crit: strike.crit, quake: strike.quake, advantage: strike.advantage, opening: strike.opening, final: lastForm && kaijuHp <= 0 });
+      events.push({ type: "robot-hit", damage: strike.damage, counter: strike.counter, boosted: strike.boosted, crit: strike.crit, quake: strike.quake, advantage: strike.advantage, opening: strike.opening, final: lastForm && kaijuHp <= 0, ...(wasted > 0 ? { wasted } : {}) });
       if (strike.opening) opening = false;
       if (strike.boosted) boost = false;
     }
@@ -285,8 +287,9 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
       events.push({ type: "stun" });
     }
     if (strike.assist > 0) {
+      const wasted = Math.max(0, strike.assist - Math.max(0, kaijuHp));
       kaijuHp -= strike.assist;
-      events.push({ type: "bit-assist", damage: strike.assist });
+      events.push({ type: "bit-assist", damage: strike.assist, ...(wasted > 0 ? { wasted } : {}) });
       const heal = Math.min(setup.assistHeal, setup.robotMax - robotHp);
       if (heal > 0) {
         robotHp += heal;

@@ -71,7 +71,8 @@ export class HallScene extends WorldScene {
     const [board] = this.objectsOf("decorboard");
     this.addInteractable(board, "decorboard", () => ui.prompt.decorBoard, () => store().openOverlay("decor"));
 
-    const start = this.from.travel ? travel : this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0]);
+    // แมพที่ไม่มีห้องเรียน (แมพ 3) ไม่มีประตูห้อง: เริ่มที่หน้าประตูโรงเก็บหุ่น
+    const start = this.from.travel ? travel : this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0] ?? gate);
     const spot = this.spotBelow(start);
     this.createPlayer(spot.x, spot.y);
     this.syncWithProgress();

@@ -19,5 +19,20 @@
       "id": "1c4ebcda-4c18-421b-b46f-0e7068509de6",
       "reason": "มีตัวอักษรปลอมบนลำตัวหุ่น จึงเพิ่ม plain smooth white body และ blank parchment ใน prompt แล้วเจนใหม่"
     }
-  ]
+  ],
+  "edits": [
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "reference",
+      "box": [
+        64,
+        0,
+        256,
+        180
+      ],
+      "jobId": "70aa3287-cd5f-4151-9d2b-001b1b3cbafd",
+      "description": "replace the robot holding the certificate with the reference small robot holding the same certificate scroll with a gold seal, happy, same size and position, keep the confetti and the background unchanged"
+    }
+  ],
+  "note": "หุ่นในภาพเดิมหน้าตาไม่ตรงกับในเกม (ผู้ใช้แจ้งรอบที่ 7) จึงแก้ส่วนที่มีหุ่นด้วย edit_image_pro_flash โดยใช้ภาพในเกมเป็นภาพอ้างอิง (พี่บิต CH-02, การ์เดียน BT-00) แล้ววางกลับ ภาพก่อนแก้คือ original.png"
 }

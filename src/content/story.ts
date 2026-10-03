@@ -1,7 +1,8 @@
 // เนื้อเรื่อง "ปฏิบัติการการ์เดียน" (docs/GDD.md ข้อ 2)
 // เป็นข้อความของเกม ไม่ใช่เนื้อหาบทเรียน: ห้ามมีข้อเท็จจริงเรื่อง ML ทุกอย่างที่เป็นความรู้ต้องมาจาก course.json
 // {name} = ชื่อที่ผู้เล่นตั้ง
-import type { Difficulty, FoeArt } from "../state/campaign";
+import { battleOf, type Difficulty, type FoeArt } from "../state/campaign";
+import { fmt, ui } from "./ui-strings";
 
 export type Speaker = "narrator" | "professor" | "mentor";
 /** อารมณ์ของช่อง ใช้เลือกเพลงประกอบ: tense = ตึงเครียด, calm = สงบ, bright = สดใสมีชัย */
@@ -57,6 +58,7 @@ export const storyBeats: Record<string, StoryLine[]> = {
   // แมพ 2 ศูนย์วิจัยภาคสนาม: มาถึงครั้งแรก แล้วบรรยายสรุปของแต่ละห้อง (ห้องละ 1–2 หัวข้อ)
   "map-normal": [
     line("narrator", "st_map2", "ศูนย์วิจัยภาคสนามริมทะเล ที่นี่ไม่มีห้องเรียนให้เดินฟังทีละสถานี มีแต่งานจริงที่รออยู่"),
+    line("professor", "st_npc_sage_1", "ดร.ไอรีนเพื่อนเก่าของฉันดูแลศูนย์นี้ เธอตามสัญญาณของแกนโอเมก้ามาตลอด แกนนั้นกำลังปลุกไคจูชุดใหม่ขึ้นจากทะเล"),
     tense("mentor", "st_kaiju_7", "ไคจูชุดใหม่แข็งแกร่งกว่าที่แล็บมาก จะลุยเลยก็ได้ หรือจะเข้าห้องทบทวนก่อนก็ได้ แกน AI ที่ชาร์จใหม่ที่นี่ทำให้การ์เดียนอึดขึ้นในด่านของเรื่องนั้น ร้านของที่นี่มีอุปกรณ์ใหม่ และคนที่นี่ก็มีเรื่องให้ช่วยด้วย"),
   ],
   "zone-n1": [tense("mentor", "st_kaiju_7", "คลังความรู้ของแต่ละเรื่องเปิดอ่านได้ถ้าต้องการ ห้องนี้มีแกน 2 ชิ้น และ “โวลต์อีล” กำลังป่วนท่าเรือโรงไฟฟ้าอยู่ข้างนอก")],
@@ -68,6 +70,7 @@ export const storyBeats: Record<string, StoryLine[]> = {
   // แมพ 3 ป้อมปราการ: มาถึงครั้งแรก แล้วบรรยายสรุปของห้องเดียว
   "map-hard": [
     tense("narrator", "st_map3", "ป้อมปราการบนปล่องภูเขาไฟ ที่มั่นสุดท้ายก่อนถึงรังของโอเมก้า"),
+    line("narrator", "st_npc_captain_1", "กัปตันเรย์กับหน่วยของเขาตั้งที่มั่นอยู่ในโรงเก็บหุ่นของป้อม ลุงโอลาฟเปิดคลังแสงรอไว้แล้ว"),
     tense("professor", "st_boss_4", "ที่นี่ไม่มีห้องเรียนแล้ว ทุกอย่างที่เธอเรียนมาคือพลังของการ์เดียน ลุยด่านต่อสู้ทีละด่านจนถึงร่างสุดท้ายของโอเมก้า"),
     tense("mentor", "st_kaiju_10", "ไคจูสองตัวเฝ้าทางขึ้นป้อมอยู่ แมกมาโกเลมกับฟีนิกซ์เหล็ก เลือกอาวุธที่ชนะทางให้ดีก่อนออกไป"),
   ],
@@ -117,20 +120,41 @@ export const storyBeats: Record<string, StoryLine[]> = {
     bright("narrator", "st_ending_1", "โอเมก้าล้มลง เมืองกลับมาสงบอีกครั้ง"),
     bright("professor", "st_ending_2", "ทำได้แล้ว {name} การ์เดียนมีพลังสู้จนจบได้เพราะแกนทั้ง 6 ชิ้นที่เธอเก็บมาเองด้วยความรู้ทุกเรื่อง"),
     bright("mentor", "st_ending_3", "ภารกิจฝึกงานที่ Pixel AI Lab เสร็จสมบูรณ์ ไปรับใบประกาศนักฝึก AI กันเถอะ"),
-    bright("narrator", "st_map2", "แต่ศูนย์วิจัยภาคสนามที่ชายฝั่งขอกำลังเสริม ไคจูชุดใหม่กำลังบุก กระดานแผนที่ในโถงเปิดเส้นทางไปแมพ 2 แล้ว"),
+    bright("narrator", "st_map2", "แต่แกนของโอเมก้าไม่ได้ดับไปด้วย สัญญาณของมันลอยไปทางชายฝั่ง ดร.ไอรีนแห่งศูนย์วิจัยภาคสนามขอกำลังเสริม กระดานแผนที่ในโถงเปิดเส้นทางไปแมพ 2 แล้ว"),
   ],
   "ending-normal": [
     bright("narrator", "st_win_boss_2", "ร่างคลั่งของโอเมก้าล้มลงในที่สุด ชายฝั่งกลับมาสงบอีกครั้ง"),
     bright("professor", "st_ending_2", "เก่งมาก {name} เธอทบทวนความรู้ได้แม่นขึ้นทุกเรื่อง การ์เดียนถึงสู้ได้ขนาดนี้"),
-    bright("narrator", "st_map3", "แต่แกนของโอเมก้าลอยหนีไปทางภูเขาไฟ ป้อมปราการที่นั่นคือที่มั่นสุดท้าย กระดานแผนที่เปิดเส้นทางไปแมพ 3 แล้ว"),
+    bright("narrator", "st_map3", "แต่แกนของโอเมก้าลอยหนีไปทางภูเขาไฟ ป้อมปราการที่นั่นคือที่มั่นสุดท้าย กัปตันเรย์ส่งข่าวมาขอให้การ์เดียนไปช่วย กระดานแผนที่เปิดเส้นทางไปแมพ 3 แล้ว"),
   ],
   "ending-hard": [
     bright("narrator", "st_win_boss_4", "ร่างจักรพรรดิของโอเมก้าแตกสลายเป็นแสง ไม่มีไคจูตัวไหนเหลืออีกแล้ว"),
     bright("professor", "st_ending_2", "{name} เธอพาการ์เดียนผ่านมาได้ทั้งสามแมพด้วยความรู้ของตัวเองล้วน ๆ ฉันภูมิใจในตัวเธอมาก"),
     bright("mentor", "st_ending_3", "ปฏิบัติการการ์เดียนเสร็จสมบูรณ์ทุกแมพแล้ว ขอบคุณที่สู้มาด้วยกันนะ"),
-    bright("narrator", "st_finale", "Pixel AI Lab เปิดไฟสว่างอีกครั้ง การ์เดียนกับพี่บิตยืนเฝ้าเมืองต่อไป จบบริบูรณ์"),
+    bright("narrator", "st_finale", "จากแล็บ ชายฝั่ง จนถึงภูเขาไฟ แกนทั้ง 6 ชิ้นกลับมาส่องแสงที่ Pixel AI Lab การ์เดียนกับพี่บิตยืนเฝ้าเมืองต่อไป จบบริบูรณ์"),
   ],
 };
+
+/**
+ * ตอนของเรื่องราวแต่ละแมพตามลำดับที่เกิดขึ้น (เครื่องฉายในโรงเก็บหุ่นใช้ทวนเรื่อง)
+ * ตอนจบของแมพ 1 และ 2 ต่อไปยังตอนมาถึงของแมพถัดไป ทุกฉากใน storyBeats อยู่ในแมพเดียว (มีเทสต์ตรวจ)
+ */
+export const STORY_CHAPTERS: Record<Difficulty, string[]> = {
+  easy: ["prologue", "room-1", "win-k1", "room-2", "win-k2", "room-3", "win-k3", "room-4", "win-k4", "room-5", "win-k5", "room-6", "ending"],
+  normal: ["map-normal", "zone-n1", "win-n1", "zone-n2", "win-n2", "zone-n3", "win-n3", "ending-normal"],
+  hard: ["map-hard", "win-h1", "win-h2", "ending-hard"],
+};
+
+/** ชื่อตอนของเรื่องราว */
+export function chapterTitle(map: Difficulty, beat: string): string {
+  if (beat === "prologue") return ui.archive.prologue;
+  if (beat.startsWith("map-")) return fmt(ui.archive.arrival, { map: storyNames.maps[map] });
+  if (beat.startsWith("ending")) return ui.archive.ending;
+  const room = beat.match(/^(?:room-|zone-[nh])(\d)$/);
+  if (room) return fmt(ui.archive.room, { n: room[1] });
+  const battle = battleOf(map, beat.replace(/^win-/, ""));
+  return battle ? fmt(ui.archive.win, { kaiju: foeName(battle.forms.at(-1)!.art) }) : beat;
+}
 
 /** ช่องของฉากเนื้อเรื่อง (ไม่มีฉากนี้คืนรายการว่าง) */
 export const storyLines = (beat: string): StoryLine[] => storyBeats[beat] ?? [];

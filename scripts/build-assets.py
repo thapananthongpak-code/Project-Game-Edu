@@ -9,6 +9,7 @@
 prompt ของแต่ละชิ้นดึงจาก docs/ART_GUIDE.md ตรงตัว ต้องใช้ Pillow (pip install pillow)
 """
 import json
+import math
 import re
 from pathlib import Path
 
@@ -338,6 +339,27 @@ def blank_patches(img, patches):
     return img
 
 
+def synth_walk(stand, frames=WALK_FRAMES, lift=2):
+    """เฟรมเดินจากท่ายืนที่ถูกต้องของทิศนั้น (postprocess.synthWalk): ขาซ้ายขวายกสลับกันและตัวยุบลง 1 px ตอนเท้าทั้งสองแตะพื้น
+    ใช้กับทิศเหนือของชุดที่แอนิเมชันจากตัวเจนหันตัวกลับมาด้านหน้ากลางทาง (ผ้าคลุมหรือเสื้อด้านหน้าโผล่ตอนเดินขึ้น)"""
+    left, top, right, bottom = stand.getbbox()
+    hip = bottom - max(6, round((bottom - top) * 0.2))
+    mid = (left + right) // 2
+    out = []
+    for k in range(frames):
+        s = math.sin(2 * math.pi * k / frames)
+        lifts = (max(0, round(lift * s)), max(0, round(-lift * s)))
+        bob = 1 if abs(s) < 0.5 else 0
+        frame = Image.new("RGBA", stand.size, (0, 0, 0, 0))
+        frame.alpha_composite(stand.crop((0, 0, stand.width, hip)), (0, bob))
+        for side, (x0, x1) in enumerate(((0, mid), (mid, stand.width))):
+            leg = stand.crop((x0, hip, x1, bottom))
+            up = lifts[side]
+            frame.alpha_composite(leg.crop((0, up, leg.width, leg.height)) if up else leg, (x0, hip + (0 if up else bob)))
+        out.append(frame)
+    return out
+
+
 def character_sheet(folder, postprocess=None):
     """แผ่นสไปรต์ 64×64 ต่อเฟรม: แถว = ทิศ คอลัมน์ 0 = ยืน คอลัมน์ 1.. = เดิน ทุกเฟรมของทิศเดียวกันเลื่อนเท่ากับท่ายืน เท้าจึงไม่กระตุก"""
     backdrop = (postprocess or {}).get("removeBackdrop")
@@ -348,7 +370,10 @@ def character_sheet(folder, postprocess=None):
         if right - left > SPRITE_SIZE or bottom - top > FEET_Y:
             raise SystemExit(f"ตัวละครใหญ่เกินกรอบ {SPRITE_SIZE}×{SPRITE_SIZE}: {(right - left, bottom - top)}")
         dx, dy = FEET_X - (right - left) // 2 - left, FEET_Y - bottom
-        frames = [idle] + [Image.open(folder / "walk" / f"{direction}_{i}.png").convert("RGBA") for i in range(WALK_FRAMES)]
+        if direction in (postprocess or {}).get("synthWalk", []):
+            frames = [idle] + synth_walk(idle)
+        else:
+            frames = [idle] + [Image.open(folder / "walk" / f"{direction}_{i}.png").convert("RGBA") for i in range(WALK_FRAMES)]
         for col, frame in enumerate(frames):
             if backdrop and col > 0 and direction in backdrop["directions"]:
                 frame = remove_backdrop(frame, backdrop)

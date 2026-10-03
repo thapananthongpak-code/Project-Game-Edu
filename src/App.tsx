@@ -16,6 +16,7 @@ import { ReviewQuiz } from "./ui/ReviewQuiz";
 import { Shop } from "./ui/Shop";
 import { Storage } from "./ui/Storage";
 import { GuardianBay } from "./ui/GuardianBay";
+import { StoryArchive } from "./ui/StoryArchive";
 import { Wardrobe } from "./ui/Wardrobe";
 import { BitPad } from "./ui/BitPad";
 import { TravelMap } from "./ui/TravelMap";
@@ -84,6 +85,7 @@ export function App() {
       {overlay === "storage" && <Storage />}
       {overlay === "guardian" && <GuardianBay />}
       {overlay === "wardrobe" && <Wardrobe />}
+      {overlay === "archive" && <StoryArchive />}
       {overlay === "bit" && <BitPad />}
       {overlay === "travel" && <TravelMap />}
       {overlay === "decor" && <DecorBoard />}

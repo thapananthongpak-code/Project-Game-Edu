@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { NPCS } from "../state/npcs";
-import { foeName, storyBeats, storyLines, zoneBeat } from "./story";
+import { chapterTitle, foeName, STORY_CHAPTERS, storyBeats, storyLines, zoneBeat } from "./story";
 import { ui } from "./ui-strings";
 
 interface ManifestAsset {
@@ -21,6 +21,18 @@ describe("เนื้อเรื่องแบบช่องการ์ต�
         expect(web.get(line.art), `${beat}: ${line.art}`).toBe(`story/${line.art}.png`);
         expect(line.text.trim().length, beat).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("เรื่องราวของแต่ละแมพ: ทุกฉากอยู่ในแมพเดียว เรียงจากตอนมาถึงถึงบทส่งท้าย บทส่งท้ายของแมพ 1 และ 2 พาไปแมพถัดไป และทุกตอนมีชื่อ", () => {
+    const all = DIFFICULTIES.flatMap((map) => STORY_CHAPTERS[map]);
+    expect(new Set(all).size).toBe(all.length);
+    expect([...all].sort()).toEqual(Object.keys(storyBeats).filter((beat) => !beat.startsWith("zone-h")).sort());
+    expect(DIFFICULTIES.map((map) => STORY_CHAPTERS[map].at(-1))).toEqual(["ending", "ending-normal", "ending-hard"]);
+    expect([storyLines("ending").at(-1)?.art, storyLines("ending-normal").at(-1)?.art]).toEqual([storyLines("map-normal")[0].art, storyLines("map-hard")[0].art]);
+    for (const map of DIFFICULTIES) {
+      for (const battle of CAMPAIGN[map].battles.filter((b) => !b.boss)) expect(STORY_CHAPTERS[map], battle.id).toContain(`win-${battle.id}`);
+      for (const beat of STORY_CHAPTERS[map]) expect(chapterTitle(map, beat), beat).not.toBe(beat);
     }
   });
 

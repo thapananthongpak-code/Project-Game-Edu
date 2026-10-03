@@ -12,5 +12,32 @@
   },
   "fetchTool": "get_image",
   "id": "c8b625e6-067c-4fcc-bd9d-9376feeb0282",
-  "generatedAt": "2026-10-02T07:18:02.907Z"
+  "generatedAt": "2026-10-02T07:18:02.907Z",
+  "edits": [
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "reference",
+      "box": [
+        60,
+        7,
+        256,
+        164
+      ],
+      "jobId": "c6cb9e17-3dc9-49dc-886f-2dc52a674253",
+      "description": "replace the big white robot standing in the hangar with the reference guardian mech, same size and position, standing tall, keep the small scientist, the trucks and the background unchanged"
+    },
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "reference",
+      "box": [
+        60,
+        7,
+        256,
+        164
+      ],
+      "jobId": "46d57d71-461d-4a63-9ad2-f098bf72124b",
+      "description": "replace the small round flying drone on the right of the big robot with the reference small robot hovering in the air, same small size and position, keep everything else unchanged"
+    }
+  ],
+  "note": "หุ่นในภาพเดิมหน้าตาไม่ตรงกับในเกม (ผู้ใช้แจ้งรอบที่ 7) จึงแก้ส่วนที่มีหุ่นด้วย edit_image_pro_flash โดยใช้ภาพในเกมเป็นภาพอ้างอิง (พี่บิต CH-02, การ์เดียน BT-00) แล้ววางกลับ ภาพก่อนแก้คือ original.png"
 }

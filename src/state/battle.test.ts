@@ -510,6 +510,18 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     for (const kind of WEAPON_CLASSES) expect(Object.values(WEAPON).filter((spec) => spec.class === kind), kind).toHaveLength(2);
   });
 
+  it("ตีเกินพลังที่คู่ต่อสู้เหลือ: บันทึกส่วนที่เกิน (wasted) แถบพลังจึงลดน้อยกว่าตัวเลขได้ และส่วนที่เกินไม่ทบไปร่างถัดไป", () => {
+    const setup = plain();
+    // แบตเตอรี่เสริมแรง 2 เท่า แต่ไคจูเหลือพลัง 1
+    const boosted = resolveAnswer(setup, { ...startBattle(setup), kaijuHp: 1, boost: true }, true);
+    expect(boosted.events[0]).toMatchObject({ type: "robot-hit", damage: 2, wasted: 1, final: true });
+    expect(boosted.state.kaijuHp).toBe(0);
+    // ตีพอดี: ไม่มีส่วนเกิน และพี่บิตไม่ยิงเสริมใส่คู่ต่อสู้ที่หมดพลังแล้ว
+    const exact = resolveAnswer(setup, { ...startBattle(setup), kaijuHp: 1, streak: 1 }, true);
+    expect(exact.events.find((e) => e.type === "robot-hit")).not.toHaveProperty("wasted");
+    expect(exact.events.some((e) => e.type === "bit-assist")).toBe(false);
+  });
+
   it("ชนะทาง แพ้ทาง พอใช้ได้: ทุกอาวุธชนะทางร่างที่แพ้ทางประเภทของมัน แพ้ทางร่างที่ทนประเภทของมัน วนเป็นวงสามประเภท", () => {
     for (const weak of WEAPON_CLASSES) {
       expect(resistOf(weak)).not.toBe(weak);

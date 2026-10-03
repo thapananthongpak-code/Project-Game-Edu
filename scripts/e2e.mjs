@@ -2304,7 +2304,7 @@ async function playNormal(page) {
   await page.getByTestId("travel-close").click();
   await page.waitForTimeout(350);
   const arrival = await travelTo(page, "normal", 3);
-  assert.deepEqual([arrival?.beat, arrival.art], ["map-normal", ["st_map2", "st_kaiju_7"]], "มาถึงแมพ 2 ครั้งแรก: เห็นฉากเนื้อเรื่องของแมพ");
+  assert.deepEqual([arrival?.beat, arrival.art], ["map-normal", ["st_map2", "st_npc_sage_1", "st_kaiju_7"]], "มาถึงแมพ 2 ครั้งแรก: เห็นฉากเนื้อเรื่องของแมพ");
   assert.match(await page.getByTestId("cores").innerText(), /0\/5/, "แกน AI ของแมพ 2 ต้องเก็บใหม่ 5 ชิ้น (เรื่องที่ 1–5)");
   assert.equal(await creditsOf(page), start - 120, "เครดิต อุปกรณ์ และของใช้ใช้ร่วมกันทุกแมพ");
   let state = (await snap(page)).store;
@@ -2781,7 +2781,7 @@ async function playHard(page) {
     story: [...MAP1_STORY, "map-normal", "zone-n1", "zone-n2", "zone-n3", "win-n1", "win-n2", "win-n3", "ending-normal"],
   }));
   const arrival = await travelTo(page, "hard", 0);
-  assert.deepEqual([arrival?.beat, arrival.art], ["map-hard", ["st_map3", "st_boss_4", "st_kaiju_10"]]);
+  assert.deepEqual([arrival?.beat, arrival.art], ["map-hard", ["st_map3", "st_npc_captain_1", "st_boss_4", "st_kaiju_10"]]);
   assert.match(arrival.lines.join(" "), /ไม่มีห้องเรียน/);
   assert.equal(await page.getByTestId("cores").count(), 0, "แมพ 3 ไม่มีแกน AI ให้เก็บ: ไม่แสดงตัวนับแกน");
   assert.match(await page.getByTestId("objective").innerText(), /เตรียมอุปกรณ์ที่แท่นการ์เดียน แล้วออกสู้กับแมกมาโกเลม/);
@@ -2823,6 +2823,25 @@ async function playHard(page) {
   await page.waitForTimeout(350);
   log("NPC ของแมพ 3 อยู่ในโรงเก็บหุ่น: กัปตันเรย์ (ถามตอบรวม 6 ข้อจากทุกเรื่อง) ลุงโอลาฟ (คลังแสง: เกราะไททัน)");
 
+  // --- เครื่องฉาย: บันทึกเรื่องราวของทุกแมพที่ไปถึง ตอนที่ดูแล้วดูซ้ำได้ ตอนที่ยังไม่ถึงล็อก
+  await walkTo(page, "hologram");
+  assert.match((await snap(page)).store.prompt, /เรื่องราวของทุกแมพ/);
+  await act(page);
+  const archive = page.getByTestId("archive");
+  await archive.waitFor();
+  // แมพที่อยู่ขึ้นก่อนและเปิดไว้ แมพอื่นพับไว้
+  assert.deepEqual(await archive.locator("details").evaluateAll((all) => all.map((d) => [d.dataset.testid, d.open])), [["archive-hard", true], ["archive-easy", false], ["archive-normal", false]]);
+  await page.getByTestId("archive-toggle-normal").click();
+  assert.deepEqual(await page.getByTestId("archive-hard").locator("li").evaluateAll((rows) => rows.map((row) => [row.dataset.testid, row.dataset.seen])), [["chapter-map-hard", "true"], ["chapter-win-h1", "false"], ["chapter-win-h2", "false"], ["chapter-ending-hard", "false"]]);
+  assert.match(await page.getByTestId("chapter-ending-normal").innerText(), /บทส่งท้ายของแมพ/);
+  assert.match(await page.getByTestId("chapter-win-n1").innerText(), /ชนะโวลต์อีล/);
+  await shot(page, "33-hard-archive");
+  await page.getByTestId("chapter-play-ending-normal").click();
+  const replayed = await readStory(page);
+  assert.deepEqual([replayed?.beat, replayed.art.at(-1)], ["ending-normal", "st_map3"], "ดูบทส่งท้ายของแมพ 2 ซ้ำได้ ช่องสุดท้ายพาไปแมพ 3");
+  await page.waitForTimeout(300);
+  log("เครื่องฉายในโรงเก็บหุ่น: เรื่องราวของทั้ง 3 แมพเรียงตอน ตอนที่ดูแล้วดูซ้ำได้ ตอนที่ยังไม่ถึงล็อก");
+
   // --- จุดปรับแต่งก่อนออกรบ: ชุดที่ตู้เสื้อผ้า อาวุธและเกราะที่แท่นการ์เดียน
   await walkTo(page, "wardrobe");
   await act(page);
@@ -2856,6 +2875,12 @@ async function playHard(page) {
   await page.getByTestId("battle-start").click();
   assert.equal(await page.getByTestId("hp-left").getAttribute("data-max"), "9", "แมพ 3: การ์เดียนเริ่มที่พลัง 5 เกราะไททัน +4");
   assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-robot").getAttribute("data-armor")], ["strong", "titan"]);
+  // แถบพลัง: 4 ช่องท้ายที่มาจากเกราะไททันเป็นสีเหล็กและหมดก่อน ไคจูที่หุ้มเกราะอยู่แถบเป็นสีเหล็กทั้งแถบ
+  const segments = (side) => page.getByTestId(`hp-${side}`).locator("[data-segment]").evaluateAll((cells) => cells.map((cell) => cell.dataset.segment));
+  assert.deepEqual(await segments("left"), [...Array(5).fill("hp"), ...Array(4).fill("armor")]);
+  assert.match(await page.getByTestId("hp-left").getAttribute("aria-label"), /เกราะเหลือ 4 ช่อง/);
+  assert.equal(await page.getByTestId("hp-right").getAttribute("data-shielded"), "true");
+  assert.ok((await segments("right")).every((segment) => segment === "armor"), "ไคจูหุ้มเกราะ: แถบพลังเป็นสีเหล็ก");
   const golem = await winBattle(page, "h1");
   assert.deepEqual([golem.story?.beat, golem.story.art[0]], ["win-h1", "st_win_kaiju_10"]);
   assert.ok(golem.turns.every((turn) => [1, 2, 3].includes(turn.source)), "โจทย์ของแมกมาโกเลมมาจากเรื่องที่ 1–3");
@@ -2937,6 +2962,15 @@ async function playHard(page) {
   await backToHall(page);
   assert.match(await page.getByTestId("objective").innerText(), /ปฏิบัติการการ์เดียนสำเร็จทุกแมพแล้ว/);
   log(`แมพ 3 บอสโอเมก้า 3 ร่าง: แบตเตอรี่เสริม ชิปวิเคราะห์ และแกนสำรองใช้ได้ แพ้แล้วร่างปัจจุบันกลับมาพลังเต็ม ชนะครบ 3 ร่างใน ${turns.length} ตา (ร่างสุดท้ายคลั่ง) ได้ 120 เครดิต เห็นฉากจบของเกม`);
+
+  // --- โหลดหน้าใหม่ขณะอยู่แมพ 3 (โถงไม่มีประตูห้อง): ผู้เล่นเริ่มที่หน้าประตูโรงเก็บหุ่น ไม่มี error
+  await page.reload();
+  await page.waitForFunction(() => window.__aitq?.snapshot().store.ready);
+  await page.locator('[data-testid="menu-continue"]:not([disabled])').click();
+  await inHall(page);
+  await page.waitForTimeout(400);
+  assert.equal((await snap(page)).store.profile.difficulty, "hard");
+  assert.ok((await snap(page)).player, "โถงของแมพ 3 สร้างผู้เล่นได้หลังโหลดหน้าใหม่");
 
   // --- ใบประกาศอยู่ที่แมพ 1: กลับไปดูได้ และแสดงการปราบไคจูของทุกแมพที่ไปถึง
   await openTravel(page);

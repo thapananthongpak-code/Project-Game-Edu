@@ -12,5 +12,20 @@
   },
   "fetchTool": "get_image",
   "id": "71074c8b-a099-4106-a4ca-162aa8601f5a",
-  "generatedAt": "2026-10-02T07:20:39.809Z"
+  "generatedAt": "2026-10-02T07:20:39.809Z",
+  "edits": [
+    {
+      "tool": "edit_image_pro_flash",
+      "method": "reference",
+      "box": [
+        0,
+        0,
+        200,
+        180
+      ],
+      "jobId": "29c3d751-e2da-4306-b304-8cf10dd19430",
+      "description": "replace the small white robot in the bottom left corner with the reference small robot cheering, same size and position, keep the professor and the shelves unchanged"
+    }
+  ],
+  "note": "หุ่นในภาพเดิมหน้าตาไม่ตรงกับในเกม (ผู้ใช้แจ้งรอบที่ 7) จึงแก้ส่วนที่มีหุ่นด้วย edit_image_pro_flash โดยใช้ภาพในเกมเป็นภาพอ้างอิง (พี่บิต CH-02, การ์เดียน BT-00) แล้ววางกลับ ภาพก่อนแก้คือ original.png"
 }

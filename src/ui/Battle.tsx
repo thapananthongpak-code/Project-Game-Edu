@@ -10,7 +10,7 @@ import { type ActiveSupply, applySupply, type BattleEvent, battleSetup, type Bat
 import { BATTLE } from "../state/battle.config";
 import { type BattleSpec, battleOf, type FoeArt } from "../state/campaign";
 import { coreBoostOf, creditsOf, difficultyOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
-import { bagSizeOf, GEAR, matchupOf, type Weapon } from "../state/gear";
+import { armorHp, bagSizeOf, GEAR, matchupOf, type Weapon } from "../state/gear";
 import { bagOf, gearOf, modulesOf, powerOf } from "../state/shop";
 import { REWARDS, type Supply } from "../state/shop.config";
 import { art, type FxArt } from "./art";
@@ -221,35 +221,49 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
 /** ของที่ผู้เล่นกดใช้เองระหว่างสู้ (แกนสำรองทำงานเอง) */
 const ACTIVE: readonly ActiveSupply[] = ["repair-kit", "shield", "overcharge"];
 
-function HpBar({ label, hp, max, align, children }: { label: string; hp: number; max: number; align: "left" | "right"; children?: React.ReactNode }) {
+/**
+ * แถบพลังทีละช่อง armor = จำนวนช่องท้ายแถบที่มาจากเกราะ (เกราะหนัก เกราะไททัน) เป็นสีเหล็กและหมดก่อนพลังของตัวหุ่น
+ * shielded = คู่ต่อสู้หุ้มเกราะอยู่ ช่องที่เหลือทั้งหมดเป็นสีเหล็ก (ตอบถูกข้อแรกทำให้เกราะแตก ไม่ลดพลัง)
+ */
+function HpBar({ label, hp, max, align, armor = 0, shielded = false, children }: { label: string; hp: number; max: number; align: "left" | "right"; armor?: number; shielded?: boolean; children?: React.ReactNode }) {
   return (
     <div className={`absolute top-[4%] w-[44%] ${align === "left" ? "left-[3%]" : "right-[3%] text-right"}`}>
       <div className="inline-flex items-center gap-1 align-bottom">
-        <span className="rounded border-2 border-ink bg-cream px-1.5 text-xs font-extrabold leading-5">{label}</span>
+        <span className="rounded border-2 border-ink bg-cream px-1.5 text-xs font-extrabold leading-5">
+          {label}
+          {(armor > 0 || shielded) && <span aria-hidden="true"> 🛡</span>}
+        </span>
         {children}
       </div>
-      <div className={`mt-0.5 flex gap-[2px] ${align === "right" ? "flex-row-reverse" : ""}`} role="img" aria-label={`${label} ${fmt(ui.battle.hp, { n: hp, total: max })}`} data-testid={`hp-${align}`} data-hp={hp} data-max={max}>
+      <div className={`mt-0.5 flex gap-[2px] ${align === "right" ? "flex-row-reverse" : ""}`} role="img" aria-label={`${label} ${fmt(ui.battle.hp, { n: hp, total: max })}${armor > 0 ? ` ${fmt(ui.battle.hpArmor, { n: Math.max(0, hp - (max - armor)) })}` : ""}${shielded ? ` ${ui.battle.armored}` : ""}`} data-testid={`hp-${align}`} data-hp={hp} data-max={max} data-armor={armor} data-shielded={shielded}>
         {Array.from({ length: max }, (_, i) => (
-          <span key={i} className={`h-3 min-w-0 flex-1 rounded-sm border-2 border-ink ${i < hp ? (align === "left" ? "bg-teal" : "bg-wrong") : "bg-slate"}`} />
+          <span key={i} data-segment={i >= hp ? "empty" : shielded || i >= max - armor ? "armor" : "hp"} className={`h-3 min-w-0 flex-1 rounded-sm border-2 border-ink ${i >= hp ? "bg-slate" : shielded || i >= max - armor ? "bg-[#8fb8de] shadow-[inset_0_2px_0_0_#e0f0ff]" : align === "left" ? "bg-teal" : "bg-wrong"}`} />
         ))}
       </div>
     </div>
   );
 }
 
+/** บอกว่าทำไมแถบพลังลดน้อยกว่าตัวเลข: คู่ต่อสู้เหลือพลังน้อยกว่าแรงโจมตี ส่วนที่เกินไม่ทบไปร่างถัดไป */
+const wastedNote = (kaiju: string, damage: number, wasted: number): string =>
+  damage - wasted > 0 ? fmt(ui.battle.log.wasted, { kaiju, left: damage - wasted }) : fmt(ui.battle.log.wastedNone, { kaiju });
+
 function eventText(event: BattleEvent, kaiju: string, { spec, weapon, foe }: Scene): string {
   switch (event.type) {
     case "robot-hit": {
       const hit = fmt(ui.battle.log.robotHit, { move: ui.battle.moves[guardianMove(weapon, event)], n: event.damage });
       const extra = [event.crit && ui.battle.log.crit, event.advantage && ui.battle.log.advantage, event.quake && ui.battle.log.quake, event.counter && ui.battle.log.counter, (event.boosted || event.opening) && ui.battle.log.boostedHit].filter(Boolean);
-      return extra.length > 0 ? `${hit} (${extra.join(" ")})` : hit;
+      const line = extra.length > 0 ? `${hit} (${extra.join(" ")})` : hit;
+      return event.wasted ? `${line} · ${wastedNote(kaiju, event.damage, event.wasted)}` : line;
     }
     case "armor-break":
       return event.pierced ? ui.battle.log.armorPierced : ui.battle.log.armorBreak;
     case "stun":
       return fmt(ui.battle.log.stun, { kaiju });
-    case "bit-assist":
-      return fmt(ui.battle.log.assist, { n: event.damage });
+    case "bit-assist": {
+      const line = fmt(ui.battle.log.assist, { n: event.damage });
+      return event.wasted ? `${line} · ${wastedNote(kaiju, event.damage, event.wasted)}` : line;
+    }
     case "bit-heal":
       return fmt(ui.battle.log.bitHeal, { n: event.amount });
     case "kaiju-hit": {
@@ -551,7 +565,7 @@ export function Battle() {
           data-testid="battle-arena"
         >
           <div key={`stage-${fx.id}`} className={`absolute inset-0 ${fx.shakeAt !== null ? "battle-shake" : ""}`} style={fx.shakeAt !== null ? { animationDelay: `${fx.shakeAt}ms` } : undefined}>
-            <HpBar label={storyNames.robot} hp={state.robotHp} max={setup.robotMax} align="left">
+            <HpBar label={storyNames.robot} hp={state.robotHp} max={setup.robotMax} armor={armorHp(gear.armor)} align="left">
               {/* อุปกรณ์ที่ใส่อยู่: อาวุธ เกราะ ชิป */}
               <span className="flex gap-0.5 rounded border-2 border-ink bg-cream px-0.5" role="img" aria-label={fmt(ui.battle.gear, gearNames)} data-testid="battle-gear">
                 <GearIcon value={gear.weapon} className="h-5 w-5" />
@@ -559,7 +573,7 @@ export function Battle() {
                 <GearIcon value={gear.chip} className="h-5 w-5" />
               </span>
             </HpBar>
-            <HpBar label={kaiju} hp={state.kaijuHp} max={form.hp} align="right" />
+            <HpBar label={kaiju} hp={state.kaijuHp} max={form.hp} shielded={state.armored} align="right" />
             {/* การ์เดียนที่ใส่เกราะและถืออาวุธจริง (ภาพเดียวกับหุ่นบนแท่นในโรงเก็บหุ่น) */}
             <div
               key={`robot-${fx.id}`}
