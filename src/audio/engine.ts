@@ -40,10 +40,16 @@ let timer: number | null = null;
 let sfxCount = 0;
 
 function ensureContext(): AudioContext | null {
-  if (context) return context;
+  // Safari ปิด context ได้ (closed) เมื่อระบบเสียงเปลี่ยน: สร้างใหม่
+  if (context && context.state !== "closed") return context;
   const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
   context = new Ctor();
+  playing = null;
+  // กลับมาเล่นได้เมื่อไร (เช่น Safari หายจากสถานะ interrupted) ให้เพลงเริ่มต่อทันที
+  context.addEventListener("statechange", () => {
+    if (context?.state === "running") syncMusic();
+  });
   const master = context.createGain();
   master.gain.value = MASTER_GAIN;
   master.connect(context.destination);
@@ -135,11 +141,12 @@ function syncMusic(): void {
   schedule();
 }
 
-/** เรียกจาก event ของผู้ใช้ (แตะ คลิก กดปุ่ม) เพื่อให้เบราว์เซอร์ยอมเล่นเสียง */
+/** เรียกจาก event ของผู้ใช้ (แตะ คลิก กดปุ่ม) เพื่อให้เบราว์เซอร์ยอมเล่นเสียง
+ * ทุกสถานะที่ไม่ใช่ running (suspended หรือ interrupted ของ Safari หลังเครื่องพักหรือมีเสียงจากแท็บอื่น) ลองเล่นต่อ ถ้าไม่สำเร็จลองใหม่ในการกดครั้งถัดไป */
 export function unlockAudio(): void {
   const ctx = ensureContext();
   if (!ctx) return;
-  if (ctx.state === "suspended" && document.visibilityState === "visible") void ctx.resume().then(syncMusic);
+  if (ctx.state !== "running" && document.visibilityState === "visible") void ctx.resume().then(syncMusic, () => undefined);
   else syncMusic();
 }
 
@@ -179,8 +186,8 @@ export function installAudioLifecycle(): () => void {
   const unlock = () => unlockAudio();
   const visibility = () => {
     if (!context) return;
-    if (document.visibilityState === "hidden") void context.suspend();
-    else void context.resume().then(syncMusic);
+    if (document.visibilityState === "hidden") void context.suspend().catch(() => undefined);
+    else void context.resume().then(syncMusic, () => undefined);
   };
   window.addEventListener("pointerdown", unlock, { passive: true });
   window.addEventListener("keydown", unlock);
