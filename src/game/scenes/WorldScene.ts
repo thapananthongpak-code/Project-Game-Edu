@@ -1,5 +1,7 @@
 import * as Phaser from "phaser";
-import { useGameStore } from "../../state/gameStore";
+import { fmt, ui } from "../../content/ui-strings";
+import { quizUnlocked, useGameStore, type WorldLabel } from "../../state/gameStore";
+import { type NpcId, type NpcRecord, NPCS, questReady } from "../../state/npcs";
 import { touchInput } from "../../state/input";
 import { type CharacterSheet, sheetKey, wangKey } from "./BootScene";
 import { BASE_WIDTH, type Direction, MAP_COLS, MAP_ROWS, MAP_TOP, mentorTexture, playerTexture, TILE } from "../constants";
@@ -47,6 +49,11 @@ export abstract class WorldScene extends Phaser.Scene {
   protected map!: GameMap;
   /** ภาพของวัตถุแต่ละชิ้นบนแผนที่ */
   protected placed = new Map<MapObject, Phaser.GameObjects.Image>();
+  /** ของในเควสเสริม: เห็นและเก็บได้เฉพาะตอนที่รับเควสแล้วและยังไม่ได้เก็บชิ้นนั้น */
+  private pickups: { image: Phaser.GameObjects.Image; visible: () => boolean }[] = [];
+  private npcs: NpcId[] = [];
+  /** กล่องชนของช่องตกแต่งตั้งพื้น: กันทางเดินเฉพาะตอนมีของวางอยู่ (HallScene เปิดปิดผ่าน setSlotSolid) */
+  private slotBodies = new Map<MapObject, Phaser.GameObjects.Zone>();
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private facing: Direction = "south";
   private actionReadyAt = 0;
@@ -72,6 +79,9 @@ export abstract class WorldScene extends Phaser.Scene {
   protected buildMap(map: GameMap): void {
     this.map = map;
     this.placed = new Map();
+    this.pickups = [];
+    this.npcs = [];
+    this.slotBodies = new Map();
     this.markerTarget = "";
     const isFloor = (col: number, row: number) => isFloorCell(map, col, row);
     const wang = this.registry.get(wangKey(map.tileset)) as Record<string, number> | undefined;
@@ -98,10 +108,35 @@ export abstract class WorldScene extends Phaser.Scene {
     this.tweens.add({ targets: this.marker, scaleY: 0.7, duration: 450, yoyo: true, repeat: -1 });
   }
 
-  private addObstacle(x: number, y: number, width: number, height: number): void {
+  private addObstacle(x: number, y: number, width: number, height: number): Phaser.GameObjects.Zone {
     const zone = this.add.zone(x, y, width, height);
     this.physics.add.existing(zone, true);
     this.obstacles.add(zone);
+    return zone;
+  }
+
+  /**
+   * ส่วนฐานที่มองเห็นของภาพวัตถุ (แถวล่าง 12 พิกเซล) กล่องชนกว้างเท่าส่วนนี้ ไม่ใช่เท่าความกว้างของภาพ
+   * ภาพที่มีขอบโปร่งใสด้านข้างจึงไม่มีกำแพงล่องหน (เดิมผู้เล่นชนขอบที่มองไม่เห็นรอบวัตถุ)
+   */
+  private visibleBase(key: string, frameWidth: number, frameHeight: number): { left: number; right: number } | null {
+    let left = Infinity;
+    let right = -Infinity;
+    for (let y = Math.max(0, frameHeight - 12); y < frameHeight; y++) {
+      for (let x = 0; x < frameWidth; x++) {
+        if (this.textures.getPixelAlpha(x, y, key) > 40) {
+          left = Math.min(left, x);
+          right = Math.max(right, x);
+        }
+      }
+    }
+    return Number.isFinite(left) ? { left, right } : null;
+  }
+
+  /** ช่องตกแต่งตั้งพื้น: กันทางเดินเมื่อมีของวาง ช่องว่างเดินผ่านได้ */
+  protected setSlotSolid(object: MapObject, solid: boolean): void {
+    const zone = this.slotBodies.get(object);
+    if (zone?.body) (zone.body as Phaser.Physics.Arcade.StaticBody).enable = solid;
   }
 
   /**
@@ -137,9 +172,96 @@ export abstract class WorldScene extends Phaser.Scene {
     // ของที่วางราบกับพื้นอยู่ใต้ตัวละครเสมอ
     const image = this.add.image(x, baseY, object.prop).setOrigin(0.5, 1).setDepth(object.flat ? 1 : baseY);
     this.placed.set(object, image);
-    // ช่องตกแต่งของโถง: ซ่อนไว้จนกว่าฉากจะรู้ว่าผู้เล่นวางอะไร (HallScene) ช่องตั้งพื้นยังกันทางเดินเสมอ
-    if (object.kind === "slot") image.setVisible(false);
-    if (!object.mount && !object.flat) this.addObstacle(x, baseY - 6, Math.max(20, Math.min(image.width, (object.w ?? 1) * TILE) - 10), 12);
+    // ช่องตกแต่งของโถง: ซ่อนไว้จนกว่าฉากจะรู้ว่าผู้เล่นวางอะไร (HallScene) และกันทางเดินเฉพาะตอนมีของวาง
+    if (object.kind === "slot") {
+      image.setVisible(false);
+      if (!object.mount) {
+        const zone = this.addObstacle(x, baseY - 6, Math.max(20, (object.w ?? 1) * TILE - 12), 12);
+        this.slotBodies.set(object, zone);
+        this.setSlotSolid(object, false);
+      }
+      return;
+    }
+    if (object.mount || object.flat) return;
+    // กล่องชนอยู่ใต้ส่วนฐานที่มองเห็น ไม่กว้างเกินช่องของวัตถุ
+    const maxWidth = (object.w ?? 1) * TILE;
+    const base = this.visibleBase(object.prop, image.width, image.height);
+    const left = x - image.width / 2 + (base?.left ?? 0);
+    const right = x - image.width / 2 + (base?.right ?? image.width - 1) + 1;
+    const width = Math.max(14, Math.min(maxWidth, right - left) - 4);
+    this.addObstacle((left + right) / 2, baseY - 6, width, 12);
+  }
+
+
+  /** NPC และของในเควสเสริมของแผนที่นี้ (ห้องเรียนและโรงเก็บหุ่นของแมพ 3) GDD ข้อ 16 */
+  protected addNpcs(): void {
+    const store = () => useGameStore.getState();
+    // NPC: คุยครั้งแรกได้ฟังเรื่องราวก่อน ร้านพิเศษที่รู้จักกันแล้วเปิดร้านเลย บทบาทอื่นเปิดหน้าต่างคุย
+    for (const object of this.objectsOf("npc")) {
+      const id = object.npc as NpcId;
+      this.npcs.push(id);
+      this.addInteractable(object, `npc-${id}`, () => fmt(ui.prompt.npc, { name: ui.npc[id].name, role: ui.npc.roles[NPCS[id].role] }), () => (NPCS[id].role === "shop" && store().npcs[id]?.met ? store().openShop(id) : store().openNpc(id)));
+    }
+    for (const object of this.objectsOf("pickup")) {
+      const id = object.npc as "mechanic" | "foreman" | "ranger";
+      const index = object.index as number;
+      const image = this.placed.get(object) as Phaser.GameObjects.Image;
+      const visible = () => {
+        const record = store().npcs[id];
+        return Boolean(record?.accepted && !record.done && !record.found.includes(index));
+      };
+      this.pickups.push({ image, visible });
+      this.tweens.add({ targets: image, alpha: 0.55, duration: 520, yoyo: true, repeat: -1 });
+      this.addInteractable(
+        object,
+        `pickup-${id}-${index}`,
+        () => fmt(ui.prompt.pickup, { item: ui.npc[id].item }),
+        () => {
+          const found = store().collectPickup(id, index);
+          const total = NPCS[id].pickups;
+          store().showToast(found >= total ? fmt(ui.npc.allFound, { item: ui.npc[id].item, name: ui.npc[id].name }) : fmt(ui.npc.found, { item: ui.npc[id].item, n: found, total }));
+        },
+        visible,
+      );
+    }
+
+  }
+
+  /** ของในเควสเสริมแสดงเฉพาะตอนที่เก็บได้ */
+  protected syncPickups(): void {
+    for (const pickup of this.pickups) pickup.image.setVisible(pickup.visible());
+  }
+
+  /** คีย์สถานะของ NPC ในฉาก ใช้ตัดสินว่าต้องวาดป้ายใหม่หรือไม่ */
+  protected npcKey(): string {
+    const state = useGameStore.getState();
+    return this.npcs.map((id) => JSON.stringify(state.npcs[id] ?? null)).join("") + String(this.npcs.map((id) => quizUnlocked(state, NPCS[id].quizTopics)));
+  }
+
+  /** ป้ายเหนือหัว NPC ทุกคนในฉาก */
+  protected npcLabels(): WorldLabel[] {
+    const state = useGameStore.getState();
+    return this.interactables
+      .filter((i) => i.id.startsWith("npc-"))
+      .flatMap((i) => {
+        const id = i.id.slice(4) as NpcId;
+        const label = this.npcLabel(id, state.npcs[id], quizUnlocked(state, NPCS[id].quizTopics));
+        return label ? [{ id: i.id, x: i.x, y: i.top + 2, ...label }] : [];
+      });
+  }
+
+  /** ป้ายเหนือ NPC: ! = มีเรื่องให้ทำ, n/N = ความคืบหน้าของเควส, ✓ = เสร็จแล้ว (ร้านพิเศษไม่มีป้ายสถานะ) */
+  private npcLabel(id: NpcId, record: NpcRecord | undefined, unlocked: boolean): { text: string; tone: "default" | "done" | "locked" } | null {
+    const spec = NPCS[id];
+    if (spec.role === "shop") return { text: "$", tone: "default" };
+    if (spec.role === "gift") return record?.gifted ? { text: "✓", tone: "done" } : { text: "!", tone: "default" };
+    if (spec.role === "quest") {
+      if (record?.done) return { text: "✓", tone: "done" };
+      if (!record?.accepted || questReady(spec, record)) return { text: "!", tone: "default" };
+      return { text: `${record.found.length}/${spec.pickups}`, tone: "default" };
+    }
+    if (!unlocked) return null;
+    return (record?.tries ?? 0) > 0 ? { text: `${record?.best}/${spec.questions}`, tone: "done" } : { text: "?", tone: "default" };
   }
 
   /** จุดโต้ตอบของวัตถุบนแผนที่ */

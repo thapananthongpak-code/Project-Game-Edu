@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "inside a dark steel fortress command hall with red warning lights and a big window showing an erupting volcano with lava, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "b8bf3ff7-a3d1-4a1b-9063-43c019c5b1ba",
+  "generatedAt": "2026-10-03T06:17:01.077Z"
+}

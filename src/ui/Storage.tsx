@@ -1,18 +1,11 @@
-import { playSfx } from "../audio/engine";
 import { fmt, ui } from "../content/ui-strings";
 import { guardianPowerOf, pendingBattle, useGameStore } from "../state/gameStore";
-import { ARMORS, BAG_SIZE, CHIPS, type Gear, itemPower, WEAPONS } from "../state/gear";
+import { BAG_SIZE, type Gear } from "../state/gear";
 import { art } from "./art";
 import { BagPicker } from "./BagPicker";
 import { useDialog } from "./useDialog";
 
 type Slot = keyof Gear;
-const SLOTS: { slot: Slot; values: readonly string[]; base: string }[] = [
-  { slot: "weapon", values: WEAPONS, base: "fist" },
-  { slot: "armor", values: ARMORS, base: "plate" },
-  { slot: "chip", values: CHIPS, base: "none" },
-];
-type ItemId = keyof typeof ui.shop.items;
 
 /** ไอคอนของอุปกรณ์หนึ่งชิ้น ช่องชิปที่ว่างเป็นกรอบเส้นประ */
 export function GearIcon({ value, className = "h-12 w-12" }: { value: Gear[Slot]; className?: string }) {
@@ -21,15 +14,13 @@ export function GearIcon({ value, className = "h-12 w-12" }: { value: Gear[Slot]
 }
 
 /**
- * กล่องเก็บไอเทม (GDD ข้อ 17) ที่โถงและโรงเก็บหุ่น: เลือกอุปกรณ์ของการ์เดียน (อาวุธ เกราะ ชิป ช่องละชิ้น)
- * และจัดของใช้ลงกระเป๋าสำหรับออกปฏิบัติการ พี่บิตแนะนำของที่เหมาะกับด่านถัดไป
+ * กล่องเก็บไอเทม (GDD ข้อ 17) ที่โถงและโรงเก็บหุ่น: จัดของใช้ลงกระเป๋าสำหรับออกปฏิบัติการ พี่บิตแนะนำของและอาวุธที่เหมาะกับด่านถัดไป
+ * อาวุธ เกราะ และชิปใส่ที่แท่นการ์เดียนในโรงเก็บหุ่น (GuardianBay)
  */
 export function Storage() {
-  const shop = useGameStore((s) => s.shop);
   const upcoming = useGameStore(pendingBattle);
   // ค่าพลังสำหรับด่านถัดไป: นับความได้เปรียบของอาวุธที่ใส่อยู่กับคู่ต่อสู้ของด่านนั้นด้วย
   const power = useGameStore((s) => guardianPowerOf(s, pendingBattle(s) ?? undefined));
-  const equip = useGameStore((s) => s.equip);
   const openShop = useGameStore((s) => s.openShop);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
@@ -54,44 +45,6 @@ export function Storage() {
             {fmt(ui.missions.recommended, { n: upcoming.power })} · <span className={power >= upcoming.power ? "text-correct-dark" : "text-wrong"}>{power >= upcoming.power ? ui.missions.powerOk : ui.missions.powerLow}</span>
           </p>
         )}
-
-        <section data-testid="storage-gear">
-          <h3 className="mb-1 text-xs font-bold text-slate">{ui.storage.gearTitle}</h3>
-          <div className="flex flex-col gap-2">
-            {SLOTS.map(({ slot, values, base }) => (
-              <div key={slot} role="radiogroup" aria-label={ui.storage.slots[slot]} className="flex flex-wrap items-stretch gap-2">
-                <span className="flex w-12 shrink-0 items-center text-sm font-extrabold">{ui.storage.slots[slot]}</span>
-                {values
-                  .filter((value) => value === base || shop.owned.includes(`${slot}-${value}`))
-                  .map((value) => {
-                    const using = shop[slot] === value;
-                    const strings = ui.shop.items[`${slot}-${value}` as ItemId];
-                    const gain = itemPower(slot, value);
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        role="radio"
-                        aria-checked={using}
-                        data-testid={`storage-${slot}-${value}`}
-                        title={strings.detail}
-                        onClick={() => (playSfx("equip"), equip(slot, value))}
-                        className={`flex min-w-0 flex-1 basis-36 items-center gap-2 rounded-lg border-[3px] border-ink p-1 pr-2 text-left ${using ? "bg-hint shadow-[0_3px_0_0_#1a1c2c]" : "bg-paper hover:bg-teal-light"}`}
-                      >
-                        <GearIcon value={value as Gear[Slot]} className="h-10 w-10 shrink-0" />
-                        <span className="min-w-0">
-                          <span className="block text-sm font-extrabold">{strings.name}</span>
-                          <span className="block text-xs text-slate">{strings.detail}</span>
-                          {gain > 0 && <span className="block text-xs font-bold text-teal-dark">{fmt(ui.shop.powerGain, { n: gain })}</span>}
-                        </span>
-                      </button>
-                    );
-                  })}
-              </div>
-            ))}
-          </div>
-          <p className="mt-1 text-xs text-slate">{ui.storage.gearHint}</p>
-        </section>
 
         <BagPicker spec={upcoming} />
 

@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "069a37fe-9801-49f1-acca-22fba5e41738",
+  "generatedAt": "2026-10-03T06:04:12.538Z"
+}

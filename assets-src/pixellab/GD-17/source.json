@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-13/image.png",
+    "reference": "GD-05/image.png",
+    "usage_description": "copy the weapon and the way it is held from this reference: the same lance shape, colors, size and grip in the same hand"
+  },
+  "fetchTool": "get_image",
+  "id": "a0c2ac35-0363-45a7-a6c4-6143d36c51f8",
+  "generatedAt": "2026-10-03T06:07:51.031Z"
+}

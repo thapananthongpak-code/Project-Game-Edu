@@ -2,7 +2,7 @@ import { useState } from "react";
 import { playSfx } from "../audio/engine";
 import { buildBattleItems, type ChoiceItem, shuffled } from "../content/choices";
 import { fmt, ui } from "../content/ui-strings";
-import { creditsOf, roomProgress, useGameStore } from "../state/gameStore";
+import { creditsOf, quizUnlocked, useGameStore } from "../state/gameStore";
 import { emptyNpc, type NpcId, NPCS, questReady } from "../state/npcs";
 import { art } from "./art";
 import { ChoiceCard } from "./ChoiceCard";
@@ -78,7 +78,8 @@ function Quiz({ id, onClose }: { id: QuizNpc; onClose: () => void }) {
   const text = ui.npc[id];
   const record = useGameStore((s) => s.npcs[id]) ?? emptyNpc();
   // เล่นได้เมื่อได้แกน AI ของทุกหัวข้อที่ใช้โจทย์ ในแมพที่ NPC คนนี้อยู่
-  const unlocked = useGameStore((s) => spec.quizTopics.every((topic) => roomProgress(s, topic).core));
+  // แมพที่ไม่มีห้องเรียน (แมพ 3) ใช้แกนที่ได้จากการเรียนที่แมพ 1
+  const unlocked = useGameStore((s) => quizUnlocked(s, spec.quizTopics));
   const recordQuiz = useGameStore((s) => s.recordQuiz);
   const [items, setItems] = useState<ChoiceItem[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -217,6 +218,8 @@ function Story({ id, onDone }: { id: NpcId; onDone: () => void }) {
   const last = index + 1 >= lines.length;
   return (
     <div className="flex flex-col gap-3" data-testid="npc-story" data-line={index}>
+      {/* ช่องการ์ตูนของเรื่องราว: ตัวละครของเกมบนฉากของตอนนั้น (st_npc_<id>_<n> ประกอบตอน build) */}
+      <img key={index} src={art.story(`st_npc_${id}_${index + 1}`)} alt="" data-testid="npc-story-art" data-art={`st_npc_${id}_${index + 1}`} className="pixelated aspect-video w-full rounded-md border-[3px] border-ink object-cover" />
       <p className="rounded-md border-2 border-ink bg-teal-light px-3 py-2 font-semibold" data-testid="npc-story-line">
         {lines[index]}
       </p>

@@ -2,7 +2,7 @@
 // กระเป๋าพกได้ BAG_SIZE ชิ้นต่อการออกปฏิบัติการ (ชุดนักบินอวกาศ +1) ของที่เหลืออยู่ในกล่องเก็บไอเทม
 import type { Trait } from "./battle.config";
 import type { BattleSpec } from "./campaign";
-import { BAG_SIZE, POWER, type Weapon, WEAPON, type WeaponClass, WEAPONS } from "./gear";
+import { BAG_SIZE, type Matchup, matchupOf, POWER, resistOf, type Weapon, WEAPON, type WeaponClass, WEAPONS } from "./gear";
 import { SUPPLIES, type Supply } from "./shop.config";
 
 /** ของที่เหมาะกับลักษณะของคู่ต่อสู้ เรียงจากสำคัญที่สุด (เหตุผลของแต่ละลักษณะอยู่ใน ui.storage.reason) */
@@ -51,12 +51,20 @@ export const missingAdvice = (spec: BattleSpec, stock: Readonly<Record<Supply, n
 
 // ---------------------------------------------------------------- อาวุธที่ได้เปรียบ
 
-/** น้ำหนักของความได้เปรียบของอาวุธประเภทหนึ่งกับด่านนี้: ผลรวมพลังของร่างที่แพ้ทางอาวุธประเภทนั้น */
-const advantageWeight = (spec: BattleSpec, kind: WeaponClass): number => spec.forms.filter((form) => form.weak === kind).reduce((sum, form) => sum + form.hp, 0);
+/** น้ำหนักของความได้เปรียบของอาวุธประเภทหนึ่งกับด่านนี้: พลังของร่างที่ชนะทาง ลบพลังของร่างที่แพ้ทาง */
+const advantageWeight = (spec: BattleSpec, kind: WeaponClass): number =>
+  spec.forms.reduce((sum, form) => sum + (form.weak === kind ? form.hp : resistOf(form.weak) === kind ? -form.hp : 0), 0);
+
+/** ความเข้ากันของอาวุธกับคู่ต่อสู้ทุกร่างของด่าน ตามลำดับร่าง */
+export const matchupsOf = (spec: BattleSpec, weapon: Weapon): Matchup[] => spec.forms.map((form) => matchupOf(weapon, form.weak));
 
 export interface WeaponAdvice {
   /** จุดอ่อนของแต่ละร่าง ตามลำดับ */
   weak: WeaponClass[];
+  /** ประเภทอาวุธที่แต่ละร่างทนทาน ตามลำดับ */
+  resist: WeaponClass[];
+  /** ความเข้ากันของอาวุธที่ใส่อยู่กับแต่ละร่าง */
+  matchups: Matchup[];
   /** อาวุธที่ใส่อยู่ได้เปรียบอย่างน้อยหนึ่งร่าง */
   advantaged: boolean;
   /**
@@ -65,7 +73,7 @@ export interface WeaponAdvice {
    */
   better: Weapon | null;
   stronger: boolean;
-  /** อาวุธที่ได้เปรียบแต่ยังไม่มี (แนะนำให้ซื้อ) */
+  /** อาวุธที่ยังไม่มีและได้เปรียบกว่าทั้งอาวุธที่ใส่อยู่และชิ้นที่ดีที่สุดในกล่อง (แนะนำให้ซื้อ) */
   wanted: Weapon[];
 }
 
@@ -81,9 +89,11 @@ export function adviseWeapon(spec: BattleSpec, current: Weapon, owned: readonly 
   const stronger = !more && mine > 0 && best !== current && strength(best) > strength(current);
   return {
     weak: spec.forms.map((form) => form.weak),
+    resist: spec.forms.map((form) => resistOf(form.weak)),
+    matchups: matchupsOf(spec, current),
     advantaged: mine > 0,
     better: more || stronger ? best : null,
     stronger,
-    wanted: WEAPONS.filter((weapon) => !have.includes(weapon) && weight(weapon) > mine),
+    wanted: WEAPONS.filter((weapon) => !have.includes(weapon) && weight(weapon) > 0 && weight(weapon) > mine && weight(weapon) >= weight(best)),
   };
 }

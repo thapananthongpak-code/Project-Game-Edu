@@ -5,7 +5,7 @@ import { robotMaxOf } from "./battle";
 import { BATTLE } from "./battle.config";
 import { type BattleSpec, campaignOf, DIFFICULTIES, type Difficulty, mapIndex } from "./campaign";
 import { emptyField, fieldStatus } from "./field";
-import { bagSizeOf, type Gear, guardianPower, WEAPON } from "./gear";
+import { bagSizeOf, type Gear, guardianPower, matchupOf } from "./gear";
 import { type NpcId, type NpcRecord, npcCredits, NPCS } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
 import { BIT_MODULES, type BitModule, CATALOG, DECOR, type Decor, type DecorSize, REWARDS, type ShopItem, STARTER_DECOR, type Supply } from "./shop.config";
@@ -87,12 +87,8 @@ export function purchase(shop: ShopState, id: string, balance: number, context: 
     const key = `${context.map}:${item.value}`;
     return { ...shop, spent, loadout, supplies: { ...shop.supplies, [item.value]: shop.supplies[item.value] + 1 }, bought: { ...shop.bought, [key]: (shop.bought[key] ?? 0) + 1 } };
   }
-  const owned = [...shop.owned, item.id];
-  if (item.kind === "weapon" || item.kind === "armor" || item.kind === "chip") return { ...shop, spent, owned, [item.kind]: item.value } as ShopState;
-  if (item.kind === "outfit") return { ...shop, spent, owned, outfit: item.value };
-  if (item.kind === "paint") return { ...shop, spent, owned, paint: item.value };
-  if (item.kind === "bit") return { ...shop, spent, owned, bit: item.value };
-  return { ...shop, spent, owned };
+  // ร้านขายอย่างเดียว: ของที่ซื้อแล้วผู้เล่นไปใส่เองที่จุดปรับแต่งในโรงเก็บหุ่น (ตู้เสื้อผ้า แท่นการ์เดียน แท่นปรับแต่งพี่บิต)
+  return { ...shop, spent, owned: [...shop.owned, item.id] };
 }
 
 /** โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว */
@@ -115,16 +111,17 @@ export function bagOf(shop: ShopState): Supply[] {
   return bag;
 }
 
-/** สัดส่วนของร่างของคู่ต่อสู้ในด่านนี้ที่อาวุธได้เปรียบ (0–1) */
-export const advantageShare = (spec: BattleSpec, gear: Gear): number => spec.forms.filter((form) => form.weak === WEAPON[gear.weapon].class).length / spec.forms.length;
+/** สัดส่วนของร่างของคู่ต่อสู้ในด่านนี้ที่อาวุธชนะทาง ลบสัดส่วนที่แพ้ทาง (−1 ถึง 1) */
+export const advantageShare = (spec: BattleSpec, gear: Gear): number =>
+  spec.forms.reduce((sum, form) => sum + ({ strong: 1, even: 0, weak: -1 } as const)[matchupOf(gear.weapon, form.weak)], 0) / spec.forms.length;
 
 /**
  * ค่าพลังรวมของการ์เดียนตอนนี้: พลังสูงสุด อุปกรณ์ เครื่องแบบ โมดูลของพี่บิต และของใช้ในกระเป๋า
  * ระบุด่าน: นับความได้เปรียบของอาวุธที่ใส่อยู่กับคู่ต่อสู้ของด่านนั้นด้วย
  */
-export const powerOf = (difficulty: Difficulty | undefined, shop: ShopState, spec?: BattleSpec): number =>
+export const powerOf = (difficulty: Difficulty | undefined, shop: ShopState, spec?: BattleSpec, coreBonus = 0): number =>
   guardianPower({
-    robotMax: robotMaxOf(difficulty, shop.outfit, gearOf(shop)),
+    robotMax: robotMaxOf(difficulty, shop.outfit, gearOf(shop), coreBonus),
     gear: gearOf(shop),
     outfit: shop.outfit,
     modules: modulesOf(shop),

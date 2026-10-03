@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-13/image.png",
+    "reference": "GD-04/image.png",
+    "usage_description": "copy the weapon and the way it is held from this reference: the same hammer shape, colors, size and grip in the same hand"
+  },
+  "fetchTool": "get_image",
+  "id": "a529bf0d-ebd9-4d2e-81aa-525ac4b59be3",
+  "generatedAt": "2026-10-03T06:05:03.344Z"
+}

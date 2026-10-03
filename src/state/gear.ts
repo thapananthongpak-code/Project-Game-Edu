@@ -9,9 +9,19 @@ export type Armor = (typeof ARMORS)[number];
 export const CHIPS = ["none", "retry", "charger"] as const;
 export type Chip = (typeof CHIPS)[number];
 
-/** ประเภทของอาวุธ: คู่ต่อสู้แต่ละร่างแพ้ทางอาวุธประเภทหนึ่ง (FormSpec.weak) อาวุธประเภทนั้นจึงได้เปรียบ */
+/**
+ * ประเภทของอาวุธ: คู่ต่อสู้แต่ละร่างแพ้ทางอาวุธประเภทหนึ่ง (FormSpec.weak) และทนทานต่ออีกประเภทหนึ่ง (resistOf)
+ * ชนะทางกันเป็นวง: ร่างที่แพ้ทางแรงกระแทกทนคมอาวุธ แพ้ทางคมอาวุธทนลำแสง แพ้ทางลำแสงทนแรงกระแทก
+ */
 export const WEAPON_CLASSES = ["strike", "blade", "beam"] as const;
 export type WeaponClass = (typeof WEAPON_CLASSES)[number];
+
+/** ประเภทของอาวุธที่คู่ต่อสู้ร่างนี้ทนทาน (อาวุธประเภทนี้เสียเปรียบ) */
+export const resistOf = (weak: WeaponClass): WeaponClass => WEAPON_CLASSES[(WEAPON_CLASSES.indexOf(weak) + 1) % WEAPON_CLASSES.length];
+
+/** ความเข้ากันของอาวุธกับคู่ต่อสู้ร่างหนึ่ง: strong = ชนะทาง, even = พอใช้ได้, weak = แพ้ทาง */
+export type Matchup = "strong" | "even" | "weak";
+export const matchupOf = (weapon: Weapon, weak: WeaponClass): Matchup => (WEAPON[weapon].class === weak ? "strong" : WEAPON[weapon].class === resistOf(weak) ? "weak" : "even");
 
 export interface Gear {
   weapon: Weapon;
@@ -54,6 +64,9 @@ export const GEAR = {
    */
   advantage: 1,
   advantageFromStreak: 2,
+  /** ชนะทาง: การโจมตีหนักของคู่ต่อสู้เบาลงเท่านี้ (อึดขึ้น) แพ้ทาง: แรงขึ้นเท่านี้ (อ่อนแอลง) และความสามารถพิเศษของอาวุธไม่ทำงาน */
+  strongGuard: 1,
+  weakExposure: 1,
   critMultiplier: 2,
   quakeDamage: 2,
   /** เกราะหนักและเกราะไททัน: พลังสูงสุดเพิ่ม */
@@ -90,7 +103,7 @@ export const POWER = {
   module: { scanner: 10, laser: 15, medic: 20 } as Record<string, number>,
   /** ต่อของใช้หนึ่งชิ้นในกระเป๋า */
   perItem: 5,
-  /** อาวุธที่ใส่อยู่ได้เปรียบคู่ต่อสู้ของด่าน (นับตามสัดส่วนของร่างที่ได้เปรียบ) */
+  /** อาวุธที่ใส่อยู่ชนะทางคู่ต่อสู้ของด่าน (นับตามสัดส่วนของร่างที่ชนะทาง) แพ้ทางหักเท่ากัน */
   advantage: 20,
 } as const;
 
@@ -116,7 +129,7 @@ export interface PowerInput {
   modules: readonly string[];
   /** จำนวนของใช้ในกระเป๋า */
   bag: number;
-  /** สัดส่วนของร่างของคู่ต่อสู้ที่อาวุธนี้ได้เปรียบ (0–1) ไม่ระบุ = ไม่นับ */
+  /** สัดส่วนของร่างที่อาวุธนี้ชนะทาง ลบสัดส่วนของร่างที่แพ้ทาง (−1 ถึง 1) ไม่ระบุ = ไม่นับ */
   advantage?: number;
 }
 
@@ -129,6 +142,6 @@ export function guardianPower({ robotMax, gear, outfit, modules, bag, advantage 
       (POWER.outfit[outfit] ?? 0) +
       modules.reduce((sum, module) => sum + (POWER.module[module] ?? 0), 0) +
       Math.min(bagSizeOf(outfit), Math.max(0, bag)) * POWER.perItem +
-      Math.max(0, Math.min(1, advantage)) * POWER.advantage,
+      Math.max(-1, Math.min(1, advantage)) * POWER.advantage,
   );
 }

@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-07/image.png",
+    "reference": "GD-06/image.png",
+    "usage_description": "copy the weapon and the way it is held from this reference: the same cannon shape, colors, size and grip in the same hand"
+  },
+  "fetchTool": "get_image",
+  "id": "cd470ff6-9500-4931-9da2-51e073704595",
+  "generatedAt": "2026-10-03T06:05:03.537Z"
+}

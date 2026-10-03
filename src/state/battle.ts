@@ -3,7 +3,7 @@
 // ด่านหนึ่งมีได้หลายร่าง (บอสของระดับกลางและยาก) ต้องชนะทีละร่าง
 import { BATTLE } from "./battle.config";
 import { type BattleSpec, campaignOf, type Difficulty, type FormSpec } from "./campaign";
-import { armorHp, DEFAULT_GEAR, type Gear, GEAR, WEAPON } from "./gear";
+import { armorHp, DEFAULT_GEAR, type Gear, GEAR, type Matchup, matchupOf, WEAPON } from "./gear";
 import type { BitModule, Outfit, Supply } from "./shop.config";
 
 /** ค่าที่ใช้ตลอดการออกปฏิบัติการหนึ่งครั้ง: ด่าน ระดับความยาก อุปกรณ์ของการ์เดียน และสิทธิพิเศษของเครื่องแบบ */
@@ -30,16 +30,19 @@ export interface BattleSetup {
 }
 
 /** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของแมพ บวกเกราะ (หนัก ไททัน) และเครื่องแบบ (ชุดเกราะผู้พิทักษ์ ชุดฮีโร่การ์เดียน) */
-export const robotMaxOf = (difficulty: Difficulty | undefined, outfit: Outfit, gear: Gear): number =>
-  campaignOf(difficulty).robotHp + armorHp(gear.armor) + (outfit === "guardian" ? BATTLE.perks.guardianHp : outfit === "hero" ? BATTLE.perks.heroHp : 0);
+export const robotMaxOf = (difficulty: Difficulty | undefined, outfit: Outfit, gear: Gear, coreBonus = 0): number =>
+  campaignOf(difficulty).robotHp + armorHp(gear.armor) + (outfit === "guardian" ? BATTLE.perks.guardianHp : outfit === "hero" ? BATTLE.perks.heroHp : 0) + coreBonus;
 
-/** modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว gear = อุปกรณ์ของการ์เดียนที่ใส่อยู่ */
-export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, modules: readonly BitModule[] = [], gear: Gear = DEFAULT_GEAR): BattleSetup {
+/**
+ * modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว gear = อุปกรณ์ของการ์เดียนที่ใส่อยู่
+ * coreBonus = พลังสูงสุดที่เพิ่มจากแกน AI ที่ชาร์จแล้วในแมพนี้ (แมพ 2: coreBoostOf ใน gameStore.ts)
+ */
+export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec, outfit: Outfit, modules: readonly BitModule[] = [], gear: Gear = DEFAULT_GEAR, coreBonus = 0): BattleSetup {
   const level = campaignOf(difficulty);
   const has = (module: BitModule) => modules.includes(module);
   return {
     spec,
-    robotMax: robotMaxOf(difficulty, outfit, gear),
+    robotMax: robotMaxOf(difficulty, outfit, gear, coreBonus),
     hints: level.battleHints + (outfit === "researcher" ? BATTLE.perks.researcherHints : 0) + (has("scanner") ? BATTLE.modules.scannerHints : 0),
     assistDamage: (outfit === "commander" ? BATTLE.perks.commanderAssist : BATTLE.assistDamage) + (has("laser") ? BATTLE.modules.laserAssist : 0),
     assistHeal: has("medic") ? BATTLE.modules.medicHeal : 0,
@@ -171,6 +174,8 @@ export interface Strike {
   pierced: boolean;
   /** อาวุธได้เปรียบคู่ต่อสู้ร่างนี้ (ประเภทตรงกับจุดอ่อน): แรงขึ้น GEAR.advantage */
   advantage: boolean;
+  /** ความเข้ากันของอาวุธกับร่างนี้ (ชนะทาง พอใช้ได้ แพ้ทาง) */
+  matchup: Matchup;
   /** ค้อนทุบสะเทือน: แรงขึ้น GEAR.quakeDamage */
   quake: boolean;
   damage: number;
@@ -193,11 +198,14 @@ export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
   const every = (n: number | undefined) => n !== undefined && streak % n === 0;
   const counter = isCharging(setup, state);
   const armored = form.trait === "armor" && state.armored;
-  const armorBreak = armored && !weapon.pierce;
-  const advantage = !armorBreak && weapon.class === form.weak && streak >= GEAR.advantageFromStreak;
-  const quake = !armorBreak && every(weapon.quakeEvery);
+  // แพ้ทาง: ความสามารถพิเศษของอาวุธ (คริติคอล สตัน ค้อนสะเทือน ทุบทะลุเกราะ) ไม่ทำงานกับร่างนี้
+  const matchup = matchupOf(setup.gear.weapon, form.weak);
+  const special = matchup !== "weak";
+  const armorBreak = armored && !(weapon.pierce && special);
+  const advantage = !armorBreak && matchup === "strong" && streak >= GEAR.advantageFromStreak;
+  const quake = !armorBreak && special && every(weapon.quakeEvery);
   const base = (counter ? BATTLE.charge.counterDamage : form.trait === "combo" ? Math.min(BATTLE.comboMax, streak) : BATTLE.hit) + (advantage ? GEAR.advantage : 0) + (quake ? GEAR.quakeDamage : 0);
-  const crit = !armorBreak && every(weapon.critEvery);
+  const crit = !armorBreak && special && every(weapon.critEvery);
   const opening = !armorBreak && !crit && state.opening;
   const boosted = !armorBreak && !crit && !opening && state.boost;
   const damage = armorBreak ? 0 : base * (crit ? GEAR.critMultiplier : opening || boosted ? 2 : 1);
@@ -205,13 +213,14 @@ export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
     armorBreak,
     pierced: armored && !armorBreak,
     advantage,
+    matchup,
     quake,
     damage,
     counter: counter && !armorBreak,
     crit,
     opening,
     boosted,
-    stuns: every(weapon.stunEvery) && !state.stunned,
+    stuns: special && every(weapon.stunEvery) && !state.stunned,
     assist: state.kaijuHp - damage > 0 && streak % BATTLE.assistStreak === 0 ? setup.assistDamage : 0,
   };
 }
@@ -234,8 +243,11 @@ export function threatOf(setup: BattleSetup, state: BattleState): Threat {
   const saved = state.retries > 0 ? "retry" : state.stunned ? "stun" : state.dodge > 0 ? "dodge" : state.guard > 0 ? "guard" : state.shield ? "shield" : null;
   // ได้ตอบใหม่หรือคู่ต่อสู้ติดสตัน: คู่ต่อสู้ไม่ได้ทำอะไรเลยในตานี้
   const acts = saved !== "retry" && saved !== "stun";
+  // ชนะทาง: การโจมตีหนักเบาลง (อึดขึ้น) แพ้ทาง: แรงขึ้น (อ่อนแอลง) การโจมตีปกติเท่าเดิม
+  const matchup = matchupOf(setup.gear.weapon, form.weak);
+  const heavyDamage = BATTLE.heavyDamage + (matchup === "strong" ? -GEAR.strongGuard : matchup === "weak" ? GEAR.weakExposure : 0);
   return {
-    damage: heavy ? BATTLE.heavyDamage : BATTLE.wrongDamage,
+    damage: heavy ? heavyDamage : BATTLE.wrongDamage,
     heavy,
     saved,
     regen: acts && form.trait === "regen" ? Math.min(BATTLE.regen, form.hp - state.kaijuHp) : 0,

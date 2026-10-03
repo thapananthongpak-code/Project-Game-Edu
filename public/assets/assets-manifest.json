@@ -2117,6 +2117,116 @@
       ]
     },
     {
+      "id": "TS-10",
+      "kind": "tileset",
+      "name": "ไทล์เซตโรงเก็บหุ่นของแมพ 2",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_hangar2": "tiles/ts_hangar2.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of sand colored concrete slabs with faded yellow guide paint lines, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of white and teal steel hangar wall panels with a blue trim band and small round status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "a16f977b-af9d-4a4b-be50-656d121b1481",
+        "generatedAt": "2026-10-03T06:18:37.273Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-11",
+      "kind": "tileset",
+      "name": "ไทล์เซตโรงเก็บหุ่นของแมพ 3",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_hangar3": "tiles/ts_hangar3.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of dark steel grating panels with thin glowing orange gaps, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of dark red-brown volcanic rock reinforced with black steel beams and small red warning lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "bfccdb4f-09df-4d3c-b298-8bcb8a99bf2f",
+        "generatedAt": "2026-10-03T06:19:36.194Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "status": "generated"
+    },
+    {
       "id": "PR-C01",
       "kind": "prop",
       "name": "ประตูล็อก",
@@ -4674,6 +4784,1147 @@
       "status": "generated"
     },
     {
+      "id": "PR-G05",
+      "kind": "prop",
+      "name": "แท่นการ์เดียน (โรงเก็บหุ่น หุ่นยืนบนแท่นนี้)",
+      "requested": true,
+      "size": [
+        96,
+        64
+      ],
+      "files": {
+        "pr_guardian_bay": "props/pr_guardian_bay.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a robot maintenance bay seen from a low top-down angle: a wide flat round steel platform with yellow and black hazard edges, two short mechanical clamp arms on the left and right sides and a small control panel, empty platform, no robot, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 96,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e674b78c-8570-433b-b69b-27e450ceaaa0",
+        "generatedAt": "2026-10-03T06:10:32.701Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-G06",
+      "kind": "prop",
+      "name": "ตู้กระจกเก็บแกน AI (โรงเก็บหุ่น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_core_case": "props/pr_core_case.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a transparent glass display cabinet with a thin silver steel frame, two empty glass shelves inside, a glowing teal light strip at the base, the glass is see-through and empty, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "2a3b2c9b-1745-4912-b90f-80a6883f66b5",
+        "generatedAt": "2026-10-03T06:10:52.035Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-G07",
+      "kind": "prop",
+      "name": "แท่นปรับแต่งพี่บิต (วางบนพื้น)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_bit_pad": "props/pr_bit_pad.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a flat round glowing cyan customization pad on the floor with a holographic ring and small wrench and gear symbols around the edge, flat floor object seen from above, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "a5e0dc4a-dfa1-4ca9-8525-157479e2e054",
+        "generatedAt": "2026-10-03T06:11:11.695Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-01",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + หมัด",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_fist": "guardian/gd_plate_fist.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "giant friendly guardian mech robot standing in a heroic pose facing right, white and teal armor plates, glowing cyan visor, round chest reactor with six small sockets, broad shoulders, big fists, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "0424958b-bdc1-4d2b-82d5-8c4dc89639be",
+        "generatedAt": "2026-10-02T04:27:23.016Z"
+      },
+      "status": "generated",
+      "note": "ภาพเดียวกับ BT-00 (หุ่นการ์เดียนเปล่า) คัดลอกมาเป็นจุดตั้งต้นของชุด GD"
+    },
+    {
+      "id": "GD-02",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + ดาบพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_sword": "guardian/gd_plate_sword.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long glowing cyan energy sword in its front fist on the right side of the image, the handle passes through the closed fingers, the blade points up and forward, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "aa1b82cd-f747-4849-a499-49f4271a434e",
+        "generatedAt": "2026-10-03T06:03:58.586Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-03",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + ปืนเลเซอร์",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_blaster": "guardian/gd_plate_blaster.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a white and cyan laser blaster pistol in its front fist on the right side of the image, fingers wrapped around the grip, barrel aimed forward to the right, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "92239888-8cf0-49aa-8dae-99ac8d748e0f",
+        "generatedAt": "2026-10-03T06:04:05.294Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-04",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + ค้อนพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_hammer": "guardian/gd_plate_hammer.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "965677cf-45df-4321-ae7a-a5a6a8a3fac6",
+        "generatedAt": "2026-10-03T00:00:00.000Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-05",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + หอกสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_lance": "guardian/gd_plate_lance.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "069a37fe-9801-49f1-acca-22fba5e41738",
+        "generatedAt": "2026-10-03T06:04:12.538Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-06",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + ปืนใหญ่พลาสม่า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_cannon": "guardian/gd_plate_cannon.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "c0adb96b-666c-4107-9bed-7d343a41efa5",
+        "generatedAt": "2026-10-03T06:03:58.509Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-07",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + หมัด",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_fist": "guardian/gd_heavy_fist.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now wearing extra heavy dark gunmetal armor plates bolted onto its shoulders, chest, forearms and thighs, bulkier and tougher silhouette, same pose, same colors elsewhere, no weapon, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "7cb9babd-804c-4024-b887-af87db621633",
+        "generatedAt": "2026-10-03T06:04:04.920Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-08",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + ดาบพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_sword": "guardian/gd_heavy_sword.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long glowing cyan energy sword in its front fist on the right side of the image, the handle passes through the closed fingers, the blade points up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-02/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same sword shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "d2679f4e-2167-4f2d-a035-6b96e82d79ca",
+        "generatedAt": "2026-10-03T06:05:03.872Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-09",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + ปืนเลเซอร์",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_blaster": "guardian/gd_heavy_blaster.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a white and cyan laser blaster pistol in its front fist on the right side of the image, fingers wrapped around the grip, barrel aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-03/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same blaster shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "f8e75127-c6d2-4eb5-bfc4-d7379e9d4102",
+        "generatedAt": "2026-10-03T06:05:03.338Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-10",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + ค้อนพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_hammer": "guardian/gd_heavy_hammer.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-04/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same hammer shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "375063f5-611b-4020-8748-5bb81fda4dec",
+        "generatedAt": "2026-10-03T06:05:17.752Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-11",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + หอกสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_lance": "guardian/gd_heavy_lance.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-05/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same lance shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "ccb94c87-c674-4988-b7e1-9c14a7117098",
+        "generatedAt": "2026-10-03T06:07:36.818Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-12",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + ปืนใหญ่พลาสม่า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_cannon": "guardian/gd_heavy_cannon.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-06/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same cannon shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "cd470ff6-9500-4931-9da2-51e073704595",
+        "generatedAt": "2026-10-03T06:05:03.537Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-13",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + หมัด",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_fist": "guardian/gd_guard_fist.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now wearing a reflector armor: a glowing translucent cyan force-field plate over its chest and a round cyan reflector disc mounted on each shoulder, same pose, everything else unchanged, no weapon, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "0da10cd8-292e-4cae-ace1-b8668d681efc",
+        "generatedAt": "2026-10-03T06:04:05.067Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-14",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + ดาบพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_sword": "guardian/gd_guard_sword.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long glowing cyan energy sword in its front fist on the right side of the image, the handle passes through the closed fingers, the blade points up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-02/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same sword shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "803b107c-2a6f-4bdc-83e7-8d6508aa02f6",
+        "generatedAt": "2026-10-03T06:05:10.671Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-15",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + ปืนเลเซอร์",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_blaster": "guardian/gd_guard_blaster.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a white and cyan laser blaster pistol in its front fist on the right side of the image, fingers wrapped around the grip, barrel aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-03/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same blaster shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "9add1fd9-a5af-4ecc-a020-52f3acf19e4a",
+        "generatedAt": "2026-10-03T06:05:17.920Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-16",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + ค้อนพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_hammer": "guardian/gd_guard_hammer.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-04/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same hammer shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "a529bf0d-ebd9-4d2e-81aa-525ac4b59be3",
+        "generatedAt": "2026-10-03T06:05:03.344Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-17",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + หอกสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_lance": "guardian/gd_guard_lance.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-05/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same lance shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "a0c2ac35-0363-45a7-a6c4-6143d36c51f8",
+        "generatedAt": "2026-10-03T06:07:51.031Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-18",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + ปืนใหญ่พลาสม่า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_cannon": "guardian/gd_guard_cannon.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-06/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same cannon shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "14a4f0fa-d862-4d07-8a66-311d683226dd",
+        "generatedAt": "2026-10-03T06:07:44.521Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-19",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + หมัด",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_fist": "guardian/gd_titan_fist.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now wearing massive gold and white titan armor: big gold shoulder pauldrons, a thick gold chest plate and gold knee guards, same pose, everything else unchanged, no weapon, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "a71c9558-9e3d-4007-b6c5-ae9f8b074221",
+        "generatedAt": "2026-10-03T06:03:58.516Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-20",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + ดาบพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_sword": "guardian/gd_titan_sword.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long glowing cyan energy sword in its front fist on the right side of the image, the handle passes through the closed fingers, the blade points up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-02/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same sword shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "6d961a43-58c3-4ffd-81c0-d4cfe7804752",
+        "generatedAt": "2026-10-03T06:05:10.359Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-21",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + ปืนเลเซอร์",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_blaster": "guardian/gd_titan_blaster.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a white and cyan laser blaster pistol in its front fist on the right side of the image, fingers wrapped around the grip, barrel aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-03/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same blaster shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "a599bc3d-b45f-42f2-8db2-1dc8021eb002",
+        "generatedAt": "2026-10-03T06:07:44.425Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-22",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + ค้อนพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_hammer": "guardian/gd_titan_hammer.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-04/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same hammer shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "c405d6cc-1b5d-4644-959a-00a246f23d87",
+        "generatedAt": "2026-10-03T06:07:36.825Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-23",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + หอกสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_lance": "guardian/gd_titan_lance.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-05/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same lance shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "2aa4c68a-3025-4cbd-bf00-1f3e3964c6d6",
+        "generatedAt": "2026-10-03T06:07:44.423Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-24",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + ปืนใหญ่พลาสม่า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_cannon": "guardian/gd_titan_cannon.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-06/image.png",
+          "usage_description": "copy the weapon and the way it is held from this reference: the same cannon shape, colors, size and grip in the same hand"
+        },
+        "fetchTool": "get_image",
+        "id": "fcd00b3e-d55c-4b40-bdd2-658621b086a7",
+        "generatedAt": "2026-10-03T06:07:37.110Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-01",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: ห้องแล็บหุ่นยนต์",
+      "requested": true,
+      "size": [
+        320,
+        143
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_lab": "story/bg_scene_lab.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a bright robotics laboratory with long workbenches, blank glowing monitors, a robot arm and spare parts on shelves, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no numbers, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "276a161e-441f-466e-a9a5-288209d38835",
+        "generatedAt": "2026-10-03T06:21:11.012Z"
+      },
+      "status": "generated",
+      "postprocess": {
+        "patches": [
+          [
+            58,
+            43,
+            10,
+            11
+          ],
+          [
+            196,
+            59,
+            12,
+            5
+          ],
+          [
+            242,
+            53,
+            7,
+            7
+          ]
+        ]
+      },
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "876d5d44-3625-4144-bb81-da9500a41e41",
+          "reason": "มุมขวาล่างมีตัวเลข \"20\" สีแดง ขัดกับกติกาห้ามมีตัวอักษรในภาพ จึงเปลี่ยนจอคอมพิวเตอร์เป็นจอเปล่า เพิ่ม no numbers แล้วเจนใหม่",
+          "subject": "inside a bright robotics laboratory with long workbenches, computer screens, a robot arm and spare parts on shelves, empty room"
+        }
+      ],
+      "note": "ป้ายเล็กในภาพมีขีดคล้ายตัวอักษร ระบายเป็นแผ่นเรียบตอน build (postprocess.patches) แทนการเจนใหม่"
+    },
+    {
+      "id": "SC-02",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: โรงเก็บหุ่น",
+      "requested": true,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_hangar": "story/bg_scene_hangar.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a huge empty robot hangar with a maintenance gantry, hanging cables and a crane hook, yellow and black hazard stripes on the floor, nothing standing under the gantry, no robots, no mechs, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no numbers, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "72a84461-135c-4a3c-96d7-376d5d1e4db9",
+        "generatedAt": "2026-10-03T06:21:40.387Z"
+      },
+      "status": "generated",
+      "postprocess": {
+        "patches": [
+          [
+            105,
+            57,
+            15,
+            6
+          ]
+        ]
+      },
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "902ac47f-5218-4d3b-aed1-11e508c26237",
+          "reason": "มีหุ่นยนต์สีเขียวที่ไม่ใช่การ์เดียนของเกมยืนอยู่ใต้โครงซ่อม ทั้งที่ฉากนี้ต้องว่างไว้วางการ์เดียนของเกม จึงระบุว่าใต้โครงต้องว่าง ไม่มีหุ่น แล้วเจนใหม่",
+          "subject": "inside a huge robot hangar with a maintenance gantry, hanging cables and a crane hook, yellow and black hazard stripes on the floor, empty room"
+        }
+      ],
+      "note": "ป้ายเล็กในภาพมีขีดคล้ายตัวอักษร ระบายเป็นแผ่นเรียบตอน build (postprocess.patches) แทนการเจนใหม่"
+    },
+    {
+      "id": "SC-03",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: ลู่ซ้อมกีฬา",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_gym": "story/bg_scene_gym.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "an outdoor running track with hurdles and an empty stadium stand under an orange sunset sky, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9b0b1e6c-f5d5-4cd8-825a-711524b06908",
+        "generatedAt": "2026-10-03T06:12:30.019Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-04",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: คลังของแล็บ",
+      "requested": true,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_archive": "story/bg_scene_archive.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a cozy storage archive room with tall wooden shelves full of boxes, old trophies and drawers, warm lamp light, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e24738d3-500e-4da6-9862-3ee5d5201d28",
+        "generatedAt": "2026-10-03T06:12:50.105Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-05",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: โรงงาน",
+      "requested": true,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_factory": "story/bg_scene_factory.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a factory hall with long conveyor belts, big gears, machines and steam pipes, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9b5309d4-c197-457e-bf57-e0229ab8d45b",
+        "generatedAt": "2026-10-03T06:13:19.893Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-06",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: ตลาดลานกลางเมือง",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_market": "story/bg_scene_market.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a colorful city plaza street market with stalls under striped awnings at daytime, empty street, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "7b05f952-3a76-42da-941e-5ac499904082",
+        "generatedAt": "2026-10-03T06:13:48.887Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-07",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: สตูดิโอถ่ายทำ",
+      "requested": true,
+      "size": [
+        320,
+        164
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_studio": "story/bg_scene_studio.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a film studio with a camera on a tripod, two spotlights and a plain green backdrop, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "507aff71-ce6f-48b9-b65d-322b8588b90e",
+        "generatedAt": "2026-10-03T06:14:36.240Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-08",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: เตาตีเหล็ก",
+      "requested": true,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_forge": "story/bg_scene_forge.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a blacksmith forge workshop with a glowing furnace, a heavy anvil, hanging tongs and swords on the wall, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "34189bf3-df03-4a07-9a71-95de39b3b501",
+        "generatedAt": "2026-10-03T06:15:15.188Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-09",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: ศูนย์วิจัยริมทะเล",
+      "requested": true,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_outpost": "story/bg_scene_outpost.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a seaside research station with big windows facing a blue ocean, wall maps and green radar screens, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "39ad2bdd-e64c-4bf5-86c3-3ba3ccaf02a8",
+        "generatedAt": "2026-10-03T06:15:44.310Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-10",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: เต็นท์พยาบาลสนาม",
+      "requested": true,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_clinic": "story/bg_scene_clinic.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a field medical tent with two cots, medicine shelves and a plain red cross sign, warm light, empty tent, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "3c79c487-c8f6-4031-85b6-9356f084692e",
+        "generatedAt": "2026-10-03T06:16:31.836Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "SC-11",
+      "kind": "backdrop",
+      "name": "ฉากเรื่องราว: ห้องบัญชาการของป้อม",
+      "requested": true,
+      "size": [
+        320,
+        155
+      ],
+      "files": {},
+      "web": {
+        "bg_scene_fortress": "story/bg_scene_fortress.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "inside a dark steel fortress command hall with red warning lights and a big window showing an erupting volcano with lava, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b8bf3ff7-a3d1-4a1b-9063-43c019c5b1ba",
+        "generatedAt": "2026-10-03T06:17:01.077Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "CORE-1",
       "kind": "icon",
       "name": "แกน AI ชิ้นที่ 1",
@@ -6403,6 +7654,70 @@
       "status": "generated"
     },
     {
+      "id": "BT-13",
+      "kind": "battle",
+      "name": "ไคจูแมพ 3 ด่าน 1 แมกมาโกเลม (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_10": "battle/bt_kaiju_10.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "huge magma golem kaiju facing left made of cracked black volcanic rock with glowing orange lava seams, massive heavy fists, a small head with glowing yellow eyes, standing, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "5d9219ab-201d-48e4-8e44-f91dff04483a",
+        "generatedAt": "2026-10-03T06:09:44.031Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-14",
+      "kind": "battle",
+      "name": "ไคจูแมพ 3 ด่าน 2 ฟีนิกซ์เหล็ก (หันซ้าย)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_11": "battle/bt_kaiju_11.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "giant iron phoenix kaiju facing left, steel feather wings spread wide with burning orange flame edges, sharp silver beak, glowing red eyes, long fiery tail, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 128,
+          "height": 128,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "west"
+        },
+        "fetchTool": "get_image",
+        "id": "b7d2a735-21db-4672-8774-ddef75f5e893",
+        "generatedAt": "2026-10-03T06:10:12.724Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "BG-07",
       "kind": "backdrop",
       "name": "ฉากต่อสู้ 7 ท่าเรือโรงไฟฟ้า (แมพ 2)",
@@ -7578,6 +8893,44 @@
       ]
     },
     {
+      "id": "ST-KAIJU-10",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_kaiju_10)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_10": "story/st_kaiju_10.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_10",
+        "bt_kaiju_10"
+      ]
+    },
+    {
+      "id": "ST-KAIJU-11",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_kaiju_11)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_kaiju_11": "story/st_kaiju_11.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_10",
+        "bt_kaiju_11"
+      ]
+    },
+    {
       "id": "ST-PROLOGUE-4",
       "kind": "composite",
       "name": "ภาพประกอบเนื้อเรื่อง (st_corridor + แกน AI 6 ชิ้น)",
@@ -7599,6 +8952,721 @@
         "core_4",
         "core_5",
         "core_6"
+      ]
+    },
+    {
+      "id": "ST-NPC-MECHANIC-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_lab + npc_mechanic + pt_professor)",
+      "requested": false,
+      "size": [
+        320,
+        143
+      ],
+      "files": {},
+      "web": {
+        "st_npc_mechanic_1": "story/st_npc_mechanic_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_lab",
+        "npc_mechanic",
+        "pt_professor"
+      ]
+    },
+    {
+      "id": "ST-NPC-MECHANIC-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_hangar + npc_mechanic + npc_foreman + gd_plate_fist)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_mechanic_2": "story/st_npc_mechanic_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_hangar",
+        "npc_mechanic",
+        "npc_foreman",
+        "gd_plate_fist"
+      ]
+    },
+    {
+      "id": "ST-NPC-MECHANIC-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_hangar + npc_mechanic + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_mechanic_3": "story/st_npc_mechanic_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_hangar",
+        "npc_mechanic",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-COACH-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_gym + npc_coach)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_npc_coach_1": "story/st_npc_coach_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_gym",
+        "npc_coach"
+      ]
+    },
+    {
+      "id": "ST-NPC-COACH-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_gym + npc_coach + npc_ranger)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_npc_coach_2": "story/st_npc_coach_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_gym",
+        "npc_coach",
+        "npc_ranger"
+      ]
+    },
+    {
+      "id": "ST-NPC-COACH-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_gym + npc_coach + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_npc_coach_3": "story/st_npc_coach_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_gym",
+        "npc_coach",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-ARCHIVIST-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_archive + npc_archivist)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_archivist_1": "story/st_npc_archivist_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_archive",
+        "npc_archivist"
+      ]
+    },
+    {
+      "id": "ST-NPC-ARCHIVIST-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_archive + npc_archivist + npc_sage + pt_professor)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_archivist_2": "story/st_npc_archivist_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_archive",
+        "npc_archivist",
+        "npc_sage",
+        "pt_professor"
+      ]
+    },
+    {
+      "id": "ST-NPC-ARCHIVIST-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_archive + npc_archivist + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_archivist_3": "story/st_npc_archivist_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_archive",
+        "npc_archivist",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-FOREMAN-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_factory + npc_foreman)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_foreman_1": "story/st_npc_foreman_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_factory",
+        "npc_foreman"
+      ]
+    },
+    {
+      "id": "ST-NPC-FOREMAN-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_factory + npc_foreman + bt_kaiju_4)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_foreman_2": "story/st_npc_foreman_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_factory",
+        "npc_foreman",
+        "bt_kaiju_4"
+      ]
+    },
+    {
+      "id": "ST-NPC-FOREMAN-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_hangar + npc_foreman + npc_mechanic + gd_plate_fist)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_foreman_3": "story/st_npc_foreman_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_hangar",
+        "npc_foreman",
+        "npc_mechanic",
+        "gd_plate_fist"
+      ]
+    },
+    {
+      "id": "ST-NPC-VENDOR-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_market + npc_vendor)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_npc_vendor_1": "story/st_npc_vendor_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_market",
+        "npc_vendor"
+      ]
+    },
+    {
+      "id": "ST-NPC-VENDOR-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_lab + npc_vendor + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        143
+      ],
+      "files": {},
+      "web": {
+        "st_npc_vendor_2": "story/st_npc_vendor_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_lab",
+        "npc_vendor",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-VENDOR-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_market + npc_vendor + npc_director)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_npc_vendor_3": "story/st_npc_vendor_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_market",
+        "npc_vendor",
+        "npc_director"
+      ]
+    },
+    {
+      "id": "ST-NPC-DIRECTOR-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_studio + npc_director + pt_professor)",
+      "requested": false,
+      "size": [
+        320,
+        164
+      ],
+      "files": {},
+      "web": {
+        "st_npc_director_1": "story/st_npc_director_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_studio",
+        "npc_director",
+        "pt_professor"
+      ]
+    },
+    {
+      "id": "ST-NPC-DIRECTOR-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_studio + npc_director)",
+      "requested": false,
+      "size": [
+        320,
+        164
+      ],
+      "files": {},
+      "web": {
+        "st_npc_director_2": "story/st_npc_director_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_studio",
+        "npc_director"
+      ]
+    },
+    {
+      "id": "ST-NPC-DIRECTOR-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_studio + npc_director + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        164
+      ],
+      "files": {},
+      "web": {
+        "st_npc_director_3": "story/st_npc_director_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_studio",
+        "npc_director",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-SMITH-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_forge + npc_smith)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_smith_1": "story/st_npc_smith_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_forge",
+        "npc_smith"
+      ]
+    },
+    {
+      "id": "ST-NPC-SMITH-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_forge + npc_smith + npc_mechanic)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_smith_2": "story/st_npc_smith_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_forge",
+        "npc_smith",
+        "npc_mechanic"
+      ]
+    },
+    {
+      "id": "ST-NPC-SMITH-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_forge + npc_smith + npc_keeper + gr_lance)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_smith_3": "story/st_npc_smith_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_forge",
+        "npc_smith",
+        "npc_keeper",
+        "gr_lance"
+      ]
+    },
+    {
+      "id": "ST-NPC-SAGE-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_sage + pt_professor)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_sage_1": "story/st_npc_sage_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_sage",
+        "pt_professor"
+      ]
+    },
+    {
+      "id": "ST-NPC-SAGE-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_sage + npc_archivist)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_sage_2": "story/st_npc_sage_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_sage",
+        "npc_archivist"
+      ]
+    },
+    {
+      "id": "ST-NPC-SAGE-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_sage + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_sage_3": "story/st_npc_sage_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_sage",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-RANGER-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_ranger)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_ranger_1": "story/st_npc_ranger_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_ranger"
+      ]
+    },
+    {
+      "id": "ST-NPC-RANGER-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_gym + npc_ranger + npc_coach)",
+      "requested": false,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "st_npc_ranger_2": "story/st_npc_ranger_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_gym",
+        "npc_ranger",
+        "npc_coach"
+      ]
+    },
+    {
+      "id": "ST-NPC-RANGER-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_ranger + pr_pickup_beacon)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_ranger_3": "story/st_npc_ranger_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_ranger",
+        "pr_pickup_beacon"
+      ]
+    },
+    {
+      "id": "ST-NPC-MEDIC-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_clinic + npc_medic + pt_professor)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_medic_1": "story/st_npc_medic_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_clinic",
+        "npc_medic",
+        "pt_professor"
+      ]
+    },
+    {
+      "id": "ST-NPC-MEDIC-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_clinic + npc_medic + npc_captain)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_medic_2": "story/st_npc_medic_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_clinic",
+        "npc_medic",
+        "npc_captain"
+      ]
+    },
+    {
+      "id": "ST-NPC-MEDIC-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_clinic + npc_medic + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_medic_3": "story/st_npc_medic_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_clinic",
+        "npc_medic",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-CAPTAIN-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_fortress + npc_captain)",
+      "requested": false,
+      "size": [
+        320,
+        155
+      ],
+      "files": {},
+      "web": {
+        "st_npc_captain_1": "story/st_npc_captain_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_fortress",
+        "npc_captain"
+      ]
+    },
+    {
+      "id": "ST-NPC-CAPTAIN-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_fortress + npc_captain + npc_medic)",
+      "requested": false,
+      "size": [
+        320,
+        155
+      ],
+      "files": {},
+      "web": {
+        "st_npc_captain_2": "story/st_npc_captain_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_fortress",
+        "npc_captain",
+        "npc_medic"
+      ]
+    },
+    {
+      "id": "ST-NPC-CAPTAIN-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_fortress + npc_captain + gd_plate_fist)",
+      "requested": false,
+      "size": [
+        320,
+        155
+      ],
+      "files": {},
+      "web": {
+        "st_npc_captain_3": "story/st_npc_captain_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_fortress",
+        "npc_captain",
+        "gd_plate_fist"
+      ]
+    },
+    {
+      "id": "ST-NPC-KEEPER-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_fortress + npc_keeper)",
+      "requested": false,
+      "size": [
+        320,
+        155
+      ],
+      "files": {},
+      "web": {
+        "st_npc_keeper_1": "story/st_npc_keeper_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_fortress",
+        "npc_keeper"
+      ]
+    },
+    {
+      "id": "ST-NPC-KEEPER-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_forge + npc_keeper + npc_smith)",
+      "requested": false,
+      "size": [
+        320,
+        154
+      ],
+      "files": {},
+      "web": {
+        "st_npc_keeper_2": "story/st_npc_keeper_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_forge",
+        "npc_keeper",
+        "npc_smith"
+      ]
+    },
+    {
+      "id": "ST-NPC-KEEPER-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_fortress + npc_keeper + npc_captain)",
+      "requested": false,
+      "size": [
+        320,
+        155
+      ],
+      "files": {},
+      "web": {
+        "st_npc_keeper_3": "story/st_npc_keeper_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_fortress",
+        "npc_keeper",
+        "npc_captain"
       ]
     },
     {
@@ -7819,6 +9887,46 @@
         "bg_battle_9",
         "bt_robot",
         "bt_kaiju_9"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-10",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_robot + bt_kaiju_10)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_10": "story/st_win_kaiju_10.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_10",
+        "bt_robot",
+        "bt_kaiju_10"
+      ]
+    },
+    {
+      "id": "ST-WIN-KAIJU-11",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_battle_10 + bt_robot + bt_kaiju_11)",
+      "requested": false,
+      "size": [
+        320,
+        160
+      ],
+      "files": {},
+      "web": {
+        "st_win_kaiju_11": "story/st_win_kaiju_11.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_battle_10",
+        "bt_robot",
+        "bt_kaiju_11"
       ]
     },
     {

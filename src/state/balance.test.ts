@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BARE, type Build, buildPower, PAR, parBuild, seeded, simulateBattle, simulateSortie } from "./balance";
 import { battleSetup } from "./battle";
+import { advantageShare } from "./shop";
 import { CAMPAIGN, DIFFICULTIES } from "./campaign";
 import { BAG_SIZE } from "./gear";
 import { idealBag } from "./loadout";
@@ -79,7 +80,7 @@ describe("ความสมดุลของด่านต่อสู้ (GD
     }
   });
 
-  it("อุปกรณ์แต่ละชิ้นช่วยได้ แต่ไม่มีชิ้นไหนทำให้ด่านสุดท้ายกลายเป็นชนะแน่นอน", () => {
+  it("อุปกรณ์แต่ละชิ้นช่วยได้ (อาวุธช่วยเมื่อไม่แพ้ทางคู่ต่อสู้ และถ่วงเมื่อแพ้ทาง) แต่ไม่มีชิ้นไหนทำให้ด่านสุดท้ายกลายเป็นชนะแน่นอน", () => {
     const pieces: Build["gear"][] = [
       { weapon: "sword", armor: "plate", chip: "none" },
       { weapon: "blaster", armor: "plate", chip: "none" },
@@ -93,7 +94,10 @@ describe("ความสมดุลของด่านต่อสู้ (GD
       const bare = simulateBattle(difficulty, spec, BARE, 0.6);
       for (const gear of pieces) {
         const one = simulateBattle(difficulty, spec, { ...BARE, gear }, 0.6);
-        expect(one.sorties, `${spec.id} ${JSON.stringify(gear)}`).toBeLessThanOrEqual(bare.sorties + 0.05);
+        const share = advantageShare(spec, gear) - advantageShare(spec, BARE.gear);
+        // อาวุธที่แพ้ทางคู่ต่อสู้มากกว่าหมัด: เล่นยากขึ้นจริง (ความเข้ากันของอาวุธมีผล) ชิ้นอื่นต้องไม่ทำให้แย่ลง
+        if (share < 0) expect(one.sorties, `${spec.id} ${JSON.stringify(gear)}`).toBeGreaterThan(bare.sorties);
+        else expect(one.sorties, `${spec.id} ${JSON.stringify(gear)}`).toBeLessThanOrEqual(bare.sorties + 0.05);
         expect(one.firstTry, `${spec.id} ${JSON.stringify(gear)}`).toBeLessThan(0.9);
       }
     }

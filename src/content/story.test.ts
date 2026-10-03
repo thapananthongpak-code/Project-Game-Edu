@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
+import { NPCS } from "../state/npcs";
 import { foeName, storyBeats, storyLines, zoneBeat } from "./story";
+import { ui } from "./ui-strings";
 
 interface ManifestAsset {
   files: Record<string, string>;
@@ -19,6 +21,14 @@ describe("เนื้อเรื่องแบบช่องการ์ต�
         expect(web.get(line.art), `${beat}: ${line.art}`).toBe(`story/${line.art}.png`);
         expect(line.text.trim().length, beat).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("เรื่องราวของ NPC ทุกคนมีภาพช่องการ์ตูนครบทุกบรรทัด (st_npc_<id>_<n>)", () => {
+    for (const npc of Object.values(NPCS)) {
+      const lines = ui.npc.stories[npc.id];
+      expect(lines.length, npc.id).toBeGreaterThan(0);
+      lines.forEach((_, i) => expect(web.get(`st_npc_${npc.id}_${i + 1}`), `${npc.id} ${i + 1}`).toBe(`story/st_npc_${npc.id}_${i + 1}.png`));
     }
   });
 

@@ -325,6 +325,19 @@ def remove_backdrop(frame, backdrop):
     return frame
 
 
+def blank_patches(img, patches):
+    """ป้ายเล็กในฉากที่เจนมาบางภาพมีขีดคล้ายตัวอักษร (postprocess.patches ใน source.json = [x, y, กว้าง, สูง]):
+    ระบายช่องนั้นด้วยสีที่พบมากที่สุดในช่อง ป้ายจึงเหลือเป็นแผ่นเรียบไม่มีตัวอักษร"""
+    img = img.copy()
+    for x, y, w, h in patches:
+        colors = [img.getpixel((i, j)) for i in range(x, x + w) for j in range(y, y + h)]
+        fill = max(set(colors), key=colors.count)
+        for i in range(x, x + w):
+            for j in range(y, y + h):
+                img.putpixel((i, j), fill)
+    return img
+
+
 def character_sheet(folder, postprocess=None):
     """แผ่นสไปรต์ 64×64 ต่อเฟรม: แถว = ทิศ คอลัมน์ 0 = ยืน คอลัมน์ 1.. = เดิน ทุกเฟรมของทิศเดียวกันเลื่อนเท่ากับท่ายืน เท้าจึงไม่กระตุก"""
     backdrop = (postprocess or {}).get("removeBackdrop")
@@ -376,6 +389,7 @@ def import_generated(asset, source):
         scene = Image.open(folder / "image.png").convert("RGB")
         if list(scene.size) != asset["size"]:
             raise SystemExit(f"{asset['id']}: ภาพต้องมีขนาด {asset['size']} แต่ได้ {scene.size}")
+        scene = blank_patches(scene, (source.get("postprocess") or {}).get("patches", []))
         # ฉากที่เจนมาบางภาพมีแถบดำบนล่าง ตัดออก (หน้าเกมขยายฉากให้เต็มกรอบเอง)
         dark = lambda y: max(max(scene.getpixel((x, y))) for x in range(0, scene.width, 4)) < 48
         top, bottom = 0, scene.height
@@ -388,7 +402,7 @@ def import_generated(asset, source):
     elif asset["kind"] == "npc":
         key = next(iter(asset["files"]))
         images[key] = normalize_sprite(Image.open(folder / "south.png"), source.get("postprocess"))
-    elif asset["kind"] in ("icon", "portrait", "fx"):
+    elif asset["kind"] in ("icon", "portrait", "fx", "guardian"):
         # ใช้ภาพตามที่เจนมา ต้องได้ขนาดตรงกับที่เกมใช้
         key = next(iter({**asset["files"], **asset.get("web", {})}))
         icon = Image.open(folder / "image.png").convert("RGBA")
@@ -443,6 +457,7 @@ STORY_COMPOSITES = {
     "st_boss_3": ("bg_battle_10", "bt_boss_3"),
     **{f"st_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(7, 10)},
     "st_boss_4": ("bg_battle_10", "bt_boss_4"),
+    **{f"st_kaiju_{n}": ("bg_battle_10", f"bt_kaiju_{n}") for n in (10, 11)},
 }
 # บทนำช่องที่ 4: ทางเดินห้องวิจัย + แกน AI ทั้ง 6 ชิ้นของเกม (เจนภาพให้มีลูกแก้วครบ 6 ไม่ได้ จึงวางภาพแกนจริงทับ)
 STORY_CORES = ("st_prologue_4", "st_corridor")
@@ -454,10 +469,35 @@ STORY_WINS = {
     "st_win_boss_2": ("bg_battle_5", "bt_boss_2"),
     "st_win_boss_3": ("bg_battle_5", "bt_boss_3"),
     **{f"st_win_kaiju_{n}": (f"bg_battle_{n}", f"bt_kaiju_{n}") for n in range(7, 10)},
+    **{f"st_win_kaiju_{n}": ("bg_battle_10", f"bt_kaiju_{n}") for n in (10, 11)},
     "st_win_boss_4": ("bg_battle_10", "bt_boss_4"),
 }
 # ไคจูของแมพ 2 และร่างสุดท้ายของบอส: (รหัส, ไฟล์, สีของภาพชั่วคราว) และฉากต่อสู้ของแมพ 2–3: (รหัส, เลขฉาก)
-EXTRA_FOES = [("BT-09", "bt_kaiju_7", "#F6C343"), ("BT-10", "bt_kaiju_8", "#8B9BB4"), ("BT-11", "bt_kaiju_9", "#F6C343"), ("BT-12", "bt_boss_4", "#FFF4DC")]
+EXTRA_FOES = [("BT-09", "bt_kaiju_7", "#F6C343"), ("BT-10", "bt_kaiju_8", "#8B9BB4"), ("BT-11", "bt_kaiju_9", "#F6C343"), ("BT-12", "bt_boss_4", "#FFF4DC"),
+              ("BT-13", "bt_kaiju_10", "#F08C2E"), ("BT-14", "bt_kaiju_11", "#B13E53")]
+# หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธ (แก้จาก BT-00 ด้วย edit_image_pro_flash): GD-01..24 = เกราะ × อาวุธ ตามลำดับนี้
+GUARDIAN_ARMORS = ["plate", "heavy", "guard", "titan"]
+GUARDIAN_WEAPONS = ["fist", "sword", "blaster", "hammer", "lance", "cannon"]
+GUARDIAN_VARIANTS = [(f"GD-{a * 6 + w + 1:02d}", f"gd_{armor}_{weapon}") for a, armor in enumerate(GUARDIAN_ARMORS) for w, weapon in enumerate(GUARDIAN_WEAPONS)]
+# ฉากหลังของเรื่องราว NPC (ฉากเปล่า ตอน build วางตัวละครของเกมลงไป)
+SCENE_BACKDROPS = [("SC-01", "bg_scene_lab"), ("SC-02", "bg_scene_hangar"), ("SC-03", "bg_scene_gym"), ("SC-04", "bg_scene_archive"), ("SC-05", "bg_scene_factory"), ("SC-06", "bg_scene_market"),
+                   ("SC-07", "bg_scene_studio"), ("SC-08", "bg_scene_forge"), ("SC-09", "bg_scene_outpost"), ("SC-10", "bg_scene_clinic"), ("SC-11", "bg_scene_fortress")]
+# เรื่องราวของ NPC เรื่องละ 3 ช่อง (ข้อความอยู่ใน ui.npc.stories): ช่อง -> (ฉากหลัง, ตัวละครในช่อง)
+# ตัวละคร: ("npc", id) ยืนบนพื้น ("bit",) พี่บิตลอย ("prof",) ศาสตราจารย์ในจอวิดีโอคอล ("guardian",) หุ่นการ์เดียน ("kaiju", key) ไคจู ("item", key) ของชิ้นเล็ก
+NPC_PANELS = {
+    "mechanic": [("bg_scene_lab", [("npc", "mechanic"), ("prof",)]), ("bg_scene_hangar", [("npc", "mechanic"), ("npc", "foreman"), ("guardian",)]), ("bg_scene_hangar", [("npc", "mechanic"), ("bit",)])],
+    "coach": [("bg_scene_gym", [("npc", "coach")]), ("bg_scene_gym", [("npc", "coach"), ("npc", "ranger")]), ("bg_scene_gym", [("npc", "coach"), ("bit",)])],
+    "archivist": [("bg_scene_archive", [("npc", "archivist")]), ("bg_scene_archive", [("npc", "archivist"), ("npc", "sage"), ("prof",)]), ("bg_scene_archive", [("npc", "archivist"), ("bit",)])],
+    "foreman": [("bg_scene_factory", [("npc", "foreman")]), ("bg_scene_factory", [("npc", "foreman"), ("kaiju", "bt_kaiju_4")]), ("bg_scene_hangar", [("npc", "foreman"), ("npc", "mechanic"), ("guardian",)])],
+    "vendor": [("bg_scene_market", [("npc", "vendor")]), ("bg_scene_lab", [("npc", "vendor"), ("bit",)]), ("bg_scene_market", [("npc", "vendor"), ("npc", "director")])],
+    "director": [("bg_scene_studio", [("npc", "director"), ("prof",)]), ("bg_scene_studio", [("npc", "director")]), ("bg_scene_studio", [("npc", "director"), ("bit",)])],
+    "smith": [("bg_scene_forge", [("npc", "smith")]), ("bg_scene_forge", [("npc", "smith"), ("npc", "mechanic")]), ("bg_scene_forge", [("npc", "smith"), ("item", "gr_lance"), ("npc", "keeper")])],
+    "sage": [("bg_scene_outpost", [("npc", "sage"), ("prof",)]), ("bg_scene_outpost", [("npc", "sage"), ("npc", "archivist")]), ("bg_scene_outpost", [("npc", "sage"), ("bit",)])],
+    "ranger": [("bg_scene_outpost", [("npc", "ranger")]), ("bg_scene_gym", [("npc", "ranger"), ("npc", "coach")]), ("bg_scene_outpost", [("npc", "ranger"), ("item", "pr_pickup_beacon")])],
+    "medic": [("bg_scene_clinic", [("npc", "medic"), ("prof",)]), ("bg_scene_clinic", [("npc", "medic"), ("npc", "captain")]), ("bg_scene_clinic", [("npc", "medic"), ("bit",)])],
+    "captain": [("bg_scene_fortress", [("npc", "captain")]), ("bg_scene_fortress", [("npc", "captain"), ("npc", "medic")]), ("bg_scene_fortress", [("npc", "captain"), ("guardian",)])],
+    "keeper": [("bg_scene_fortress", [("npc", "keeper")]), ("bg_scene_forge", [("npc", "keeper"), ("npc", "smith")]), ("bg_scene_fortress", [("npc", "keeper"), ("npc", "captain")])],
+}
 EXTRA_BACKDROPS = [("BG-07", 7), ("BG-08", 8), ("BG-09", 9), ("BG-10", 10)]
 # ไอคอนของใช้และโมดูลของพี่บิต (แสดงใน HTML แทนอีโมจิ): (รหัส, ไฟล์)
 ITEM_ICONS = [("IT-01", "it_repair_kit"), ("IT-02", "it_shield"), ("IT-03", "it_overcharge"), ("IT-04", "it_analyzer"), ("IT-05", "it_reboot"),
@@ -658,6 +698,10 @@ def main():
                 lambda: draw_floor("#C9B27C", "#8B6B3D"), lambda: draw_wall("#5B6B3A", INK, stripe="#F08C2E")),
         tileset("TS-09", "ts_fortress", "ไทล์เซตโถงของแมพ 3 (ป้อมปราการ)", True,
                 lambda: draw_floor("#333C57", INK), lambda: draw_wall(INK, "#1A1C2C", stripe=RED)),
+        tileset("TS-10", "ts_hangar2", "ไทล์เซตโรงเก็บหุ่นของแมพ 2", True,
+                lambda: draw_floor("#C9B27C", MIST), lambda: draw_wall(PAPER, TEAL, stripe=SCREEN)),
+        tileset("TS-11", "ts_hangar3", "ไทล์เซตโรงเก็บหุ่นของแมพ 3", True,
+                lambda: draw_floor("#333C57", INK), lambda: draw_wall("#5D275D", INK, stripe=RED)),
         prop("PR-C01", "pr_door_locked", (32, 64), lambda: draw_door(False)),
         prop("PR-C02", "pr_door_open", (32, 64), lambda: draw_door(True)),
         prop("PR-C03", "pr_core_pedestal", (32, 64), draw_pedestal),
@@ -675,6 +719,12 @@ def main():
         prop("PR-G02", "pr_mission_console", (64, 64), lambda: draw_block(64, 64, SLATE, SCREEN)),
         prop("PR-G03", "pr_wardrobe", (32, 64), lambda: draw_block(32, 64, MIST, SLATE)),
         prop("PR-G04", "pr_hologram", (32, 64), lambda: draw_block(32, 64, SCREEN, TEAL)),
+        prop("PR-G05", "pr_guardian_bay", (96, 64), lambda: draw_block(96, 64, STEEL, YELLOW)),
+        prop("PR-G06", "pr_core_case", (64, 64), lambda: draw_block(64, 64, MIST, TEAL)),
+        prop("PR-G07", "pr_bit_pad", (64, 32), lambda: draw_block(64, 32, SCREEN, TEAL)),
+        *[{**image(asset_id, base, (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "guardian", {}, "guardian"),
+           "pixellab": {"tool": "edit_image_pro_flash", "arguments": {"description": prompts[base]}, "fetchTool": "get_image"}} for asset_id, base in GUARDIAN_VARIANTS],
+        *[image(asset_id, base, (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "story", web=True) for asset_id, base in SCENE_BACKDROPS],
         *[core(room) for room in ROOM_COLORS],
         image("BT-00", "bt_robot", (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "battle", {**BATTLE_SETTINGS, "direction": "east"}, "battle", web=True),
         *[kaiju(n) for n in KAIJU_COLORS],
@@ -776,6 +826,49 @@ def main():
         robot = sprite(robot_key)
         scene.alpha_composite(robot, (40, scene.height - robot.height - 4))
         composed(key, scene, [backdrop_key, robot_key, kaiju_key])
+
+    # เรื่องราวของ NPC: ฉากหลังเปล่า + ตัวละครของเกม (ขยาย 2 เท่าแบบพิกเซล) เรียงจากซ้ายไปขวาตามลำดับในรายการ
+    def npc_panel(key, backdrop_key, actors):
+        scene = Image.open(built[backdrop_key]).convert("RGBA")
+        parts = [backdrop_key]
+        people = [a for a in actors if a[0] in ("npc", "guardian", "kaiju")]
+        slots = [scene.width * (i + 1) / (len(people) + 1) for i in range(len(people))]
+        for (kind, *rest), x in zip(people, slots):
+            if kind == "npc":
+                body = sprite(f"npc_{rest[0]}")
+                body = body.resize((body.width * 2, body.height * 2), Image.NEAREST)
+                parts.append(f"npc_{rest[0]}")
+            elif kind == "guardian":
+                body = sprite("gd_plate_fist")
+                parts.append("gd_plate_fist")
+            else:
+                body = sprite(rest[0])
+                parts.append(rest[0])
+            scene.alpha_composite(body, (int(x - body.width / 2), scene.height - body.height - 6))
+        for kind, *rest in actors:
+            if kind == "bit":
+                bit = sprite("ch_mentor_south")
+                bit = bit.resize((bit.width * 2, bit.height * 2), Image.NEAREST)
+                scene.alpha_composite(bit, (scene.width - bit.width - 26, 30))
+                parts.append("ch_mentor_south")
+            elif kind == "prof":
+                # ศาสตราจารย์คุยผ่านจอวิดีโอคอลที่มุมซ้ายบน
+                face = Image.open(built["pt_professor"]).convert("RGBA")
+                frame = Image.new("RGBA", (face.width + 8, face.height + 8), (26, 28, 44, 255))
+                inner = Image.new("RGBA", (face.width, face.height), (167, 240, 112, 255))
+                frame.alpha_composite(inner, (4, 4))
+                frame.alpha_composite(face, (4, 4))
+                scene.alpha_composite(frame, (12, 12))
+                parts.append("pt_professor")
+            elif kind == "item":
+                thing = sprite(rest[0])
+                scene.alpha_composite(thing, (scene.width - thing.width - 30, scene.height - thing.height - 40))
+                parts.append(rest[0])
+        composed(key, scene, parts)
+
+    for npc_id, panels in NPC_PANELS.items():
+        for n, (backdrop_key, actors) in enumerate(panels, start=1):
+            npc_panel(f"st_npc_{npc_id}_{n}", backdrop_key, actors)
 
     fallen_scene(*STORY_VICTORY)
     for key, (backdrop_key, kaiju_key) in STORY_WINS.items():

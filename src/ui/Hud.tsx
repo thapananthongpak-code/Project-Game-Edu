@@ -109,9 +109,12 @@ export function Hud() {
         <img src={art.credit} alt="" className="pixelated h-4 w-4" />
         {fmt(ui.hud.credits, { n: credits })}
       </span>
-      <span className="hidden shrink-0 rounded-md border-2 border-ink bg-teal-light px-2 py-0.5 text-xs font-bold min-[420px]:inline" data-testid="cores">
-        {fmt(ui.hud.cores, { n: cores, total })}
-      </span>
+      {/* แมพที่ไม่มีห้องเรียน (แมพ 3) ไม่มีแกนให้เก็บ */}
+      {total > 0 && (
+        <span className="hidden shrink-0 rounded-md border-2 border-ink bg-teal-light px-2 py-0.5 text-xs font-bold min-[420px]:inline" data-testid="cores">
+          {fmt(ui.hud.cores, { n: cores, total })}
+        </span>
+      )}
       {topic && (
         <button type="button" className="btn !min-h-9 shrink-0 !px-2 text-xs" data-testid="hud-tutor" onClick={press(() => setTutorOpen(true))}>
           {ui.hud.tutor}

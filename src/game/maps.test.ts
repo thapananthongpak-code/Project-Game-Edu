@@ -5,7 +5,7 @@ import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { NPCS, npcsOfMap } from "../state/npcs";
 import { DECOR } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMap, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, slotsOf, zoneMap } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, slotsOf, zoneMap } from "./maps";
 
 interface ManifestAsset {
   size: [number, number];
@@ -21,8 +21,10 @@ const named = (label: string, rooms: Record<number, GameMap>): [string, GameMap]
 const maps: [string, GameMap][] = [
   ["โถงแมพ 1 (6 ประตู)", hallMap],
   ["โถงแมพ 2 (3 ประตู)", hallMapOf("normal")],
-  ["โถงแมพ 3 (1 ประตู)", hallMapOf("hard")],
-  ["โรงเก็บหุ่น", hangarMap],
+  ["โถงแมพ 3 (ไม่มีห้องเรียน)", hallMapOf("hard")],
+  ["โรงเก็บหุ่นแมพ 1", hangarMapOf("easy")],
+  ["โรงเก็บหุ่นแมพ 2", hangarMapOf("normal")],
+  ["โรงเก็บหุ่นแมพ 3", hangarMapOf("hard")],
   ...named("ห้อง", roomMaps),
   ...named("ระดับกลาง ห้อง", normalMaps),
   ...named("ระดับยาก ห้อง", hardMaps),
@@ -100,7 +102,16 @@ describe("แผนที่ของทุกฉาก", () => {
     const doors = hallMap.objects.filter((o) => o.kind === "door");
     expect(doors.map((door) => door.index)).toEqual(Array.from({ length: ROOM_COUNT }, (_, i) => i + 1));
     expect(doors.map((door) => door.col)).toEqual([...doors.map((door) => door.col)].sort((a, b) => a - b));
-    expect(["console", "robot", "wardrobe", "hologram", "door", "storage"].map((kind) => count(hangarMap, kind as MapObject["kind"]))).toEqual([1, 1, 1, 1, 1, 1]);
+    // โรงเก็บหุ่นของทุกแมพมีจุดปรับแต่งแยกกัน: แท่นการ์เดียน ตู้เสื้อผ้า แท่นพี่บิต ตู้กระจกเก็บแกน แผงสั่งปฏิบัติการ กล่องเก็บไอเทม เครื่องฉาย และประตู
+    for (const difficulty of DIFFICULTIES) {
+      const kinds = ["console", "robot", "wardrobe", "bitpad", "corecase", "hologram", "door", "storage"] as const;
+      expect(kinds.map((kind) => count(hangarMapOf(difficulty), kind)), difficulty).toEqual(kinds.map(() => 1));
+      // แท่นพี่บิตวางราบกับพื้น ผู้เล่นยืนบนแท่นได้
+      expect(hangarMapOf(difficulty).objects.find((o) => o.kind === "bitpad")?.flat, difficulty).toBe(true);
+    }
+    // โรงเก็บหุ่นของแต่ละแมพออกแบบต่างกัน
+    expect(new Set(DIFFICULTIES.map((difficulty) => hangarMapOf(difficulty).tileset)).size).toBe(3);
+    expect(new Set(DIFFICULTIES.map((difficulty) => hangarMapOf(difficulty).shape.join("\n"))).size).toBe(3);
     // โถงของทุกแมพมีประตูโรงเก็บหุ่น ร้าน กล่องเก็บไอเทม กระดานแผนที่การเดินทาง และกระดานตกแต่ง อย่างละหนึ่ง
     for (const difficulty of DIFFICULTIES) {
       expect(["gate", "shop", "storage", "travel", "decorboard"].map((kind) => count(hallMapOf(difficulty), kind as MapObject["kind"])), difficulty).toEqual([1, 1, 1, 1, 1]);
@@ -145,16 +156,19 @@ describe("แผนที่ของทุกฉาก", () => {
     });
   });
 
-  it("แมพ 3: ห้องเดียว มีเครื่องทดสอบรวมหนึ่งเครื่อง ไม่มีสถานี คลังความรู้ โต๊ะทบทวน แท่น หรือภารกิจภาคสนาม", () => {
-    const map = hardMaps[1];
-    expect(["minigame", "field", "core", "door", "station", "archive", "review"].map((kind) => count(map, kind as MapObject["kind"]))).toEqual([1, 0, 0, 1, 0, 0, 0]);
-    expect(map.objects.find((o) => o.kind === "minigame")?.topic).toBeUndefined();
+  it("แมพ 3: ไม่มีห้องเรียน (ลุยด่านต่อสู้อย่างเดียว) โถงไม่มีประตูห้อง", () => {
+    expect(Object.keys(hardMaps)).toEqual([]);
+    expect(CAMPAIGN.hard.zones).toEqual([]);
+    expect(count(hallMapOf("hard"), "door")).toBe(0);
   });
 
   it("NPC ของแต่ละแมพ: อยู่ครบทุกคน คนละหนึ่งที่ ในห้องของหัวข้อตัวเอง และของในเควสเสริมมีครบตามจำนวน", () => {
     for (const difficulty of DIFFICULTIES) {
       const placed = CAMPAIGN[difficulty].zones.flatMap((zone, i) => zoneMap(difficulty, i + 1).objects.filter((o) => o.kind === "npc").map((o) => ({ npc: o.npc, zone })));
-      expect(placed.map((p) => p.npc).sort(), difficulty).toEqual(npcsOfMap(difficulty).map((spec) => spec.id).sort());
+      // แมพที่ไม่มีห้องเรียน (แมพ 3): NPC อยู่ในโรงเก็บหุ่นของแมพนั้น
+      const inHangar = hangarMapOf(difficulty).objects.filter((o) => o.kind === "npc").map((o) => o.npc);
+      expect([...placed.map((p) => p.npc), ...inHangar].sort(), difficulty).toEqual(npcsOfMap(difficulty).map((spec) => spec.id).sort());
+      expect(inHangar.length > 0, difficulty).toBe(CAMPAIGN[difficulty].zones.length === 0);
       for (const { npc, zone } of placed) expect(zone.topics, `${difficulty} ${npc}`).toContain(NPCS[npc as keyof typeof NPCS].topic);
       CAMPAIGN[difficulty].zones.forEach((_, i) => {
         const map = zoneMap(difficulty, i + 1);
@@ -175,14 +189,14 @@ describe("แผนที่ของทุกฉาก", () => {
     }
   });
 
-  it("โถงและโรงเก็บหุ่นไม่มี NPC ประจำห้อง ของติดผนังของโถงไม่ชนประตูของทุกแมพ", () => {
+  it("โถงไม่มี NPC ของติดผนังของโถงไม่ชนประตูของทุกแมพ", () => {
     for (const zones of DIFFICULTIES) {
       const map = hallMapOf(zones);
       expect(count(map, "npc") + count(map, "pickup")).toBe(0);
       const mounted = map.objects.filter((o) => o.mount).flatMap((o) => Array.from({ length: o.w ?? 1 }, (_, n) => Math.floor(o.col) + n));
       expect(new Set(mounted).size, `โถงของ ${zones}`).toBe(mounted.length);
     }
-    expect(count(hangarMap, "npc")).toBe(0);
+    expect(count(hangarMapOf("easy"), "npc") + count(hangarMapOf("normal"), "npc")).toBe(0);
   });
 });
 

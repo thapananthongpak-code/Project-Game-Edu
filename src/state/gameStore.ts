@@ -31,7 +31,7 @@ import type { Avatar, Decor, DecorSize, Supply } from "./shop.config";
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
 export interface MusicCue {
@@ -445,7 +445,7 @@ export function isRoomUnlocked(state: Run, zone: number): boolean {
   if (zone <= 1) return true;
   const level = planOf(state);
   const previous = level.zones[zone - 2];
-  if (!previous || !previous.topics.every((topic) => roomProgress(state, topic).core)) return false;
+  if (!previous || (level.roomsNeedCores && !previous.topics.every((topic) => roomProgress(state, topic).core))) return false;
   const gate = gateOf(difficultyOf(state), zone);
   return !gate || (state.battles[gate.id]?.won ?? false);
 }
@@ -462,7 +462,28 @@ export const allBattlesWon = (state: Run): boolean => planOf(state).battles.ever
 export const battlesWon = (state: Run): number => planOf(state).battles.filter((battle) => state.battles[battle.id]?.won).length;
 
 /** ค่าพลังรวมของการ์เดียนตอนนี้ (เทียบกับ BattleSpec.power ของด่าน เป็นคำแนะนำเท่านั้น) ระบุด่าน: นับความได้เปรียบของอาวุธกับคู่ต่อสู้ของด่านนั้นด้วย */
-export const guardianPowerOf = (state: Pick<GameState, "profile" | "shop">, spec?: BattleSpec): number => powerOf(state.profile?.difficulty, state.shop, spec);
+export const guardianPowerOf = (state: Pick<GameState, "profile" | "shop" | "progress">, spec?: BattleSpec): number => powerOf(state.profile?.difficulty, state.shop, spec, spec ? coreBoostOf(state, spec) : 0);
+
+/**
+ * แกน AI ที่ชาร์จแล้วเพิ่มพลังสูงสุดของการ์เดียนในด่านของเรื่องนั้น (แมพ 2 ซึ่งข้ามการทบทวนได้: ทบทวนแล้วอึดขึ้น)
+ * นับแกนของแมพที่อยู่ เฉพาะหัวข้อที่ด่านนั้นใช้ถาม ไม่เกิน coreBoost ของแมพ
+ */
+export function coreBoostOf(state: Pick<GameState, "profile" | "progress">, spec: BattleSpec): number {
+  const limit = planOf(state).coreBoost;
+  if (limit <= 0) return 0;
+  const topics = topicsOf(difficultyOf(state));
+  return Math.min(limit, spec.sources.filter((topic) => topics.includes(topic) && roomProgress(state, topic).core).length);
+}
+
+/**
+ * ถามตอบพิเศษของ NPC เปิดเมื่อได้แกน AI ของทุกหัวข้อที่ถามในแมพนั้น
+ * แมพที่ไม่มีห้องเรียน (แมพ 3) ใช้แกนจากบันทึกการเรียนของแมพ 1 แทน (ได้ครบแล้วก่อนมาถึงเสมอ)
+ */
+export function quizUnlocked(state: Pick<GameState, "profile" | "progress" | "others">, topics: readonly number[]): boolean {
+  if (topicsOf(difficultyOf(state)).length > 0) return topics.every((topic) => roomProgress(state, topic).core);
+  const learned = learningRooms(state);
+  return topics.every((topic) => learned[topic]?.core ?? false);
+}
 
 /** รหัสฉากเนื้อเรื่องตอนมาถึงแมพ (แมพ 1 ใช้บทนำ) และบทส่งท้ายของแมพ */
 export const arrivalBeat = (map: Difficulty): string | null => (map === "easy" ? null : `map-${map}`);

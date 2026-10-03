@@ -19,7 +19,7 @@ export function Missions() {
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const shop = useGameStore((s) => s.shop);
-  const power = guardianPowerOf({ profile, shop });
+  const power = guardianPowerOf({ profile, shop, progress });
   const run = { profile, progress, battles };
   const pending = pendingBattle(run);
 
@@ -35,7 +35,7 @@ export function Missions() {
         <p className="text-sm text-slate">{ui.missions.intro}</p>
         <div className="rounded-md border-2 border-ink bg-teal-light px-2 py-1.5" data-testid="missions-power" data-power={power}>
           <p className="font-extrabold">⚡ {fmt(ui.missions.power, { n: power })}</p>
-          <p className="text-sm">{ui.missions.powerNote}</p>
+          <p className="text-sm">{planOf(run).roomsNeedCores ? ui.missions.powerNote : ui.missions.powerNoteFree}</p>
         </div>
         <ul className="flex flex-col gap-2">
           {planOf(run).battles.map((battle) => {
@@ -45,7 +45,7 @@ export function Missions() {
             const replaysLeft = Math.max(0, BATTLE.replayRewards - Math.max(0, (record?.wins ?? 0) - 1));
             const status = won ? "won" : pending?.id === battle.id ? "ready" : "locked";
             // ค่าพลังสำหรับด่านนี้: นับความได้เปรียบของอาวุธที่ใส่อยู่กับคู่ต่อสู้ของด่านด้วย
-            const mine = guardianPowerOf({ profile, shop }, battle);
+            const mine = guardianPowerOf({ profile, shop, progress }, battle);
             return (
               <li key={battle.id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${status === "ready" ? "bg-hint" : "bg-paper"}`} data-testid={`mission-${battle.id}`} data-status={status}>
                 <div className="flex shrink-0 items-end gap-0.5 rounded-md border-2 border-ink bg-teal-light p-1">

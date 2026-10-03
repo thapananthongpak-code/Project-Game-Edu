@@ -9,12 +9,13 @@ import { fmt, ui } from "../content/ui-strings";
 import { type ActiveSupply, applySupply, type BattleEvent, battleSetup, type BattleState, formOf, isCharging, isEnraged, isFurious, phaseCount, phaseOf, questionSource, resolveAnswer, retryCarry, startBattle, strikeOf, threatOf } from "../state/battle";
 import { BATTLE } from "../state/battle.config";
 import { type BattleSpec, battleOf, type FoeArt } from "../state/campaign";
-import { creditsOf, difficultyOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
-import { bagSizeOf, GEAR, type Weapon, WEAPON } from "../state/gear";
+import { coreBoostOf, creditsOf, difficultyOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
+import { bagSizeOf, GEAR, matchupOf, type Weapon } from "../state/gear";
 import { bagOf, gearOf, modulesOf, powerOf } from "../state/shop";
-import { PAINT_FILTER, REWARDS, type Supply } from "../state/shop.config";
+import { REWARDS, type Supply } from "../state/shop.config";
 import { art, type FxArt } from "./art";
 import { BagPicker, ItemIcon } from "./BagPicker";
+import { GuardianModel } from "./GuardianModel";
 import { FOE_SKILLS, foeSkill, GUARDIAN_MOVES, guardianMove, type MoveSpec, type Pose, SHOT_MS } from "./battleMoves";
 import { ChoiceCard } from "./ChoiceCard";
 import { PageView } from "./ContentView";
@@ -303,9 +304,13 @@ export function Battle() {
     const state = useGameStore.getState();
     const difficulty = difficultyOf(state);
     const record = state.battles[battleId];
+    const spec = battleOf(difficulty, battleId) as BattleSpec;
     return {
       difficulty,
-      spec: battleOf(difficulty, battleId) as BattleSpec,
+      spec,
+      /** แกน AI ที่ชาร์จแล้วในแมพนี้เพิ่มพลังสูงสุด (แมพ 2) */
+      coreBonus: coreBoostOf(state, spec),
+      coreBoost: planOf(state).coreBoost,
       pools: planOf(state).pools,
       /** ด่านนี้ชนะแล้ว: รอบนี้เป็นการซ้อมรบ */
       training: record?.won ?? false,
@@ -317,7 +322,7 @@ export function Battle() {
   // อุปกรณ์และเครื่องแบบ: เปลี่ยนได้จนกว่าจะกดออกปฏิบัติการ (พี่บิตแนะนำอาวุธที่ได้เปรียบในหน้าเตรียม) จากนั้นคงที่ตลอดด่าน
   const [locked, setLocked] = useState<{ setup: ReturnType<typeof battleSetup>; modules: ReturnType<typeof modulesOf>; outfit: typeof shop.outfit } | null>(null);
   const live = useMemo(
-    () => ({ setup: battleSetup(fixed.difficulty, spec, shop.outfit, modulesOf(shop), gearOf(shop)), modules: modulesOf(shop), outfit: shop.outfit }),
+    () => ({ setup: battleSetup(fixed.difficulty, spec, shop.outfit, modulesOf(shop), gearOf(shop), fixed.coreBonus), modules: modulesOf(shop), outfit: shop.outfit }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- ขึ้นกับอุปกรณ์ เครื่องแบบ และโมดูลเท่านั้น
     [fixed.difficulty, spec, shop.outfit, shop.weapon, shop.armor, shop.chip, shop.owned],
   );
@@ -490,8 +495,8 @@ export function Battle() {
   const title = fmt(training ? ui.battle.trainingTitle : ui.battle.title, { kaiju: battleName });
   const lastCorrect = item !== null && answered === item.answer;
   const perk = ui.shop.perks[boot.outfit];
-  const power = powerOf(boot.difficulty, shop, spec);
-  const advantage = WEAPON[gear.weapon].class === form.weak;
+  const power = powerOf(boot.difficulty, shop, spec, fixed.coreBonus);
+  const matchup = matchupOf(gear.weapon, form.weak);
   const gearNames = { weapon: ui.shop.items[`weapon-${gear.weapon}`].name, armor: ui.shop.items[`armor-${gear.armor}`].name, chip: ui.shop.items[`chip-${gear.chip}`].name };
   // แผงคำสั่ง: สิ่งที่จะเกิดในตานี้
   const strike = strikeOf(setup, state);
@@ -555,17 +560,17 @@ export function Battle() {
               </span>
             </HpBar>
             <HpBar label={kaiju} hp={state.kaijuHp} max={form.hp} align="right" />
-            {/* การ์เดียนกับอาวุธที่ถืออยู่ ขยับด้วยกัน */}
+            {/* การ์เดียนที่ใส่เกราะและถืออาวุธจริง (ภาพเดียวกับหุ่นบนแท่นในโรงเก็บหุ่น) */}
             <div
               key={`robot-${fx.id}`}
               className={`absolute bottom-[3%] left-[8%] aspect-square h-[72%] ${fx.robot ? `battle-robot-${fx.robot.pose}` : "battle-idle"} ${state.shield ? "battle-shielded" : ""}`}
               style={fx.robot ? { animationDelay: `${fx.robot.at}ms` } : undefined}
               data-testid="battle-robot"
               data-weapon={gear.weapon}
+              data-armor={gear.armor}
               data-pose={fx.robot?.pose ?? "idle"}
             >
-              <img src={art.robot} alt="" className="pixelated absolute inset-0 h-full w-full" style={{ filter: PAINT_FILTER[paint] }} />
-              {gear.weapon !== "fist" && <img src={art.gear(gear.weapon) ?? ""} alt="" className={`pixelated absolute battle-weapon-${gear.weapon}`} />}
+              <GuardianModel gear={gear} paint={paint} className="absolute inset-0 h-full w-full" />
             </div>
             <img key={`bit-${fx.id}`} src={bit} alt="" className={`pixelated absolute bottom-[52%] left-[2%] h-[26%] ${fx.assistAt !== null ? "battle-bit-assist" : "battle-idle"}`} style={fx.assistAt !== null ? { animationDelay: `${fx.assistAt}ms` } : undefined} />
             <img
@@ -579,8 +584,9 @@ export function Battle() {
               style={fx.kaiju ? { animationDelay: `${fx.kaiju.at}ms` } : undefined}
             />
             <div className="absolute right-[4%] top-[26%] flex flex-col items-end gap-1">
-              <span className={`rounded border-2 border-ink px-2 text-xs font-extrabold ${advantage ? "bg-hint" : "bg-cream"}`} data-testid="battle-weak" data-weak={form.weak} data-advantage={advantage}>
-                {advantage ? `▲ ${ui.battle.advantageOn}` : fmt(ui.battle.weak, { class: ui.storage.weaponClasses[form.weak] })}
+              <span className={`rounded border-2 border-ink px-2 text-xs font-extrabold ${matchup === "strong" ? "bg-hint" : matchup === "weak" ? "bg-[#f8e1e5]" : "bg-cream"}`} data-testid="battle-weak" data-weak={form.weak} data-matchup={matchup} data-advantage={matchup === "strong"} title={ui.matchup.effects[matchup]}>
+                {matchup === "strong" ? "▲ " : matchup === "weak" ? "▼ " : ""}
+                {fmt(ui.battle.matchupBadge, { matchup: ui.matchup.names[matchup] })} · {fmt(ui.battle.weak, { class: ui.storage.weaponClasses[form.weak] })}
               </span>
               {charging && (
                 <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-charging">
@@ -697,6 +703,11 @@ export function Battle() {
             <ul className="flex flex-col gap-0.5 text-sm text-slate">
               <li>{ui.battle.assistNote}</li>
               <li data-testid="battle-hints-note">{setup.hints > 0 ? fmt(ui.battle.hintsNote, { n: setup.hints }) : ui.battle.noHintsNote}</li>
+              {fixed.coreBonus > 0 ? (
+                <li data-testid="battle-core-bonus" data-bonus={fixed.coreBonus}>{fmt(ui.battle.coreBonus, { n: fixed.coreBonus })}</li>
+              ) : (
+                fixed.coreBoost > 0 && !training && <li data-testid="battle-core-bonus" data-bonus={0}>{ui.battle.coreBonusHint}</li>
+              )}
               {perk && <li data-testid="battle-perk">{fmt(ui.battle.perk, { outfit: ui.shop.items[`outfit-${boot.outfit}`].name, perk })}</li>}
               {boot.modules.length > 0 && <li data-testid="battle-modules">{fmt(ui.battle.modules, { list: boot.modules.map((module) => ui.shop.items[`module-${module}`].name).join(" ") })}</li>}
             </ul>
@@ -848,7 +859,7 @@ export function Battle() {
               </p>
             )}
             {/* จัดกระเป๋าสำหรับรอบถัดไปจากของที่ยังเหลือในกล่อง */}
-            <BagPicker spec={spec} canEquip={false} />
+            <BagPicker spec={spec} />
             <div className="flex flex-wrap justify-center gap-2">
               <button type="button" className="btn btn-ghost" onClick={closeOverlay}>
                 {ui.battle.finish}

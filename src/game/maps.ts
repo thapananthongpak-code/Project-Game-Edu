@@ -22,7 +22,7 @@ export type ObjectKind =
   | "travel"
   /** กระดานตกแต่งโถง: เลือกของตกแต่งมาวางในช่องตกแต่ง */
   | "decorboard"
-  /** ช่องตกแต่งของโถง: ว่างจนกว่าผู้เล่นจะเลือกของมาวาง (ช่องตั้งพื้นกันทางเดินเสมอ ทางเดินจึงไม่เปลี่ยนตามของที่วาง) */
+  /** ช่องตกแต่งของโถง: ว่างจนกว่าผู้เล่นจะเลือกของมาวาง (ช่องตั้งพื้นกันทางเดินเฉพาะตอนมีของวาง maps.test.ts ตรวจผังโดยนับเป็นสิ่งกีดขวางเสมอ) */
   | "slot"
   /** จอตัวอย่างและวิดีโอเสริมของหัวข้อ (ห้องเรียนของแมพ 1) โต้ตอบได้เมื่อครูกำหนดรายการไว้ใน extras.json */
   | "extras"
@@ -30,7 +30,12 @@ export type ObjectKind =
   | "console"
   | "wardrobe"
   | "hologram"
+  /** แท่นการ์เดียน: หุ่นบนแท่นแสดงอุปกรณ์ที่ใส่ กดแล้วใส่อาวุธ เกราะ ชิป และสี */
   | "robot"
+  /** ตู้กระจกเก็บแกน AI ที่เก็บได้ */
+  | "corecase"
+  /** แท่นปรับแต่งพี่บิต: คอสตูมและโมดูล (วางราบกับพื้น) */
+  | "bitpad"
   /** NPC ประจำห้อง (src/state/npcs.ts) */
   | "npc"
   /** ของที่ผู้เล่นเก็บในเควสเสริมของ NPC วางราบกับพื้น เห็นเฉพาะตอนที่รับเควสแล้วและยังไม่ได้เก็บ */
@@ -171,7 +176,7 @@ const HALLS: Record<Difficulty, GameMap> = {
       decor("pr_decor_crates", 8, 9, 1),
     ],
   },
-  // แมพ 3 ป้อมปราการภูเขาไฟ: ห้องโถงเหล็กดำ ประตูเดียว
+  // แมพ 3 ป้อมปราการภูเขาไฟ: ลานป้อมเหล็กดำ ไม่มีห้องเรียน (ลุยด่านต่อสู้อย่างเดียว) ประตูโรงเก็บหุ่นตรงกลาง
   hard: {
     tileset: "ts_fortress",
     shape: [
@@ -189,8 +194,8 @@ const HALLS: Record<Difficulty, GameMap> = {
     ],
     spawn: { col: 2, row: 3 },
     objects: [
-      { kind: "door", prop: "pr_door_locked", col: 6, row: 1, mount: true, index: 1 },
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
+      wall("pr_decor_tool_rack", 5),
       { kind: "shop", prop: "pr_shop", col: 2, row: 8, w: 2 },
       { kind: "storage", prop: "pr_storage_box", col: 6, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 12, row: 8, w: 2 },
@@ -215,28 +220,107 @@ export const hallMapOf = (difficulty: Difficulty): GameMap => HALLS[difficulty];
 /** ช่องตกแต่งของแผนที่ ตามลำดับในผัง */
 export const slotsOf = (map: GameMap): MapObject[] => map.objects.filter((object) => object.kind === "slot");
 
-/** โรงเก็บหุ่น: หุ่นการ์เดียน แผงสั่งปฏิบัติการ ตู้เสื้อผ้า และเครื่องฉายข้อความของอาจารย์ */
-export const hangarMap: GameMap = {
-  tileset: "ts_hangar",
-  shape: RECT,
-  spawn: { col: 2, row: 3 },
-  objects: [
-    backDoor(2),
-    { kind: "robot", prop: "pr_robot_dock", col: 8.5, row: 4, w: 3 },
-    { kind: "console", prop: "pr_mission_console", col: 9, row: 7, w: 2 },
-    { kind: "hologram", prop: "pr_hologram", col: 5, row: 2 },
-    { kind: "wardrobe", prop: "pr_wardrobe", col: 16, row: 2 },
-    { kind: "storage", prop: "pr_storage_box", col: 13, row: 7, w: 2 },
-    wall("pr_decor_tool_rack", 7),
-    wall("pr_decor_tool_rack", 12),
-    wall(SCREENS, 17),
-    decor("pr_decor_energy_tanks", 13, 4),
-    decor("pr_decor_energy_tanks", 5, 4),
-    floor("pr_decor_hazard_floor", 9, 9),
-    decor("pr_decor_crates", 18, 8, 1),
-    decor("pr_decor_crates", 1, 8, 1),
-  ],
+/**
+ * โรงเก็บหุ่นของแต่ละแมพ (ผังและไทล์เซตต่างกัน) ทุกโรงมีจุดปรับแต่งแยกกันตามที่ผู้ใช้กำหนด:
+ * แท่นการ์เดียน (robot: ใส่อาวุธ เกราะ ชิป และสี หุ่นบนแท่นแสดงอุปกรณ์ที่ใส่) ตู้เสื้อผ้า (wardrobe: ชุดของผู้เล่น)
+ * แท่นปรับแต่งพี่บิต (bitpad: คอสตูมและโมดูลของพี่บิต) ตู้กระจกเก็บแกน AI (corecase) แผงสั่งปฏิบัติการ (console)
+ * กล่องเก็บไอเทม (storage) และเครื่องฉายข้อความของอาจารย์ (hologram) แมพ 3 ไม่มีห้องเรียน NPC ของแมพนี้จึงอยู่ในโรงเก็บหุ่น
+ */
+const HANGARS: Record<Difficulty, GameMap> = {
+  easy: {
+    tileset: "ts_hangar",
+    shape: RECT,
+    spawn: { col: 2, row: 3 },
+    objects: [
+      backDoor(2),
+      { kind: "robot", prop: "pr_guardian_bay", col: 8.5, row: 4, w: 3 },
+      { kind: "corecase", prop: "pr_core_case", col: 12, row: 4, w: 2 },
+      { kind: "console", prop: "pr_mission_console", col: 9, row: 7, w: 2 },
+      { kind: "hologram", prop: "pr_hologram", col: 5, row: 2 },
+      { kind: "wardrobe", prop: "pr_wardrobe", col: 16, row: 2 },
+      { kind: "bitpad", prop: "pr_bit_pad", col: 4, row: 6, w: 2, flat: true },
+      { kind: "storage", prop: "pr_storage_box", col: 13, row: 8, w: 2 },
+      wall("pr_decor_tool_rack", 7),
+      wall("pr_decor_tool_rack", 12),
+      wall(SCREENS, 17),
+      decor("pr_decor_energy_tanks", 5, 4),
+      floor("pr_decor_hazard_floor", 9, 9),
+      decor("pr_decor_crates", 18, 8, 1),
+      decor("pr_decor_crates", 1, 8, 1),
+    ],
+  },
+  // แมพ 2: โรงซ่อมริมทะเล ผนังสองช่วงกั้นเป็นอู่ซ่อมกับลานเตรียมพร้อม
+  normal: {
+    tileset: "ts_hangar2",
+    shape: [
+      "####################",
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#######......#######",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    spawn: { col: 2, row: 3 },
+    objects: [
+      backDoor(2),
+      { kind: "robot", prop: "pr_guardian_bay", col: 8.5, row: 3, w: 3 },
+      { kind: "corecase", prop: "pr_core_case", col: 15, row: 3, w: 2 },
+      { kind: "wardrobe", prop: "pr_wardrobe", col: 5, row: 2 },
+      { kind: "hologram", prop: "pr_hologram", col: 18, row: 2 },
+      { kind: "console", prop: "pr_mission_console", col: 4, row: 8, w: 2 },
+      { kind: "bitpad", prop: "pr_bit_pad", col: 14, row: 7, w: 2, flat: true },
+      { kind: "storage", prop: "pr_storage_box", col: 9, row: 8, w: 2 },
+      wall("pr_decor_tool_rack", 11),
+      wall(WINDOW, 13),
+      decor("pr_decor_crates", 1, 6, 1),
+      decor("pr_decor_crates", 18, 9, 1),
+      decor("pr_decor_energy_tanks", 17, 6),
+      floor("pr_decor_hazard_floor", 9, 6),
+    ],
+  },
+  // แมพ 3: โรงเก็บหุ่นในป้อมบนปล่องภูเขาไฟ เสาเหล็กสี่ต้น กัปตันกับนายคลังแสงประจำอยู่ที่นี่
+  hard: {
+    tileset: "ts_hangar3",
+    shape: [
+      "####################",
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#..#............#..#",
+      "#..................#",
+      "#..................#",
+      "#..#............#..#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    spawn: { col: 1, row: 3 },
+    objects: [
+      backDoor(1),
+      { kind: "robot", prop: "pr_guardian_bay", col: 8.5, row: 4, w: 3 },
+      { kind: "corecase", prop: "pr_core_case", col: 5, row: 4, w: 2 },
+      { kind: "console", prop: "pr_mission_console", col: 9, row: 8, w: 2 },
+      { kind: "wardrobe", prop: "pr_wardrobe", col: 15, row: 2 },
+      { kind: "hologram", prop: "pr_hologram", col: 17, row: 2 },
+      { kind: "bitpad", prop: "pr_bit_pad", col: 13, row: 5, w: 2, flat: true },
+      { kind: "storage", prop: "pr_storage_box", col: 5, row: 8, w: 2 },
+      wall(SCREENS, 6),
+      wall("pr_decor_tool_rack", 11),
+      decor("pr_r3_server_rack", 18, 9, 1),
+      floor("pr_decor_hazard_floor", 9, 6),
+      person("captain", 14, 8),
+      person("keeper", 2, 6),
+    ],
+  },
 };
+
+/** โรงเก็บหุ่นของแมพ */
+export const hangarMapOf = (difficulty: Difficulty): GameMap => HANGARS[difficulty];
 
 export const roomMaps: Record<number, GameMap> = {
   // ห้อง 1 ห้องปฐมนิเทศ: ห้องโล่ง สถานีเรียงริมผนังบน มีเสาสองต้น
@@ -589,38 +673,8 @@ export const normalMaps: Record<number, GameMap> = {
 };
 
 /** แมพ 3: ห้องเดียว ไม่มีบทสอน เครื่องทดสอบรวมตรงกลางทำเควสของหัวข้อ 1–5 ทีละหัวข้อ ผ่านแล้วได้แกน AI ทันที */
-export const hardMaps: Record<number, GameMap> = {
-  1: {
-    tileset: "ts_hangar",
-    shape: [
-      "####################",
-      "####################",
-      "#..................#",
-      "#..................#",
-      "#...##........##...#",
-      "#..................#",
-      "#..................#",
-      "#...##........##...#",
-      "#..................#",
-      "#..................#",
-      "####################",
-    ],
-    spawn: { col: 1, row: 3 },
-    objects: [
-      backDoor(1),
-      decor("pr_mission_console", 3, 2),
-      { kind: "minigame", prop: "pr_r1_learning_machine", col: 9, row: 3, w: 2 },
-      decor("pr_decor_energy_tanks", 14, 2),
-      decor("pr_r3_server_rack", 17, 2, 1),
-      wall(SCREENS, 6),
-      wall("pr_decor_tool_rack", 11),
-      floor("pr_decor_hazard_floor", 9, 5),
-      decor("pr_decor_crates", 18, 9, 1),
-      person("captain", 12, 8),
-      person("keeper", 5, 8),
-    ],
-  },
-};
+/** แมพ 3 ไม่มีห้องเรียน (ลุยด่านต่อสู้อย่างเดียว GDD ข้อ 15) */
+export const hardMaps: Record<number, GameMap> = {};
 
 /** แผนที่ของห้องลำดับที่ zone ของแมพ */
 export const zoneMap = (difficulty: Difficulty, zone: number): GameMap => (difficulty === "easy" ? roomMaps : difficulty === "normal" ? normalMaps : hardMaps)[zone];

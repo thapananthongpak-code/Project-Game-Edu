@@ -1,0 +1,20 @@
+{
+  "tool": "create_topdown_tileset",
+  "arguments": {
+    "lower_description": "seamless floor tile of dark steel grating panels with thin glowing orange gaps, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "upper_description": "seamless wall tile of dark red-brown volcanic rock reinforced with black steel beams and small red warning lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "tile_size": {
+      "width": 32,
+      "height": 32
+    },
+    "mode": "standard",
+    "transition_size": 0,
+    "view": "low top-down",
+    "outline": "lineless",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_topdown_tileset",
+  "id": "bfccdb4f-09df-4d3c-b298-8bcb8a99bf2f",
+  "generatedAt": "2026-10-03T06:19:36.194Z"
+}

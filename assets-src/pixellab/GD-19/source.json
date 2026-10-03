@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now wearing massive gold and white titan armor: big gold shoulder pauldrons, a thick gold chest plate and gold knee guards, same pose, everything else unchanged, no weapon, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "a71c9558-9e3d-4007-b6c5-ae9f8b074221",
+  "generatedAt": "2026-10-03T06:03:58.516Z"
+}

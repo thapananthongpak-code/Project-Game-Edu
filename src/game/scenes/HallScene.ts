@@ -53,7 +53,8 @@ export class HallScene extends WorldScene {
           const state = store();
           if (isRoomUnlocked(state, zone)) return state.enterRoom(zone);
           // ได้แกน AI ของห้องก่อนหน้าครบแล้วแต่ยังไม่ชนะไคจูที่เฝ้าห้องนี้: บอกให้ไปโรงเก็บหุ่น
-          const missing = zones[zone - 2].topics.find((topic) => !roomProgress(state, topic).core);
+          // แมพที่ข้ามการทบทวนได้ (แมพ 2) ไม่ต้องใช้แกน AI ของห้องก่อนหน้า ขาดแค่การชนะไคจู
+          const missing = planOf(state).roomsNeedCores ? zones[zone - 2].topics.find((topic) => !roomProgress(state, topic).core) : undefined;
           const gate = gateOf(difficultyOf(state), zone);
           state.showToast(missing === undefined && gate ? fmt(ui.toast.roomLockedBattle, { n: zone, kaiju: foeName(gate.forms[0].art) }) : fmt(ui.toast.roomLocked, { n: zone, prev: missing ?? topics[0] - 1 }));
         },
@@ -96,6 +97,7 @@ export class HallScene extends WorldScene {
         const decor = placed[object.slot?.id ?? ""];
         image.setVisible(Boolean(decor));
         if (decor) image.setTexture(DECOR[decor].prop);
+        this.setSlotSolid(object, Boolean(decor));
       }
     }
 

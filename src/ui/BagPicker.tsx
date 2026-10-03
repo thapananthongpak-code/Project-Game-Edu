@@ -4,6 +4,7 @@ import { fmt, ui } from "../content/ui-strings";
 import type { BattleSpec } from "../state/campaign";
 import { useGameStore } from "../state/gameStore";
 import { bagSizeOf, GEAR, type Weapon, WEAPONS } from "../state/gear";
+import { MatchupList } from "./GuardianModel";
 import { adviseBag, adviseWeapon, missingAdvice } from "../state/loadout";
 import { bagOf } from "../state/shop";
 import { type BitModule, SUPPLIES, type Supply } from "../state/shop.config";
@@ -21,12 +22,10 @@ export function ItemIcon({ value, className = "h-6 w-6" }: { value: Supply | `mo
 /**
  * กระเป๋าสำหรับออกปฏิบัติการ (GDD ข้อ 17): ของใช้พกเข้าด่านได้ตามขนาดกระเป๋า (3 ชิ้น ชุดนักบินอวกาศ 4 ชิ้น) ที่เหลืออยู่ในกล่องเก็บไอเทม
  * พี่บิตแนะนำของที่เหมาะกับลักษณะของคู่ต่อสู้ และอาวุธที่ได้เปรียบคู่ต่อสู้ในด่าน spec (null = ยังไม่มีด่านที่รออยู่)
- * canEquip = กดเปลี่ยนเป็นอาวุธที่แนะนำได้จากตรงนี้ (ระหว่างออกปฏิบัติการเปลี่ยนอุปกรณ์ไม่ได้)
  */
-export function BagPicker({ spec, canEquip = true }: { spec: BattleSpec | null; canEquip?: boolean }) {
+export function BagPicker({ spec }: { spec: BattleSpec | null }) {
   const shop = useGameStore((s) => s.shop);
   const packBag = useGameStore((s) => s.packBag);
-  const equip = useGameStore((s) => s.equip);
   const bit = useBit();
   const bag = bagOf(shop);
   const size = bagSizeOf(shop.outfit);
@@ -55,23 +54,18 @@ export function BagPicker({ spec, canEquip = true }: { spec: BattleSpec | null; 
           {spec && weapons ? (
             <>
               {/* อาวุธ: จุดอ่อนของแต่ละร่าง และอาวุธที่ได้เปรียบ */}
-              <div data-testid="weapon-advice" data-weak={weapons.weak.join(",")} data-advantaged={weapons.advantaged} data-better={weapons.better ?? ""} data-stronger={weapons.stronger} data-wanted={weapons.wanted.join(",")}>
-                {spec.forms.map((form) => (
-                  <p key={form.art}>{fmt(ui.storage.weaponWeak, { kaiju: foeName(form.art), class: ui.storage.weaponClasses[form.weak] })}</p>
-                ))}
+              <div data-testid="weapon-advice" data-weak={weapons.weak.join(",")} data-advantaged={weapons.advantaged} data-better={weapons.better ?? ""} data-matchups={weapons.matchups.join(",")} data-stronger={weapons.stronger} data-wanted={weapons.wanted.join(",")}>
+                <MatchupList spec={spec} weapon={shop.weapon} />
                 {new Set(weapons.weak).size > 1 && <p>{ui.storage.weaponSplit}</p>}
                 {weapons.advantaged && (!weapons.better || weapons.stronger) && <p className="font-bold">{fmt(ui.storage.weaponGood, { n: GEAR.advantage })}</p>}
                 {weapons.better && (
                   <p className="flex flex-wrap items-center gap-2 font-bold">
                     {fmt(weapons.stronger ? ui.storage.weaponStronger : ui.storage.weaponSwitch, { weapon: weaponName(weapons.better) })}
-                    {canEquip && (
-                      <button type="button" className="btn !min-h-9 !px-2 text-xs" data-testid="weapon-advice-equip" onClick={() => (playSfx("equip"), equip("weapon", weapons.better as Weapon))}>
-                        {fmt(ui.storage.weaponEquip, { weapon: weaponName(weapons.better) })}
-                      </button>
-                    )}
+
                   </p>
                 )}
                 {!weapons.better && !weapons.advantaged && weapons.wanted.length > 0 && <p className="font-bold text-slate">{fmt(ui.storage.weaponBuy, { list: weapons.wanted.map(weaponName).join(" · ") })}</p>}
+                {weapons.better && <p className="text-xs text-slate">{ui.storage.weaponWhere}</p>}
               </div>
               {traits.map((trait) => (
                 <p key={trait}>{ui.storage.reason[trait]}</p>

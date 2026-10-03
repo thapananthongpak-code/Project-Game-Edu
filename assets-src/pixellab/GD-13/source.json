@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now wearing a reflector armor: a glowing translucent cyan force-field plate over its chest and a round cyan reflector disc mounted on each shoulder, same pose, everything else unchanged, no weapon, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "0da10cd8-292e-4cae-ace1-b8668d681efc",
+  "generatedAt": "2026-10-03T06:04:05.067Z"
+}

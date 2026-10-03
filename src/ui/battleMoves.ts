@@ -184,6 +184,26 @@ export const FOE_SKILLS: Record<FoeSkill, MoveSpec> = {
     end: 920,
     shake: true,
   },
+  // แมกมาโกเลม: ทุบด้วยหมัดหินลาวา / ปะทุลาวาจากพื้น
+  "magma-fist": { pose: "dash", sparks: [{ art: "fireball", motion: "pop", at: 200, impact: true }], sounds: [["punch", 200], ["fire", 220], ["hurt", 260]], hitAt: 200, end: 600, shake: true },
+  "lava-burst": {
+    pose: "charge",
+    sparks: [{ art: "fireball", motion: "drop", at: 360, big: true }, { art: "fireball", motion: "drop", at: 500, row: 1, flip: true }, hit(620, true), hit(760, true, -1)],
+    sounds: [["charge", 0], ["fire", 380], ["boom", 620], ["boom", 760]],
+    hitAt: 620,
+    end: 1100,
+    shake: true,
+  },
+  // ฟีนิกซ์เหล็ก: ยิงขนเหล็ก / พุ่งดิ่งลงมาพร้อมเปลวไฟ
+  "steel-feather": { pose: "fire", sparks: [{ art: "sting", motion: "shot", at: 0 }, { art: "sting", motion: "shot", at: 120, row: 1 }, hit(SHOT_MS)], sounds: [["slash", 0], ["slash", 120], ["hurt", SHOT_MS]], hitAt: SHOT_MS, end: 640, shake: true },
+  "phoenix-dive": {
+    pose: "dash",
+    sparks: [{ art: "fireball", motion: "shot", at: 0, big: true }, hit(SHOT_MS, true), hit(SHOT_MS + 180, true, 1)],
+    sounds: [["fire", 0], ["boom", SHOT_MS], ["boom", SHOT_MS + 180]],
+    hitAt: SHOT_MS,
+    end: 860,
+    shake: true,
+  },
   halo: { pose: "charge", sparks: [{ art: "halo", motion: "pop", at: 380, big: true, impact: true }], sounds: [["charge", 0], ["boom", 400]], hitAt: 400, end: 900, shake: true },
   judgement: {
     pose: "charge",
@@ -236,6 +256,8 @@ const SKILL_OF: Record<FoeArt, { normal: FoeSkill; heavy: FoeSkill }> = {
   kaiju_8: { normal: "ram", heavy: "shell-cannon" },
   kaiju_9: { normal: "sting", heavy: "sting-rain" },
   boss_4: { normal: "halo", heavy: "judgement" },
+  kaiju_10: { normal: "magma-fist", heavy: "lava-burst" },
+  kaiju_11: { normal: "steel-feather", heavy: "phoenix-dive" },
 };
 
 export const foeSkill = (art: FoeArt, heavy: boolean): FoeSkill => SKILL_OF[art][heavy ? "heavy" : "normal"];

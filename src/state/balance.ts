@@ -3,8 +3,9 @@
 // balance.test.ts ใช้ไฟล์นี้ยืนยันว่าเกมไม่ยากหรือง่ายเกินไป และ npm run balance พิมพ์ตารางเต็ม
 import { type ActiveSupply, applySupply, type BattleSetup, type BattleState, battleSetup, resolveAnswer, retryCarry, startBattle, strikeOf, threatOf } from "./battle";
 import type { BattleSpec, Difficulty } from "./campaign";
-import { DEFAULT_GEAR, type Gear, guardianPower, WEAPON } from "./gear";
+import { DEFAULT_GEAR, type Gear, guardianPower } from "./gear";
 import { idealBag } from "./loadout";
+import { advantageShare } from "./shop";
 import type { BitModule, Outfit, Supply } from "./shop.config";
 
 /** ตัวสุ่มแบบมีเมล็ด (mulberry32) */
@@ -54,13 +55,16 @@ export const PAR: Record<string, { gear: Gear; items: number }> = {
   k4: { gear: gear("fist", "heavy", "none"), items: 3 },
   k5: { gear: gear("blaster", "heavy", "none"), items: 2 },
   omega: { gear: gear("sword", "heavy", "charger"), items: 3 },
-  // แมพ 2: ของจากแมพ 1 ติดตัวมา แล้วซื้อค้อน เกราะสะท้อน หอกของลุงเหล็ก และชิปคิดทบทวน
+  // แมพ 2: ของจากแมพ 1 ติดตัวมา แล้วซื้อค้อน เกราะสะท้อน หอกของลุงบียอร์น และชิปคิดทบทวน
   n1: { gear: gear("sword", "heavy", "charger"), items: 3 },
   n2: { gear: gear("hammer", "heavy", "charger"), items: 3 },
   n3: { gear: gear("blaster", "guard", "charger"), items: 3 },
   "omega-n": { gear: gear("lance", "guard", "retry"), items: 3 },
-  // แมพ 3: ปืนใหญ่พลาสม่า (ได้เปรียบร่างแรก) กับของที่มีมาจากแมพ 2
-  end: { gear: gear("cannon", "guard", "retry"), items: 3 },
+  // แมพ 3: ด่านต่อสู้ล้วน ปืนใหญ่พลาสม่ากับของที่มีมาจากแมพ 2 สลับอาวุธตามจุดอ่อนของแต่ละด่าน
+  h1: { gear: gear("cannon", "heavy", "charger"), items: 3 },
+  h2: { gear: gear("hammer", "guard", "charger"), items: 3 },
+  // บอสใหญ่แต่ละร่างแพ้ทางคนละแบบ: หอกชนะทางร่างสุดท้ายที่คลั่ง (ร่างที่อันตรายที่สุด) แม้จะแพ้ทางร่างที่ 2 ที่หุ้มเกราะ
+  end: { gear: gear("lance", "titan", "retry"), items: 3 },
 };
 
 export const parBuild = (spec: BattleSpec): Build => ({ ...BARE, gear: PAR[spec.id].gear, bag: idealBag(spec).slice(0, PAR[spec.id].items) });
@@ -73,7 +77,7 @@ export const buildPower = (difficulty: Difficulty, spec: BattleSpec, build: Buil
     outfit: build.outfit,
     modules: build.modules,
     bag: build.bag.length,
-    advantage: spec.forms.filter((form) => form.weak === WEAPON[build.gear.weapon].class).length / spec.forms.length,
+    advantage: advantageShare(spec, build.gear),
   });
 
 const lift = (p: number, by: number) => p + (1 - p) * by;

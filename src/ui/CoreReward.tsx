@@ -48,16 +48,16 @@ export function CoreReward() {
             {fmt(ui.reward.credits, { n: credits })}
           </div>
         </div>
-        {battle ? (
+        {/* หัวข้อถัดไปของห้องนี้ และด่านต่อสู้ที่ออกได้แล้ว (แมพ 2 ออกรบได้ก่อนเรียนครบห้อง จึงแสดงได้ทั้งสองอย่าง) */}
+        {nextTopic !== undefined && (
+          <p className="mt-3 rounded-md border-2 border-ink bg-hint px-3 py-2 text-sm font-bold" data-testid="reward-next-topic">
+            ▸ {fmt(ui.reward.nextTopic, { n: nextTopic })}
+          </p>
+        )}
+        {battle && (
           <p className="mt-3 rounded-md border-2 border-ink bg-hint px-3 py-2 text-sm font-bold" data-testid="reward-next">
             ⚔ {fmt(ui.reward.next, { kaiju: foeName(battle.forms[0].art) })}
           </p>
-        ) : (
-          nextTopic !== undefined && (
-            <p className="mt-3 rounded-md border-2 border-ink bg-hint px-3 py-2 text-sm font-bold" data-testid="reward-next-topic">
-              ▸ {fmt(ui.reward.nextTopic, { n: nextTopic })}
-            </p>
-          )
         )}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
           {field ? (

@@ -28,20 +28,20 @@ const easyBattle = (room) => (room === 6 ? "omega" : `k${room}`);
 const NO_SUPPLIES = { "repair-kit": 0, shield: 0, overcharge: 0, analyzer: 0, reboot: 0 };
 /** NPC ประจำห้อง (src/state/npcs.ts และ src/content/ui-strings.ts) */
 const NPC = {
-  mechanic: { name: "ช่างเมย์", topic: 1, pickups: 3 },
-  coach: { name: "โค้ชต้น", topic: 2, questions: 4 },
-  archivist: { name: "ป้าดา", topic: 3 },
-  foreman: { name: "หัวหน้าชัย", topic: 4, pickups: 4 },
-  vendor: { name: "น้องมิว", topic: 5 },
-  director: { name: "พี่โฟกัส", topic: 6, questions: 4 },
+  mechanic: { name: "ช่างโซอี้", topic: 1, pickups: 3 },
+  coach: { name: "โค้ชแดเนียล", topic: 2, questions: 4 },
+  archivist: { name: "ป้ามาร์ธา", topic: 3 },
+  foreman: { name: "หัวหน้าฮันส์", topic: 4, pickups: 4 },
+  vendor: { name: "น้องมีอา", topic: 5 },
+  director: { name: "พี่ลูคัส", topic: 6, questions: 4 },
   // แมพ 2
-  smith: { name: "ลุงเหล็ก", topic: 1 },
-  sage: { name: "อาจารย์ซิน", topics: [1, 2], questions: 5 },
-  ranger: { name: "พี่ฟ้า", topic: 4, pickups: 4 },
-  medic: { name: "หมอปลา", topic: 5 },
+  smith: { name: "ลุงบียอร์น", topic: 1 },
+  sage: { name: "ดร.ไอรีน", topics: [1, 2], questions: 5 },
+  ranger: { name: "พี่ไรลีย์", topic: 4, pickups: 4 },
+  medic: { name: "หมอโซเฟีย", topic: 5 },
   // แมพ 3
   captain: { name: "กัปตันเรย์", topics: [1, 2, 3, 4, 5], questions: 6 },
-  keeper: { name: "น้าคลัง", topic: 1 },
+  keeper: { name: "ลุงโอลาฟ", topic: 1 },
 };
 const playing = async (page) => (await snap(page)).audio.playing;
 const strip = (heading) => heading.replace(/^\d+\s+/, "");
@@ -324,7 +324,7 @@ async function onboard(page, { name, topic1Correct, tap = false, shots = false, 
   assert.equal(story?.beat, "prologue", "เข้าแล็บครั้งแรกต้องเห็นบทนำของเนื้อเรื่อง");
   assert.equal(story.lines.length, 5);
   assert.deepEqual(story.art, ["st_prologue_1", "st_prologue_2", "st_prologue_3", "st_prologue_4", "st_prologue_5"], "บทนำเป็นช่องการ์ตูน 5 ช่อง ภาพไม่ซ้ำกัน");
-  assert.ok(story.lines.some((line) => line.startsWith("อาจารย์วิน:") && line.includes(name)), "อาจารย์วินเรียกชื่อผู้เล่น");
+  assert.ok(story.lines.some((line) => line.startsWith("ศาสตราจารย์วินสตัน:") && line.includes(name)), "ศาสตราจารย์วินสตันเรียกชื่อผู้เล่น");
   assert.ok(story.lines.at(-1).startsWith("พี่บิต:"));
   const { profile, pretest, story: seen } = (await snap(page)).store;
   assert.deepEqual(seen, ["prologue"], "ดูบทนำจบแล้วถูกบันทึก ไม่แสดงซ้ำ");
@@ -572,6 +572,19 @@ async function goToHangar(page) {
   assert.match((await snap(page)).store.prompt, /ประตูโรงเก็บหุ่น/);
   await act(page);
   await inHangar(page);
+}
+
+/** เดินกลับโถง (จากห้องหรือโรงเก็บหุ่น) แล้วเปิดร้านสหกรณ์ */
+async function openHallShop(page) {
+  if ((await snap(page)).store.screen !== "hall") {
+    await walkTo(page, "door-entry");
+    await act(page);
+    await inHall(page);
+    await page.waitForTimeout(300);
+  }
+  await walkTo(page, "shop");
+  await act(page);
+  await page.getByTestId("shop").waitFor();
 }
 
 async function backToHall(page) {
@@ -1008,9 +1021,24 @@ async function playRoom1(page) {
   await goToHangar(page);
   await assertCanvasFits(page, "โรงเก็บหุ่น");
   await shot(page, "07-hangar");
-  await walkTo(page, "robot");
+  // ตู้กระจกเก็บแกน AI: แกนที่เก็บได้ตั้งอยู่ในตู้ ไม่ได้วางเรียงบนพื้น
+  assert.equal((await snap(page)).bay.cores, 1, "ตู้กระจกแสดงแกนที่เก็บได้ 1 ชิ้น");
+  await walkTo(page, "corecase");
   await act(page);
-  assert.match((await snap(page)).store.toast, /ได้พลังงานจากแกน AI แล้ว 1\/6 ชิ้น ค่าพลังรวม 60/);
+  assert.match((await snap(page)).store.toast, /แกน AI ในตู้กระจก 1\/6 ชิ้น/);
+  // แท่นการ์เดียน: หุ่นที่จอดอยู่แสดงอาวุธและเกราะที่ใส่ บอกว่าอาวุธชนะทาง พอใช้ได้ หรือแพ้ทางไคจูของด่านถัดไป
+  assert.deepEqual((await snap(page)).bay, { texture: "gd_plate_fist", tint: null, chip: false, cores: 1 }, "หุ่นบนแท่นใส่เกราะมาตรฐานและกำหมัด");
+  await walkTo(page, "robot");
+  assert.match((await snap(page)).store.prompt, /แท่นการ์เดียน/);
+  await act(page);
+  await page.getByTestId("guardian-bay").waitFor();
+  assert.equal(await page.getByTestId("guardian-power").getAttribute("data-power"), "80", "ค่าพลังรวม 60 + หมัดชนะทางกลิตช์ 20");
+  assert.deepEqual(await page.getByTestId("guardian-model").evaluate((el) => [el.dataset.weapon, el.dataset.armor, el.dataset.chip]), ["fist", "plate", "none"]);
+  assert.deepEqual(await page.getByTestId("guardian-bay").getByTestId("matchup").evaluateAll((rows) => rows.map((row) => row.dataset.matchup)), ["strong"]);
+  assert.match(await page.getByTestId("guardian-vs-fist").innerText(), /กับกลิตช์: ชนะทาง/);
+  assert.deepEqual(await page.getByTestId("guardian-bay").locator("[role=radio]").evaluateAll((radios) => radios.map((r) => r.dataset.testid)), ["guardian-weapon-fist", "guardian-armor-plate", "guardian-chip-none", "guardian-paint-standard"], "ยังไม่ได้ซื้ออะไร: มีแต่อุปกรณ์เริ่มต้น");
+  await shot(page, "07-guardian-bay");
+  await page.getByTestId("guardian-close").click();
   await page.waitForTimeout(300);
   await openMissions(page);
   assert.deepEqual(await missionStatus(page), { k1: "ready", k2: "locked", k3: "locked", k4: "locked", k5: "locked", omega: "locked" }, "แมพ 1: ไคจูประจำห้อง 5 ตัว และบอส 1 ตัว");
@@ -1018,10 +1046,10 @@ async function playRoom1(page) {
   // ค่าพลังรวมของการ์เดียนเทียบกับพลังที่แนะนำของแต่ละด่าน (คำแนะนำ ไม่ใช่เงื่อนไข)
   assert.equal(await page.getByTestId("missions-power").getAttribute("data-power"), "60", "อุปกรณ์เริ่มต้น: พลังสูงสุด 6 × 10");
   const recommended = await page.locator('[data-testid^="mission-power-"]').evaluateAll((rows) => rows.map((row) => [Number(row.dataset.recommended), row.dataset.ok]));
-  // ด่านแรก: หมัดการ์เดียนได้เปรียบกลิตช์ (+20) พลัง 60 + 20 จึงถึงพลังที่แนะนำ ด่านอื่นยังไม่ถึง
+  // ด่านแรก: หมัดการ์เดียนชนะทางกลิตช์ (+20) พลัง 60 + 20 จึงถึงพลังที่แนะนำ ด่านอื่นยังไม่ถึง
   assert.deepEqual(recommended, CAMPAIGN.easy.battles.map((battle, i) => [battle.power, String(i === 0)]), "พลังที่แนะนำของแต่ละด่านตรงกับโครงของแมพ ด่านแรกใช้อุปกรณ์เริ่มต้นได้");
   assert.deepEqual(CAMPAIGN.easy.battles.map((battle) => battle.power), [80, 100, 110, 110, 140, 160]);
-  assert.match(await page.getByTestId("mission-k1").innerText(), /แพ้ทางแรงกระแทก \(หมัด ค้อน\)/, "แผงสั่งปฏิบัติการบอกจุดอ่อนของไคจูแต่ละด่าน");
+  assert.match(await page.getByTestId("mission-k1").innerText(), /จุดอ่อน: แรงกระแทก \(หมัด ค้อน\)/, "แผงสั่งปฏิบัติการบอกจุดอ่อนของไคจูแต่ละด่าน");
   await shot(page, "08-missions");
   await page.getByTestId("missions-close").click();
   await page.waitForTimeout(300);
@@ -1033,12 +1061,13 @@ async function playRoom1(page) {
   assert.match(intro1, /ขอข้อมูลจากพี่บิตได้ 2 ครั้ง/, "ระดับง่ายขอข้อมูลระหว่างสู้ได้ 2 ครั้ง");
   // หน้าเตรียมออกปฏิบัติการ: ค่าพลังรวมเทียบกับพลังที่แนะนำ อุปกรณ์ที่ใส่ กระเป๋า และคำแนะนำของพี่บิต
   const power1 = page.getByTestId("battle-power");
-  assert.deepEqual([await power1.getAttribute("data-power"), await power1.getAttribute("data-recommended"), await power1.getAttribute("data-ok")], ["80", "80", "true"], "ค่าพลังรวม 60 + อาวุธได้เปรียบ 20");
-  // พี่บิตบอกจุดอ่อนของไคจูและอาวุธที่ได้เปรียบ
+  assert.deepEqual([await power1.getAttribute("data-power"), await power1.getAttribute("data-recommended"), await power1.getAttribute("data-ok")], ["80", "80", "true"], "ค่าพลังรวม 60 + อาวุธชนะทาง 20");
+  // พี่บิตบอกจุดอ่อนของไคจูและอาวุธที่ชนะทาง
   const advice1 = page.getByTestId("weapon-advice");
-  assert.deepEqual([await advice1.getAttribute("data-weak"), await advice1.getAttribute("data-advantaged"), await advice1.getAttribute("data-better")], ["strike", "true", ""], "กลิตช์แพ้ทางแรงกระแทก หมัดที่ใส่อยู่ได้เปรียบ");
-  assert.match(await advice1.innerText(), /กลิตช์แพ้ทางแรงกระแทก/);
-  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-advantage"), await page.getByTestId("battle-weak").innerText()], ["strike", "true", "▲ อาวุธได้เปรียบ"], "ป้ายบนฉากบอกว่าอาวุธที่ใส่อยู่ได้เปรียบ");
+  assert.deepEqual([await advice1.getAttribute("data-weak"), await advice1.getAttribute("data-advantaged"), await advice1.getAttribute("data-better")], ["strike", "true", ""], "กลิตช์แพ้ทางแรงกระแทก หมัดที่ใส่อยู่ชนะทาง");
+  assert.match(await advice1.innerText(), /กลิตช์ แพ้ทางแรงกระแทก/);
+  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["strike", "strong", "▲ อาวุธชนะทาง · จุดอ่อน: แรงกระแทก (หมัด ค้อน)"], "ป้ายบนฉากบอกว่าอาวุธที่ใส่อยู่ชนะทาง");
+  assert.equal(await page.getByTestId("battle-robot").getAttribute("data-armor"), "plate", "การ์เดียนในฉากต่อสู้ใส่เกราะที่ใส่ไว้จริง");
   assert.match(await page.getByTestId("battle-gear-note").innerText(), /หมัดการ์เดียน · เกราะมาตรฐาน · ไม่ใส่ชิป/);
   assert.equal(await page.getByTestId("bag-picker").getAttribute("data-bag"), "", "ยังไม่มีของใช้: กระเป๋าว่าง");
   assert.equal(await page.getByTestId("bag-box-empty").count(), 1);
@@ -1079,12 +1108,12 @@ async function playRoom1(page) {
   assert.equal(await effects.getAttribute("data-sparks"), "impact:kaiju", "ตอบถูก (ยังไม่มีอาวุธ): การ์เดียนพุ่งเข้าไปต่อย");
   assert.equal(await effects.getAttribute("data-banners"), "การ์เดียน: หมัดการ์เดียน!");
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "fist");
-  // ตอบถูกสองข้อติดกัน: อาวุธที่ได้เปรียบเริ่มแรงขึ้น (+1) และพี่บิตยิงเสริมอีก 1
-  assert.deepEqual(await command.evaluate((el) => [el.dataset.move, el.dataset.damage]), ["punch", "2"], "แผงคำสั่งบอกล่วงหน้าว่าข้อถัดไปได้เปรียบ");
+  // ตอบถูกสองข้อติดกัน: อาวุธที่ชนะทางเริ่มแรงขึ้น (+1) และพี่บิตยิงเสริมอีก 1
+  assert.deepEqual(await command.evaluate((el) => [el.dataset.move, el.dataset.damage]), ["punch", "2"], "แผงคำสั่งบอกล่วงหน้าว่าข้อถัดไปชนะทาง");
   turn = await battleTurn(page, true);
-  assert.equal(turn.kaiju, 4, "ตอบถูกสองข้อติดกัน: ได้เปรียบ -2 และพี่บิตยิงเสริม -1");
+  assert.equal(turn.kaiju, 4, "ตอบถูกสองข้อติดกัน: ชนะทาง -2 และพี่บิตยิงเสริม -1");
   assert.equal(await effects.getAttribute("data-sparks"), "impact:kaiju,bolt:kaiju,impact:kaiju", "พี่บิตยิงเสริมมีเอฟเฟกต์ของตัวเอง");
-  assert.match(turn.log, /การ์เดียนใช้หมัดการ์เดียน -2 \(ได้เปรียบ\).*พี่บิตยิงเสริม -1/);
+  assert.match(turn.log, /การ์เดียนใช้หมัดการ์เดียน -2 \(ชนะทาง\).*พี่บิตยิงเสริม -1/);
   await shot(page, "08-battle-fight");
   while ((await page.getByTestId("battle").getAttribute("data-stage")) === "fight") await battleTurn(page, true);
   await page.getByTestId("battle-won").waitFor();
@@ -1104,24 +1133,32 @@ async function playRoom1(page) {
   await page.waitForTimeout(300);
   log("ด่านต่อสู้ที่ 1 กลิตช์: ตอบผิดเสียพลัง ตอบถูกสองข้อติดพี่บิตยิงเสริม ขอข้อมูลและถามพี่บิตระหว่างสู้ได้ แผงคำสั่งบอกท่าล่วงหน้า ชนะแล้วได้ 40 เครดิต และห้อง 2 เปิด");
 
-  // --- ตู้เสื้อผ้า: ซื้อชุด สวมทันที เปลี่ยนตัวละครได้
+  // --- ตู้เสื้อผ้าในโรงเก็บหุ่น: ใส่ได้เฉพาะชุดที่มี (ซื้อชุดที่ร้านในโถง) เปลี่ยนตัวละครได้
   await walkTo(page, "wardrobe");
+  await act(page);
+  await page.getByTestId("wardrobe").waitFor();
+  assert.deepEqual(await page.getByTestId("wardrobe").locator('[data-testid^="wardrobe-outfit-"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid)), ["wardrobe-outfit-lab"], "ยังไม่ได้ซื้อชุด: ตู้มีแต่ชุดเริ่มต้น");
+  await page.getByTestId("wardrobe-close").click();
+  await page.waitForTimeout(300);
+
+  // --- ร้านสหกรณ์ในโถง: ร้านขายอย่างเดียว ของที่ซื้อแล้วไปใส่ที่จุดปรับแต่งในโรงเก็บหุ่น
+  await backToHall(page);
+  await walkTo(page, "shop");
   await act(page);
   await page.getByTestId("shop").waitFor();
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "115");
   assert.match(await page.getByTestId("shop-item-outfit-engineer").innerText(), /ในการต่อสู้: ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม \+1/, "เครื่องแบบบอกสิทธิพิเศษในการต่อสู้");
-  assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 9, "ร้านมีชุด 9 แบบ (ชุดของแมพ 2 และ 3 ยังล็อก)");
+  assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 8, "ร้านมีชุด 8 แบบ (ชุดเริ่มต้นไม่ขาย ชุดของแมพ 2 และ 3 ยังล็อก)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-outfit-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-outfit-", "")).sort()), ["astronaut", "commander", "hero", "ninja"], "ชุดของแมพถัดไปยังซื้อไม่ได้");
   assert.match(await page.getByTestId("shop-locked-outfit-ninja").innerText(), /วางขายที่แมพ 2/);
-  assert.equal(await page.locator('[data-testid^="shop-item-bit-"]').count(), 5, "ร้านมีคอสตูมของพี่บิต 5 แบบ (รูปมาตรฐาน + 4 คอสตูม ของร้านพิเศษไม่แสดงจนกว่าจะซื้อ)");
+  assert.equal(await page.locator('[data-testid^="shop-item-bit-"]').count(), 4, "ร้านมีคอสตูมของพี่บิต 4 แบบ (รูปมาตรฐานไม่ขาย ของร้านพิเศษไม่แสดงจนกว่าจะซื้อ)");
   assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 3, "ร้านมีโมดูลอัปเกรดของพี่บิต 3 อย่าง");
-  // อุปกรณ์ของการ์เดียน: 3 ช่อง (ของเริ่มต้น ของแมพ 1 และของแมพถัดไปที่ยังล็อก ของร้านพิเศษไม่แสดง) แต่ละชิ้นบอกค่าพลังที่เพิ่ม
-  for (const [slot, count, locked] of [["weapon", 5, ["cannon", "hammer"]], ["armor", 3, ["guard"]], ["chip", 3, ["retry"]]]) {
+  // อุปกรณ์ของการ์เดียน: 3 ช่อง (ของแมพ 1 และของแมพถัดไปที่ยังล็อก ของเริ่มต้นและของร้านพิเศษไม่แสดง) แต่ละชิ้นบอกค่าพลังที่เพิ่ม
+  for (const [slot, count, locked] of [["weapon", 4, ["cannon", "hammer"]], ["armor", 2, ["guard"]], ["chip", 2, ["retry"]]]) {
     assert.equal(await page.locator(`[data-testid^="shop-item-${slot}-"]`).count(), count, `ร้านมี${slot} ${count} แบบ`);
     assert.deepEqual(await page.locator(`[data-testid^="shop-item-${slot}-"][data-locked="true"]`).evaluateAll((rows, prefix) => rows.map((row) => row.dataset.testid.replace(prefix, "")).sort(), `shop-item-${slot}-`), locked, `${slot} ของแมพถัดไปยังล็อก`);
   }
   assert.equal(await page.getByTestId("shop-buy-weapon-hammer").count(), 0, "ของที่ยังล็อกไม่มีปุ่มซื้อ");
-  assert.equal(await page.getByTestId("shop-item-weapon-fist").getAttribute("data-using"), "true");
   assert.match(await page.getByTestId("shop-power-weapon-sword").innerText(), /ค่าพลัง \+30/);
   assert.match(await page.getByTestId("shop-power-armor-heavy").innerText(), /ค่าพลัง \+20/);
   assert.equal(await page.getByTestId("shop-power").getAttribute("data-power"), "60");
@@ -1130,20 +1167,30 @@ async function playRoom1(page) {
   assert.deepEqual(await page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock))), [3, 3, 2, 2, 1], "ของใช้มีจำนวนจำกัดต่อแมพ");
   await page.getByTestId("shop-buy-outfit-engineer").click();
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "15");
-  assert.equal(await page.getByTestId("shop-item-outfit-engineer").getAttribute("data-using"), "true");
-  assert.equal(await page.getByTestId("shop-power").getAttribute("data-power"), "65", "เครื่องแบบส่งเสริมพลังของการ์เดียน: ชุดช่าง +5");
-  assert.equal((await snap(page)).avatar.texture, "ch_b_engineer", "ซื้อชุดแล้วตัวละครในฉากเปลี่ยนชุดทันที");
-  await page.getByTestId("shop-avatar-a").click();
-  assert.equal((await snap(page)).avatar.texture, "ch_a_engineer");
-  await page.getByTestId("shop-wear-outfit-lab").click();
-  assert.equal((await snap(page)).avatar.texture, "ch_a_lab");
-  await page.getByTestId("shop-wear-outfit-engineer").click();
-  await page.getByTestId("shop-avatar-b").click();
+  assert.match(await page.getByTestId("shop-owned-outfit-engineer").innerText(), /มีแล้ว · ใส่ที่ตู้เสื้อผ้าในโรงเก็บหุ่น/, "ซื้อแล้วร้านบอกว่าไปใส่ที่ไหน");
+  assert.equal((await snap(page)).avatar.texture, "ch_b_lab", "ซื้อแล้วยังไม่สวมให้เอง");
   assert.equal(await page.getByTestId("shop-buy-supply-shield").isDisabled(), true, "เครดิตเหลือ 15: ซื้อโล่ (20) ไม่ได้");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
+  await goToHangar(page);
+  await walkTo(page, "wardrobe");
+  await act(page);
+  await page.getByTestId("wardrobe").waitFor();
+  assert.match(await page.getByTestId("wardrobe-outfit-engineer").innerText(), /ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม \+1/, "ตู้เสื้อผ้าบอกสิทธิพิเศษของเครื่องแบบ");
+  await page.getByTestId("wardrobe-outfit-engineer").click();
+  assert.equal(await page.getByTestId("wardrobe-outfit-engineer").getAttribute("aria-checked"), "true");
+  assert.equal((await snap(page)).avatar.texture, "ch_b_engineer", "สวมชุดที่ตู้แล้วตัวละครในฉากเปลี่ยนชุดทันที");
+  await page.getByTestId("wardrobe-avatar-a").click();
+  assert.equal((await snap(page)).avatar.texture, "ch_a_engineer");
+  await page.getByTestId("wardrobe-outfit-lab").click();
+  assert.equal((await snap(page)).avatar.texture, "ch_a_lab");
+  await page.getByTestId("wardrobe-outfit-engineer").click();
+  await page.getByTestId("wardrobe-avatar-b").click();
+  await shot(page, "07-wardrobe");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(350);
   assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: { easy: STARTER_DECOR } });
-  log("ร้านและตู้เสื้อผ้า: เครดิต 75 + 40 ซื้อชุดช่าง 100 สวมทันที เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
+  log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
   await startBattle(page, "k1", KAIJU[0], { training: true });
@@ -1238,10 +1285,10 @@ async function playRoom(page, room) {
     assert.deepEqual([first, second, third], [10, 10, 0]);
     assert.deepEqual((await snap(page)).store.npcs.coach, { met: true, accepted: false, found: [], done: false, best: 4, tries: 3, gifted: false });
     assert.deepEqual((await snap(page)).store.progress[2].outcome, { totalMisses: 0, requiredRepair: false }, "ถามตอบพิเศษไม่กระทบผลของเควส");
-    log("NPC โค้ชต้น (ถามตอบพิเศษ): ล็อกจนกว่าจะได้แกน AI โจทย์มาจากเนื้อหาของเรื่องที่ 2 นับรอบที่ดีที่สุด ได้เครดิต 10 + 10");
+    log("NPC โค้ชแดเนียล (ถามตอบพิเศษ): ล็อกจนกว่าจะได้แกน AI โจทย์มาจากเนื้อหาของเรื่องที่ 2 นับรอบที่ดีที่สุด ได้เครดิต 10 + 10");
   }
   if (room === 3) {
-    // ร้านพิเศษของป้าดา: ขายของที่ร้านสหกรณ์ไม่มี ซื้อคอสตูมของพี่บิตแล้วพี่บิตในฉากเปลี่ยนทันที
+    // ร้านพิเศษของป้ามาร์ธา: ขายของที่ร้านสหกรณ์ไม่มี ซื้อคอสตูมของพี่บิตแล้วพี่บิตในฉากเปลี่ยนทันที
     await page.waitForTimeout(300);
     await talkTo(page, "archivist");
     const shop = page.getByTestId("shop");
@@ -1251,76 +1298,93 @@ async function playRoom(page, room) {
     assert.deepEqual(await shop.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", "")).sort()), ["bit-explorer", "paint-emerald"], "ร้านพิเศษมีเฉพาะของของร้านนี้");
     await shot(page, "13-npc-shop");
     await page.getByTestId("shop-buy-bit-explorer").click();
-    assert.equal((await snap(page)).companion.texture, "ch_mentor_explorer_south", "ซื้อคอสตูมแล้วพี่บิตในฉากเปลี่ยนทันที");
+    assert.match(await page.getByTestId("shop-owned-bit-explorer").innerText(), /ใช้ที่แท่นปรับแต่งพี่บิตในโรงเก็บหุ่น/);
+    assert.equal((await snap(page)).companion.texture, "ch_mentor_south", "ซื้อแล้วยังไม่เปลี่ยนชุดให้เอง");
     await page.getByTestId("shop-close").click();
     await page.waitForTimeout(350);
-    log("NPC ป้าดา (ร้านพิเศษ): ขายเฉพาะของของร้าน ซื้อคอสตูมนักสำรวจแล้วพี่บิตเปลี่ยนชุดทันที");
+    log("NPC ป้ามาร์ธา (ร้านพิเศษ): ขายเฉพาะของของร้าน ซื้อคอสตูมนักสำรวจแล้วไปเปลี่ยนที่แท่นปรับแต่งพี่บิต");
   }
   if (room === 4) {
     await page.waitForTimeout(300);
     const reward = await doSideQuest(page, "foreman");
     assert.equal(reward, 25);
     await shot(page, "14-npc-quest-done");
-    log("NPC หัวหน้าชัย (เควสเสริม): รับเควส เก็บเฟือง 4 ชิ้นที่ปรากฏในห้อง กลับมาส่ง ได้ 25 เครดิตครั้งเดียว");
+    log("NPC หัวหน้าฮันส์ (เควสเสริม): รับเควส เก็บเฟือง 4 ชิ้นที่ปรากฏในห้อง กลับมาส่ง ได้ 25 เครดิตครั้งเดียว");
   }
 
   // --- ด่านต่อสู้ของห้อง: ไคจูแต่ละตัวมีลักษณะต่างกัน
-  await goToHangar(page);
   if (room === 3) {
-    // ซื้อของใช้ในการต่อสู้ก่อนออกปฏิบัติการ
-    await walkTo(page, "wardrobe");
-    await act(page);
-    await page.getByTestId("shop").waitFor();
+    // ซื้อของใช้ในการต่อสู้ที่ร้านในโถงก่อนออกปฏิบัติการ
+    await openHallShop(page);
     await page.getByTestId("shop-buy-supply-shield").click();
     await page.getByTestId("shop-buy-supply-repair-kit").click();
     assert.match(await page.getByTestId("shop-notice").innerText(), /ซื้อชุดซ่อมฉุกเฉินแล้ว/);
     await page.getByTestId("shop-close").click();
     await page.waitForTimeout(350);
     assert.deepEqual((await snap(page)).store.shop.supplies, { ...NO_SUPPLIES, "repair-kit": 1, shield: 1 });
-    // คอสตูมจากร้านพิเศษที่ซื้อแล้ว สลับใช้ได้จากตู้เสื้อผ้า
-    await walkTo(page, "wardrobe");
-    await act(page);
-    await page.getByTestId("shop").waitFor();
-    assert.equal(await page.getByTestId("shop-item-bit-explorer").getAttribute("data-using"), "true");
-    await page.getByTestId("shop-wear-bit-classic").click();
-    assert.equal((await snap(page)).companion.texture, "ch_mentor_south");
-    await page.getByTestId("shop-wear-bit-explorer").click();
+  }
+  if (room === 4) {
+    await openHallShop(page);
+    var swordBefore = Number(await page.getByTestId("shop-balance").getAttribute("data-balance"));
+    assert.ok(swordBefore >= 120, `เครดิตก่อนด่านที่ 4 ต้องพอซื้ออาวุธหนึ่งชิ้น: ${swordBefore}`);
+    await shot(page, "14-shop-gear");
+    await page.getByTestId("shop-buy-weapon-sword").click();
+    assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), String(swordBefore - 120), "ดาบ 120 เครดิต");
+    assert.match(await page.getByTestId("shop-owned-weapon-sword").innerText(), /ใส่ที่แท่นการ์เดียนในโรงเก็บหุ่น/);
+    assert.equal((await snap(page)).store.shop.weapon, "fist", "ซื้อแล้วยังไม่ใส่ให้เอง");
     await page.getByTestId("shop-close").click();
     await page.waitForTimeout(350);
   }
-  if (room === 4) {
-    // ซื้อดาบพลังงาน: ใส่ให้ทันที ค่าพลังรวมเพิ่ม แล้วสลับอุปกรณ์ที่กล่องเก็บไอเทมในโรงเก็บหุ่น
-    await walkTo(page, "wardrobe");
+  await goToHangar(page);
+  if (room === 3) {
+    // แท่นปรับแต่งพี่บิต: เปลี่ยนคอสตูมที่ซื้อจากร้านพิเศษ
+    await walkTo(page, "bitpad");
+    assert.match((await snap(page)).store.prompt, /พี่บิต/);
     await act(page);
-    await page.getByTestId("shop").waitFor();
-    const before = Number(await page.getByTestId("shop-balance").getAttribute("data-balance"));
-    assert.ok(before >= 120, `เครดิตก่อนด่านที่ 4 ต้องพอซื้ออาวุธหนึ่งชิ้น: ${before}`);
-    await shot(page, "14-shop-gear");
-    await page.getByTestId("shop-buy-weapon-sword").click();
-    assert.deepEqual([await page.getByTestId("shop-balance").getAttribute("data-balance"), await page.getByTestId("shop-power").getAttribute("data-power")], [String(before - 120), "95"], "ดาบ 120 เครดิต ค่าพลัง 65 + 30");
-    assert.equal(await page.getByTestId("shop-item-weapon-sword").getAttribute("data-using"), "true");
-    await page.getByTestId("shop-close").click();
+    await page.getByTestId("bitpad").waitFor();
+    assert.equal(await page.getByTestId("bitpad-skin-classic").getAttribute("aria-checked"), "true");
+    await page.getByTestId("bitpad-skin-explorer").click();
+    assert.equal((await snap(page)).companion.texture, "ch_mentor_explorer_south", "เปลี่ยนคอสตูมที่แท่นแล้วพี่บิตในฉากเปลี่ยนทันที");
+    await page.getByTestId("bitpad-skin-classic").click();
+    assert.equal((await snap(page)).companion.texture, "ch_mentor_south");
+    await page.getByTestId("bitpad-skin-explorer").click();
+    assert.equal(await page.getByTestId("bitpad-module-laser").getAttribute("data-owned"), "false", "โมดูลที่ยังไม่ได้ซื้อแสดงว่ายังไม่มี");
+    await shot(page, "13-bitpad");
+    await page.getByTestId("bitpad-close").click();
     await page.waitForTimeout(350);
+  }
+  if (room === 4) {
+    // แท่นการ์เดียน: เกียร์แครบแพ้ทางแรงกระแทก ทนคมอาวุธ หมัดชนะทาง ดาบแพ้ทาง
+    await walkTo(page, "robot");
+    await act(page);
+    await page.getByTestId("guardian-bay").waitFor();
+    assert.match(await page.getByTestId("guardian-vs-fist").innerText(), /กับเกียร์แครบ: ชนะทาง/);
+    assert.match(await page.getByTestId("guardian-vs-sword").innerText(), /กับเกียร์แครบ: แพ้ทาง/);
+    assert.equal(await page.getByTestId("guardian-power").getAttribute("data-power"), "85", "หมัดชนะทาง: 65 + 20");
+    // ลองถือดาบที่แพ้ทาง: ค่าพลังรวมลดลง 20 แม้ดาบแรงกว่าหมัด (65 + 30 − 20)
+    await page.getByTestId("guardian-weapon-sword").click();
+    assert.deepEqual([await page.getByTestId("guardian-power").getAttribute("data-power"), await page.getByTestId("guardian-model").getAttribute("data-weapon")], ["75", "sword"]);
+    assert.deepEqual(await page.getByTestId("guardian-bay").getByTestId("matchup").evaluateAll((rows) => rows.map((row) => row.dataset.matchup)), ["weak"]);
+    assert.match(await page.getByTestId("guardian-bay").getByTestId("matchup").innerText(), /ความสามารถพิเศษของอาวุธไม่ทำงาน/);
+    await page.getByTestId("guardian-close").click();
+    await page.waitForTimeout(400);
+    assert.equal((await snap(page)).bay.texture, "gd_plate_sword", "หุ่นที่จอดอยู่ถือดาบที่เพิ่งใส่");
     await walkTo(page, "storage");
     assert.match((await snap(page)).store.prompt, /กล่องเก็บไอเทม/);
     await act(page);
     await page.getByTestId("storage").waitFor();
     assert.equal(await playing(page), "shop:0");
-    assert.equal(await page.getByTestId("storage-power").getAttribute("data-power"), "95");
+    assert.equal(await page.getByTestId("storage-power").getAttribute("data-power"), "75");
     assert.equal(await page.getByTestId("storage-recommended").getAttribute("data-ok"), "false", "ด่านที่ 4 แนะนำพลัง 110: ยังไม่ถึง แต่ออกปฏิบัติการได้");
-    assert.deepEqual(await page.getByTestId("storage-gear").locator("[role=radio]").evaluateAll((buttons) => buttons.map((b) => `${b.dataset.testid}:${b.getAttribute("aria-checked")}`)), ["storage-weapon-fist:false", "storage-weapon-sword:true", "storage-armor-plate:true", "storage-chip-none:true"], "กล่องแสดงเฉพาะอุปกรณ์ที่มี ใส่ได้ช่องละชิ้น");
-    // เกียร์แครบแพ้ทางแรงกระแทก: พี่บิตบอกว่าหมัดได้เปรียบกว่าดาบ และค่าพลังรวมนับความได้เปรียบของด่านที่รออยู่ (+20)
-    assert.deepEqual([await page.getByTestId("weapon-advice").getAttribute("data-weak"), await page.getByTestId("weapon-advice").getAttribute("data-advantaged"), await page.getByTestId("weapon-advice").getAttribute("data-better")], ["strike", "false", "fist"]);
-    assert.match(await page.getByTestId("weapon-advice").innerText(), /เกียร์แครบแพ้ทางแรงกระแทก[\s\S]*เปลี่ยนเป็นหมัดการ์เดียนจะได้เปรียบ/);
-    await page.getByTestId("storage-weapon-fist").click();
-    assert.equal(await page.getByTestId("storage-power").getAttribute("data-power"), "85", "ถอดดาบ: 65 + หมัดได้เปรียบ 20");
-    assert.equal(await page.getByTestId("weapon-advice").getAttribute("data-advantaged"), "true");
-    await page.getByTestId("storage-weapon-sword").click();
-    assert.equal((await snap(page)).store.shop.weapon, "sword");
+    // พี่บิตเตือนว่าดาบแพ้ทาง และแนะนำหมัด
+    const weaponAdvice = page.getByTestId("weapon-advice");
+    assert.deepEqual([await weaponAdvice.getAttribute("data-weak"), await weaponAdvice.getAttribute("data-advantaged"), await weaponAdvice.getAttribute("data-better"), await weaponAdvice.getAttribute("data-matchups")], ["strike", "false", "fist", "weak"]);
+    assert.match(await weaponAdvice.innerText(), /เปลี่ยนเป็นหมัดการ์เดียนจะชนะทาง/);
+    assert.match(await weaponAdvice.innerText(), /แท่นการ์เดียน/, "บอกว่าเปลี่ยนอาวุธได้ที่แท่นการ์เดียน");
     await shot(page, "14-storage");
     await page.getByTestId("storage-close").click();
     await page.waitForTimeout(350);
-    log(`อุปกรณ์ของการ์เดียน: ซื้อดาบพลังงาน 120 เครดิต (เหลือ ${before - 120}) ค่าพลังรวม 65 → 95 สลับอุปกรณ์ได้ที่กล่องเก็บไอเทม พี่บิตบอกอาวุธที่ได้เปรียบไคจูของด่านถัดไป`);
+    log(`อุปกรณ์ของการ์เดียน: ซื้อดาบพลังงาน 120 เครดิต (เหลือ ${swordBefore - 120}) ใส่ที่แท่นการ์เดียน หุ่นที่จอดอยู่ถือดาบ ดาบแพ้ทางเกียร์แครบ ค่าพลังรวม 85 → 75 พี่บิตแนะนำหมัดที่ชนะทาง`);
   }
   if (room === 5) {
     // กระเป๋า: ซื้อของใช้ 4 ชิ้น ลงกระเป๋าให้ 3 ชิ้น ชิ้นที่ 4 อยู่ในกล่อง จัดใหม่ตามคำแนะนำของพี่บิตที่กล่องเก็บไอเทมในโถง
@@ -1394,6 +1458,7 @@ async function playRoom(page, room) {
     assert.match(intro, /ยิ่งโจมตีแรง/);
     const hits = [];
     assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "sword", "การ์เดียนถือดาบที่ซื้อมา");
+    assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["weak", "▼ อาวุธแพ้ทาง · จุดอ่อน: แรงกระแทก (หมัด ค้อน)"]);
     assert.match(intro, /พลังยังไม่ถึงที่แนะนำ ออกปฏิบัติการได้เลย/, "พลังไม่ถึงที่แนะนำก็ออกปฏิบัติการได้");
     const fx = page.getByTestId("battle-fx");
     const sparks = [];
@@ -1401,14 +1466,13 @@ async function playRoom(page, room) {
       const struck = await battleTurn(page, true);
       hits.push(struck.log.match(/การ์เดียนใช้(\S+) -(\d)/).slice(1).join(" "));
       sparks.push(await fx.getAttribute("data-sparks"));
-      if (i === 2) assert.match(struck.log, /คริติคอล!/);
+      assert.doesNotMatch(struck.log, /คริติคอล!/, "ดาบแพ้ทาง: ไม่ติดคริติคอล");
     }
-    // คอมโบ 1, 2, 3 และดาบติดคริติคอลในข้อที่สามที่ตอบถูกติดกัน: 3 × 2
-    assert.deepEqual(hits, ["คมดาบพลังงาน 1", "คมดาบพลังงาน 2", "ดาบกากบาท 6"], "คอมโบ: ถูกติดต่อกันโจมตีแรงขึ้น ข้อที่สามติดคริติคอลและเปลี่ยนเป็นท่าแรงของดาบ");
+    // คอมโบ 1, 2, 3 แต่ดาบแพ้ทางเกียร์แครบ ความสามารถพิเศษ (คริติคอลในข้อที่สาม) จึงไม่ทำงาน
+    assert.deepEqual(hits.map((hit) => hit.split(" ")[1]), ["1", "2", "3"], "คอมโบ: ถูกติดต่อกันโจมตีแรงขึ้น แต่ไม่คูณสองเพราะแพ้ทาง");
     assert.equal(sparks[0], "sword:kaiju", "ท่าของดาบต่างจากหมัด");
-    assert.ok(sparks[2].startsWith("sword:kaiju,sword:kaiju,impact:kaiju"));
     await shot(page, "14-battle-sword");
-    detail = "ถือดาบ ตอบถูกติดต่อกันโจมตีแรงขึ้น 1, 2 และคริติคอล 6";
+    detail = "ถือดาบที่แพ้ทาง ตอบถูกติดต่อกันโจมตีแรงขึ้น 1, 2, 3 แต่ไม่ติดคริติคอล";
   }
   if (room === 5) {
     assert.match(intro, /ฝูง/);
@@ -1602,7 +1666,7 @@ async function playField(page) {
     // เฟสที่ 3 เป็นต้นไป: โอเมก้าโกรธจัด สกิลเปลี่ยนเป็นลมหายใจเพลิง (โจมตีหนัก)
     if (await page.getByTestId("battle-furious").count()) {
       furious += 1;
-      assert.deepEqual(await page.getByTestId("battle-command").evaluate((el) => [el.dataset.skill, el.dataset.threat]), ["flame", "2"]);
+      assert.deepEqual(await page.getByTestId("battle-command").evaluate((el) => [el.dataset.skill, el.dataset.threat]), ["flame", "1"], "ลมหายใจเพลิงแรง 2 แต่ดาบชนะทางโอเมก้า โดนเบาลง 1");
     } else assert.equal(await page.getByTestId("battle-command").getAttribute("data-skill"), "dragon-claw");
     boss.push(await battleTurn(page, true));
   }
@@ -1610,7 +1674,7 @@ async function playField(page) {
   assert.match(boss.at(-1).log, /ลำแสงแกน AI|พี่บิตยิงเสริม/, "ปิดฉากด้วยลำแสงแกน AI (หรือพี่บิตยิงเสริมเป็นคนปิด)");
   const sources = boss.map((turn) => turn.source);
   assert.deepEqual(sources, [...sources].sort((a, b) => a - b), `เฟสไล่จากห้อง 1 ไปห้อง 6: ${sources}`);
-  // ดาบได้เปรียบโอเมก้าและติดคริติคอล การโจมตีแรงครั้งเดียวจึงข้ามเฟสสุดท้ายได้ (เฟสนับจากพลังที่เหลือ)
+  // ดาบชนะทางโอเมก้าและติดคริติคอล การโจมตีแรงครั้งเดียวจึงข้ามเฟสสุดท้ายได้ (เฟสนับจากพลังที่เหลือ)
   assert.equal(sources[0], 1);
   assert.ok(sources.at(-1) >= 5, `ด่านจบที่เฟสท้าย ๆ: ${sources}`);
   assert.ok(boss.some((turn) => /ผ่านเฟสแล้ว/.test(turn.log)));
@@ -1635,7 +1699,7 @@ async function playField(page) {
   assert.match(await page.getByTestId("objective").innerText(), /ชนะไคจูของแมพนี้ครบแล้ว ไปที่กระดานแผนที่เพื่อเดินทางไปแมพ 2/, "จบแมพ 1 แล้ว: เป้าหมายถัดไปคือเดินทางไปแมพ 2");
   log(`ด่านสุดท้าย โอเมก้า: ${boss.length} ตา ไล่โจทย์ห้อง ${[...new Set(sources)].join(", ")} ชนะแล้วเห็นบทส่งท้าย ใบประกาศแสดงปราบไคจู 6/6`);
 
-  // ร้านพิเศษของน้องมิวในห้อง 5: ของเฉพาะร้าน ซื้อสีพิเศษของการ์เดียนได้
+  // ร้านพิเศษของน้องมีอาในห้อง 5: ของเฉพาะร้าน ซื้อสีพิเศษของการ์เดียนได้
   await walkTo(page, "door-5");
   await act(page);
   await inRoom(page, 5);
@@ -1643,7 +1707,7 @@ async function playField(page) {
   await page.getByTestId("shop").waitFor();
   assert.deepEqual(await page.getByTestId("shop").locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", "")).sort()), ["bit-star", "paint-sakura"]);
   await page.getByTestId("shop-buy-paint-sakura").click();
-  assert.equal((await snap(page)).store.shop.paint, "sakura");
+  assert.equal((await snap(page)).store.shop.paint, "standard", "ซื้อสีแล้วไปย้อมที่แท่นการ์เดียน");
   await page.getByTestId("shop-close").click();
   await page.waitForTimeout(350);
   await walkTo(page, "door-entry");
@@ -1655,22 +1719,30 @@ async function playField(page) {
   await walkTo(page, "door-6");
   await act(page);
   assert.equal(await inRoom(page, 6), null, "บรรยายสรุปของห้องแสดงครั้งเดียว");
-  // ถามตอบพิเศษของพี่โฟกัส: เปิดหลังได้แกน AI ชิ้นสุดท้าย (จึงอยู่หลังแบบทดสอบหลังเรียนเสมอ) โจทย์จากขั้นตอนของภารกิจภาคสนาม
+  // ถามตอบพิเศษของพี่ลูคัส: เปิดหลังได้แกน AI ชิ้นสุดท้าย (จึงอยู่หลังแบบทดสอบหลังเรียนเสมอ) โจทย์จากขั้นตอนของภารกิจภาคสนาม
   assert.equal(await doQuiz(page, "director", 4), 20);
   await page.getByRole("button", { name: "สมุดเควส" }).click();
   assert.match(await page.getByTestId("questlog-side").innerText(), /กิจกรรมเสริมกับคนในแล็บ \(ไม่บังคับ\) 3\/4/);
   await page.getByRole("button", { name: "ปิด", exact: true }).click();
   await page.waitForTimeout(350);
-  log("NPC น้องมิว (ร้านพิเศษ) และพี่โฟกัส (ถามตอบพิเศษหลังได้แกนชิ้นสุดท้าย): ซื้อสีพิเศษได้ ตอบถูก 4 ข้อได้ 20 เครดิต สมุดเควสแสดงกิจกรรมเสริม 3/4");
+  log("NPC น้องมีอา (ร้านพิเศษ) และพี่ลูคัส (ถามตอบพิเศษหลังได้แกนชิ้นสุดท้าย): ซื้อสีพิเศษได้ ตอบถูก 4 ข้อได้ 20 เครดิต สมุดเควสแสดงกิจกรรมเสริม 3/4");
   await walkTo(page, "core");
   await act(page);
   await page.getByTestId("certificate").waitFor();
   await page.keyboard.press("Escape");
   assert.equal((await snap(page)).store.overlay, null, "ปิดใบประกาศด้วย Esc ได้");
   await page.waitForTimeout(400);
-  await walkTo(page, "door-entry");
+  // ย้อมสีที่ซื้อมาที่แท่นการ์เดียน: หุ่นที่จอดอยู่เปลี่ยนสีตาม
+  await goToHangar(page);
+  await walkTo(page, "robot");
   await act(page);
-  await inHall(page);
+  await page.getByTestId("guardian-bay").waitFor();
+  await page.getByTestId("guardian-paint-sakura").click();
+  await page.getByTestId("guardian-close").click();
+  await page.waitForTimeout(400);
+  const bay = (await snap(page)).bay;
+  assert.deepEqual([(await snap(page)).store.shop.paint, bay.texture, bay.tint !== null], ["sakura", "gd_plate_sword", true], "หุ่นที่จอดอยู่ย้อมสีซากุระ");
+  await backToHall(page);
 }
 
 // ---------------------------------------------------------------- แดชบอร์ดผู้สอน
@@ -2270,7 +2342,7 @@ async function playNormal(page) {
   // --- ห้อง 1 ของแมพ 2: สองเรื่องในห้องเดียว คลังความรู้อ่านได้แต่ไม่บังคับ
   await walkTo(page, "door-2");
   await act(page);
-  assert.match((await snap(page)).store.toast, /ห้อง 2 ยังล็อก ต้องได้แกน AI ชิ้นที่ 1 ก่อน/);
+  assert.match((await snap(page)).store.toast, /ห้อง 2 ยังล็อก ต้องพาการ์เดียนไปชนะโวลต์อีลก่อน/, "แมพ 2: ห้องเปิดด้วยการชนะไคจูอย่างเดียว ไม่ต้องมีแกน AI");
   await walkTo(page, "door-1");
   assert.match((await snap(page)).store.prompt, /เข้าห้อง 1: เรื่องที่ 1–2/);
   await act(page);
@@ -2283,7 +2355,7 @@ async function playNormal(page) {
   assert.match(await page.getByTestId("hud-topic").innerText(), new RegExp(`เรื่องที่ 1: ${topic1.title}`));
   assert.match(await page.getByTestId("objective").innerText(), /เครื่องฝึกของเรื่องที่ 1.*อ่านคลังความรู้ก่อนได้/);
 
-  // ถามตอบของอาจารย์ซินใช้โจทย์ของสองเรื่อง จึงล็อกจนกว่าจะได้แกน AI ของทั้งสองเรื่องในแมพนี้
+  // ถามตอบของดร.ไอรีนใช้โจทย์ของสองเรื่อง จึงล็อกจนกว่าจะได้แกน AI ของทั้งสองเรื่องในแมพนี้
   const sageStory = await talkTo(page, "sage");
   assert.equal(await page.getByTestId("npc-quiz").getAttribute("data-stage"), "locked");
   await page.getByTestId("npc-close").click();
@@ -2357,7 +2429,7 @@ async function playNormal(page) {
   // เครดิต ×1.5: (สถานี 5×5 + ดาว 2×10 + ทบทวน 10 + แกน 20) × 1.5 = 112.5 ปัดเป็น 113
   assert.equal(await page.getByTestId("reward-credits").getAttribute("data-credits"), "113");
   assert.match(await page.getByTestId("reward-next-topic").innerText(), /เรื่องที่ 2 ในห้องนี้/);
-  assert.equal(await page.getByTestId("reward-next").count(), 0, "ยังไม่มีด่านต่อสู้: ไคจูของห้องนี้ต้องใช้แกนทั้งสองชิ้น");
+  assert.ok((await page.getByTestId("reward-next").innerText()).includes(KAIJU2.n1), "แมพ 2 ออกรบได้ทุกเมื่อ ไม่ต้องรอแกนครบ");
   await page.getByTestId("reward-stay").click();
   await page.waitForTimeout(300);
   assert.ok((await creditsOf(page)) > beforeCore, "รับแกน AI ของแมพ 2 ได้เครดิตเพิ่ม");
@@ -2386,7 +2458,7 @@ async function playNormal(page) {
   await page.waitForTimeout(300);
   log("แมพ 2 ห้อง 1: เควสไม่ลดต่ำกว่าระดับปกติ เรื่องที่ 2 ล็อกจนกว่าจะได้แกนชิ้นที่ 1 ข้ามคลังความรู้ได้ คำถามทบทวนแบบเลือกตอบ เครดิต ×1.5");
 
-  // --- NPC ของแมพ 2: อาจารย์ซิน (ถามตอบสองเรื่อง) และลุงเหล็ก (ร้านอาวุธพิเศษ) แต่ละคนมีเรื่องราวของตัวเอง
+  // --- NPC ของแมพ 2: ดร.ไอรีน (ถามตอบสองเรื่อง) และลุงบียอร์น (ร้านอาวุธพิเศษ) แต่ละคนมีเรื่องราวของตัวเอง
   const sageBefore = await creditsOf(page);
   const quizReward = await doQuiz(page, "sage", 5);
   assert.deepEqual([(await snap(page)).store.npcs.sage.best, (await creditsOf(page)) - sageBefore], [5, quizReward]);
@@ -2396,10 +2468,10 @@ async function playNormal(page) {
   const smithShop = page.getByTestId("shop");
   await smithShop.waitFor();
   assert.equal(await smithShop.getAttribute("data-vendor"), "smith");
-  assert.deepEqual(await smithShop.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", ""))), ["weapon-lance"], "ร้านของลุงเหล็กขายอาวุธพิเศษที่ร้านสหกรณ์ไม่มี");
+  assert.deepEqual(await smithShop.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", ""))), ["weapon-lance"], "ร้านของลุงบียอร์นขายอาวุธพิเศษที่ร้านสหกรณ์ไม่มี");
   await shot(page, "30-normal-npc-shop");
   await page.getByTestId("shop-buy-weapon-lance").click();
-  assert.equal((await snap(page)).store.shop.weapon, "lance", "ซื้ออาวุธแล้วใส่ให้ทันที");
+  assert.equal((await snap(page)).store.shop.weapon, "fist", "ซื้ออาวุธแล้วไปใส่ที่แท่นการ์เดียน");
   await page.getByTestId("shop-close").click();
   await page.waitForTimeout(350);
   // คุยครั้งถัดไป: ไม่เล่าเรื่องซ้ำ เปิดร้านเลย
@@ -2407,30 +2479,42 @@ async function playNormal(page) {
   await page.getByTestId("shop").waitFor();
   await page.getByTestId("shop-close").click();
   await page.waitForTimeout(350);
-  log(`NPC ของแมพ 2: อาจารย์ซิน (ถามตอบ 5 ข้อจากเรื่องที่ 1–2 เปิดหลังได้แกนทั้งสองเรื่อง ได้ ${quizReward} เครดิต) ลุงเหล็ก (ร้านอาวุธพิเศษ: หอกสายฟ้า) เล่าเรื่องราวของตัวเองครั้งแรกที่คุย`);
+  log(`NPC ของแมพ 2: ดร.ไอรีน (ถามตอบ 5 ข้อจากเรื่องที่ 1–2 เปิดหลังได้แกนทั้งสองเรื่อง ได้ ${quizReward} เครดิต) ลุงบียอร์น (ร้านอาวุธพิเศษ: หอกสายฟ้า) เล่าเรื่องราวของตัวเองครั้งแรกที่คุย`);
 
-  // --- ไคจูประจำห้อง: โจทย์จากทั้งสองเรื่องของห้อง ขอข้อมูลได้ครั้งเดียว หอกได้เปรียบโวลต์อีล
+  // --- ไคจูประจำห้อง: โจทย์จากทั้งสองเรื่องของห้อง ขอข้อมูลได้ครั้งเดียว หอกชนะทางโวลต์อีล
   await goToHangar(page);
+  assert.equal((await snap(page)).bay.cores, 2, "ตู้กระจกของแมพ 2 แสดงแกนที่เก็บได้ในแมพนี้");
+  await walkTo(page, "robot");
+  await act(page);
+  await page.getByTestId("guardian-bay").waitFor();
+  assert.match(await page.getByTestId("guardian-vs-lance").innerText(), /กับโวลต์อีล: ชนะทาง/);
+  await page.getByTestId("guardian-weapon-lance").click();
+  await page.getByTestId("guardian-close").click();
+  await page.waitForTimeout(400);
+  assert.equal((await snap(page)).bay.texture, "gd_plate_lance", "หุ่นที่จอดอยู่ถือหอกสายฟ้า");
   await openMissions(page);
   assert.deepEqual(await missionStatus(page), { n1: "ready", n2: "locked", n3: "locked", "omega-n": "locked" }, "แมพ 2: ไคจูประจำห้อง 3 ตัว และบอส 1 ตัว");
   assert.match(await page.getByTestId("mission-omega-n").innerText(), /กลายร่างได้ 2 ร่าง/);
-  assert.match(await page.getByTestId("mission-n1").innerText(), /แพ้ทางคมอาวุธ \(ดาบ หอก\)/);
+  assert.match(await page.getByTestId("mission-n1").innerText(), /จุดอ่อน: คมอาวุธ \(ดาบ หอก\)/);
+  assert.match(await page.getByTestId("missions-power").innerText(), /ไม่ต้องมีแกน AI/);
   await shot(page, "31-normal-missions");
   await page.getByTestId("missions-close").click();
   await page.waitForTimeout(300);
   await startBattle(page, "n1", KAIJU2.n1);
   assert.match(await page.getByTestId("battle-hints-note").innerText(), /ขอข้อมูลจากพี่บิตได้ 1 ครั้ง/);
   const advice = page.getByTestId("weapon-advice");
-  assert.deepEqual([await advice.getAttribute("data-weak"), await advice.getAttribute("data-advantaged"), await advice.getAttribute("data-better")], ["blade", "true", ""], "หอกสายฟ้าได้เปรียบโวลต์อีล");
+  assert.deepEqual([await advice.getAttribute("data-weak"), await advice.getAttribute("data-advantaged"), await advice.getAttribute("data-better")], ["blade", "true", ""], "หอกสายฟ้าชนะทางโวลต์อีล");
   assert.equal(await page.getByTestId("battle-power").getAttribute("data-recommended"), String(specOf("n1").power));
+  assert.equal(await page.getByTestId("battle-core-bonus").getAttribute("data-bonus"), "2", "แกนของเรื่องที่ 1–2 ชาร์จแล้ว: พลังสูงสุด +2");
   await shot(page, "31-normal-battle-intro");
   await page.getByTestId("battle-start").click();
+  assert.equal(await page.getByTestId("hp-left").getAttribute("data-max"), String(CAMPAIGN.normal.robotHp + 2));
   assert.match(await page.getByTestId("battle-hint").innerText(), /เหลือ 1/);
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "lance");
   const thrust = await battleTurn(page, true);
   assert.match(thrust.log, /การ์เดียนใช้หอกแทง -1/);
   const thunder = await battleTurn(page, true);
-  assert.match(thunder.log, /การ์เดียนใช้หอกสายฟ้า -4 \(คริติคอล! ได้เปรียบ\)/, "หอก: ถูก 2 ข้อติดกันเป็นคริติคอล และได้เปรียบ (1 + 1) × 2");
+  assert.match(thunder.log, /การ์เดียนใช้หอกสายฟ้า -4 \(คริติคอล! ชนะทาง\)/, "หอก: ถูก 2 ข้อติดกันเป็นคริติคอล และชนะทาง (1 + 1) × 2");
   await shot(page, "31-normal-battle-lance");
   const first = await winBattle(page, "n1");
   assert.deepEqual([...new Set([thrust, thunder, ...first.turns].map((turn) => turn.source))].sort(), [1, 2], "โจทย์ของไคจูประจำห้องมาจากทั้งสองเรื่องของห้อง");
@@ -2443,7 +2527,7 @@ async function playNormal(page) {
   assert.equal((await inRoom(page, 2))?.beat, "zone-n2");
   assert.ok((await roomIds(page)).includes("minigame-t4"));
   assert.deepEqual(await npcIds(page), ["ranger"]);
-  log(`แมพ 2 ไคจูประจำห้อง 1 โวลต์อีล: โจทย์จากเรื่องที่ 1 และ 2 หอกสายฟ้าได้เปรียบและติดคริติคอล ชนะใน ${first.turns.length + 2} ตา ได้ 60 เครดิต ห้อง 2 เปิด`);
+  log(`แมพ 2 ไคจูประจำห้อง 1 โวลต์อีล: โจทย์จากเรื่องที่ 1 และ 2 หอกสายฟ้าชนะทางและติดคริติคอล ชนะใน ${first.turns.length + 2} ตา ได้ 60 เครดิต ห้อง 2 เปิด`);
 
   // --- ผู้เล่นที่ได้แกนครบ 5 ชิ้นของแมพ 2 แล้ว: เควสเสริม ของช่วยเหลือ เกราะ อุปกรณ์สามช่อง และบอส 2 ร่าง
   await resumeWith(page, travelerSave({
@@ -2458,7 +2542,7 @@ async function playNormal(page) {
   await walkTo(page, "door-3");
   await act(page);
   assert.match((await snap(page)).store.toast, /ห้อง 3 ยังล็อก ต้องพาการ์เดียนไปชนะไอรอนเชลล์/);
-  // เควสเสริมของพี่ฟ้า: เก็บเครื่องส่งสัญญาณ 4 เครื่องในห้อง 2 เครดิตคูณ 1.5
+  // เควสเสริมของพี่ไรลีย์: เก็บเครื่องส่งสัญญาณ 4 เครื่องในห้อง 2 เครดิตคูณ 1.5
   await walkTo(page, "door-2");
   await act(page);
   await inRoom(page, 2);
@@ -2476,7 +2560,7 @@ async function playNormal(page) {
   assert.match(await page.getByTestId("battle-intro").innerText(), /หุ้มเกราะ/);
   const hammerAdvice = page.getByTestId("weapon-advice");
   assert.deepEqual([await hammerAdvice.getAttribute("data-weak"), await hammerAdvice.getAttribute("data-advantaged"), await hammerAdvice.getAttribute("data-better"), await hammerAdvice.getAttribute("data-stronger")], ["strike", "true", "hammer", "true"]);
-  assert.match(await hammerAdvice.innerText(), /ไอรอนเชลล์แพ้ทางแรงกระแทก[\s\S]*ค้อนพลังงานได้เปรียบเหมือนกันและแรงกว่า/);
+  assert.match(await hammerAdvice.innerText(), /ไอรอนเชลล์ แพ้ทางแรงกระแทก[\s\S]*ค้อนพลังงานชนะทางเหมือนกันและแรงกว่า/);
   await page.getByTestId("battle-start").click();
   await page.getByTestId("battle-armored").waitFor();
   const armorHp = specOf("n2").forms[0].hp;
@@ -2497,7 +2581,7 @@ async function playNormal(page) {
   assert.match(turn.log, /เกราะแตกแล้ว/);
   assert.equal(await page.getByTestId("battle-bag").getAttribute("data-used"), "false", "ตาใหม่: ใช้ของได้อีกหนึ่งชิ้น");
   turn = await battleTurn(page, true);
-  assert.match(turn.log, /การ์เดียนใช้หมัดจรวด -4 \(ได้เปรียบ เสริมพลัง ×2\)/, "หมัดได้เปรียบ (1 + 1) และแบตเตอรี่เสริม × 2");
+  assert.match(turn.log, /การ์เดียนใช้หมัดจรวด -4 \(ชนะทาง เสริมพลัง ×2\)/, "หมัดชนะทาง (1 + 1) และแบตเตอรี่เสริม × 2");
   await shot(page, "31-normal-battle-armor");
   const analyzed = await useAnalyzer(page);
   assert.deepEqual((await snap(page)).store.shop.supplies, analyzed ? NO_SUPPLIES : { ...NO_SUPPLIES, analyzer: 1 }, "ของใช้แล้วหมดไป");
@@ -2507,9 +2591,15 @@ async function playNormal(page) {
   log(`แมพ 2 ไอรอนเชลล์ (เกราะ): ตอบถูกข้อแรกเกราะแตก ตอบผิดเกราะกลับมา แบตเตอรี่เสริมโจมตี 2 เท่า ใช้ของได้ตาละ 1 ชิ้น ชิปวิเคราะห์ตัดตัวเลือกผิด (${analyzed ? `ใช้ได้ในตาที่ ${analyzed}` : "รอบนี้เจอแต่โจทย์สองตัวเลือก จึงไม่ได้ใช้"})`);
 
   // ซ้อมรบกับไอรอนเชลล์ด้วยค้อน: กดใส่ตามคำแนะนำของพี่บิตจากหน้าเตรียมออกปฏิบัติการ ค้อนทุบเกราะแตกและโจมตีเข้าในข้อเดียว
+  // ซ้อมรบด้วยค้อนตามคำแนะนำของพี่บิต: เปลี่ยนอาวุธที่แท่นการ์เดียนก่อนออกปฏิบัติการ
+  await walkTo(page, "robot");
+  await act(page);
+  await page.getByTestId("guardian-bay").waitFor();
+  await page.getByTestId("guardian-weapon-hammer").click();
+  await page.getByTestId("guardian-close").click();
+  await page.waitForTimeout(400);
+  assert.deepEqual([(await snap(page)).store.shop.weapon, (await snap(page)).bay.texture], ["hammer", "gd_plate_hammer"]);
   await startBattle(page, "n2", KAIJU2.n2, { training: true });
-  await page.getByTestId("weapon-advice-equip").click();
-  assert.equal((await snap(page)).store.shop.weapon, "hammer");
   assert.equal(await page.getByTestId("weapon-advice").getAttribute("data-better"), "");
   await page.getByTestId("battle-start").click();
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "hammer");
@@ -2518,28 +2608,39 @@ async function playNormal(page) {
   assert.equal(turn.kaiju, armorHp - 1, "ค้อนทุบทะลุเกราะ: ลดพลังได้ตั้งแต่ข้อแรก");
   await shot(page, "31-normal-battle-hammer");
   await winBattle(page, "n2");
-  log("อาวุธที่ได้เปรียบ: พี่บิตแนะนำค้อนสำหรับไอรอนเชลล์ กดใส่จากหน้าเตรียมออกปฏิบัติการได้ ค้อนทุบเกราะแตกและโจมตีเข้าในข้อเดียว");
+  log("อาวุธที่ชนะทาง: พี่บิตแนะนำค้อนสำหรับไอรอนเชลล์ เปลี่ยนที่แท่นการ์เดียนแล้วหุ่นที่จอดอยู่ถือค้อน ค้อนทุบเกราะแตกและโจมตีเข้าในข้อเดียว");
 
   // --- ชุดนักบินอวกาศ: กระเป๋าพกของได้ 4 ชิ้น
   await walkTo(page, "wardrobe");
   await act(page);
-  await page.getByTestId("shop").waitFor();
-  await page.getByTestId("shop-wear-outfit-astronaut").click();
+  await page.getByTestId("wardrobe").waitFor();
+  await page.getByTestId("wardrobe-outfit-astronaut").click();
   assert.equal((await snap(page)).avatar.texture, "ch_a_astronaut", "ชุดใหม่ของแมพ 2 มีภาพตัวละครของตัวเอง");
-  await page.getByTestId("shop-close").click();
+  await page.getByTestId("wardrobe-close").click();
   await page.waitForTimeout(350);
 
-  // --- อุปกรณ์ครบสามช่อง: ปืนเลเซอร์ (สตัน) เกราะสะท้อน (กันให้เอง) ชิปคิดทบทวน (ได้ตอบใหม่) ใส่ที่กล่องเก็บไอเทม
+  // --- อุปกรณ์ครบสามช่อง: ปืนเลเซอร์ (สตัน) เกราะสะท้อน (กันให้เอง) ชิปคิดทบทวน (ได้ตอบใหม่) ใส่ที่แท่นการ์เดียน
+  await walkTo(page, "robot");
+  await act(page);
+  await page.getByTestId("guardian-bay").waitFor();
+  // ฝูงสติงเกอร์แพ้ทางลำแสง ทนแรงกระแทก: ค้อนแพ้ทาง ปืนเลเซอร์ชนะทาง
+  assert.match(await page.getByTestId("guardian-vs-hammer").innerText(), /กับฝูงสติงเกอร์: แพ้ทาง/);
+  assert.match(await page.getByTestId("guardian-vs-blaster").innerText(), /กับฝูงสติงเกอร์: ชนะทาง/);
+  const powerBefore = Number(await page.getByTestId("guardian-power").getAttribute("data-power"));
+  for (const id of ["weapon-blaster", "armor-guard", "chip-retry"]) await page.getByTestId(`guardian-${id}`).click();
+  // ค้อนที่แพ้ทาง (40 − 20) → ปืนที่ชนะทาง (30 + 20) + เกราะสะท้อน 30 + ชิปคิดทบทวน 30
+  assert.equal(Number(await page.getByTestId("guardian-power").getAttribute("data-power")) - powerBefore, 90);
+  assert.deepEqual(await page.getByTestId("guardian-model").evaluate((el) => [el.dataset.weapon, el.dataset.armor, el.dataset.chip]), ["blaster", "guard", "retry"]);
+  await shot(page, "31-normal-guardian-bay");
+  await page.getByTestId("guardian-close").click();
+  await page.waitForTimeout(400);
+  assert.deepEqual((await snap(page)).bay, { texture: "gd_guard_blaster", tint: null, chip: true, cores: 5 }, "หุ่นที่จอดอยู่ใส่เกราะสะท้อน ถือปืนเลเซอร์ ชิปเรืองแสงที่อก");
   await walkTo(page, "storage");
   await act(page);
   await page.getByTestId("storage").waitFor();
   assert.equal(await page.getByTestId("bag-picker").getAttribute("data-size"), "4", "ชุดนักบินอวกาศ: กระเป๋า 4 ช่อง");
   assert.equal(await page.locator('[data-testid^="bag-slot-"]').count(), 4);
-  const powerBefore = Number(await page.getByTestId("storage-power").getAttribute("data-power"));
-  for (const id of ["weapon-blaster", "armor-guard", "chip-retry"]) await page.getByTestId(`storage-${id}`).click();
-  // ค้อน 40 → ปืน 30, + เกราะสะท้อน 30 + ชิปคิดทบทวน 30 + ปืนได้เปรียบฝูงสติงเกอร์ 20
-  assert.equal(Number(await page.getByTestId("storage-power").getAttribute("data-power")) - powerBefore, 70);
-  assert.equal(await page.getByTestId("weapon-advice").getAttribute("data-advantaged"), "true", "ฝูงสติงเกอร์แพ้ทางลำแสง: ปืนเลเซอร์ได้เปรียบ");
+  assert.equal(await page.getByTestId("weapon-advice").getAttribute("data-advantaged"), "true", "ฝูงสติงเกอร์แพ้ทางลำแสง: ปืนเลเซอร์ชนะทาง");
   assert.match(await page.getByTestId("bag-advice").innerText(), /ยังไม่มีในกล่อง/);
   await shot(page, "31-normal-storage");
   await page.keyboard.press("Escape");
@@ -2561,7 +2662,7 @@ async function playNormal(page) {
     const wrong = (right + 1) % options.length;
     await page.getByTestId("choice-option").nth(wrong).click();
     assert.match(await page.getByTestId("battle-log").innerText(), /ชิปคิดทบทวนทำงาน/);
-    assert.deepEqual([await page.getByTestId("battle-next").count(), await page.getByTestId("battle").getAttribute("data-turn"), await page.getByTestId("hp-left").getAttribute("data-hp")], [0, "0", "6"]);
+    assert.deepEqual([await page.getByTestId("battle-next").count(), await page.getByTestId("battle").getAttribute("data-turn"), await page.getByTestId("hp-left").getAttribute("data-hp")], [0, "0", String(CAMPAIGN.normal.robotHp + 1)], "พลังเต็ม 6 + แกนของเรื่องที่ 5 อีก 1");
     assert.equal(await page.getByTestId("choice-option").nth(wrong).getAttribute("data-removed"), "true");
     assert.equal(await page.getByTestId("battle-retries").count(), 0, "ใช้ได้ครั้งเดียวต่อการออกปฏิบัติการ");
     assert.equal(await page.evaluate(() => document.activeElement?.dataset.testid), "choice-option", "โฟกัสย้ายไปตัวเลือกที่ยังกดได้");
@@ -2575,7 +2676,7 @@ async function playNormal(page) {
   turn = await battleTurn(page, false);
   assert.equal(turn.retried, false);
   assert.match(turn.log, /เกราะสะท้อนกันห่าเหล็กในไว้ได้/);
-  assert.deepEqual([turn.robot, await page.getByTestId("battle-guard").count()], [6, 0]);
+  assert.deepEqual([turn.robot, await page.getByTestId("battle-guard").count()], [CAMPAIGN.normal.robotHp + 1, 0]);
   // ตอบถูก 3 ข้อติดกัน: ปืนเลเซอร์ทำให้ฝูงติดสตัน ตอบผิดครั้งถัดไปฝูงโจมตีไม่ได้
   const shots = [];
   for (let i = 0; i < 3; i++) {
@@ -2590,12 +2691,12 @@ async function playNormal(page) {
   await shot(page, "31-normal-stun");
   turn = await battleTurn(page, false);
   assert.match(turn.log, /ฝูงสติงเกอร์ติดสตัน โจมตีไม่ได้/);
-  assert.deepEqual([turn.robot, await page.getByTestId("battle-stunned").count()], [6, 0]);
+  assert.deepEqual([turn.robot, await page.getByTestId("battle-stunned").count()], [CAMPAIGN.normal.robotHp + 1, 0]);
   const third = await winBattle(page, "n3");
   assert.deepEqual([third.story?.beat, third.story.art], ["win-n3", ["st_win_kaiju_9", "st_boss_2"]]);
   log("อุปกรณ์ของการ์เดียน: ชิปคิดทบทวนให้ตอบข้อเดิมใหม่ เกราะสะท้อนกันสกิลแรกให้เอง ปืนเลเซอร์ทำให้ติดสตันเมื่อถูก 3 ข้อติดกัน ชุดนักบินอวกาศพกของได้ 4 ชิ้น");
 
-  // --- หมอปลา (ช่วยเหลือ): ให้ชุดซ่อมและโล่ครั้งเดียว
+  // --- หมอโซเฟีย (ช่วยเหลือ): ให้ชุดซ่อมและโล่ครั้งเดียว
   await backToHall(page);
   await walkTo(page, "door-3");
   await act(page);
@@ -2616,10 +2717,10 @@ async function playNormal(page) {
   await page.getByTestId("npc-close").click();
   await page.waitForTimeout(350);
   await page.getByRole("button", { name: "สมุดเควส" }).click();
-  assert.match(await page.getByTestId("questlog-side").innerText(), /2\/3/, "กิจกรรมเสริมของแมพ 2: เควสของพี่ฟ้าและของช่วยเหลือของหมอปลา (ถามตอบของอาจารย์ซินยังไม่ได้เล่นในข้อมูลชุดนี้)");
+  assert.match(await page.getByTestId("questlog-side").innerText(), /2\/3/, "กิจกรรมเสริมของแมพ 2: เควสของพี่ไรลีย์และของช่วยเหลือของหมอโซเฟีย (ถามตอบของดร.ไอรีนยังไม่ได้เล่นในข้อมูลชุดนี้)");
   await page.getByRole("button", { name: "ปิด", exact: true }).click();
   await page.waitForTimeout(350);
-  log("NPC หมอปลา (ช่วยเหลือ): ให้ชุดซ่อมและโล่ครั้งเดียว ไม่เสียเครดิต สมุดเควสนับกิจกรรมเสริมของแมพนี้");
+  log("NPC หมอโซเฟีย (ช่วยเหลือ): ให้ชุดซ่อมและโล่ครั้งเดียว ไม่เสียเครดิต สมุดเควสนับกิจกรรมเสริมของแมพนี้");
 
   // --- บอส 2 ร่าง: ชนะร่างแรกแล้วกลายร่าง แพ้ในร่างที่ 2 แล้วออกใหม่ได้โดยไม่ต้องสู้ร่างแรกซ้ำ
   await goToHangar(page);
@@ -2631,7 +2732,8 @@ async function playNormal(page) {
   await page.getByTestId("battle-start").click();
   assert.equal((await snap(page)).audio.playing, "boss:0");
   assert.match(await page.getByTestId("battle-form").innerText(), /ร่างที่ 1\/2/);
-  assert.equal(await page.getByTestId("hp-left").getAttribute("data-max"), "6");
+  assert.equal(await page.getByTestId("hp-left").getAttribute("data-max"), String(CAMPAIGN.normal.robotHp + CAMPAIGN.normal.coreBoost), "แกนของแมพ 2 ครบ: พลังสูงสุดเพิ่มเต็มเพดาน");
+  assert.equal(await page.getByTestId("battle-weak").getAttribute("data-matchup"), "weak", "ร่างแรกแพ้ทางคมอาวุธ ทนลำแสง: ปืนเลเซอร์แพ้ทาง");
   let transformed = null;
   for (let guard = 0; guard < 30 && !transformed; guard++) {
     turn = await battleTurn(page, true);
@@ -2643,7 +2745,7 @@ async function playNormal(page) {
   assert.equal(await playing(page), "boss:1", "บอสกลายร่าง: เพลงบอสคีย์สูงขึ้นและเร็วขึ้น");
   assert.deepEqual([await page.getByTestId("battle").getAttribute("data-form"), await page.getByTestId("battle-foe").getAttribute("data-art")], ["1", "boss_2"]);
   assert.match(await page.getByTestId("battle-form").innerText(), /ร่างที่ 2\/2/);
-  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-advantage")], ["beam", "true"], "ร่างใหม่แพ้ทางอาวุธอีกแบบ: ปืนเลเซอร์ที่ถืออยู่ได้เปรียบร่างนี้");
+  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-matchup")], ["beam", "strong"], "ร่างใหม่แพ้ทางอาวุธอีกแบบ: ปืนเลเซอร์ที่ถืออยู่ชนะทางร่างนี้");
   await shot(page, "32-normal-boss-form2");
   turn = await battleTurn(page, true);
   for (let guard = 0; guard < 30 && (await page.getByTestId("battle").getAttribute("data-stage")) === "fight"; guard++) turn = await battleTurn(page, false);
@@ -2666,7 +2768,9 @@ async function playNormal(page) {
   log("แมพ 2 บอสโอเมก้า 2 ร่าง: แต่ละร่างแพ้ทางอาวุธคนละแบบ ชนะร่างแรกแล้วกลายร่าง แพ้ในร่างที่ 2 แล้วออกใหม่ที่ร่างเดิม ชนะแล้วเห็นบทส่งท้ายและแมพ 3 เปิด");
 }
 
-// ---------------------------------------------------------------- แมพ 3: ป้อมปราการภูเขาไฟ (ห้องเดียว บอส 3 ร่าง)
+// ---------------------------------------------------------------- แมพ 3: ป้อมปราการภูเขาไฟ (ไม่มีห้องเรียน ลุยด่านต่อสู้ 3 ด่าน บอส 3 ร่าง)
+
+const KAIJU3 = { h1: "แมกมาโกเลม", h2: "ฟีนิกซ์เหล็ก" };
 
 async function playHard(page) {
   // ผู้เล่นที่ชนะไคจูของแมพ 2 ครบแล้ว ยังอยู่ที่แมพ 2
@@ -2676,109 +2780,15 @@ async function playHard(page) {
     battles: { ...wonAll("easy"), ...wonAll("normal") },
     story: [...MAP1_STORY, "map-normal", "zone-n1", "zone-n2", "zone-n3", "win-n1", "win-n2", "win-n3", "ending-normal"],
   }));
-  const arrival = await travelTo(page, "hard", 1);
-  assert.deepEqual([arrival?.beat, arrival.art], ["map-hard", ["st_map3", "st_boss_4"]]);
-  assert.match(await page.getByTestId("cores").innerText(), /0\/5/);
+  const arrival = await travelTo(page, "hard", 0);
+  assert.deepEqual([arrival?.beat, arrival.art], ["map-hard", ["st_map3", "st_boss_4", "st_kaiju_10"]]);
+  assert.match(arrival.lines.join(" "), /ไม่มีห้องเรียน/);
+  assert.equal(await page.getByTestId("cores").count(), 0, "แมพ 3 ไม่มีแกน AI ให้เก็บ: ไม่แสดงตัวนับแกน");
+  assert.match(await page.getByTestId("objective").innerText(), /เตรียมอุปกรณ์ที่แท่นการ์เดียน แล้วออกสู้กับแมกมาโกเลม/);
   await assertCanvasFits(page, "โถงของแมพ 3");
   await shot(page, "33-hard-hall");
-  const start = await creditsOf(page);
-  await walkTo(page, "door-1");
-  assert.match((await snap(page)).store.prompt, /เข้าห้อง 1: เรื่องที่ 1–5/);
-  await act(page);
-  const briefing = await inRoom(page, 1);
-  assert.deepEqual([briefing?.beat, briefing.lines.length, briefing.art], ["zone-h1", 1, ["st_prologue_5"]]);
-  assert.deepEqual(await roomIds(page), ["door-entry", "minigame"], "แมพ 3: ไม่มีสถานี คลังความรู้ โต๊ะทบทวน หรือภารกิจภาคสนาม (ภาคสนามและแบบทดสอบหลังเรียนอยู่ที่แมพ 1)");
-  assert.deepEqual(await npcIds(page), ["captain", "keeper"]);
-  await assertCanvasFits(page, "แมพ 3");
-  await shot(page, "33-hard-room");
-  await page.getByTestId("hud-tutor").click();
-  assert.equal(await page.getByTestId("tutor-remaining").getAttribute("data-limit"), "2", "แมพ 3 ถามติวเตอร์ได้ 2 ครั้งต่อรอบ");
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(200);
-  // ถามตอบของกัปตันเรย์ใช้โจทย์ของทุกเรื่อง จึงล็อกจนกว่าจะได้แกน AI ครบ 5 ชิ้นของแมพนี้
-  await talkTo(page, "captain");
-  assert.equal(await page.getByTestId("npc-quiz").getAttribute("data-stage"), "locked");
-  await page.getByTestId("npc-close").click();
-  await page.waitForTimeout(350);
 
-  // เครื่องทดสอบรวม: ทำเควสทีละเรื่องที่ระดับท้าทาย ผ่านแล้วได้แกน AI ทันที ไม่มีบทสอนและคำถามทบทวน
-  const game = page.getByTestId("minigame");
-  for (let topic = 1; topic <= 5; topic++) {
-    await walkTo(page, "minigame");
-    assert.ok((await snap(page)).store.prompt.includes(`เครื่องทดสอบรวม เรื่องที่ ${topic}:`), `เครื่องทดสอบรวมชี้ไปเรื่องที่ ${topic}`);
-    await act(page);
-    await game.waitFor();
-    assert.deepEqual([await game.getAttribute("data-tier"), await game.getAttribute("data-mode")], ["challenge", "round"], `เรื่องที่ ${topic}: ระดับท้าทาย ตรวจทั้งรอบ`);
-    assert.equal(await page.getByTestId("peek-button").isDisabled(), true, "แมพ 3 เปิดอ่านไม่ได้");
-    if (topic === 1) {
-      // ส่งผิด 2 รอบติดกัน: ระดับไม่ลด (ต่ำสุดคือท้าทาย) แต่ห้องซ่อมยังถูกเสนอ ผู้เรียนที่ติดจึงยังมีทางทบทวน
-      const wrong = [terms[1], terms[0], terms[2], terms[3]];
-      for (let i = 0; i < terms.length; i++) {
-        await card(page, terms[i].term).click();
-        await slot(page, wrong[i].definition).click();
-      }
-      await page.getByTestId("submit-round").click();
-      await card(page, terms[0].term).click();
-      await slot(page, terms[0].definition).click();
-      await card(page, terms[1].term).click();
-      await slot(page, terms[1].definition).click();
-      // สลับสองใบที่เหลือให้ผิดอีกรอบ
-      await slot(page, terms[0].definition).click();
-      await slot(page, terms[1].definition).click();
-      await card(page, terms[0].term).click();
-      await slot(page, terms[1].definition).click();
-      await card(page, terms[1].term).click();
-      await slot(page, terms[0].definition).click();
-      await page.getByTestId("submit-round").click();
-      assert.match(await page.getByTestId("misses").innerText(), /ผิด 2 ครั้ง/);
-      assert.deepEqual([await game.getAttribute("data-tier"), await game.getAttribute("data-mode")], ["challenge", "round"], "ผิด 2 รอบติดกัน: ระดับไม่ลดต่ำกว่าท้าทาย");
-      assert.equal(await page.getByTestId("repair-prompt").getAttribute("data-required"), "false");
-      await shot(page, "33-hard-quest");
-      await page.getByTestId("repair-decline").click();
-    }
-    await solveMinigame(page, topic);
-    await page.getByTestId("minigame-finish").click();
-    const reward = page.getByTestId("reward");
-    await reward.waitFor();
-    assert.equal(await reward.getAttribute("data-topic"), String(topic));
-    assert.match(await page.getByTestId("reward-title").innerText(), new RegExp(`ได้รับแกน AI ชิ้นที่ ${topic}`));
-    // เครดิต ×2: (ดาว + แกน 20) × 2
-    assert.equal(await page.getByTestId("reward-credits").getAttribute("data-credits"), topic === 1 ? "80" : "100");
-    if (topic < 5) assert.match(await page.getByTestId("reward-next-topic").innerText(), new RegExp(`เรื่องที่ ${topic + 1} ในห้องนี้`));
-    else assert.ok((await page.getByTestId("reward-next").innerText()).includes(BOSS_FORMS.boss_2), "ครบ 5 เรื่อง: ภารกิจต่อไปคือบอสใหญ่ของแมพ 3");
-    if (topic === 1) await shot(page, "33-hard-reward");
-    await page.getByTestId("reward-stay").click();
-    await page.waitForTimeout(300);
-    const progress = (await snap(page)).store.progress[topic];
-    assert.deepEqual([progress.core, progress.reviewDone, progress.stationsSeen], [true, false, 0], `เรื่องที่ ${topic}: ได้แกนโดยไม่มีสถานีและคำถามทบทวน`);
-  }
-  await walkTo(page, "minigame");
-  assert.match((await snap(page)).store.prompt, /ผ่านครบทุกเรื่องแล้ว/);
-  await act(page);
-  assert.match((await snap(page)).store.toast, /ผ่านเควสครบทุกเรื่องแล้ว/);
-  assert.equal((await creditsOf(page)) - start, 480, "เครดิตของแมพ 3: 80 + 100 × 4");
-  log("แมพ 3: ห้องเดียว ไม่มีบทสอน เครื่องทดสอบรวมทำเควส 5 เรื่องที่ระดับท้าทาย (ผิดแล้วระดับไม่ลด) ผ่านแล้วได้แกน AI ทันที เครดิต ×2");
-
-  // --- NPC ของแมพ 3: กัปตันเรย์ (ถามตอบรวมทุกเรื่อง) และน้าคลัง (คลังแสง: เกราะไททัน)
-  await page.waitForTimeout(300);
-  assert.equal(await doQuiz(page, "captain", 6), 60, "ถามตอบ 6 ข้อ ข้อละ 5 เครดิต × 2");
-  await talkTo(page, "keeper");
-  const armory = page.getByTestId("shop");
-  await armory.waitFor();
-  assert.deepEqual([await armory.getAttribute("data-vendor"), await armory.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", "")))], ["keeper", ["armor-titan"]]);
-  assert.match(await page.getByTestId("shop-power-armor-titan").innerText(), /ค่าพลัง \+40/);
-  await page.getByTestId("shop-buy-armor-titan").click();
-  assert.equal((await snap(page)).store.shop.armor, "titan");
-  await shot(page, "33-hard-npc-shop");
-  await page.getByTestId("shop-close").click();
-  await page.waitForTimeout(350);
-  log("NPC ของแมพ 3: กัปตันเรย์ (ถามตอบรวม 6 ข้อจากทุกเรื่อง เปิดหลังได้แกนครบ) น้าคลัง (คลังแสง: เกราะไททัน พลังสูงสุด +4)");
-
-  // --- ร้านของแมพ 3: อุปกรณ์ขั้นสูงสุดวางขาย เครื่องแบบและของใช้ที่ช่วยให้ผ่านบอสใหญ่
-  await walkTo(page, "door-entry");
-  await act(page);
-  await inHall(page);
-  await page.waitForTimeout(300);
+  // --- ร้านของแมพ 3: อุปกรณ์ขั้นสูงสุดวางขาย ซื้อแล้วไปใส่ที่โรงเก็บหุ่น
   await walkTo(page, "shop");
   await act(page);
   await page.getByTestId("shop").waitFor();
@@ -2787,24 +2797,85 @@ async function playHard(page) {
   assert.equal(await page.getByTestId("shop-buy-module-scanner").count(), 0, "โมดูลซื้อได้ครั้งเดียว ติดตั้งถาวร");
   assert.equal(await page.getByTestId("shop-buy-supply-reboot").isDisabled(), true, "แกนสำรองถือได้ชิ้นเดียว");
   assert.match(await page.getByTestId("shop-buy-supply-reboot").innerText(), /ถือเต็มแล้ว \(1\)/);
-  assert.equal((await snap(page)).avatar.texture, "ch_a_researcher");
-  assert.equal((await snap(page)).store.shop.weapon, "cannon");
+  assert.deepEqual([(await snap(page)).avatar.texture, (await snap(page)).store.shop.weapon], ["ch_a_lab", "fist"], "ร้านขายอย่างเดียว");
   await shot(page, "34-hard-shop");
   await page.getByTestId("shop-close").click();
   await page.waitForTimeout(300);
 
-  // บอสสุดท้าย 3 ร่าง
+  // --- โรงเก็บหุ่นของแมพ 3: ผังของตัวเอง NPC ของแมพนี้ประจำอยู่ที่นี่ ตู้กระจกแสดงแกน 6 ชิ้นจากแมพ 1
   await goToHangar(page);
+  await assertCanvasFits(page, "โรงเก็บหุ่นของแมพ 3");
+  assert.deepEqual(await npcIds(page), ["captain", "keeper"]);
+  assert.equal((await snap(page)).bay.cores, 6);
+  await shot(page, "33-hard-hangar");
+  // ถามตอบของกัปตันเรย์ใช้โจทย์ของทุกเรื่อง เปิดเพราะเรียนครบแล้วที่แมพ 1
+  const start = await creditsOf(page);
+  assert.equal(await doQuiz(page, "captain", 6), 60, "ถามตอบ 6 ข้อ ข้อละ 5 เครดิต × 2");
+  assert.equal((await creditsOf(page)) - start, 60);
+  await talkTo(page, "keeper");
+  const armory = page.getByTestId("shop");
+  await armory.waitFor();
+  assert.deepEqual([await armory.getAttribute("data-vendor"), await armory.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", "")))], ["keeper", ["armor-titan"]]);
+  assert.match(await page.getByTestId("shop-power-armor-titan").innerText(), /ค่าพลัง \+40/);
+  await page.getByTestId("shop-buy-armor-titan").click();
+  await shot(page, "33-hard-npc-shop");
+  await page.getByTestId("shop-close").click();
+  await page.waitForTimeout(350);
+  log("NPC ของแมพ 3 อยู่ในโรงเก็บหุ่น: กัปตันเรย์ (ถามตอบรวม 6 ข้อจากทุกเรื่อง) ลุงโอลาฟ (คลังแสง: เกราะไททัน)");
+
+  // --- จุดปรับแต่งก่อนออกรบ: ชุดที่ตู้เสื้อผ้า อาวุธและเกราะที่แท่นการ์เดียน
+  await walkTo(page, "wardrobe");
+  await act(page);
+  await page.getByTestId("wardrobe").waitFor();
+  await page.getByTestId("wardrobe-outfit-researcher").click();
+  await page.getByTestId("wardrobe-close").click();
+  await page.waitForTimeout(300);
+  assert.equal((await snap(page)).avatar.texture, "ch_a_researcher");
+  await walkTo(page, "robot");
+  await act(page);
+  await page.getByTestId("guardian-bay").waitFor();
+  assert.match(await page.getByTestId("guardian-next").innerText(), /ด่านถัดไป: แมกมาโกเลม/);
+  assert.match(await page.getByTestId("guardian-vs-cannon").innerText(), /กับแมกมาโกเลม: ชนะทาง/);
+  assert.match(await page.getByTestId("guardian-vs-fist").innerText(), /กับแมกมาโกเลม: แพ้ทาง/);
+  await page.getByTestId("guardian-weapon-cannon").click();
+  await page.getByTestId("guardian-armor-titan").click();
+  await page.getByTestId("guardian-close").click();
+  await page.waitForTimeout(400);
+  assert.equal((await snap(page)).bay.texture, "gd_titan_cannon", "หุ่นที่จอดอยู่ใส่เกราะไททันและถือปืนใหญ่");
+
   await openMissions(page);
-  assert.deepEqual(await missionStatus(page), { end: "ready" }, "แมพ 3: มีบอสตัวเดียว");
+  assert.deepEqual(await missionStatus(page), { h1: "ready", h2: "locked", end: "locked" }, "แมพ 3: ไคจู 2 ตัว แล้วบอสใหญ่");
+  assert.match(await page.getByTestId("missions-power").innerText(), /ไม่ต้องมีแกน AI/);
   assert.match(await page.getByTestId("mission-end").innerText(), /กลายร่างได้ 3 ร่าง/);
   await page.getByTestId("missions-close").click();
   await page.waitForTimeout(300);
+
+  // --- ด่าน 1 แมกมาโกเลม (เกราะ แพ้ทางลำแสง): ปืนใหญ่ชนะทาง
+  await startBattle(page, "h1", KAIJU3.h1);
+  assert.match(await page.getByTestId("battle-intro").innerText(), /หุ้มเกราะ/);
+  await page.getByTestId("battle-start").click();
+  assert.equal(await page.getByTestId("hp-left").getAttribute("data-max"), "9", "แมพ 3: การ์เดียนเริ่มที่พลัง 5 เกราะไททัน +4");
+  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-robot").getAttribute("data-armor")], ["strong", "titan"]);
+  const golem = await winBattle(page, "h1");
+  assert.deepEqual([golem.story?.beat, golem.story.art[0]], ["win-h1", "st_win_kaiju_10"]);
+  assert.ok(golem.turns.every((turn) => [1, 2, 3].includes(turn.source)), "โจทย์ของแมกมาโกเลมมาจากเรื่องที่ 1–3");
+  log(`แมพ 3 ด่าน 1 แมกมาโกเลม: ปืนใหญ่ชนะทาง ชนะใน ${golem.turns.length} ตา`);
+
+  // --- ด่าน 2 ฟีนิกซ์เหล็ก (ฟื้นพลัง แพ้ทางแรงกระแทก): ปืนใหญ่พอใช้ได้
+  await startBattle(page, "h2", KAIJU3.h2);
+  await page.getByTestId("battle-start").click();
+  assert.equal(await page.getByTestId("battle-weak").getAttribute("data-matchup"), "even");
+  const phoenix = await winBattle(page, "h2");
+  assert.deepEqual([phoenix.story?.beat, phoenix.story.art[0]], ["win-h2", "st_win_kaiju_11"]);
+  log(`แมพ 3 ด่าน 2 ฟีนิกซ์เหล็ก: ปืนใหญ่พอใช้ได้ ชนะใน ${phoenix.turns.length} ตา`);
+
+  // บอสสุดท้าย 3 ร่าง
   await startBattle(page, "end", BOSS_FORMS.boss_2);
   const intro = await page.getByTestId("battle-intro").innerText();
   assert.equal(await page.getByTestId("battle-trait").count(), 3);
   assert.match(intro, /กลายร่างได้ 3 ร่าง/);
   assert.match(await page.getByTestId("battle-hints-note").innerText(), /ขอข้อมูลจากพี่บิตได้ 2 ครั้ง/, "แมพ 3 ขอข้อมูลไม่ได้ ชุดนักวิจัยและโมดูลสแกนเนอร์ให้เพิ่มอย่างละ 1 ครั้ง");
+  assert.deepEqual(await page.getByTestId("bag-picker").getByTestId("matchup").evaluateAll((rows) => rows.map((row) => row.dataset.matchup)), ["strong", "even", "weak"], "ปืนใหญ่ชนะทางร่างแรก พอใช้ได้กับร่างที่สอง แพ้ทางร่างสุดท้าย");
   assert.match(await page.getByTestId("battle-modules").innerText(), /โมดูลสแกนเนอร์.*โมดูลพยาบาล|โมดูลพยาบาล.*โมดูลสแกนเนอร์/);
   assert.match(await page.getByTestId("battle-perk").innerText(), /ชุดนักวิจัยภาคสนาม/);
   assert.equal(await page.getByTestId("bag-picker").getAttribute("data-bag"), "reboot,analyzer,overcharge");
@@ -2880,7 +2951,7 @@ async function playHard(page) {
   await walkTo(page, "core");
   await act(page);
   await page.getByTestId("certificate").waitFor();
-  assert.match((await page.getByTestId("certificate-guardian").innerText()).replace(/\s+/g, " "), /แมพ 1: Pixel AI Lab ปราบไคจู 6\/6 ด่าน.*แมพ 2: ศูนย์วิจัยภาคสนาม ปราบไคจู 4\/4 ด่าน.*แมพ 3: ป้อมปราการภูเขาไฟ ปราบไคจู 1\/1 ด่าน/);
+  assert.match((await page.getByTestId("certificate-guardian").innerText()).replace(/\s+/g, " "), /แมพ 1: Pixel AI Lab ปราบไคจู 6\/6 ด่าน.*แมพ 2: ศูนย์วิจัยภาคสนาม ปราบไคจู 4\/4 ด่าน.*แมพ 3: ป้อมปราการภูเขาไฟ ปราบไคจู 3\/3 ด่าน/);
   await shot(page, "34-certificate-all-maps");
   await page.getByTestId("certificate-back").click();
   await page.waitForTimeout(350);
@@ -3240,7 +3311,7 @@ try {
     await playNormal(page);
   }
   if (wanted("hard")) {
-    console.log("เดสก์ท็อป: แมพ 3 ป้อมปราการ (1 ห้อง บอส 3 ร่าง)");
+    console.log("เดสก์ท็อป: แมพ 3 ป้อมปราการ (ไม่มีห้องเรียน ไคจู 2 ตัว บอส 3 ร่าง)");
     await playHard(page);
   }
   if (wanted("keyboard")) {

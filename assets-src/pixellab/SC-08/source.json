@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "inside a blacksmith forge workshop with a glowing furnace, a heavy anvil, hanging tongs and swords on the wall, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "34189bf3-df03-4a07-9a71-95de39b3b501",
+  "generatedAt": "2026-10-03T06:15:15.188Z"
+}

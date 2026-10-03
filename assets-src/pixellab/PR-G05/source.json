@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "a robot maintenance bay seen from a low top-down angle: a wide flat round steel platform with yellow and black hazard edges, two short mechanical clamp arms on the left and right sides and a small control panel, empty platform, no robot, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 96,
+    "height": 64,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "e674b78c-8570-433b-b69b-27e450ceaaa0",
+  "generatedAt": "2026-10-03T06:10:32.701Z"
+}

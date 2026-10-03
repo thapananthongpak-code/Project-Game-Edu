@@ -1,7 +1,8 @@
 // แมพของเกม (docs/GDD.md ข้อ 15): แมพ 1 → 2 → 3 เล่นต่อกันตามลำดับ ยิ่งไปไกลยิ่งยาก
 //   easy   = แมพ 1 Pixel AI Lab: 6 ห้องเรียน เรียนครบทุกสถานี ภารกิจภาคสนาม แบบทดสอบหลังเรียน และใบประกาศอยู่ที่นี่
-//   normal = แมพ 2 ศูนย์วิจัยภาคสนาม: 3 ห้อง ทบทวนหัวข้อ 1–5 ที่ระดับปกติขึ้นไป ไคจูชุดใหม่
-//   hard   = แมพ 3 ป้อมปราการ: ห้องเดียว เครื่องทดสอบรวมที่ระดับท้าทาย แล้วสู้บอสใหญ่ 3 ร่าง
+//   normal = แมพ 2 ศูนย์วิจัยภาคสนาม: 3 ห้อง ทบทวนหัวข้อ 1–5 ที่ระดับปกติขึ้นไป ไคจูชุดใหม่ การทบทวนข้ามได้ทั้งหมด
+//            (ด่านต่อสู้ไม่ต้องใช้แกน AI แกนที่ชาร์จแล้วเพิ่มพลังให้การ์เดียนในด่านของเรื่องนั้น)
+//   hard   = แมพ 3 ป้อมปราการ: ไม่มีห้องเรียน ลุยด่านต่อสู้อย่างเดียว 3 ด่าน ด่านสุดท้ายคือบอสใหญ่ 3 ร่าง
 // แมพถัดไปเปิดเมื่อชนะด่านต่อสู้ครบทุกด่านของแมพก่อนหน้า (mapUnlocked ใน gameStore.ts) รหัส easy / normal / hard
 // คงไว้ตามรุ่นที่ผู้เล่นเลือก "ระดับความยาก" ตอนเริ่มเกม เพราะเป็นค่าที่บันทึกใน SaveData
 // แต่ละแมพกำหนดจำนวนห้อง สิ่งที่ต้องทำก่อนได้แกน AI ด่านต่อสู้ ตัวช่วยที่ใช้ได้ และรางวัล
@@ -18,7 +19,7 @@ export type Difficulty = (typeof DIFFICULTIES)[number];
 export const mapIndex = (map: Difficulty | undefined): number => Math.max(0, DIFFICULTIES.indexOf(map ?? "easy"));
 
 /** ภาพของคู่ต่อสู้: ไคจูของแมพ 1 (1–6) ไคจูของแมพ 2 (7–9) และร่างที่ 2–4 ของบอส (docs/ART_GUIDE.md ข้อ 5.6) */
-export type FoeArt = "kaiju_1" | "kaiju_2" | "kaiju_3" | "kaiju_4" | "kaiju_5" | "kaiju_6" | "kaiju_7" | "kaiju_8" | "kaiju_9" | "boss_2" | "boss_3" | "boss_4";
+export type FoeArt = "kaiju_1" | "kaiju_2" | "kaiju_3" | "kaiju_4" | "kaiju_5" | "kaiju_6" | "kaiju_7" | "kaiju_8" | "kaiju_9" | "kaiju_10" | "kaiju_11" | "boss_2" | "boss_3" | "boss_4";
 
 /** ร่างหนึ่งของคู่ต่อสู้ บอสของแมพ 2 และ 3 มีหลายร่าง ต้องชนะทีละร่าง */
 export interface FormSpec {
@@ -59,6 +60,10 @@ export interface DifficultySpec {
   stations: "required" | "optional" | "none";
   /** ต้องตอบคำถามทบทวนก่อนรับแกน AI หรือไม่ */
   review: boolean;
+  /** ห้องถัดไปต้องได้แกน AI ครบทุกหัวข้อของห้องก่อนหน้าด้วยหรือไม่ (false = ชนะไคจูที่เฝ้าห้องอย่างเดียว ข้ามการทบทวนได้) */
+  roomsNeedCores: boolean;
+  /** แกน AI ที่ชาร์จแล้วในแมพนี้ของหัวข้อของด่าน เพิ่มพลังสูงสุดของการ์เดียนชิ้นละ 1 ไม่เกินจำนวนนี้ (0 = ไม่มีผล) */
+  coreBoost: number;
   /** ระดับความช่วยเหลือต่ำสุดของเควส (ระดับไม่ลดต่ำกว่านี้แม้ตอบผิด) */
   minTier: Tier;
   /** ตัวคูณเครดิตวิจัย */
@@ -92,6 +97,8 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
     ],
     stations: "required",
     review: true,
+    roomsNeedCores: true,
+    coreBoost: 0,
     minTier: "assist",
     creditMultiplier: 1,
     battleHints: 2,
@@ -104,9 +111,9 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
   normal: {
     zones: [{ topics: [1, 2] }, { topics: [3, 4] }, { topics: [5] }],
     battles: [
-      { id: "n1", forms: [{ art: "kaiju_7", hp: 16, trait: "charge", weak: "blade" }], backdrop: 7, sources: [1, 2], requires: [1, 2], unlocks: 2, boss: false, power: 160 },
-      { id: "n2", forms: [{ art: "kaiju_8", hp: 16, trait: "armor", weak: "strike" }], backdrop: 8, sources: [3, 4], requires: [3, 4], unlocks: 3, boss: false, power: 170 },
-      { id: "n3", forms: [{ art: "kaiju_9", hp: 13, trait: "swarm", weak: "beam" }], backdrop: 9, sources: [5], requires: [5], boss: false, power: 170 },
+      { id: "n1", forms: [{ art: "kaiju_7", hp: 16, trait: "charge", weak: "blade" }], backdrop: 7, sources: [1, 2], requires: [], unlocks: 2, boss: false, power: 160 },
+      { id: "n2", forms: [{ art: "kaiju_8", hp: 16, trait: "armor", weak: "strike" }], backdrop: 8, sources: [3, 4], requires: [], unlocks: 3, boss: false, power: 170 },
+      { id: "n3", forms: [{ art: "kaiju_9", hp: 11, trait: "swarm", weak: "beam" }], backdrop: 9, sources: [5], requires: [], boss: false, power: 170 },
       {
         id: "omega-n",
         forms: [
@@ -115,13 +122,15 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
         ],
         backdrop: 6,
         sources: [1, 2, 3, 4, 5, 6],
-        requires: [5],
+        requires: [],
         boss: true,
         power: 190,
       },
     ],
     stations: "optional",
     review: true,
+    roomsNeedCores: false,
+    coreBoost: 2,
     minTier: "standard",
     creditMultiplier: 1.5,
     battleHints: 1,
@@ -130,10 +139,12 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
     pools: "mixed",
     formResetsOnRetry: false,
   },
-  // แมพ 3: ห้องเดียว ไม่มีบทสอน ทำเควสหัวข้อ 1–5 ที่ระดับท้าทาย แล้วสู้บอสใหญ่ที่กลายร่างได้ 3 ร่าง
+  // แมพ 3: ไม่มีห้องเรียนและไม่ต้องใช้แกน AI ลุยด่านต่อสู้ 3 ด่านตามลำดับ ด่านสุดท้ายคือบอสใหญ่ที่กลายร่างได้ 3 ร่าง
   hard: {
-    zones: [{ topics: [1, 2, 3, 4, 5] }],
+    zones: [],
     battles: [
+      { id: "h1", forms: [{ art: "kaiju_10", hp: 16, trait: "armor", weak: "beam" }], backdrop: 10, sources: [1, 2, 3], requires: [], boss: false, power: 170 },
+      { id: "h2", forms: [{ art: "kaiju_11", hp: 15, trait: "regen", weak: "strike" }], backdrop: 10, sources: [3, 4, 5], requires: [], boss: false, power: 175 },
       {
         id: "end",
         forms: [
@@ -143,13 +154,15 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
         ],
         backdrop: 10,
         sources: [1, 2, 3, 4, 5, 6],
-        requires: [1, 2, 3, 4, 5],
+        requires: [],
         boss: true,
-        power: 170,
+        power: 180,
       },
     ],
     stations: "none",
     review: false,
+    roomsNeedCores: false,
+    coreBoost: 0,
     minTier: "challenge",
     creditMultiplier: 2,
     battleHints: 0,

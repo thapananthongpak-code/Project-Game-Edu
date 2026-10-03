@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now holding a white and cyan laser blaster pistol in its front fist on the right side of the image, fingers wrapped around the grip, barrel aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-07/image.png",
+    "reference": "GD-03/image.png",
+    "usage_description": "copy the weapon and the way it is held from this reference: the same blaster shape, colors, size and grip in the same hand"
+  },
+  "fetchTool": "get_image",
+  "id": "f8e75127-c6d2-4eb5-bfc4-d7379e9d4102",
+  "generatedAt": "2026-10-03T06:05:03.338Z"
+}

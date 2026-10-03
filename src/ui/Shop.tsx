@@ -3,8 +3,8 @@ import { playSfx } from "../audio/engine";
 import { fmt, ui } from "../content/ui-strings";
 import { creditsOf, difficultyOf, guardianPowerOf, reachedMap, useGameStore } from "../state/gameStore";
 import { type Gear, itemPower } from "../state/gear";
-import { bagOf, type EquipKind, ownsItem, stockLeft, tierOpen } from "../state/shop";
-import { AVATARS, type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STARTER_DECOR, type Supply } from "../state/shop.config";
+import { bagOf, ownsItem, stockLeft, tierOpen } from "../state/shop";
+import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STARTER_DECOR, type Supply } from "../state/shop.config";
 import { art } from "./art";
 import { ItemIcon } from "./BagPicker";
 import { GearIcon } from "./Storage";
@@ -16,20 +16,12 @@ type Kind = ShopItem["kind"];
 const KINDS = ["weapon", "armor", "chip", "supply", "outfit", "bit", "module", "paint", "decor"] as const;
 const GEAR_KINDS: readonly Kind[] = ["weapon", "armor", "chip"];
 
-/** ของเริ่มต้นที่ทุกคนมี แสดงคู่กับของในร้านเพื่อให้สลับกลับได้ */
-const DEFAULTS: Partial<Record<Kind, { id: string; value: string }>> = {
-  weapon: { id: "weapon-fist", value: "fist" },
-  armor: { id: "armor-plate", value: "plate" },
-  chip: { id: "chip-none", value: "none" },
-  outfit: { id: "outfit-lab", value: "lab" },
-  bit: { id: "bit-classic", value: "classic" },
-  paint: { id: "paint-standard", value: "standard" },
-};
 
 /**
  * ร้านสหกรณ์แล็บ ตู้เสื้อผ้า และร้านพิเศษของ NPC (GDD ข้อ 13 และ 16)
  * ซื้ออุปกรณ์ของการ์เดียน (อาวุธ เกราะ ชิป) ชุด คอสตูมและโมดูลอัปเกรดของพี่บิต สีการ์เดียน และของใช้ในการต่อสู้ด้วยเครดิตวิจัย
- * ร้านพิเศษขายเฉพาะของของ NPC คนนั้น ของที่ซื้อจากร้านพิเศษแล้วกลับมาสลับใช้ได้ที่ร้านสหกรณ์และตู้เสื้อผ้า
+ * ร้านขายอย่างเดียว ของที่ซื้อแล้วใส่ที่จุดปรับแต่งในโรงเก็บหุ่น: ชุดที่ตู้เสื้อผ้า อุปกรณ์และสีที่แท่นการ์เดียน คอสตูมของพี่บิตที่แท่นปรับแต่งพี่บิต
+ * ร้านพิเศษขายเฉพาะของของ NPC คนนั้น
  */
 export function Shop() {
   const profile = useGameStore((s) => s.profile);
@@ -42,8 +34,6 @@ export function Shop() {
   const openOverlay = useGameStore((s) => s.openOverlay);
   const bag = bagOf(shop);
   const buy = useGameStore((s) => s.buy);
-  const equip = useGameStore((s) => s.equip);
-  const setAvatar = useGameStore((s) => s.setAvatar);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const [notice, setNotice] = useState<string | null>(null);
@@ -86,7 +76,7 @@ export function Shop() {
     const lockedTier = item !== null && !tierOpen(item, reached);
     const left = item?.kind === "supply" ? stockLeft(shop, item, map) : null;
     return (
-      <li key={id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${using ? "bg-hint" : lockedTier ? "bg-mist" : "bg-paper"}`} data-testid={`shop-item-${id}`} data-owned={owned} data-using={using} data-locked={lockedTier} data-stock={left ?? undefined}>
+      <li key={id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${using ? "bg-hint" : lockedTier ? "border-dashed bg-cream" : "bg-paper"}`} data-testid={`shop-item-${id}`} data-owned={owned} data-using={using} data-locked={lockedTier} data-stock={left ?? undefined}>
         <div className="shrink-0 rounded-md border-2 border-ink bg-teal-light">{picture(kind, value)}</div>
         <div className="min-w-0 flex-1">
           <div className="font-extrabold">{strings.name}</div>
@@ -113,14 +103,10 @@ export function Shop() {
           <button type="button" className="btn !min-h-10 shrink-0 text-sm" disabled={owned || left === 0 || (item !== null && balance < item.price)} data-testid={`shop-buy-${id}`} onClick={() => item && purchase(item)}>
             {owned && item?.kind === "supply" ? fmt(ui.shop.full, { n: item.max }) : ui.shop.buy}
           </button>
-        ) : kind === "module" ? (
-          <span className="shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-sm font-bold">{ui.shop.installed}</span>
-        ) : kind === "decor" ? (
-          <span className="shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-sm font-bold">{ui.shop.owned}</span>
         ) : (
-          <button type="button" className="btn btn-ghost !min-h-10 shrink-0 text-sm" disabled={using} data-testid={`shop-wear-${id}`} onClick={() => (playSfx(GEAR_KINDS.includes(kind) ? "equip" : "click"), equip(kind as EquipKind, value))}>
-            {using ? ui.shop.wearing : ui.shop.wear}
-          </button>
+          <span className="max-w-40 shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-xs font-bold" data-testid={`shop-owned-${id}`}>
+            ✓ {ui.shop.owned} · {ui.shop.ownedAt[kind]}
+          </span>
         )}
       </li>
     );
@@ -159,32 +145,9 @@ export function Shop() {
           {notice}
         </p>
 
-        {!vendor && (
-          <section>
-            <h3 className="mb-1 text-xs font-bold text-slate">{ui.shop.character}</h3>
-            <div className="flex gap-2" role="radiogroup" aria-label={ui.shop.character}>
-              {AVATARS.map((choice) => (
-                <button
-                  key={choice}
-                  type="button"
-                  role="radio"
-                  aria-checked={avatar === choice}
-                  data-testid={`shop-avatar-${choice}`}
-                  onClick={() => setAvatar(choice)}
-                  className={`flex items-center gap-2 rounded-lg border-[3px] border-ink p-1 pr-3 font-bold ${avatar === choice ? "bg-hint shadow-[0_3px_0_0_#1a1c2c]" : "bg-paper hover:bg-teal-light"}`}
-                >
-                  <img src={art.player(choice, shop.outfit)} alt="" className="pixelated h-12 w-12" />
-                  {ui.onboarding.avatars[choice]}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
         {KINDS.map((kind) => {
           const listed = items.filter((item) => item.kind === kind);
-          const fallback = vendor ? undefined : DEFAULTS[kind];
-          if (listed.length === 0 && !fallback) return null;
+          if (listed.length === 0) return null;
           const starters = kind === "decor" && !vendor ? STARTER_DECOR : [];
           return (
             <section key={kind} data-testid={`shop-section-${kind}`}>
@@ -196,7 +159,6 @@ export function Shop() {
                 </button>
               )}
               <ul className="flex flex-col gap-2">
-                {fallback && card(fallback.id, kind, fallback.value, null)}
                 {starters.map((decor) => card(`decor-${decor}`, "decor", decor, null))}
                 {listed.map((item) => card(item.id, item.kind, item.value, item))}
               </ul>

@@ -292,24 +292,6 @@ canvas {
 .battle-robot-dodge {
   animation: battle-dodge 0.5s ease-out;
 }
-/* อาวุธของแมพ 2 และ 3 ที่การ์เดียนถือ */
-.battle-weapon-hammer {
-  left: 52%;
-  top: 4%;
-  width: 56%;
-  transform: rotate(18deg);
-}
-.battle-weapon-lance {
-  left: 50%;
-  top: 2%;
-  width: 62%;
-  transform: rotate(24deg);
-}
-.battle-weapon-cannon {
-  left: 46%;
-  top: 22%;
-  width: 60%;
-}
 .battle-kaiju-dash {
   animation: battle-dash-left 0.5s ease-out;
 }
@@ -334,17 +316,33 @@ canvas {
 .battle-bit-assist {
   animation: battle-assist 0.5s ease-out;
 }
-/* อาวุธที่การ์เดียนถืออยู่ วางที่มือด้านหน้าของหุ่น */
-.battle-weapon-sword {
-  left: 58%;
-  top: 8%;
-  width: 52%;
-  transform: rotate(14deg);
+/* ชิปที่ติดตั้งเรืองแสงที่อกของการ์เดียน (ตำแหน่งตามภาพหุ่น 128×128) เร่งพลัง = ส้ม คิดทบทวน = เขียว */
+.guardian-chip {
+  position: absolute;
+  left: 57%;
+  top: 33%;
+  width: 7%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  border: 2px solid var(--color-ink);
 }
-.battle-weapon-blaster {
-  left: 56%;
-  top: 34%;
-  width: 44%;
+.guardian-chip-charger {
+  background: #ffcd75;
+  box-shadow: 0 0 8px 2px #ffcd75;
+}
+.guardian-chip-retry {
+  background: #38b764;
+  box-shadow: 0 0 8px 2px #38b764;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .guardian-chip {
+    animation: guardian-chip-pulse 1.4s ease-in-out infinite;
+  }
+}
+@keyframes guardian-chip-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 .battle-shielded {
   outline: 3px solid var(--color-teal-light);

@@ -349,7 +349,7 @@ describe("migrateSave", () => {
     expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
   });
 
-  it("รุ่น 7 ที่เคยเลือกระดับกลางหรือยาก: อยู่ที่แมพนั้นต่อ ความคืบหน้าเดิมเป็นทั้งบันทึกการเรียนและความคืบหน้าของแมพนั้น (ไม่มีหัวข้อ 6) บทส่งท้ายเป็นของแมพนั้น", () => {
+  it("รุ่น 7 ที่เคยเลือกระดับกลางหรือยาก: อยู่ที่แมพนั้นต่อ ความคืบหน้าเดิมเป็นทั้งบันทึกการเรียนและความคืบหน้าของแมพ 2 (ไม่มีหัวข้อ 6) บทส่งท้ายเป็นของแมพนั้น", () => {
     const rooms = Object.fromEntries([1, 2, 3, 4, 5, 6].map((topic) => [topic, { ...emptyRoom(), minigameDone: topic < 6, stars: topic < 6 ? 3 : 0, core: true }]));
     const v7 = { ...JSON.parse(JSON.stringify(sample)), version: 7, maps: undefined, profile: { name: "กลาง", difficulty: "normal", classCode: "", avatar: "a" }, rooms, battles: { n1: won, n2: won, n3: won, "omega-n": won }, story: ["prologue", "zone-n1", "ending"] };
     const save = migrateSave(v7) as SaveData;
@@ -359,7 +359,8 @@ describe("migrateSave", () => {
     expect(save.maps.hard).toEqual({});
     expect(save.story).toEqual(["prologue", "zone-n1", "ending-normal"]);
     const hard = migrateSave({ ...v7, profile: { ...v7.profile, difficulty: "hard" }, battles: { end: won } }) as SaveData;
-    expect([Object.keys(hard.maps.hard), hard.maps.normal, hard.story.at(-1)]).toEqual([["1", "2", "3", "4", "5"], {}, "ending-hard"]);
+    // แมพ 3 ไม่มีห้องเรียนแล้ว: ความคืบหน้าเดิมเหลือเป็นบันทึกการเรียนอย่างเดียว
+    expect([Object.keys(hard.rooms), Object.keys(hard.maps.hard), hard.maps.normal, hard.story.at(-1)]).toEqual([["1", "2", "3", "4", "5", "6"], [], {}, "ending-hard"]);
   });
 
   it("ของตกแต่งและของที่ซื้อจากร้านที่ผิดรูป: วางได้เฉพาะของที่มี ขนาดช่องตรวจตอนวาง ชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ", () => {

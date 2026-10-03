@@ -44,9 +44,9 @@ describe("แมพและด่านต่อสู้", () => {
     // แมพ 2: ด่านของแมพ 1 (6) + แมพ 2 (4)
     const normal = player("กลาง", { profile: { name: "กลาง", difficulty: "normal", classCode: "PVC1", avatar: "a" }, battles: { k1: win, n1: win, n2: win } });
     expect(summarizeStudent(normal)).toMatchObject({ difficulty: "normal", battlesWon: 3, battlesTotal: 10, reviewsTotal: 5 });
-    // แมพ 3: ทุกด่านของเกม (6 + 4 + 1) ด่านของแมพที่ยังไปไม่ถึงไม่ถูกนับเป็นตัวหาร
+    // แมพ 3: ทุกด่านของเกม (6 + 4 + 3) ด่านของแมพที่ยังไปไม่ถึงไม่ถูกนับเป็นตัวหาร
     const hard = player("ยาก", { profile: { name: "ยาก", difficulty: "hard", classCode: "PVC1", avatar: "a" }, battles: { end: win } });
-    expect(summarizeStudent(hard)).toMatchObject({ difficulty: "hard", battlesWon: 1, battlesTotal: 11, reviewsTotal: 5 });
+    expect(summarizeStudent(hard)).toMatchObject({ difficulty: "hard", battlesWon: 1, battlesTotal: 13, reviewsTotal: 5 });
     // ความคืบหน้าของแมพ 2 และ 3 (save.maps) ไม่ปนกับบันทึกการเรียนของแมพ 1
     const replay = player("ทวน", { profile: { name: "ทวน", difficulty: "normal", classCode: "PVC1", avatar: "a" }, maps: { normal: { 1: { ...emptyRoom(), minigameDone: true, stars: 3, core: true } }, hard: {} } });
     expect(summarizeStudent(replay)).toMatchObject({ cores: 0, stars: 0, roomReached: 0 });
@@ -71,7 +71,7 @@ describe("แมพและด่านต่อสู้", () => {
       .split(/\r?\n/)
       .map((line) => line.split(","));
     const cell = (name: string) => row[header.indexOf(name)];
-    expect([cell("map"), cell("kaiju_defeated"), cell("kaiju_total"), cell("battle_answers"), cell("battle_correct")]).toEqual(["3", "1", "11", "6", "5"]);
+    expect([cell("map"), cell("kaiju_defeated"), cell("kaiju_total"), cell("battle_answers"), cell("battle_correct")]).toEqual(["3", "1", "13", "6", "5"]);
   });
 });
 

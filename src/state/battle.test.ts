@@ -3,7 +3,7 @@ import { applySupply, type BattleEvent, type BattleSetup, type BattleState, batt
 import { BATTLE } from "./battle.config";
 import { type BattleSpec, battleOf, CAMPAIGN, type Difficulty, DIFFICULTIES, topicsOf } from "./campaign";
 import { seeded } from "./balance";
-import { BAG_SIZE, bagSizeOf, DEFAULT_GEAR, type Gear, GEAR, WEAPON, WEAPON_CLASSES } from "./gear";
+import { BAG_SIZE, bagSizeOf, DEFAULT_GEAR, type Gear, GEAR, matchupOf, resistOf, WEAPON, WEAPON_CLASSES, type WeaponClass, WEAPONS } from "./gear";
 import { OUTFITS } from "./shop.config";
 
 const setupOf = (difficulty: Difficulty, id: string, outfit: (typeof OUTFITS)[number] = "lab", gear: Partial<Gear> = {}): BattleSetup =>
@@ -37,26 +37,34 @@ const sweep = (setup: BattleSetup) => {
 /** ด่านพื้นฐานสำหรับทดสอบกติกากลาง: คู่ต่อสู้ลักษณะพื้นฐาน พลัง 6 ที่ไม่แพ้ทางหมัด (ไม่มีผลของความได้เปรียบมาปน) */
 const PLAIN: BattleSpec = { ...(battleOf("easy", "k1") as BattleSpec), forms: [{ art: "kaiju_1", hp: 6, trait: "basic", weak: "blade" }] };
 const plain = (outfit: (typeof OUTFITS)[number] = "lab", gear: Partial<Gear> = {}): BattleSetup => battleSetup("easy", PLAIN, outfit, [], { ...DEFAULT_GEAR, ...gear });
+/** ด่านจริงที่เปลี่ยนเฉพาะประเภทอาวุธที่คู่ต่อสู้แพ้ทาง (ทดสอบความสามารถของอาวุธโดยไม่ให้ผลของการแพ้ทางมาปน) */
+const withWeak = (id: string, weak: WeaponClass, gear: Partial<Gear>): BattleSetup => {
+  const spec = battleOf("easy", id) as BattleSpec;
+  return battleSetup("easy", { ...spec, forms: spec.forms.map((form) => ({ ...form, weak })) }, "lab", [], { ...DEFAULT_GEAR, ...gear });
+};
 const easy = (room: number) => (room === 1 ? plain() : setupOf("easy", room === 6 ? "omega" : `k${room}`));
 const ROBOT = CAMPAIGN.easy.robotHp;
 
 describe("โครงของระดับความยาก (GDD 15)", () => {
-  it("ง่าย 6 ห้อง ไคจูประจำห้อง 5 ตัวและบอส 1 ตัว, กลาง 3 ห้อง ไคจู 3 ตัวและบอส 2 ร่าง, ยาก 1 ห้อง บอส 3 ร่าง", () => {
+  it("แมพ 1: 6 ห้อง ไคจูประจำห้อง 5 ตัวและบอส 1 ตัว, แมพ 2: 3 ห้อง ไคจู 3 ตัวและบอส 2 ร่าง, แมพ 3: ไม่มีห้องเรียน ไคจู 2 ตัวและบอส 3 ร่าง", () => {
     const shape = (difficulty: Difficulty) => {
       const level = CAMPAIGN[difficulty];
       return [level.zones.length, level.battles.filter((b) => !b.boss).length, level.battles.filter((b) => b.boss).map((b) => b.forms.length)];
     };
     expect(shape("easy")).toEqual([6, 5, [1]]);
     expect(shape("normal")).toEqual([3, 3, [2]]);
-    expect(shape("hard")).toEqual([1, 0, [3]]);
+    expect(shape("hard")).toEqual([0, 2, [3]]);
   });
 
-  it("แมพ 1 สอนครบ 6 หัวข้อ แมพ 2 และ 3 ทบทวนหัวข้อ 1–5 ตามลำดับ บอสอยู่ท้ายสุด และรหัสด่านไม่ซ้ำกันข้ามแมพ", () => {
+  it("แมพ 1 สอนครบ 6 หัวข้อ แมพ 2 ทบทวนหัวข้อ 1–5 ตามลำดับ แมพ 3 ลุยด่านอย่างเดียว บอสอยู่ท้ายสุด และรหัสด่านไม่ซ้ำกันข้ามแมพ", () => {
     const ids = DIFFICULTIES.flatMap((difficulty) => CAMPAIGN[difficulty].battles.map((battle) => battle.id));
     expect(new Set(ids).size).toBe(ids.length);
     for (const difficulty of DIFFICULTIES) {
       const level = CAMPAIGN[difficulty];
-      expect(level.zones.flatMap((zone) => zone.topics)).toEqual(difficulty === "easy" ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5]);
+      expect(level.zones.flatMap((zone) => zone.topics)).toEqual({ easy: [1, 2, 3, 4, 5, 6], normal: [1, 2, 3, 4, 5], hard: [] }[difficulty]);
+      // แมพ 1 ต้องมีแกน AI ก่อนออกรบ แมพ 2 และ 3 ออกรบได้เลย (ข้ามการเรียนได้)
+      expect(level.roomsNeedCores, difficulty).toBe(difficulty === "easy");
+      if (!level.roomsNeedCores) for (const battle of level.battles) expect(battle.requires, battle.id).toEqual([]);
       expect(topicsOf(difficulty)).toEqual(level.zones.flatMap((zone) => zone.topics));
       // แกน AI ที่ด่านต้องใช้เป็นหัวข้อที่แมพนั้นมีห้องให้ทำ
       for (const battle of level.battles) expect(battle.requires.every((topic) => topicsOf(difficulty).includes(topic)), battle.id).toBe(true);
@@ -147,7 +155,8 @@ describe("ด่านต่อสู้ไคจู (ระดับง่า�
   });
 
   it("ฝูง (ห้อง 5): เหลือเยอะโจมตีแรง เหลือน้อยโจมตีเบา", () => {
-    expect(play(easy(5), [false]).events[0]).toMatchObject({ damage: BATTLE.heavyDamage, heavy: true });
+    // ฝูงแพ้ทางลำแสง ทนแรงกระแทก: หมัด (แรงกระแทก) แพ้ทาง การโจมตีแรงจึงแรงขึ้นอีก 1
+    expect(play(easy(5), [false]).events[0]).toMatchObject({ damage: BATTLE.heavyDamage + GEAR.weakExposure, heavy: true });
     // ฝูง 12 ตัว: ตอบถูก 7 ข้อติดกัน พี่บิตยิงเสริม 3 ครั้ง เหลือ 2 ตัว
     const few = play(easy(5), [true, true, true, true, true, true, true, false]);
     expect(few.state.kaijuHp).toBe(2);
@@ -329,8 +338,8 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
   });
 
   it("ดาบพลังงาน: ตอบถูกติดกันครบ 3 ข้อทุกครั้ง การโจมตีครั้งนั้นเป็นคริติคอลแรง 2 เท่า ตอบผิดแล้วต้องนับใหม่", () => {
-    const setup = setupOf("easy", "k4", "lab", { weapon: "sword" });
-    // ด่านคอมโบ: แรง 1, 2 แล้วข้อที่สามแรง 3 × 2
+    // ด่านคอมโบที่ดาบพอใช้ได้ (ไคจูแพ้ทางลำแสง): แรง 1, 2 แล้วข้อที่สามแรง 3 × 2
+    const setup = withWeak("k4", "beam", { weapon: "sword" });
     const hits = play(setup, [true, true, true, true]).events.filter((e) => e.type === "robot-hit");
     expect(hits).toEqual([hit(1), hit(2), hit(3 * GEAR.critMultiplier, { crit: true }), hit(3)]);
     const broken = play(setupOf("easy", "k1", "lab", { weapon: "sword" }), [true, true, false, true, true]).events.filter((e) => e.type === "robot-hit");
@@ -495,14 +504,44 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
       const weak = new Set(CAMPAIGN[difficulty].battles.flatMap((battle) => battle.forms.map((form) => form.weak)));
       expect([...weak].sort(), difficulty).toEqual([...WEAPON_CLASSES].sort());
     }
-    // บอสของแมพ 3 แต่ละร่างแพ้ทางอาวุธคนละประเภท: เลือกได้ร่างเดียว
-    expect(new Set(CAMPAIGN.hard.battles[0].forms.map((form) => form.weak)).size).toBe(3);
+    // บอสของแมพ 3 แต่ละร่างแพ้ทางอาวุธคนละประเภท: อาวุธชิ้นเดียวชนะทางได้ร่างเดียว และแพ้ทางอีกร่างหนึ่งเสมอ
+    expect(new Set(CAMPAIGN.hard.battles.at(-1)!.forms.map((form) => form.weak)).size).toBe(3);
     // อาวุธมีประเภทละ 2 แบบ
     for (const kind of WEAPON_CLASSES) expect(Object.values(WEAPON).filter((spec) => spec.class === kind), kind).toHaveLength(2);
   });
 
+  it("ชนะทาง แพ้ทาง พอใช้ได้: ทุกอาวุธชนะทางร่างที่แพ้ทางประเภทของมัน แพ้ทางร่างที่ทนประเภทของมัน วนเป็นวงสามประเภท", () => {
+    for (const weak of WEAPON_CLASSES) {
+      expect(resistOf(weak)).not.toBe(weak);
+      for (const weapon of WEAPONS) {
+        const kind = WEAPON[weapon].class;
+        expect(matchupOf(weapon, weak), `${weapon} vs ${weak}`).toBe(kind === weak ? "strong" : kind === resistOf(weak) ? "weak" : "even");
+      }
+    }
+    expect(new Set(WEAPON_CLASSES.map(resistOf)).size).toBe(3);
+  });
+
+  it("ชนะทางตีแรงขึ้นและอึดขึ้น แพ้ทางตีเบาลงและอ่อนแอลง พอใช้ได้ตีปกติ (ฝูงแพ้ทางลำแสง ทนแรงกระแทก)", () => {
+    const blaster = withWeak("k5", "beam", { weapon: "blaster" });
+    const sword = withWeak("k5", "beam", { weapon: "sword" });
+    const hammer = withWeak("k5", "beam", { weapon: "hammer" });
+    expect([blaster, sword, hammer].map((setup) => strikeOf(setup, startBattle(setup)).matchup)).toEqual(["strong", "even", "weak"]);
+    // อึด: การโจมตีแรงของคู่ต่อสู้เบาลงเมื่อชนะทาง แรงขึ้นเมื่อแพ้ทาง
+    expect([blaster, sword, hammer].map((setup) => play(setup, [false]).events[0])).toEqual(
+      [BATTLE.heavyDamage - GEAR.strongGuard, BATTLE.heavyDamage, BATTLE.heavyDamage + GEAR.weakExposure].map((damage) => expect.objectContaining({ type: "kaiju-hit", damage, heavy: true })),
+    );
+    // ตีแรง: ชนะทางแรงขึ้นตั้งแต่ข้อที่ตอบถูกติดกันข้อที่ 2
+    const damage = (setup: BattleSetup) => play(setup, [true, true]).events.filter((e) => e.type === "robot-hit").map((e) => (e as { damage: number }).damage);
+    expect(damage(blaster)).toEqual([BATTLE.hit, BATTLE.hit + GEAR.advantage]);
+    expect(damage(sword)).toEqual([BATTLE.hit, BATTLE.hit]);
+    // แพ้ทาง: ความสามารถพิเศษของอาวุธไม่ทำงาน (ค้อนไม่ทุบสะเทือน)
+    expect(play(hammer, [true, true, true]).events.some((e) => e.type === "robot-hit" && e.quake)).toBe(false);
+    expect(play(withWeak("k5", "blade", { weapon: "hammer" }), [true, true, true]).events.some((e) => e.type === "robot-hit" && e.quake)).toBe(true);
+  });
+
   it("ค้อนพลังงาน: ทุบทะลุเกราะและโจมตีเข้าในครั้งเดียว และตอบถูกติดกันครบ 3 ข้อทุบสะเทือนแรงขึ้น", () => {
-    const setup = battleSetup("easy", { ...PLAIN, forms: [{ art: "kaiju_4", hp: 12, trait: "armor", weak: "beam" }] }, "lab", [], { ...DEFAULT_GEAR, weapon: "hammer" });
+    // ไคจูแพ้ทางคมอาวุธ ทนลำแสง: ค้อน (แรงกระแทก) พอใช้ได้
+    const setup = battleSetup("easy", { ...PLAIN, forms: [{ art: "kaiju_4", hp: 12, trait: "armor", weak: "blade" }] }, "lab", [], { ...DEFAULT_GEAR, weapon: "hammer" });
     expect(startBattle(setup).armored).toBe(true);
     const first = play(setup, [true]);
     expect(first.events).toEqual([{ type: "armor-break", pierced: true }, hit(1)]);
@@ -520,7 +559,8 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     const lance = play(plain("lab", { weapon: "lance" }), [true, true, true, true]).events.filter((e) => e.type === "robot-hit");
     // คู่ต่อสู้ของด่านทดสอบแพ้ทางคมอาวุธ: หอกได้เปรียบด้วย
     expect(lance.map((e) => [(e as { damage: number }).damage, (e as { crit: boolean }).crit])).toEqual([[1, false], [(1 + GEAR.advantage) * 2, true]].slice(0, lance.length));
-    const cannon = play(plain("lab", { weapon: "cannon" }), [true, true]);
+    // ปืนใหญ่ (ลำแสง) แพ้ทางคู่ต่อสู้ของด่านทดสอบ (ทนลำแสง) จึงทดสอบกับคู่ต่อสู้ที่แพ้ทางแรงกระแทกแทน (พอใช้ได้)
+    const cannon = play(withWeak("k1", "strike", { weapon: "cannon" }), [true, true]);
     expect(cannon.events.map((e) => e.type)).toEqual(["robot-hit", "robot-hit", "stun", "bit-assist"]);
     expect(cannon.state.stunned).toBe(true);
     expect([WEAPON.sword.critEvery, WEAPON.lance.critEvery, WEAPON.blaster.stunEvery, WEAPON.cannon.stunEvery]).toEqual([3, 2, 3, 2]);

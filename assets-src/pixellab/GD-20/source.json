@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now firmly gripping a long glowing cyan energy sword in its front fist on the right side of the image, the handle passes through the closed fingers, the blade points up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-19/image.png",
+    "reference": "GD-02/image.png",
+    "usage_description": "copy the weapon and the way it is held from this reference: the same sword shape, colors, size and grip in the same hand"
+  },
+  "fetchTool": "get_image",
+  "id": "6d961a43-58c3-4ffd-81c0-d4cfe7804752",
+  "generatedAt": "2026-10-03T06:05:10.359Z"
+}

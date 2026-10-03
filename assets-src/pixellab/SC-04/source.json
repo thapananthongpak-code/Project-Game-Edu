@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "inside a cozy storage archive room with tall wooden shelves full of boxes, old trophies and drawers, warm lamp light, empty room, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "e24738d3-500e-4da6-9862-3ee5d5201d28",
+  "generatedAt": "2026-10-03T06:12:50.105Z"
+}

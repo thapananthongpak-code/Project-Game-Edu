@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "inside a field medical tent with two cots, medicine shelves and a plain red cross sign, warm light, empty tent, side view background scene, retro pixel art comic panel illustration, cinematic composition, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text, no letters, no people",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "3c79c487-c8f6-4031-85b6-9356f084692e",
+  "generatedAt": "2026-10-03T06:16:31.836Z"
+}

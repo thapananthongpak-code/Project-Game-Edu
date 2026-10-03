@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "a transparent glass display cabinet with a thin silver steel frame, two empty glass shelves inside, a glowing teal light strip at the base, the glass is see-through and empty, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "2a3b2c9b-1745-4912-b90f-80a6883f66b5",
+  "generatedAt": "2026-10-03T06:10:52.035Z"
+}
