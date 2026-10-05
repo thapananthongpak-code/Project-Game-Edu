@@ -11,7 +11,7 @@ import { emptyField, type FieldProgress } from "./field";
 import { type Armor, ARMORS, bagSizeOf, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
 import { isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_NAME_CHARS } from "./rules";
-import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom, type RoomLayout, STATIONS } from "../game/decor";
+import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom, PIECES, type RoomLayout } from "../game/decor";
 import { AVATARS, type Avatar, BIT_MODULES, BIT_SKINS, BIT_SLOTS, type BitModule, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply, type Theme, THEME_IDS } from "./shop.config";
 
 export const SAVE_VERSION = 9;
@@ -62,7 +62,7 @@ export interface ShopState {
   bought: Record<string, number>;
   /** ของตกแต่งที่ผู้เล่นวางเองในโถงและโรงเก็บหุ่นของแต่ละแมพ: คีย์ "<แมพ>:<ห้อง>" -> ของที่วางพร้อมตำแหน่ง (GDD ข้อ 19) */
   decor: Partial<Record<DecorRoom, DecorPlacement[]>>;
-  /** จุดใช้งานที่ผู้เล่นย้ายเองในโถงและโรงเก็บหุ่น: คีย์ "<แมพ>:<ห้อง>" -> ตำแหน่งของจุดที่ย้าย (ไม่มี = ตำแหน่งเริ่มต้น GDD ข้อ 19) */
+  /** จุดใช้งานและเสาที่ผู้เล่นย้ายเองในโถงและโรงเก็บหุ่น: คีย์ "<แมพ>:<ห้อง>" -> ตำแหน่งของจุดที่ย้าย (ไม่มี = ตำแหน่งเริ่มต้น GDD ข้อ 19) */
   layout: Partial<Record<DecorRoom, RoomLayout>>;
   /** ธีมสีที่เลือกใช้ในโถงและโรงเก็บหุ่น: คีย์ "<แมพ>:<ห้อง>" -> ธีมที่ซื้อแล้ว (ไม่มี = พื้นและผนังเดิมของแมพ) */
   theme: Partial<Record<DecorRoom, Theme>>;
@@ -312,7 +312,7 @@ function shopOf(raw: unknown): ShopState {
     for (const area of DECOR_AREAS) {
       const room = decorRoom(map, area);
       const moved: RoomLayout = {};
-      for (const station of STATIONS) {
+      for (const station of PIECES) {
         const { col, row } = object(object(object(data.layout)[room])[station]);
         if (Number.isInteger(col) && Number.isInteger(row) && (col as number) >= 0 && (col as number) < 20 && (row as number) >= 0 && (row as number) < 11) moved[station] = { col: col as number, row: row as number };
       }

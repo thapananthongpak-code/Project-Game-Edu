@@ -2,7 +2,7 @@
 // ไฟล์นี้เป็นข้อมูลและฟังก์ชันล้วน: กติกาว่าวางตรงไหนได้ จำนวนที่วางได้ต่อห้อง และผังของห้องเมื่อรวมของตกแต่งและจุดที่ย้ายแล้ว
 import type { Difficulty } from "../state/campaign";
 import { DECOR, type Decor } from "../state/shop.config";
-import { MAP_COLS } from "./constants";
+import { MAP_COLS, MAP_ROWS } from "./constants";
 import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, isFloorCell, type MapObject, reachableCells } from "./maps";
 
 /** ห้องที่ตกแต่งได้ของแต่ละแมพ */
@@ -95,7 +95,7 @@ export function openCells(base: GameMap, area: DecorArea, placed: readonly Decor
   return cells;
 }
 
-// ---------------------------------------------------------------- จุดใช้งานที่ผู้เล่นย้ายเองได้ (GDD ข้อ 19)
+// ---------------------------------------------------------------- จุดใช้งานและเสาที่ผู้เล่นย้ายเองได้ (GDD ข้อ 19)
 
 /**
  * จุดใช้งานเริ่มต้นของโถงและโรงเก็บหุ่นที่ผู้เล่นย้ายตำแหน่งเองได้ (ชนิดของวัตถุในผัง แต่ละห้องมีชนิดละจุดเดียว)
@@ -103,41 +103,107 @@ export function openCells(base: GameMap, area: DecorArea, placed: readonly Decor
  */
 export const STATIONS = ["shop", "storage", "travel", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"] as const;
 export type Station = (typeof STATIONS)[number];
-/** ตำแหน่งที่ผู้เล่นย้ายจุดใช้งานไป (ช่องซ้ายสุดและแถวของฐาน) จุดที่ไม่อยู่ในนี้อยู่ที่ตำแหน่งเริ่มต้นของผัง */
-export type RoomLayout = Partial<Record<Station, { col: number; row: number }>>;
+/**
+ * เสาและผนังกั้นกลางห้อง (ช่องผนังที่อยู่ในพื้นที่ของห้อง ไม่ใช่ผนังรอบห้อง) ผู้เล่นย้ายได้เหมือนจุดใช้งาน
+ * เรียงเลขตามแถวแล้วตามช่องของผังเริ่มต้น ห้องหนึ่งมีได้ไม่เกิน 4 ชิ้น (มีเทสต์ตรวจ)
+ */
+export const PILLARS = ["pillar1", "pillar2", "pillar3", "pillar4"] as const;
+export type Pillar = (typeof PILLARS)[number];
+/** ชิ้นของห้องที่ย้ายได้: จุดใช้งานหรือเสา */
+export type Piece = Station | Pillar;
+export const PIECES: readonly Piece[] = [...STATIONS, ...PILLARS];
+/** ตำแหน่งที่ผู้เล่นย้ายชิ้นของห้องไป (ช่องซ้ายสุดและแถวของฐาน) ชิ้นที่ไม่อยู่ในนี้อยู่ที่ตำแหน่งเริ่มต้นของผัง */
+export type RoomLayout = Partial<Record<Piece, { col: number; row: number }>>;
 
 const isStation = (kind: string): kind is Station => STATIONS.some((station) => station === kind);
+
+/** พื้นที่ภายในห้อง (ไม่รวมผนังรอบห้อง): เสาอยู่ได้ในบริเวณนี้ */
+const INNER = { top: 2, bottom: MAP_ROWS - 2, left: 1, right: MAP_COLS - 2 };
+/** เสาย้ายไปชิดผนังด้านบนไม่ได้ (แถวนั้นเป็นที่ยืนหน้าประตูและของติดผนัง) */
+const PILLAR_TOP = INNER.top + 1;
+
+export interface PillarSpec {
+  id: Pillar;
+  col: number;
+  row: number;
+  /** ความกว้างเป็นจำนวนช่อง (เสา 1–2 ช่อง ผนังกั้นยาวกว่านั้น) */
+  w: number;
+}
 
 /** จุดใช้งานที่ย้ายได้ของห้องนี้ ตามลำดับใน STATIONS */
 export const stationsIn = (base: GameMap): Station[] => STATIONS.filter((station) => base.objects.some((object) => object.kind === station));
 
-/** ผังของห้องเมื่อย้ายจุดใช้งานตามที่ผู้เล่นจัด (ไม่ตรวจกติกา ใช้ layoutError หรือ validLayout ก่อน) */
+/** เสาและผนังกั้นของผังเริ่มต้น: ช่องผนังที่ต่อกันในแถวเดียวกันภายในห้อง */
+export function pillarsIn(base: GameMap): PillarSpec[] {
+  const runs: { col: number; row: number; w: number }[] = [];
+  for (let row = INNER.top; row <= INNER.bottom; row++) {
+    let start = -1;
+    for (let col = INNER.left; col <= INNER.right + 1; col++) {
+      const wall = col <= INNER.right && base.shape[row][col] === "#";
+      if (wall && start < 0) start = col;
+      if (!wall && start >= 0) {
+        runs.push({ col: start, row, w: col - start });
+        start = -1;
+      }
+    }
+  }
+  return runs.slice(0, PILLARS.length).map((run, index) => ({ id: PILLARS[index], ...run }));
+}
+
+/** ชิ้นที่ย้ายได้ทั้งหมดของห้องนี้: จุดใช้งานแล้วตามด้วยเสา */
+export const piecesIn = (base: GameMap): Piece[] => [...stationsIn(base), ...pillarsIn(base).map((pillar) => pillar.id)];
+
+/** ผังของห้องเมื่อย้ายจุดใช้งานและเสาตามที่ผู้เล่นจัด (ไม่ตรวจกติกา ใช้ layoutError หรือ validLayout ก่อน) */
 export function arrangedMap(base: GameMap, layout: RoomLayout): GameMap {
-  return { ...base, objects: base.objects.map((object) => (isStation(object.kind) && layout[object.kind] ? { ...object, ...layout[object.kind] } : object)) };
+  const pillars = pillarsIn(base);
+  let shape = base.shape;
+  if (pillars.some((pillar) => layout[pillar.id])) {
+    // ถอนเสาทุกต้นออกจากผังก่อน แล้วตั้งใหม่ตามตำแหน่งล่าสุด (ช่องที่อยู่นอกห้องถูกข้าม)
+    const grid = base.shape.map((line) => line.split(""));
+    for (const pillar of pillars) for (let i = 0; i < pillar.w; i++) grid[pillar.row][pillar.col + i] = ".";
+    for (const pillar of pillars) {
+      const at = layout[pillar.id] ?? pillar;
+      for (let i = 0; i < pillar.w; i++) {
+        const col = at.col + i;
+        if (Number.isInteger(col) && Number.isInteger(at.row) && at.row >= INNER.top && at.row <= INNER.bottom && col >= INNER.left && col <= INNER.right) grid[at.row][col] = "#";
+      }
+    }
+    shape = grid.map((line) => line.join(""));
+  }
+  return { ...base, shape, objects: base.objects.map((object) => (isStation(object.kind) && layout[object.kind] ? { ...object, ...layout[object.kind] } : object)) };
 }
 
 /**
- * ตรวจผังทั้งห้องหลังย้ายจุดใช้งาน (รวมของตกแต่งที่วางอยู่) คืน null ถ้าใช้ได้:
- * วัตถุตั้งพื้นทุกชิ้นอยู่บนพื้นและไม่ทับกัน (floor) ช่องยืนหน้าประตูและจุดใช้งานทุกจุดรวมทั้งจุดเริ่มว่าง (access)
+ * ตรวจผังทั้งห้องหลังย้ายจุดใช้งานหรือเสา (รวมของตกแต่งที่วางอยู่) คืน null ถ้าใช้ได้:
+ * วัตถุตั้งพื้นทุกชิ้นอยู่บนพื้นและไม่ทับกัน เสาอยู่ในห้องและไม่ทับกัน (floor) ช่องยืนหน้าประตูและจุดใช้งานทุกจุดรวมทั้งจุดเริ่มว่าง (access)
  * และเดินจากจุดเริ่มถึงทุกจุดใช้งานได้ (blocks) ผู้เรียนจึงย้ายของจนขังตัวเองหรือปิดทางไปห้องเรียนไม่ได้
  */
 export function layoutError(base: GameMap, layout: RoomLayout, decor: readonly DecorPlacement[] = []): PlaceError | null {
   for (const at of Object.values(layout)) if (!Number.isInteger(at.col) || !Number.isInteger(at.row)) return "floor";
+  const pillars = pillarsIn(base);
+  for (const pillar of pillars) {
+    const at = layout[pillar.id];
+    if (at && (at.row < PILLAR_TOP || at.row > INNER.bottom || at.col < INNER.left || at.col + pillar.w - 1 > INNER.right)) return "floor";
+  }
   const arranged = arrangedMap(base, layout);
+  // เสาไม่ทับกัน: จำนวนช่องผนังภายในห้องต้องเท่ากับความกว้างรวมของเสา
+  let walls = 0;
+  for (let row = INNER.top; row <= INNER.bottom; row++) for (let col = INNER.left; col <= INNER.right; col++) if (arranged.shape[row][col] === "#") walls++;
+  if (walls !== pillars.reduce((sum, pillar) => sum + pillar.w, 0)) return "floor";
   const map = decoratedMap(arranged, decor);
   const taken = new Set<string>();
   for (const object of map.objects) {
     for (const cell of blockedCells(object)) {
       const at = key(cell.col, cell.row);
-      if (!isFloorCell(base, cell.col, cell.row) || taken.has(at)) return "floor";
+      if (!isFloorCell(arranged, cell.col, cell.row) || taken.has(at)) return "floor";
       taken.add(at);
     }
   }
   // ของที่วางราบกับพื้น (ถ้ามี) ต้องไม่ถูกทับ
-  for (const object of map.objects.filter((item) => item.flat)) if (taken.has(key(Math.floor(object.col), object.row))) return "floor";
+  for (const object of map.objects.filter((item) => item.flat)) if (taken.has(key(Math.floor(object.col), object.row)) || !isFloorCell(arranged, Math.floor(object.col), object.row)) return "floor";
   const access = arranged.objects.flatMap(accessCells);
-  if (taken.has(key(base.spawn.col, base.spawn.row))) return "access";
-  if (access.some((cell) => !isFloorCell(base, cell.col, cell.row) || taken.has(key(cell.col, cell.row)))) return "access";
+  if (!isFloorCell(arranged, base.spawn.col, base.spawn.row) || taken.has(key(base.spawn.col, base.spawn.row))) return "access";
+  if (access.some((cell) => !isFloorCell(arranged, cell.col, cell.row) || taken.has(key(cell.col, cell.row)))) return "access";
   const reachable = reachableCells(map);
   return arranged.objects.every((object) => accessCells(object).some((cell) => reachable.has(key(cell.col, cell.row)))) ? null : "blocks";
 }
@@ -145,18 +211,17 @@ export function layoutError(base: GameMap, layout: RoomLayout, decor: readonly D
 /** ตำแหน่งที่ย้ายไว้ซึ่งยังใช้ได้กับผังปัจจุบัน (ข้อมูลที่ผิดหรือขัดกับผังทำให้ทั้งห้องกลับไปตำแหน่งเริ่มต้น) */
 export function validLayout(base: GameMap, layout: RoomLayout | undefined): RoomLayout {
   if (!layout) return {};
-  const present = stationsIn(base);
   const kept: RoomLayout = {};
-  for (const station of present) {
-    const at = layout[station];
-    if (at) kept[station] = { col: at.col, row: at.row };
+  for (const piece of piecesIn(base)) {
+    const at = layout[piece];
+    if (at) kept[piece] = { col: at.col, row: at.row };
   }
   return layoutError(base, kept) === null ? kept : {};
 }
 
-/** ช่องทั้งหมดที่ย้ายจุดใช้งานนี้ไปได้ (ใช้ไฮไลต์บนกระดานตกแต่ง) */
-export function stationCells(base: GameMap, layout: RoomLayout, decor: readonly DecorPlacement[], station: Station): { col: number; row: number }[] {
+/** ช่องทั้งหมดที่ย้ายชิ้นนี้ไปได้ (ใช้ไฮไลต์บนกระดานตกแต่ง) */
+export function stationCells(base: GameMap, layout: RoomLayout, decor: readonly DecorPlacement[], piece: Piece): { col: number; row: number }[] {
   const cells = [];
-  for (let row = 0; row < base.shape.length; row++) for (let col = 0; col < MAP_COLS; col++) if (layoutError(base, { ...layout, [station]: { col, row } }, decor) === null) cells.push({ col, row });
+  for (let row = 0; row < base.shape.length; row++) for (let col = 0; col < MAP_COLS; col++) if (layoutError(base, { ...layout, [piece]: { col, row } }, decor) === null) cells.push({ col, row });
   return cells;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DIFFICULTIES } from "../state/campaign";
 import { STARTER_PLACEMENT } from "../state/progressStore";
 import { DECOR, type Decor, DECORS } from "../state/shop.config";
-import { arrangedMap, baseMapOf, DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, decoratedMap, decorObject, layoutError, openCells, placementError, stationCells, stationsIn, validLayout, validPlacements } from "./decor";
+import { arrangedMap, baseMapOf, DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, decoratedMap, decorObject, layoutError, openCells, piecesIn, pillarsIn, placementError, stationCells, stationsIn, validLayout, validPlacements } from "./decor";
 import { accessCells, hallMapOf, hangarMapOf, reachableCells } from "./maps";
 
 const small = DECORS.filter((decor) => DECOR[decor].size === "small");
@@ -147,5 +147,63 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
     expect(placementError(arranged, "hall", [], { decor: "sofa", col: 2, row: 8 })).toBeNull();
     expect(placementError(arranged, "hall", [], { decor: "plant", col: 14, row: 5 })).toBe("floor");
     expect(placementError(arranged, "hall", [], { decor: "plant", col: 14, row: 6 })).toBe("access");
+  });
+});
+
+describe("เสาและผนังกั้นกลางห้องย้ายได้ (GDD 19)", () => {
+  it("เสาของแต่ละห้องคือช่องผนังที่อยู่กลางพื้น ห้องหนึ่งมีไม่เกิน 4 ชิ้น", () => {
+    const found = (map: "easy" | "normal" | "hard", area: "hall" | "hangar") => pillarsIn(baseMapOf(map, area)).map((pillar) => `${pillar.id}@${pillar.col},${pillar.row}x${pillar.w}`);
+    expect(found("easy", "hall")).toEqual([]);
+    expect(found("easy", "hangar")).toEqual([]);
+    expect(found("normal", "hall")).toEqual(["pillar1@3,4x2", "pillar2@15,4x2"]);
+    expect(found("normal", "hangar")).toEqual(["pillar1@1,5x6", "pillar2@13,5x6"]);
+    expect(found("hard", "hall")).toEqual(["pillar1@5,5x1", "pillar2@14,5x1"]);
+    expect(found("hard", "hangar")).toEqual(["pillar1@3,4x1", "pillar2@16,4x1", "pillar3@3,7x1", "pillar4@16,7x1"]);
+    for (const map of DIFFICULTIES) {
+      for (const area of DECOR_AREAS) {
+        const base = baseMapOf(map, area);
+        // ทุกช่องผนังภายในห้องเป็นของเสาที่ย้ายได้ (ไม่มีเสาตกหล่นเพราะเกินจำนวน)
+        const inner = base.shape.slice(2, -1).join("").split("#").length - 1 - 2 * (base.shape.length - 3);
+        expect(pillarsIn(base).reduce((sum, pillar) => sum + pillar.w, 0), `${map} ${area}`).toBe(inner);
+        expect(piecesIn(base), `${map} ${area}`).toEqual([...stationsIn(base), ...pillarsIn(base).map((pillar) => pillar.id)]);
+        for (const pillar of pillarsIn(base)) expect(stationCells(base, {}, [], pillar.id).length, `${map} ${area} ${pillar.id}`).toBeGreaterThanOrEqual(10);
+      }
+    }
+  });
+
+  it("ย้ายเสาแล้วผังของห้องเปลี่ยนตาม: ที่เดิมเป็นพื้น ที่ใหม่เป็นผนัง ทับของอื่น ทับเสาอื่น หรือชิดผนังบนไม่ได้", () => {
+    const hall = hallMapOf("hard");
+    const moved = arrangedMap(hall, { pillar1: { col: 10, row: 4 } });
+    expect([moved.shape[5][5], moved.shape[4][10], moved.shape[5][14]]).toEqual([".", "#", "#"]);
+    expect(layoutError(hall, { pillar1: { col: 10, row: 4 } })).toBeNull();
+    // ผังเริ่มต้นไม่ถูกแก้
+    expect(hall.shape[5][5]).toBe("#");
+    // ทับร้าน (ช่อง 2–3 แถว 8) ทับเสาอีกต้น ชิดผนังบน นอกห้อง และช่องยืนหน้าร้าน
+    expect(layoutError(hall, { pillar1: { col: 2, row: 8 } })).toBe("floor");
+    expect(layoutError(hall, { pillar1: { col: 14, row: 5 } })).toBe("floor");
+    expect(layoutError(hall, { pillar1: { col: 10, row: 2 } })).toBe("floor");
+    expect(layoutError(hall, { pillar1: { col: 0, row: 5 } })).toBe("floor");
+    expect(layoutError(hall, { pillar1: { col: 19, row: 5 } })).toBe("floor");
+    expect(layoutError(hall, { pillar1: { col: 2, row: 9 } })).toBe("access");
+    expect(layoutError(hall, { pillar1: { col: hall.spawn.col, row: hall.spawn.row } })).toBe("access");
+    // ของตกแต่งที่วางอยู่ทับไม่ได้ และของตกแต่งตรวจกับผังที่ย้ายเสาแล้ว
+    expect(layoutError(hall, { pillar1: { col: 10, row: 4 } }, [{ decor: "plant", col: 10, row: 4 }])).toBe("floor");
+    expect(placementError(hall, "hall", [], { decor: "plant", col: 5, row: 5 })).toBe("floor");
+    expect(placementError(moved, "hall", [], { decor: "plant", col: 5, row: 5 })).toBeNull();
+    expect(placementError(moved, "hall", [], { decor: "plant", col: 10, row: 4 })).toBe("floor");
+  });
+
+  it("ผนังกั้นของโรงเก็บหุ่นแมพ 2 ย้ายได้ทั้งแผง แต่กั้นจนเดินไปบางจุดไม่ได้ไม่ได้", () => {
+    const hangar = hangarMapOf("normal");
+    // ผนังกั้นซ้าย (ช่อง 1–6 แถว 5) เลื่อนลงมาแถว 6: ยังเดินผ่านช่องกลางได้
+    expect(layoutError(hangar, { pillar1: { col: 1, row: 6 } })).toBeNull();
+    // เลื่อนมาปิดช่องกลาง (ช่อง 7–12): ห้องถูกแบ่งเป็นสองส่วน เหลือทางผ่านช่อง 1–6 จึงยังได้
+    expect(layoutError(hangar, { pillar1: { col: 7, row: 5 } })).toBeNull();
+    // ผนังสองแผงต่อกัน (ช่อง 1–12) แล้วของ 3 ชิ้นปิดช่อง 13–18 ที่เหลือ: เดินไปด้านล่างไม่ได้
+    const wall = { pillar1: { col: 1, row: 5 }, pillar2: { col: 7, row: 5 } };
+    expect(layoutError(hangar, { ...wall, console: { col: 13, row: 5 }, storage: { col: 15, row: 5 } })).toBeNull();
+    expect(layoutError(hangar, { ...wall, console: { col: 13, row: 5 }, storage: { col: 15, row: 5 }, bitpad: { col: 17, row: 5 } })).toBe("blocks");
+    expect(validLayout(hangar, { pillar1: { col: 7, row: 5 }, pillar3: { col: 3, row: 3 } })).toEqual({ pillar1: { col: 7, row: 5 } });
+    expect(validLayout(hangar, { pillar1: { col: 7, row: 1 } })).toEqual({});
   });
 });

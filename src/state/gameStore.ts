@@ -25,7 +25,7 @@ import {
   type SyncStatus,
 } from "./progressStore";
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
-import type { DecorArea, DecorPlacement, PlaceError, Station } from "../game/decor";
+import type { DecorArea, DecorPlacement, Piece, PlaceError } from "../game/decor";
 import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, resetLayout, setTheme, toggleModule } from "./shop";
 import type { Avatar, BitModule, Decor, Supply, Theme } from "./shop.config";
 
@@ -147,8 +147,8 @@ interface GameState {
   placeDecor: (placement: DecorPlacement) => PlaceError | "owned" | "room" | null;
   /** เอาของตกแต่งออกจากห้องที่ผู้เล่นอยู่ (null = เอาออกทั้งห้อง) */
   removeDecor: (decor: Decor | null) => void;
-  /** ย้ายจุดใช้งานของห้องที่ผู้เล่นอยู่ไปตำแหน่งที่เลือกเอง คืนเหตุที่ย้ายไม่ได้ หรือ null ถ้าสำเร็จ */
-  moveStation: (station: Station, col: number, row: number) => PlaceError | "room" | null;
+  /** ย้ายจุดใช้งานหรือเสาของห้องที่ผู้เล่นอยู่ไปตำแหน่งที่เลือกเอง คืนเหตุที่ย้ายไม่ได้ หรือ null ถ้าสำเร็จ */
+  moveStation: (station: Piece, col: number, row: number) => PlaceError | "room" | null;
   /** คืนจุดใช้งานของห้องที่ผู้เล่นอยู่ไปตำแหน่งเริ่มต้น */
   resetLayout: () => void;
   /** เปลี่ยนธีมสีของห้องที่ผู้เล่นอยู่ (null = พื้นและผนังเดิมของแมพ) */

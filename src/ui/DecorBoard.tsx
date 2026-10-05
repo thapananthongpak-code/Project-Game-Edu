@@ -2,7 +2,7 @@ import { type KeyboardEvent, type PointerEvent, useEffect, useMemo, useRef, useS
 import { playSfx } from "../audio/engine";
 import { fmt, ui } from "../content/ui-strings";
 import { BASE_HEIGHT, BASE_WIDTH, MAP_COLS, MAP_ROWS, MAP_TOP, TILE } from "../game/constants";
-import { baseMapOf, DECOR_LIMIT, decorWidth, openCells, type PlaceError, type Station, stationCells, stationsIn } from "../game/decor";
+import { baseMapOf, DECOR_LIMIT, decorWidth, openCells, type Piece as RoomPiece, pillarsIn, type PlaceError, type Station, stationCells, stationsIn } from "../game/decor";
 import { decorAreaOf, difficultyOf, useGameStore } from "../state/gameStore";
 import { arrangedBase, decorIn, layoutIn, ownedDecor, ownedThemes, themeIn } from "../state/shop";
 import { DECOR, type Decor, type Theme, THEMES } from "../state/shop.config";
@@ -96,6 +96,9 @@ export function DecorBoard() {
   const arranged = useMemo(() => arrangedBase(shop, map, kind), [shop, map, kind]);
   const placed = useMemo(() => decorIn(shop, map, kind), [shop, map, kind]);
   const stations = useMemo(() => stationsIn(base), [base]);
+  /** เสาและผนังกั้นกลางห้อง: ย้ายได้ในหัวข้อเดียวกับจุดใช้งาน ตำแหน่งล่าสุดอยู่ใน layout */
+  const pillars = useMemo(() => pillarsIn(base).map((pillar) => ({ ...pillar, ...(layout[pillar.id] ?? {}) })), [base, layout]);
+  const movable = useMemo<string[]>(() => [...stations, ...pillars.map((pillar) => pillar.id)], [stations, pillars]);
   const theme = themeIn(shop, map, kind);
   const themes = ownedThemes(shop);
   const owned = ownedDecor(shop);
@@ -104,23 +107,34 @@ export function DecorBoard() {
   const moving = mode === "station";
 
   const stationObject = (station: string) => arranged.objects.find((object) => object.kind === station);
-  const nameOf = (id: string): string => (moving ? ui.decor.stations[id as Station] : ui.shop.items[`decor-${id}` as ItemId].name);
-  const imageOf = (id: string): string => (moving ? art.prop(stationObject(id)?.prop ?? "") : art.decor(id as Decor));
+  const pillarOf = (id: string) => pillars.find((pillar) => pillar.id === id);
+  /** ชื่อของเสา: ชิ้นที่ยาวตั้งแต่ 3 ช่องเรียกว่าผนังกั้น เลขนับแยกกันตามลำดับในห้อง */
+  const pillarName = (id: string): string => {
+    const wide = (pillarOf(id)?.w ?? 1) >= 3;
+    const same = pillars.filter((pillar) => pillar.w >= 3 === wide);
+    return fmt(wide ? ui.decor.partition : ui.decor.pillar, { n: same.findIndex((pillar) => pillar.id === id) + 1 });
+  };
+  const nameOf = (id: string): string => (!moving ? ui.shop.items[`decor-${id}` as ItemId].name : pillarOf(id) ? pillarName(id) : ui.decor.stations[id as Station]);
+  /** ภาพของชิ้น (เสาเป็นส่วนของผนัง ไม่มีภาพของตัวเอง แสดงเป็นแท่งสีแทน) */
+  const imageOf = (id: string): string | null => (!moving ? art.decor(id as Decor) : pillarOf(id) ? null : art.prop(stationObject(id)?.prop ?? ""));
   const isWall = (id: string): boolean => !moving && DECOR[id as Decor].size === "wall";
-  const widthOf = (id: string): number => (moving ? (stationObject(id)?.w ?? 1) : decorWidth(id as Decor));
+  const widthOf = (id: string): number => (!moving ? decorWidth(id as Decor) : (pillarOf(id)?.w ?? stationObject(id)?.w ?? 1));
   /** ชิ้นที่อยู่บนฉากในหัวข้อที่เปิดอยู่ */
   const pieces: Piece[] = moving
-    ? stations.flatMap((station) => {
-        const object = stationObject(station);
-        return object ? [{ id: station, col: object.col, row: object.row, width: object.w ?? 1, tall: 2 }] : [];
-      })
+    ? [
+        ...stations.flatMap((station) => {
+          const object = stationObject(station);
+          return object ? [{ id: station, col: object.col, row: object.row, width: object.w ?? 1, tall: 2 }] : [];
+        }),
+        ...pillars.map((pillar) => ({ id: pillar.id, col: pillar.col, row: pillar.row, width: pillar.w, tall: 1 })),
+      ]
     : mode === "decor"
       ? placed.map((p) => ({ id: p.decor, col: p.col, row: p.row, width: decorWidth(p.decor), tall: DECOR[p.decor].size === "wall" ? 1 : 2 }))
       : [];
   /** ช่องที่วางชิ้นที่ถืออยู่ได้ (ของตกแต่งที่กำลังย้ายไม่นับตัวมันเอง) */
   const open = useMemo(() => {
     if (!held) return [];
-    if (mode === "station") return stationCells(base, layout, placed, held as Station);
+    if (mode === "station") return stationCells(base, layout, placed, held as RoomPiece);
     return mode === "decor" ? openCells(arranged, kind, placed.filter((p) => p.decor !== held), held as Decor) : [];
   }, [held, mode, base, layout, arranged, kind, placed]);
   const openKeys = useMemo(() => new Set(open.map((cell) => `${cell.col},${cell.row}`)), [open]);
@@ -137,7 +151,7 @@ export function DecorBoard() {
     setNotice(idle(next));
     // ย้ายจุดใช้งาน: แถบนี้บังได้ทั้งแถวบนหรือแถวล่างของห้อง เลื่อนไปด้านที่บังจุดใช้งานน้อยกว่า (ผู้เล่นย้ายแถบเองได้อีก)
     if (next === "station") {
-      const rows = stations.map((station) => stationObject(station)?.row ?? 0);
+      const rows = [...stations.map((station) => stationObject(station)?.row ?? 0), ...pillars.map((pillar) => pillar.row)];
       setOnTop(rows.filter((row) => row >= 7).length > rows.filter((row) => row <= 3).length);
     }
   };
@@ -152,7 +166,7 @@ export function DecorBoard() {
   /** วางชิ้นที่ถืออยู่ลงที่ช่องนี้ (ของติดผนังเกาะแถวผนังเสมอ) */
   const drop = (id: string, col: number, row: number) => {
     if (moving) {
-      const error = moveStation(id as Station, col, row);
+      const error = moveStation(id as RoomPiece, col, row);
       if (error) return fail(error);
       playSfx("equip");
       setHeld(null);
@@ -279,7 +293,13 @@ export function DecorBoard() {
       }}
       className={`${pickButton} ${held === id ? "bg-hint shadow-[0_3px_0_0_#1a1c2c]" : down ? "bg-teal-light" : "bg-cream hover:bg-teal-light"}`}
     >
-      <img src={imageOf(id)} alt="" draggable={false} className="pixelated pointer-events-none h-9 w-12 object-contain" />
+      {imageOf(id) ? (
+        <img src={imageOf(id) ?? ""} alt="" draggable={false} className="pixelated pointer-events-none h-9 w-12 object-contain" />
+      ) : (
+        <span aria-hidden="true" className="pointer-events-none flex h-9 items-center text-2xl">
+          🧱
+        </span>
+      )}
       <span className="whitespace-nowrap">
         {down && !moving ? "✓ " : ""}
         {nameOf(id)}
@@ -323,7 +343,7 @@ export function DecorBoard() {
       data-count={placed.length}
       data-limit={limit}
       data-placed={placed.map((p) => `${p.decor}@${p.col},${p.row}`).join(";")}
-      data-layout={stations.map((station) => `${station}@${stationObject(station)?.col},${stationObject(station)?.row}`).join(";")}
+      data-layout={[...stations.map((station) => `${station}@${stationObject(station)?.col},${stationObject(station)?.row}`), ...pillars.map((pillar) => `${pillar.id}@${pillar.col},${pillar.row}`)].join(";")}
       data-theme={theme ?? "default"}
     >
       {/* ชั้นจัดวางทับบนฉากจริง: สิ่งที่วางแล้วเห็นในฉากทันที ชั้นนี้แสดงช่องที่วางได้ กรอบของแต่ละชิ้น และกรอบเลือกของคีย์บอร์ด */}
@@ -358,8 +378,11 @@ export function DecorBoard() {
           <span aria-hidden="true" className="pointer-events-none absolute border-[3px] border-ink shadow-[0_0_0_2px_#ffcd75]" style={box(cursor.col, cursor.row, held ? widthOf(held) : 1)} data-testid="decor-cursor" />
         </div>
       )}
-      {ghost && area && (
-        <img src={imageOf(ghost.id)} alt="" aria-hidden="true" className="pixelated pointer-events-none fixed opacity-80" style={{ left: ghost.x - (widthOf(ghost.id) * area.cell) / 2, top: ghost.y - area.cell * 1.5, width: widthOf(ghost.id) * area.cell }} />
+      {ghost && area && imageOf(ghost.id) && (
+        <img src={imageOf(ghost.id) ?? ""} alt="" aria-hidden="true" className="pixelated pointer-events-none fixed opacity-80" style={{ left: ghost.x - (widthOf(ghost.id) * area.cell) / 2, top: ghost.y - area.cell * 1.5, width: widthOf(ghost.id) * area.cell }} />
+      )}
+      {ghost && area && !imageOf(ghost.id) && (
+        <span aria-hidden="true" className="pointer-events-none fixed rounded-md border-[3px] border-ink bg-slate/80" style={{ left: ghost.x - (widthOf(ghost.id) * area.cell) / 2, top: ghost.y - area.cell / 2, width: widthOf(ghost.id) * area.cell, height: area.cell }} />
       )}
 
       {/* แถบจัดห้อง: อยู่ล่างจอ ย้ายขึ้นบนได้เมื่อบังจุดที่อยากวาง */}
@@ -430,7 +453,7 @@ export function DecorBoard() {
         {mode === "station" && (
           <>
             <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label={ui.decor.stationPalette}>
-              {stations.map((station) => pick(station, `station-pick-${station}`, layout[station] !== undefined))}
+              {movable.map((id) => pick(id, `station-pick-${id}`, layout[id as RoomPiece] !== undefined))}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <button

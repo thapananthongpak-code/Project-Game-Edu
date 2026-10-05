@@ -8,7 +8,7 @@ import { emptyField, fieldStatus } from "./field";
 import { bagSizeOf, type Gear, guardianPower, matchupOf } from "./gear";
 import { type NpcId, type NpcRecord, npcCredits, NPCS } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
-import { arrangedMap, baseMapOf, type DecorArea, type DecorPlacement, decorRoom, layoutError, type PlaceError, placementError, type RoomLayout, type Station, stationsIn, validLayout, validPlacements } from "../game/decor";
+import { arrangedMap, baseMapOf, type DecorArea, type DecorPlacement, decorRoom, layoutError, type Piece, piecesIn, type PlaceError, placementError, type RoomLayout, validLayout, validPlacements } from "../game/decor";
 import type { GameMap } from "../game/maps";
 import { BIT_MODULES, BIT_SLOTS, type BitModule, CATALOG, DECOR, type Decor, REWARDS, type ShopItem, STARTER_DECOR, type Supply, type Theme, THEME_IDS, THEMES } from "./shop.config";
 
@@ -190,19 +190,19 @@ export function removeDecor(shop: ShopState, map: Difficulty, area: DecorArea, d
 
 // ---------------------------------------------------------------- จุดใช้งานที่ย้ายเอง และธีมสีของห้อง (GDD ข้อ 19)
 
-/** ตำแหน่งที่ผู้เล่นย้ายจุดใช้งานของห้องนี้ไป (เฉพาะที่ยังใช้ได้กับผังปัจจุบัน) */
+/** ตำแหน่งที่ผู้เล่นย้ายจุดใช้งานและเสาของห้องนี้ไป (เฉพาะที่ยังใช้ได้กับผังปัจจุบัน) */
 export const layoutIn = (shop: ShopState, map: Difficulty, area: DecorArea): RoomLayout => validLayout(baseMapOf(map, area), shop.layout[decorRoom(map, area)]);
 
 /** ผังของห้องเมื่อย้ายจุดใช้งานตามที่ผู้เล่นจัดแล้ว (ยังไม่รวมของตกแต่งและธีม) กติกาของตกแต่งตรวจกับผังนี้ */
 export const arrangedBase = (shop: ShopState, map: Difficulty, area: DecorArea): GameMap => arrangedMap(baseMapOf(map, area), layoutIn(shop, map, area));
 
 /**
- * ย้ายจุดใช้งานของห้อง (ร้าน กระดานแผนที่ แท่นชาร์จ ฯลฯ) ไปตำแหน่งที่เลือกเอง คืนสถานะร้านใหม่ หรือเหตุที่ย้ายไม่ได้
+ * ย้ายจุดใช้งานของห้อง (ร้าน กระดานแผนที่ แท่นชาร์จ ฯลฯ) หรือเสากลางห้องไปตำแหน่งที่เลือกเอง คืนสถานะร้านใหม่ หรือเหตุที่ย้ายไม่ได้
  * ต้องอยู่บนพื้นที่ว่าง ไม่บังช่องยืนหน้าประตูและจุดอื่น และทุกจุดต้องยังเดินถึงได้ (src/game/decor.ts)
  */
-export function moveStation(shop: ShopState, map: Difficulty, area: DecorArea, station: Station, col: number, row: number): ShopState | PlaceError {
+export function moveStation(shop: ShopState, map: Difficulty, area: DecorArea, station: Piece, col: number, row: number): ShopState | PlaceError {
   const base = baseMapOf(map, area);
-  if (!stationsIn(base).includes(station)) return "floor";
+  if (!piecesIn(base).includes(station)) return "floor";
   const layout: RoomLayout = { ...layoutIn(shop, map, area), [station]: { col, row } };
   const error = layoutError(base, layout, decorIn(shop, map, area));
   if (error) return error;

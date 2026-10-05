@@ -188,7 +188,7 @@ function findPath(map, from, target) {
 async function walkTo(page, id) {
   const { interactables, map, player } = await snap(page);
   const target = interactables.find((i) => i.id === id);
-  assert.ok(target, `ไม่พบจุดโต้ตอบ ${id}`);
+  assert.ok(target, `ไม่พบจุดโต้ตอบ ${id} (ฉาก ${(await snap(page)).scene} มี ${interactables.map((i) => i.id).join(", ")})`);
   if (Math.hypot(player.x - target.x, player.y - target.y) >= 30) {
     const path = findPath(map, cellOf(player.x, player.y), target);
     assert.ok(path, `ไม่มีทางเดินไป ${id}`);
@@ -2397,7 +2397,7 @@ async function playNormal(page) {
   assert.equal((await layoutOf()).shop, "2,8", "ย้ายไม่ได้: ร้านอยู่ที่เดิม และยังถืออยู่");
   assert.equal(await decor.getAttribute("data-held"), "shop");
   await clickCell(page, 6, 5);
-  assert.match(await page.getByTestId("decor-notice").innerText(), /ย้ายร้านสหกรณ์แล็บแล้ว/);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ย้าย “ร้านสหกรณ์แล็บ” แล้ว/);
   assert.equal((await layoutOf()).shop, "6,5");
   await page.waitForTimeout(500);
   assert.equal(await spotOf("shop"), 224, "ร้านในฉากย้ายไปที่ใหม่ทันที");
@@ -2449,7 +2449,7 @@ async function playNormal(page) {
   await decor.waitFor();
   await page.getByTestId("decor-mode-station").click();
   await page.getByTestId("station-reset").click();
-  assert.match(await page.getByTestId("decor-notice").innerText(), /คืนทุกจุดไปตำแหน่งเริ่มต้นแล้ว/);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /คืนทุกจุดและเสาไปตำแหน่งเริ่มต้นแล้ว/);
   assert.deepEqual(await layoutOf(), { shop: "2,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
   assert.ok(!(await decorPlaced(page)).includes("plant@2,8"));
   await page.keyboard.press("Escape");
@@ -2998,10 +2998,21 @@ async function playHard(page) {
   const planner = page.getByTestId("decor");
   await planner.waitFor();
   await page.getByTestId("decor-mode-station").click();
-  assert.deepEqual(await page.locator('[data-testid^="station-pick-"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("station-pick-", ""))), ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
+  assert.deepEqual(await page.locator('[data-testid^="station-pick-"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("station-pick-", ""))), ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad", "pillar1", "pillar2", "pillar3", "pillar4"], "จุดใช้งาน 7 จุดและเสาเหล็ก 4 ต้นของโรงเก็บหุ่นแมพ 3 ย้ายได้");
   await page.getByTestId("station-pick-bitpad").click();
   await clickCell(page, 9, 6);
   assert.match(await planner.getAttribute("data-layout"), /bitpad@9,6/);
+  // เสากลางห้องย้ายได้เหมือนจุดใช้งาน: ทับของอื่นไม่ได้ ย้ายแล้วผังของห้องเปลี่ยนตาม
+  assert.match(await page.getByTestId("station-pick-pillar1").innerText(), /เสา 1/);
+  await page.getByTestId("station-pick-pillar1").click();
+  await clickCell(page, 9, 6);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ต้องเป็นพื้นที่ว่างและไม่ทับของชิ้นอื่น/);
+  await clickCell(page, 6, 6);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ย้าย “เสา 1” แล้ว/);
+  assert.match(await planner.getAttribute("data-layout"), /pillar1@6,6;pillar2@16,4/);
+  await page.waitForTimeout(500);
+  const pillars = (await snap(page)).map.shape;
+  assert.deepEqual([pillars[4][3], pillars[6][6], pillars[4][16]], [".", "#", "#"], "ที่เดิมของเสาเป็นพื้น ที่ใหม่เป็นผนัง เสาต้นอื่นอยู่ที่เดิม");
   await page.getByTestId("decor-mode-theme").click();
   assert.equal(await page.locator('[data-testid^="theme-pick-"]').count(), 2);
   await page.getByTestId("theme-pick-midnight").click();
@@ -3011,7 +3022,7 @@ async function playHard(page) {
   await page.getByTestId("decor-close").click();
   await page.waitForTimeout(400);
   let arranged = await snap(page);
-  assert.deepEqual([arranged.map.tileset, arranged.bay.cores, arranged.store.shop.theme, arranged.store.shop.layout], ["ts_theme_midnight", 6, { "hard:hangar": "midnight" }, { "hard:hangar": { bitpad: { col: 9, row: 6 } } }], "ธีมและตำแหน่งใหม่มีผลในฉากทันที แกนในตู้ยังอยู่");
+  assert.deepEqual([arranged.map.tileset, arranged.bay.cores, arranged.store.shop.theme, arranged.store.shop.layout], ["ts_theme_midnight", 6, { "hard:hangar": "midnight" }, { "hard:hangar": { bitpad: { col: 9, row: 6 }, pillar1: { col: 6, row: 6 } } }], "ธีมและตำแหน่งใหม่มีผลในฉากทันที แกนในตู้ยังอยู่");
   assert.deepEqual(await npcIds(page), ["captain", "keeper"]);
   // โหลดหน้าใหม่: การจัดห้องยังอยู่
   await page.reload();
@@ -3023,7 +3034,8 @@ async function playHard(page) {
   arranged = await snap(page);
   assert.equal(arranged.map.tileset, "ts_theme_midnight");
   assert.ok(arranged.map.blocked.includes("9,6") && arranged.map.blocked.includes("10,6"));
-  log("จัดโรงเก็บหุ่นของแมพ 3: ย้ายแท่นชาร์จพี่บิตและเปลี่ยนธีมสีได้ มีผลในฉากทันทีและยังอยู่หลังโหลดหน้าใหม่ ธีมเปลี่ยนเฉพาะห้องที่เลือก");
+  assert.deepEqual([arranged.map.shape[4][3], arranged.map.shape[6][6]], [".", "#"]);
+  log("จัดโรงเก็บหุ่นของแมพ 3: ย้ายแท่นชาร์จพี่บิต ย้ายเสากลางห้อง และเปลี่ยนธีมสีได้ มีผลในฉากทันทีและยังอยู่หลังโหลดหน้าใหม่ ธีมเปลี่ยนเฉพาะห้องที่เลือก");
   // ถามตอบของกัปตันเรย์ใช้โจทย์ของทุกเรื่อง เปิดเพราะเรียนครบแล้วที่แมพ 1
   const start = await creditsOf(page);
   assert.equal(await doQuiz(page, "captain", 6), 60, "ถามตอบ 6 ข้อ ข้อละ 5 เครดิต × 2");
