@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot, completely unchanged, with a targeting pack mounted on its back: a red glowing targeting scope lens on a dark articulated arm rising above its right shoulder and a small dark sensor box above its left shoulder, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "6fd688b2-7f8c-4e67-83de-2cf741b554bf",
+  "generatedAt": "2026-10-05T06:31:34.853Z"
+}

@@ -8,7 +8,8 @@ import { emptyField, fieldStatus } from "./field";
 import { bagSizeOf, type Gear, guardianPower, matchupOf } from "./gear";
 import { type NpcId, type NpcRecord, npcCredits, NPCS } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
-import { BIT_MODULES, type BitModule, CATALOG, DECOR, type Decor, type DecorSize, REWARDS, type ShopItem, STARTER_DECOR, type Supply } from "./shop.config";
+import { baseMapOf, type DecorArea, type DecorPlacement, decorRoom, type PlaceError, placementError, validPlacements } from "../game/decor";
+import { BIT_MODULES, BIT_SLOTS, type BitModule, CATALOG, DECOR, type Decor, REWARDS, type ShopItem, STARTER_DECOR, type Supply } from "./shop.config";
 
 export interface Earning {
   /** ความคืบหน้ารายหัวข้อของแต่ละแมพ (แมพที่ยังไม่ได้ไปไม่ต้องมี) */
@@ -87,12 +88,25 @@ export function purchase(shop: ShopState, id: string, balance: number, context: 
     const key = `${context.map}:${item.value}`;
     return { ...shop, spent, loadout, supplies: { ...shop.supplies, [item.value]: shop.supplies[item.value] + 1 }, bought: { ...shop.bought, [key]: (shop.bought[key] ?? 0) + 1 } };
   }
-  // ร้านขายอย่างเดียว: ของที่ซื้อแล้วผู้เล่นไปใส่เองที่จุดปรับแต่งในโรงเก็บหุ่น (ตู้เสื้อผ้า แท่นการ์เดียน แท่นปรับแต่งพี่บิต)
+  // ร้านขายอย่างเดียว: ของที่ซื้อแล้วผู้เล่นไปใส่เองที่จุดปรับแต่งในโรงเก็บหุ่น (ตู้เสื้อผ้า แท่นการ์เดียน แท่นชาร์จพี่บิต)
   return { ...shop, spent, owned: [...shop.owned, item.id] };
 }
 
-/** โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว */
-export const modulesOf = (shop: ShopState): BitModule[] => BIT_MODULES.filter((module) => shop.owned.includes(`module-${module}`));
+/** โมดูลของพี่บิตที่ซื้อแล้ว */
+export const ownedModules = (shop: ShopState): BitModule[] => BIT_MODULES.filter((module) => shop.owned.includes(`module-${module}`));
+
+/** โมดูลของพี่บิตที่ติดตั้งอยู่ (มีผลในด่านต่อสู้): เฉพาะที่ซื้อแล้ว ไม่เกิน BIT_SLOTS ชิ้น */
+export const modulesOf = (shop: ShopState): BitModule[] => ownedModules(shop).filter((module) => shop.modules.includes(module)).slice(0, BIT_SLOTS);
+
+/**
+ * ติดตั้งหรือถอดโมดูลของพี่บิตที่แท่นชาร์จ ติดตั้งได้เฉพาะที่ซื้อแล้ว ช่องเต็มแล้วต้องถอดชิ้นอื่นก่อน (คืนสถานะเดิม)
+ */
+export function toggleModule(shop: ShopState, module: BitModule): ShopState {
+  const installed = modulesOf(shop);
+  if (installed.includes(module)) return { ...shop, modules: installed.filter((m) => m !== module) };
+  if (!ownedModules(shop).includes(module) || installed.length >= BIT_SLOTS) return shop;
+  return { ...shop, modules: [...installed, module] };
+}
 
 export type EquipKind = "outfit" | "paint" | "bit" | "weapon" | "armor" | "chip";
 const EQUIP_DEFAULT: Record<EquipKind, string> = { outfit: "lab", paint: "standard", bit: "classic", weapon: "fist", armor: "plate", chip: "none" };
@@ -144,24 +158,33 @@ export function equip(shop: ShopState, kind: EquipKind, value: string): ShopStat
   return kind === "outfit" ? { ...next, loadout: bagOf(next) } : next;
 }
 
-// ---------------------------------------------------------------- ของตกแต่งโถง (GDD ข้อ 19)
+// ---------------------------------------------------------------- ของตกแต่งห้อง (GDD ข้อ 19)
 
 /** ของตกแต่งที่ผู้เล่นมี: ของเริ่มต้นและของที่ซื้อแล้ว */
 export const ownedDecor = (shop: ShopState): Decor[] => (Object.keys(DECOR) as Decor[]).filter((decor) => STARTER_DECOR.includes(decor) || shop.owned.includes(`decor-${decor}`));
 
+/** ของตกแต่งที่วางอยู่ในห้องหนึ่ง (เฉพาะชิ้นที่ยังถูกต้องตามผังและของที่มี) */
+export function decorIn(shop: ShopState, map: Difficulty, area: DecorArea): DecorPlacement[] {
+  const owned = ownedDecor(shop);
+  return validPlacements(baseMapOf(map, area), area, (shop.decor[decorRoom(map, area)] ?? []).filter((placement) => owned.includes(placement.decor)));
+}
+
 /**
- * วางของตกแต่งในช่องของโถงของแมพ (decor = null เอาออก) วางได้เฉพาะของที่มีและขนาดตรงกับช่อง
- * ของชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ: ถ้าวางอยู่ช่องอื่นของแมพนั้นจะย้ายมา
+ * วางของตกแต่งลงในห้องที่ตำแหน่งที่เลือกเอง (ชิ้นที่วางอยู่แล้วในห้องนั้น = ย้าย) คืนสถานะร้านใหม่ หรือเหตุที่วางไม่ได้
+ * วางได้เฉพาะของที่มี ไม่เกินจำนวนของห้อง และต้องไม่บังทางเดินไปจุดใช้งาน (src/game/decor.ts)
  */
-export function placeDecor(shop: ShopState, map: Difficulty, slot: { id: string; size: DecorSize }, decor: Decor | null): ShopState {
-  const placed = { ...(shop.decor[map] ?? {}) };
-  if (decor === null) delete placed[slot.id];
-  else {
-    if (!ownedDecor(shop).includes(decor) || DECOR[decor].size !== slot.size) return shop;
-    for (const [id, value] of Object.entries(placed)) if (value === decor) delete placed[id];
-    placed[slot.id] = decor;
-  }
-  return { ...shop, decor: { ...shop.decor, [map]: placed } };
+export function placeDecor(shop: ShopState, map: Difficulty, area: DecorArea, placement: DecorPlacement): ShopState | PlaceError | "owned" {
+  if (!ownedDecor(shop).includes(placement.decor)) return "owned";
+  const others = decorIn(shop, map, area).filter((placed) => placed.decor !== placement.decor);
+  const error = placementError(baseMapOf(map, area), area, others, placement);
+  if (error) return error;
+  return { ...shop, decor: { ...shop.decor, [decorRoom(map, area)]: [...others, { decor: placement.decor, col: placement.col, row: placement.row }] } };
+}
+
+/** เอาของตกแต่งชิ้นหนึ่งออกจากห้อง (decor = null เอาออกทั้งห้อง) */
+export function removeDecor(shop: ShopState, map: Difficulty, area: DecorArea, decor: Decor | null): ShopState {
+  const left = decor === null ? [] : decorIn(shop, map, area).filter((placed) => placed.decor !== decor);
+  return { ...shop, decor: { ...shop.decor, [decorRoom(map, area)]: left } };
 }
 
 // ---------------------------------------------------------------- ของช่วยเหลือจาก NPC (GDD ข้อ 16)

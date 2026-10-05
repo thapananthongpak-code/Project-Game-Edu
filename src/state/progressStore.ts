@@ -11,9 +11,10 @@ import { emptyField, type FieldProgress } from "./field";
 import { type Armor, ARMORS, bagSizeOf, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
 import { isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_NAME_CHARS } from "./rules";
-import { AVATARS, type Avatar, BIT_SKINS, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply } from "./shop.config";
+import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom } from "../game/decor";
+import { AVATARS, type Avatar, BIT_MODULES, BIT_SKINS, BIT_SLOTS, type BitModule, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply } from "./shop.config";
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 export interface Profile {
   /** ชื่อที่แสดง แนะนำให้ใช้ชื่อเล่นหรือเลขที่ ไม่ใช้ชื่อจริง */
@@ -49,6 +50,8 @@ export interface ShopState {
   paint: Paint;
   /** คอสตูมของพี่บิตที่ใช้อยู่ */
   bit: BitSkin;
+  /** โมดูลของพี่บิตที่ติดตั้งอยู่ (ไม่เกิน BIT_SLOTS ชิ้น เลือกจากที่ซื้อแล้วที่แท่นชาร์จพี่บิต) */
+  modules: BitModule[];
   /** อุปกรณ์ของการ์เดียนที่ใส่อยู่ (src/state/gear.ts) */
   weapon: Weapon;
   armor: Armor;
@@ -57,8 +60,8 @@ export interface ShopState {
   loadout: Supply[];
   /** จำนวนของใช้ที่ซื้อจากร้านของแต่ละแมพไปแล้ว คีย์คือ "<แมพ>:<ของใช้>" (ร้านมีของจำกัดต่อแมพ) */
   bought: Record<string, number>;
-  /** ของตกแต่งที่วางในโถงของแต่ละแมพ: รหัสช่อง -> ของตกแต่ง (GDD ข้อ 19) */
-  decor: Partial<Record<Difficulty, Record<string, Decor>>>;
+  /** ของตกแต่งที่ผู้เล่นวางเองในโถงและโรงเก็บหุ่นของแต่ละแมพ: คีย์ "<แมพ>:<ห้อง>" -> ของที่วางพร้อมตำแหน่ง (GDD ข้อ 19) */
+  decor: Partial<Record<DecorRoom, DecorPlacement[]>>;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -142,8 +145,19 @@ export const emptyRoom = (): RoomProgress => ({
 
 export const emptyBattle = (): BattleRecord => ({ won: false, wins: 0, sorties: 0, asked: 0, correct: 0 });
 
-/** ของตกแต่งที่วางไว้ให้ตั้งแต่เริ่มในโถงของแมพ 1 (ช่องตกแต่งอยู่ใน src/game/maps.ts) */
-export const STARTER_PLACEMENT: Record<string, Decor> = { wall1: "window", small1: "plant" };
+/** ของตกแต่งที่วางไว้ให้ตั้งแต่เริ่มในโถงของแมพ 1 (ผู้เล่นย้ายหรือเอาออกได้) */
+export const STARTER_PLACEMENT: readonly DecorPlacement[] = [
+  { decor: "window", col: 3, row: 1 },
+  { decor: "plant", col: 1, row: 5 },
+];
+const starterDecor = (): ShopState["decor"] => ({ "easy:hall": STARTER_PLACEMENT.map((placement) => ({ ...placement })) });
+
+/** ตำแหน่งของช่องตกแต่งในข้อมูลรุ่น 8 (ของตกแต่งเคยวางได้เฉพาะในช่องที่กำหนดของโถง): ใช้ย้ายของที่วางไว้มาเป็นตำแหน่งอิสระ */
+const LEGACY_SLOTS: Record<Difficulty, Record<string, [col: number, row: number]>> = {
+  easy: { wall1: [3, 1], wall2: [12, 1], big1: [15, 6], big2: [3, 5], small1: [1, 5], small2: [18, 5], small3: [18, 8] },
+  normal: { wall1: [1, 1], wall2: [15, 1], big1: [7, 6], big2: [11, 6], small1: [1, 6], small2: [18, 6], small3: [18, 3] },
+  hard: { wall1: [2, 1], wall2: [13, 1], big1: [16, 4], big2: [9, 6], small1: [1, 6], small2: [18, 6], small3: [12, 3] },
+};
 
 export const emptyShop = (): ShopState => ({
   spent: 0,
@@ -152,10 +166,11 @@ export const emptyShop = (): ShopState => ({
   outfit: "lab",
   paint: "standard",
   bit: "classic",
+  modules: [],
   ...DEFAULT_GEAR,
   loadout: [],
   bought: {},
-  decor: { easy: { ...STARTER_PLACEMENT } },
+  decor: starterDecor(),
 });
 
 export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, maps: { normal: {}, hard: {} }, battles: {}, npcs: {}, story: [], shop: emptyShop() });
@@ -234,7 +249,7 @@ function shopOf(raw: unknown): ShopState {
   const base = emptyShop();
   const items = new Map(CATALOG.map((item) => [item.id, item]));
   const owned = [...new Set(Array.isArray(data.owned) ? data.owned.filter((id): id is string => typeof id === "string" && items.has(id) && items.get(id)?.kind !== "supply") : [])];
-  const has = (kind: "outfit" | "paint" | "bit" | "weapon" | "armor" | "chip" | "decor", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
+  const has = (kind: "outfit" | "paint" | "bit" | "module" | "weapon" | "armor" | "chip" | "decor", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
   const supplies = { ...base.supplies };
   for (const item of CATALOG) if (item.kind === "supply") supplies[item.value] = Math.min(item.max, Math.floor(count(object(data.supplies)[item.value])));
   const outfit = OUTFITS.find((o) => o === data.outfit) ?? base.outfit;
@@ -254,17 +269,38 @@ function shopOf(raw: unknown): ShopState {
     const [map, supply] = key.split(":");
     if (DIFFICULTIES.some((d) => d === map) && SUPPLIES.some((s) => s === supply) && count(value) > 0) bought[key] = Math.floor(count(value));
   }
-  // ของตกแต่ง: วางได้เฉพาะของที่มี (ของเริ่มต้นหรือของที่ซื้อแล้ว) ชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ ข้อมูลรุ่นก่อนได้ของเริ่มต้นวางไว้ให้
-  const decor: ShopState["decor"] = {};
-  if (data.decor === undefined) decor.easy = { ...STARTER_PLACEMENT };
+  // ของตกแต่ง: วางได้เฉพาะของที่มี (ของเริ่มต้นหรือของที่ซื้อแล้ว) ชิ้นหนึ่งวางได้ครั้งเดียวต่อห้อง ไม่เกินจำนวนของห้อง
+  // ตำแหน่งตรวจกับผังอีกครั้งตอนแสดง (validPlacements) ข้อมูลรุ่นก่อนที่ยังไม่มีของตกแต่งได้ของเริ่มต้นวางไว้ให้
+  const mine = (value: unknown): Decor | undefined => {
+    const item = DECORS.find((d) => d === value);
+    return item && (STARTER_DECOR.includes(item) || has("decor", item)) ? item : undefined;
+  };
+  const saved = object(data.decor);
+  const decor: ShopState["decor"] = data.decor === undefined ? starterDecor() : {};
   for (const map of DIFFICULTIES) {
-    const placed: Record<string, Decor> = {};
-    for (const [slot, value] of Object.entries(object(object(data.decor)[map])).slice(0, 12)) {
-      const item = DECORS.find((d) => d === value);
-      if (/^[a-z0-9]{1,12}$/.test(slot) && item && (STARTER_DECOR.includes(item) || has("decor", item)) && !Object.values(placed).includes(item)) placed[slot] = item;
+    for (const area of DECOR_AREAS) {
+      const placed: DecorPlacement[] = [];
+      const raw = saved[decorRoom(map, area)];
+      for (const entry of Array.isArray(raw) ? raw.slice(0, 24) : []) {
+        const { decor: value, col, row } = object(entry);
+        const item = mine(value);
+        if (item && Number.isInteger(col) && Number.isInteger(row) && (col as number) >= 0 && (col as number) < 20 && (row as number) >= 0 && (row as number) < 11 && placed.length < DECOR_LIMIT[area] && !placed.some((p) => p.decor === item)) placed.push({ decor: item, col: col as number, row: row as number });
+      }
+      if (placed.length > 0) decor[decorRoom(map, area)] = placed;
     }
-    if (data.decor !== undefined && Object.keys(placed).length > 0) decor[map] = placed;
+    // รุ่น 8: ของตกแต่งของโถงเก็บตามรหัสช่อง ย้ายมาเป็นตำแหน่งของช่องนั้น
+    const legacy = object(saved[map]);
+    const placed: DecorPlacement[] = [];
+    for (const [slot, value] of Object.entries(legacy)) {
+      const item = mine(value);
+      const at = LEGACY_SLOTS[map][slot];
+      if (item && at && !placed.some((p) => p.decor === item)) placed.push({ decor: item, col: at[0], row: at[1] });
+    }
+    if (placed.length > 0 && decor[decorRoom(map, "hall")] === undefined) decor[decorRoom(map, "hall")] = placed;
   }
+  // โมดูลของพี่บิตที่ติดตั้ง: เฉพาะที่ซื้อแล้ว ไม่เกิน BIT_SLOTS ข้อมูลรุ่นก่อน (โมดูลทำงานทุกชิ้นที่ซื้อ) ได้ชิ้นแรก ๆ ที่มีติดตั้งให้
+  const ownedModules = BIT_MODULES.filter((module) => has("module", module));
+  const modules = (Array.isArray(data.modules) ? BIT_MODULES.filter((module) => (data.modules as unknown[]).includes(module) && ownedModules.includes(module)) : ownedModules).slice(0, BIT_SLOTS);
   return {
     spent: Math.floor(count(data.spent)),
     owned,
@@ -273,6 +309,7 @@ function shopOf(raw: unknown): ShopState {
     outfit: worn,
     paint: paint === base.paint || has("paint", paint) ? paint : base.paint,
     bit: bit === base.bit || has("bit", bit) ? bit : base.bit,
+    modules,
     weapon: weapon === base.weapon || has("weapon", weapon) ? weapon : base.weapon,
     armor: armor === base.armor || has("armor", armor) ? armor : base.armor,
     chip: chip === base.chip || has("chip", chip) ? chip : base.chip,
@@ -371,12 +408,12 @@ export function migrateSave(raw: unknown): SaveData | null {
   // รุ่น 7: ระดับความยากเป็นโหมดที่เลือกตอนเริ่มเกม ยังไม่มีแมพต่อเนื่อง ของตกแต่งโถง และคำถามทบทวนเป็นการเขียนตอบ (ข้อความที่เขียนไม่ถูกเก็บต่อ)
   // รุ่น 6: ยังไม่มีอุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (ของในกล่องถูกจัดลงกระเป๋าให้จนเต็ม)
   // รุ่น 5: ยังไม่มี NPC ประจำห้อง คอสตูมของพี่บิต และภาพเนื้อเรื่องหลังชนะด่าน ช่องอื่นเหมือนรุ่นปัจจุบัน
-  if ((data.version === SAVE_VERSION || data.version === 7 || data.version === 6 || data.version === 5) && hasRooms) {
+  if ((data.version === SAVE_VERSION || data.version === 8 || data.version === 7 || data.version === 6 || data.version === 5) && hasRooms) {
     const battles = battlesOf(data.battles);
     const profile = profileOf(data.profile);
     const rooms = roomsOf(data.rooms);
     const seen = data.version === 5 ? withWinBeats(storyOf(data.story), battles) : storyOf(data.story);
-    const worlds = data.version === SAVE_VERSION ? { maps: { normal: roomsOf(object(data.maps).normal), hard: roomsOf(object(data.maps).hard) }, story: seen } : legacyMaps(profile, rooms, seen);
+    const worlds = data.version === SAVE_VERSION || data.version === 8 ? { maps: { normal: roomsOf(object(data.maps).normal), hard: roomsOf(object(data.maps).hard) }, story: seen } : legacyMaps(profile, rooms, seen);
     return {
       version: SAVE_VERSION,
       updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : emptySave().updatedAt,

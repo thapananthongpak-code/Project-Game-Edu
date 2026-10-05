@@ -32,7 +32,7 @@ function fakeStorage(initial: Record<string, string> = {}) {
 const won = { won: true, wins: 1, sorties: 1, asked: 5, correct: 4 };
 
 const sample: SaveData = {
-  version: 8,
+  version: 9,
   updatedAt: "2026-10-02T01:00:00.000Z",
   profile: { name: "ทดสอบ", difficulty: "normal", classCode: "PVC1-67", avatar: "b" },
   pretest: { form: "B", correctByTopic: { 1: 2, 2: 0 }, items: [{ id: "B1a", topic: 1, correct: true, timeMs: 1200 }], completedAt: "2026-10-02T00:00:00.000Z" },
@@ -53,12 +53,13 @@ const sample: SaveData = {
     outfit: "engineer",
     paint: "standard",
     bit: "ninja",
+    modules: ["scanner"],
     weapon: "sword",
     armor: "plate",
     chip: "none",
     loadout: ["repair-kit", "reboot", "repair-kit"],
     bought: { "easy:repair-kit": 2, "normal:reboot": 1 },
-    decor: { easy: { wall1: "window" }, normal: { small1: "plant" } },
+    decor: { "easy:hall": [{ decor: "window", col: 3, row: 1 }], "normal:hangar": [{ decor: "plant", col: 3, row: 7 }] },
   },
 };
 
@@ -143,7 +144,7 @@ describe("migrateSave", () => {
       rooms: { 1: { ...emptyRoom(), core: true }, 2: { ...emptyRoom(), stationsSeen: 2 } },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v3))) as SaveData;
-    expect(save.version).toBe(8);
+    expect(save.version).toBe(9);
     expect(save.updatedAt).toBe(v3.updatedAt);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1", avatar: "a" });
     expect(save.pretest).toEqual(sample.pretest);
@@ -170,7 +171,7 @@ describe("migrateSave", () => {
       shop: { spent: 125, owned: ["outfit-engineer"], supplies: { "repair-kit": 1, shield: 0 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v4))) as SaveData;
-    expect(save.version).toBe(8);
+    expect(save.version).toBe(9);
     expect(save.profile).toEqual({ name: "ทดสอบ", difficulty: "easy", classCode: "PVC1-67", avatar: "b" });
     expect(save.battles).toEqual({
       k1: { won: true, wins: 1, sorties: 2, asked: 9, correct: 6 },
@@ -200,7 +201,7 @@ describe("migrateSave", () => {
       shop: { spent: 100, owned: ["outfit-engineer"], supplies: { ...emptyShop().supplies, shield: 2 }, outfit: "engineer", paint: "standard" },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v5))) as SaveData;
-    expect(save.version).toBe(8);
+    expect(save.version).toBe(9);
     expect([save.profile, save.rooms, save.battles]).toEqual([v5.profile, v5.rooms, v5.battles]);
     expect(save.story).toEqual(["prologue", "zone-n1", "win-n1"]);
     expect(save.npcs).toEqual({});
@@ -268,7 +269,7 @@ describe("migrateSave", () => {
     void [weapon, armor, chip, loadout];
     const v6 = { ...JSON.parse(JSON.stringify(sample)), version: 6, shop: { ...oldShop, owned: ["outfit-engineer", "bit-ninja"], supplies: { ...emptyShop().supplies, "repair-kit": 2, shield: 3, reboot: 1 } } };
     const save = migrateSave(v6) as SaveData;
-    expect(save.version).toBe(8);
+    expect(save.version).toBe(9);
     expect([save.profile, save.rooms, save.battles, save.npcs, save.story]).toEqual([sample.profile, sample.rooms, sample.battles, sample.npcs, sample.story]);
     expect(save.shop).toMatchObject({ weapon: "fist", armor: "plate", chip: "none", outfit: "engineer", bit: "ninja", loadout: ["repair-kit", "repair-kit", "shield"] });
     expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
@@ -336,7 +337,7 @@ describe("migrateSave", () => {
       shop: { spent: 120, owned: ["weapon-sword"], supplies: emptyShop().supplies, outfit: "lab", paint: "standard", bit: "classic", weapon: "sword", armor: "plate", chip: "none", loadout: [] },
     };
     const save = migrateSave(JSON.parse(JSON.stringify(v7))) as SaveData;
-    expect(save.version).toBe(8);
+    expect(save.version).toBe(9);
     expect(save.profile?.difficulty).toBe("easy");
     expect(save.maps).toEqual({ normal: {}, hard: {} });
     expect(save.rooms[1]).toMatchObject({ core: true, stars: 2, reviewDone: true, review: null });
@@ -345,7 +346,7 @@ describe("migrateSave", () => {
     // บันทึกภาคสนามที่เคยเขียนแล้วถือว่าคิดทบทวนข้อนั้นแล้ว ข้อที่เว้นว่างยังไม่ติ๊ก
     expect(save.rooms[6].field?.reflected).toEqual([true, false, true]);
     expect(save.npcs.mechanic).toMatchObject({ met: true, accepted: true, gifted: false });
-    expect(save.shop).toMatchObject({ weapon: "sword", bought: {}, decor: { easy: { wall1: "window", small1: "plant" } } });
+    expect(save.shop).toMatchObject({ weapon: "sword", bought: {}, decor: { "easy:hall": [{ decor: "window", col: 3, row: 1 }, { decor: "plant", col: 1, row: 5 }] } });
     expect(migrateSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
   });
 
@@ -368,8 +369,29 @@ describe("migrateSave", () => {
       ...JSON.parse(JSON.stringify(sample)),
       shop: { ...sample.shop, owned: ["decor-sofa"], decor: { easy: { big1: "sofa", big2: "sofa", wall1: "statue", "bad slot!": "plant", small1: "plant" }, moon: { big1: "sofa" } }, bought: { "easy:shield": 2, "mars:shield": 9, "easy:cheat": 1, "normal:reboot": -3 } },
     }) as SaveData;
-    expect(save.shop.decor).toEqual({ easy: { big1: "sofa", small1: "plant" } });
+    // รุ่น 8 เก็บตามรหัสช่องของโถง: ย้ายมาเป็นตำแหน่งของช่องนั้น ของที่ไม่มี ช่องที่ไม่รู้จัก และชิ้นซ้ำถูกตัดทิ้ง
+    expect(save.shop.decor).toEqual({ "easy:hall": [{ decor: "sofa", col: 15, row: 6 }, { decor: "plant", col: 1, row: 5 }] });
     expect(save.shop.bought).toEqual({ "easy:shield": 2 });
+  });
+
+  it("รุ่น 9: ของตกแต่งแบบวางอิสระและโมดูลที่ติดตั้งของพี่บิต ข้อมูลที่ผิดรูปถูกตัดทิ้ง รุ่น 8 ที่ซื้อโมดูลไว้ได้ติดตั้งให้ 2 ชิ้นแรก", () => {
+    const shop = {
+      ...sample.shop,
+      owned: ["decor-sofa", "module-scanner", "module-laser", "module-medic"],
+      modules: ["medic", "ghost", "laser", "scanner", "toolkit"],
+      decor: {
+        "easy:hall": [{ decor: "sofa", col: 12, row: 5 }, { decor: "sofa", col: 14, row: 6 }, { decor: "statue", col: 6, row: 5 }, { decor: "plant", col: 1.5, row: 5 }, { decor: "plant", col: 99, row: 5 }, "junk"],
+        "easy:hangar": [{ decor: "plant", col: 3, row: 7 }],
+        "moon:hall": [{ decor: "plant", col: 3, row: 7 }],
+      },
+    };
+    const save = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop }) as SaveData;
+    expect(save.shop.decor).toEqual({ "easy:hall": [{ decor: "sofa", col: 12, row: 5 }], "easy:hangar": [{ decor: "plant", col: 3, row: 7 }] });
+    // ติดตั้งได้เฉพาะโมดูลที่ซื้อแล้ว ไม่เกิน 2 ชิ้น
+    expect(save.shop.modules).toEqual(["scanner", "laser"]);
+    const v8 = migrateSave({ ...JSON.parse(JSON.stringify(sample)), version: 8, shop: { ...shop, modules: undefined, decor: { easy: { wall2: "window" } } } }) as SaveData;
+    expect(v8.shop.modules).toEqual(["scanner", "laser"]);
+    expect(v8.shop.decor).toEqual({ "easy:hall": [{ decor: "window", col: 12, row: 1 }] });
   });
 
   it("รูปแบบที่ไม่รู้จัก: คืน null", () => {

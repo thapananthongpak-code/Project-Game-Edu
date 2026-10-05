@@ -11,12 +11,12 @@ export type FxArt =
 
 const GEAR_ART: Record<string, string> = {
   fist: "fist", sword: "sword", blaster: "blaster", hammer: "hammer", lance: "lance", cannon: "cannon",
-  plate: "armor_plate", heavy: "armor_heavy", guard: "armor_guard", titan: "armor_titan",
-  retry: "chip_retry", charger: "chip_charger",
+  plate: "armor_plate", heavy: "armor_heavy", spike: "armor_spike", guard: "armor_guard", titan: "armor_titan",
+  retry: "chip_retry", charger: "chip_charger", focus: "chip_focus", regen: "chip_regen",
 };
 const ITEM_ART: Record<Supply | `module-${BitModule}`, string> = {
   "repair-kit": "repair_kit", shield: "shield", overcharge: "overcharge", analyzer: "analyzer", reboot: "reboot",
-  "module-scanner": "module_scanner", "module-laser": "module_laser", "module-medic": "module_medic",
+  "module-scanner": "module_scanner", "module-laser": "module_laser", "module-medic": "module_medic", "module-toolkit": "module_toolkit", "module-decoy": "module_decoy",
 };
 
 export const art = {
@@ -38,7 +38,7 @@ export const art = {
   /** ไอคอนของใช้และโมดูลของพี่บิต (IT-01..08) และเหรียญเครดิตวิจัย (IT-09) */
   item: (value: Supply | `module-${BitModule}`): string => `assets/items/it_${ITEM_ART[value]}.png`,
   credit: "assets/items/it_credit.png",
-  /** ภาพของของตกแต่งโถง (ภาพเดียวกับที่ฉากเกมใช้) */
+  /** ภาพของของตกแต่งห้อง (ภาพเดียวกับที่ฉากเกมใช้) */
   decor: (decor: Decor): string => `assets/props/${DECOR[decor].prop}.png`,
   backdrop: (room: number): string => `assets/battle/bg_battle_${room}.png`,
   core: (room: number): string => `assets/cores/core_${room}.png`,

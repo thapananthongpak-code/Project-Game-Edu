@@ -46,13 +46,13 @@ export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec
     hints: level.battleHints + (outfit === "researcher" ? BATTLE.perks.researcherHints : 0) + (has("scanner") ? BATTLE.modules.scannerHints : 0),
     assistDamage: (outfit === "commander" ? BATTLE.perks.commanderAssist : BATTLE.assistDamage) + (has("laser") ? BATTLE.modules.laserAssist : 0),
     assistHeal: has("medic") ? BATTLE.modules.medicHeal : 0,
-    repairHeal: BATTLE.repairKitHeal + (outfit === "engineer" ? BATTLE.perks.engineerHeal : 0),
+    repairHeal: BATTLE.repairKitHeal + (outfit === "engineer" ? BATTLE.perks.engineerHeal : 0) + (has("toolkit") ? BATTLE.modules.toolkitHeal : 0),
     startShield: outfit === "pilot",
     formResetsOnRetry: level.formResetsOnRetry,
     gear,
     guards: gear.armor === "guard" ? GEAR.guard.blocksPerForm : 0,
     retries: gear.chip === "retry" ? GEAR.retry.chances : 0,
-    dodges: outfit === "ninja" ? BATTLE.perks.ninjaDodges : 0,
+    dodges: (outfit === "ninja" ? BATTLE.perks.ninjaDodges : 0) + (has("decoy") ? BATTLE.modules.decoyDodges : 0),
   };
 }
 
@@ -95,6 +95,10 @@ export type BattleEvent =
   | { type: "stun" }
   | { type: "bit-assist"; damage: number; wasted?: number }
   | { type: "bit-heal"; amount: number }
+  /** ชิปซ่อมตัวเอง: ตอบถูกติดกันครบ การ์เดียนฟื้นพลัง */
+  | { type: "chip-heal"; amount: number }
+  /** เกราะหนาม: โดนโจมตีหนักแล้วคู่ต่อสู้เสียพลัง */
+  | { type: "reflect"; damage: number }
   /** by = สิ่งที่กันการโจมตีไว้ (เมื่อ blocked) */
   | { type: "kaiju-hit"; damage: number; blocked: boolean; heavy: boolean; by?: "guard" | "shield" | "dodge" }
   | { type: "kaiju-stunned" }
@@ -189,6 +193,8 @@ export interface Strike {
   stuns: boolean;
   /** พี่บิตยิงเสริมหลังการโจมตีนี้ (0 = ไม่ยิง) */
   assist: number;
+  /** ชิปซ่อมตัวเอง: พลังที่การ์เดียนฟื้นหลังการโจมตีนี้ (0 = ไม่ฟื้น) */
+  heal: number;
 }
 
 export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
@@ -202,7 +208,7 @@ export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
   const matchup = matchupOf(setup.gear.weapon, form.weak);
   const special = matchup !== "weak";
   const armorBreak = armored && !(weapon.pierce && special);
-  const advantage = !armorBreak && matchup === "strong" && streak >= GEAR.advantageFromStreak;
+  const advantage = !armorBreak && matchup === "strong" && streak >= (setup.gear.chip === "focus" ? GEAR.focus.advantageFromStreak : GEAR.advantageFromStreak);
   const quake = !armorBreak && special && every(weapon.quakeEvery);
   const base = (counter ? BATTLE.charge.counterDamage : form.trait === "combo" ? Math.min(BATTLE.comboMax, streak) : BATTLE.hit) + (advantage ? GEAR.advantage : 0) + (quake ? GEAR.quakeDamage : 0);
   const crit = !armorBreak && special && every(weapon.critEvery);
@@ -222,6 +228,7 @@ export function strikeOf(setup: BattleSetup, state: BattleState): Strike {
     boosted,
     stuns: special && every(weapon.stunEvery) && !state.stunned,
     assist: state.kaijuHp - damage > 0 && streak % BATTLE.assistStreak === 0 ? setup.assistDamage : 0,
+    heal: setup.gear.chip === "regen" && streak % GEAR.regen.every === 0 ? Math.min(GEAR.regen.heal, setup.robotMax - state.robotHp) : 0,
   };
 }
 
@@ -235,6 +242,8 @@ export interface Threat {
   regen: number;
   /** เกราะของคู่ต่อสู้ลักษณะ armor กลับมา */
   rearm: boolean;
+  /** เกราะหนาม: พลังที่คู่ต่อสู้เสียเมื่อการโจมตีหนักนี้โดน (ไม่ทำให้พลังหมด) */
+  reflect: number;
 }
 
 export function threatOf(setup: BattleSetup, state: BattleState): Threat {
@@ -252,6 +261,7 @@ export function threatOf(setup: BattleSetup, state: BattleState): Threat {
     saved,
     regen: acts && form.trait === "regen" ? Math.min(BATTLE.regen, form.hp - state.kaijuHp) : 0,
     rearm: acts && form.trait === "armor" && !state.armored,
+    reflect: saved === null && heavy && setup.gear.armor === "spike" ? Math.min(GEAR.spike.reflect, state.kaijuHp - 1) : 0,
   };
 }
 
@@ -297,6 +307,10 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
       }
     }
     kaijuHp = Math.max(0, kaijuHp);
+    if (strike.heal > 0) {
+      robotHp += strike.heal;
+      events.push({ type: "chip-heal", amount: strike.heal });
+    }
     const phase = phaseOf(setup, { form: formIndex, kaijuHp });
     if (kaijuHp > 0 && phase > phaseBefore) {
       const heal = Math.min(BATTLE.boss.phaseHeal, setup.robotMax - robotHp);
@@ -336,6 +350,10 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
       } else {
         robotHp = Math.max(0, robotHp - threat.damage);
         events.push({ type: "kaiju-hit", damage: threat.damage, blocked: false, heavy: threat.heavy });
+        if (threat.reflect > 0) {
+          kaijuHp -= threat.reflect;
+          events.push({ type: "reflect", damage: threat.reflect });
+        }
       }
       if (threat.regen > 0) {
         kaijuHp += threat.regen;

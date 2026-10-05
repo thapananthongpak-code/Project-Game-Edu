@@ -42,6 +42,7 @@ const withWeak = (id: string, weak: WeaponClass, gear: Partial<Gear>): BattleSet
   const spec = battleOf("easy", id) as BattleSpec;
   return battleSetup("easy", { ...spec, forms: spec.forms.map((form) => ({ ...form, weak })) }, "lab", [], { ...DEFAULT_GEAR, ...gear });
 };
+const specOf = (id: string) => battleOf("easy", id) as BattleSpec;
 const easy = (room: number) => (room === 1 ? plain() : setupOf("easy", room === 6 ? "omega" : `k${room}`));
 const ROBOT = CAMPAIGN.easy.robotHp;
 
@@ -520,6 +521,49 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     const exact = resolveAnswer(setup, { ...startBattle(setup), kaijuHp: 1, streak: 1 }, true);
     expect(exact.events.find((e) => e.type === "robot-hit")).not.toHaveProperty("wasted");
     expect(exact.events.some((e) => e.type === "bit-assist")).toBe(false);
+  });
+
+  it("เกราะหนาม: พลังสูงสุด +1 โดนโจมตีหนักแล้วคู่ต่อสู้เสียพลัง 1 (การโจมตีปกติไม่สะท้อน และไม่ทำให้คู่ต่อสู้หมดพลัง)", () => {
+    expect(plain("lab", { armor: "spike" }).robotMax).toBe(ROBOT + GEAR.spike.hp);
+    // ฝูง (เหลือเยอะโจมตีหนัก) ที่ดาบพอใช้ได้
+    const swarm = withWeak("k5", "beam", { weapon: "sword", armor: "spike" });
+    expect(threatOf(swarm, startBattle(swarm))).toMatchObject({ heavy: true, reflect: GEAR.spike.reflect });
+    const hit = resolveAnswer(swarm, startBattle(swarm), false);
+    expect(hit.events.map((e) => e.type)).toEqual(["kaiju-hit", "reflect"]);
+    expect(hit.state.kaijuHp).toBe(specOf("k5").forms[0].hp - GEAR.spike.reflect);
+    // โจมตีปกติ: ไม่สะท้อน
+    expect(resolveAnswer(plain("lab", { armor: "spike" }), startBattle(plain("lab", { armor: "spike" })), false).events.map((e) => e.type)).toEqual(["kaiju-hit"]);
+    // โล่กันไว้: ไม่สะท้อน และเหลือพลัง 1 ก็ไม่สะท้อนจนหมด
+    expect(threatOf(swarm, { ...startBattle(swarm), shield: true }).reflect).toBe(0);
+    const three = { ...startBattle(swarm), kaijuHp: BATTLE.swarmHeavyFrom };
+    expect(threatOf(swarm, three).reflect).toBe(1);
+    expect(threatOf(withWeak("k2", "beam", { weapon: "sword", armor: "spike" }), { ...startBattle(withWeak("k2", "beam", { weapon: "sword", armor: "spike" })), kaijuHp: 1, turn: 2 }).reflect).toBe(0);
+  });
+
+  it("ชิปล็อกเป้า: อาวุธที่ชนะทางตีแรงขึ้นตั้งแต่ข้อแรก (อาวุธที่ไม่ชนะทางไม่ได้อะไร)", () => {
+    const strong = withWeak("k1", "strike", { chip: "focus" });
+    expect(play(strong, [true]).events[0]).toMatchObject({ damage: BATTLE.hit + GEAR.advantage, advantage: true });
+    expect(play(withWeak("k1", "strike", {}), [true]).events[0]).toMatchObject({ damage: BATTLE.hit, advantage: false });
+    expect(play(withWeak("k1", "beam", { chip: "focus", weapon: "sword" }), [true]).events[0]).toMatchObject({ damage: BATTLE.hit, advantage: false });
+  });
+
+  it("ชิปซ่อมตัวเอง: ตอบถูกติดกันครบ 3 ข้อทุกครั้ง การ์เดียนฟื้นพลัง 1 (พลังเต็มไม่ฟื้น)", () => {
+    const setup = plain("lab", { chip: "regen" });
+    expect(play(setup, [true, true, true]).events.some((e) => e.type === "chip-heal")).toBe(false);
+    const hurt = play(setup, [false, true, true]);
+    expect(strikeOf(setup, hurt.state).heal).toBe(GEAR.regen.heal);
+    const healed = resolveAnswer(setup, hurt.state, true);
+    expect(healed.events.at(-1)).toEqual({ type: "chip-heal", amount: GEAR.regen.heal });
+    expect(healed.state.robotHp).toBe(setup.robotMax);
+  });
+
+  it("โมดูลของพี่บิตชุดใหม่: ตัวล่อรับการโจมตีครั้งแรกแทน (รวมกับชุดนินจาได้) และช่างซ่อมทำให้ชุดซ่อมฟื้นเพิ่ม", () => {
+    const decoy = battleSetup("easy", PLAIN, "lab", ["decoy"], DEFAULT_GEAR);
+    expect(decoy.dodges).toBe(BATTLE.modules.decoyDodges);
+    expect(resolveAnswer(decoy, startBattle(decoy), false).events).toEqual([{ type: "kaiju-hit", damage: 0, blocked: true, heavy: false, by: "dodge" }]);
+    expect(battleSetup("easy", PLAIN, "ninja", ["decoy"], DEFAULT_GEAR).dodges).toBe(BATTLE.perks.ninjaDodges + BATTLE.modules.decoyDodges);
+    expect(battleSetup("easy", PLAIN, "lab", ["toolkit"], DEFAULT_GEAR).repairHeal).toBe(BATTLE.repairKitHeal + BATTLE.modules.toolkitHeal);
+    expect(battleSetup("easy", PLAIN, "engineer", ["toolkit"], DEFAULT_GEAR).repairHeal).toBe(BATTLE.repairKitHeal + BATTLE.perks.engineerHeal + BATTLE.modules.toolkitHeal);
   });
 
   it("ชนะทาง แพ้ทาง พอใช้ได้: ทุกอาวุธชนะทางร่างที่แพ้ทางประเภทของมัน แพ้ทางร่างที่ทนประเภทของมัน วนเป็นวงสามประเภท", () => {

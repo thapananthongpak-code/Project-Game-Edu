@@ -145,9 +145,17 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         at += SHOT_MS + 160;
         break;
       case "bit-heal":
+      case "chip-heal":
         fx.sparks.push({ art: "spark", motion: "rise", side: "robot", at });
         fx.floaters.push({ text: `+${event.amount}`, side: "robot", at, tone: "heal" });
         sounds.push(["heal", at]);
+        break;
+      case "reflect":
+        // เกราะหนาม: แรงกระแทกสะท้อนกลับไปที่คู่ต่อสู้
+        fx.sparks.push({ art: "impact", motion: "pop", side: "kaiju", at });
+        fx.floaters.push({ text: `-${event.damage}`, side: "kaiju", at, tone: "damage" });
+        sounds.push(["crack", at]);
+        at += 260;
         break;
       case "kaiju-hit": {
         const id = foeSkill(foe, event.heavy);
@@ -266,6 +274,10 @@ function eventText(event: BattleEvent, kaiju: string, { spec, weapon, foe }: Sce
     }
     case "bit-heal":
       return fmt(ui.battle.log.bitHeal, { n: event.amount });
+    case "chip-heal":
+      return fmt(ui.battle.log.chipHeal, { n: event.amount });
+    case "reflect":
+      return fmt(ui.battle.log.reflect, { kaiju, n: event.damage });
     case "kaiju-hit": {
       const skill = ui.battle.skills[foeSkill(foe, event.heavy)];
       if (event.blocked) return fmt(event.by === "guard" ? ui.battle.log.guardBlocked : event.by === "dodge" ? ui.battle.log.dodged : ui.battle.log.blocked, { skill });
@@ -767,6 +779,7 @@ export function Battle() {
                   {strike.counter && <Tag>{ui.battle.command.counter}</Tag>}
                   {strike.stuns && <Tag>{ui.battle.command.stun}</Tag>}
                   {strike.assist > 0 && <Tag>{fmt(ui.battle.command.assist, { n: strike.assist })}</Tag>}
+                  {strike.heal > 0 && <Tag>{fmt(ui.battle.command.heal, { n: strike.heal })}</Tag>}
                 </li>
                 <li className="flex flex-wrap items-center gap-1">
                   <span className="font-extrabold text-wrong">✗ {ui.battle.command.wrong}</span>
@@ -782,6 +795,7 @@ export function Battle() {
                   {threat.saved === "shield" && <Tag>{ui.battle.command.shield}</Tag>}
                   {threat.regen > 0 && <Tag>{fmt(ui.battle.command.regen, { n: threat.regen })}</Tag>}
                   {threat.rearm && <Tag>{ui.battle.command.rearm}</Tag>}
+                  {threat.reflect > 0 && <Tag>{fmt(ui.battle.command.reflect, { n: threat.reflect })}</Tag>}
                 </li>
               </ul>
             )}

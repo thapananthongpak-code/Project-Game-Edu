@@ -1,5 +1,6 @@
 import type * as Phaser from "phaser";
 import { fmt, ui } from "../../content/ui-strings";
+import type { Difficulty } from "../../state/campaign";
 import { coreTotal, difficultyOf, learningRooms, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
 import type { Paint } from "../../state/shop.config";
 import { SCENE } from "../constants";
@@ -14,12 +15,14 @@ const CASE_SLOTS = [-14, 0, 14].flatMap((dx) => [-40, -22].map((dy) => ({ dx, dy
 
 /**
  * โรงเก็บหุ่นของแมพที่อยู่ (ผังต่างกันทุกแมพ GDD ข้อ 3): แท่นการ์เดียน (หุ่นแสดงอาวุธ เกราะ ชิป และสีที่ใส่) ตู้กระจกเก็บแกน AI
- * แผงสั่งปฏิบัติการ ตู้เสื้อผ้า แท่นปรับแต่งพี่บิต กล่องเก็บไอเทม เครื่องฉายข้อความของอาจารย์ และ NPC ของแมพ 3
+ * แผงสั่งปฏิบัติการ ตู้เสื้อผ้า แท่นชาร์จพี่บิต กล่องเก็บไอเทม เครื่องฉายเรื่องราว กระดานตกแต่ง และ NPC ของแมพ 3
  */
 export class HangarScene extends WorldScene {
   private cores: Phaser.GameObjects.Image[] = [];
   private guardian!: Phaser.GameObjects.Image;
   private chipDevice!: Phaser.GameObjects.Image;
+  /** แมพ ณ ตอนสร้างฉาก */
+  private world: Difficulty = "easy";
   private looks = "";
   private labelKey = "";
 
@@ -28,8 +31,8 @@ export class HangarScene extends WorldScene {
   }
 
   create(): void {
-    const map = difficultyOf(useGameStore.getState());
-    this.buildMap(hangarMapOf(map));
+    this.world = difficultyOf(useGameStore.getState());
+    this.buildMap(hangarMapOf(this.world));
     this.looks = "";
     this.labelKey = "";
     const store = () => useGameStore.getState();
@@ -67,6 +70,8 @@ export class HangarScene extends WorldScene {
     this.addInteractable(wardrobe, "wardrobe", () => ui.prompt.wardrobe, () => store().openOverlay("wardrobe"));
     const [bitpad] = this.objectsOf("bitpad");
     this.addInteractable(bitpad, "bitpad", () => ui.prompt.bitPad, () => store().openOverlay("bit"));
+    const [board] = this.objectsOf("decorboard");
+    this.addInteractable(board, "decorboard", () => ui.prompt.decorBoard, () => store().openOverlay("decor"));
     const [storage] = this.objectsOf("storage");
     this.addInteractable(storage, "storage", () => ui.prompt.storage, () => store().openOverlay("storage"));
     this.addNpcs();
@@ -110,6 +115,8 @@ export class HangarScene extends WorldScene {
       this.chipDevice.setVisible(chip !== "none");
       if (chip !== "none") this.chipDevice.setTexture(`gd_chip_${chip}`);
     }
+    // ของตกแต่งที่ผู้เล่นวางเองในโรงเก็บหุ่นของแมพนี้
+    this.syncDecor(this.world, "hangar");
     this.syncPickups();
     const labelKey = this.npcKey();
     if (labelKey !== this.labelKey) {

@@ -5,7 +5,7 @@ import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { NPCS, npcsOfMap } from "../state/npcs";
 import { DECOR } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, slotsOf, zoneMap } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
 
 interface ManifestAsset {
   size: [number, number];
@@ -104,10 +104,10 @@ describe("แผนที่ของทุกฉาก", () => {
     expect(doors.map((door) => door.col)).toEqual([...doors.map((door) => door.col)].sort((a, b) => a - b));
     // โรงเก็บหุ่นของทุกแมพมีจุดปรับแต่งแยกกัน: แท่นการ์เดียน ตู้เสื้อผ้า แท่นพี่บิต ตู้กระจกเก็บแกน แผงสั่งปฏิบัติการ กล่องเก็บไอเทม เครื่องฉาย และประตู
     for (const difficulty of DIFFICULTIES) {
-      const kinds = ["console", "robot", "wardrobe", "bitpad", "corecase", "hologram", "door", "storage"] as const;
+      const kinds = ["console", "robot", "wardrobe", "bitpad", "corecase", "hologram", "door", "storage", "decorboard"] as const;
       expect(kinds.map((kind) => count(hangarMapOf(difficulty), kind)), difficulty).toEqual(kinds.map(() => 1));
-      // แท่นพี่บิตวางราบกับพื้น ผู้เล่นยืนบนแท่นได้
-      expect(hangarMapOf(difficulty).objects.find((o) => o.kind === "bitpad")?.flat, difficulty).toBe(true);
+      // แท่นชาร์จพี่บิตเป็นแท่นตั้งพื้น
+      expect(hangarMapOf(difficulty).objects.find((o) => o.kind === "bitpad"), difficulty).toMatchObject({ prop: "pr_bit_dock", w: 2 });
     }
     // โรงเก็บหุ่นของแต่ละแมพออกแบบต่างกัน
     expect(new Set(DIFFICULTIES.map((difficulty) => hangarMapOf(difficulty).tileset)).size).toBe(3);
@@ -129,15 +129,12 @@ describe("แผนที่ของทุกฉาก", () => {
     expect(new Set(DIFFICULTIES.map((difficulty) => JSON.stringify(hallMapOf(difficulty).objects.map((o) => [o.kind, o.col, o.row])))).size).toBe(3);
   });
 
-  it("ช่องตกแต่งของโถง: ทุกแมพมี 7 ช่อง รหัสไม่ซ้ำ ครบสามขนาด และของตกแต่งทุกชิ้นมีภาพขนาดตรงกับช่องของขนาดนั้น", () => {
-    for (const difficulty of DIFFICULTIES) {
-      const slots = slotsOf(hallMapOf(difficulty));
-      expect(slots.map((o) => o.slot?.id).sort(), difficulty).toEqual(["big1", "big2", "small1", "small2", "small3", "wall1", "wall2"]);
-      for (const object of slots) expect(object.mount ?? false, `${difficulty} ${object.slot?.id}`).toBe(object.slot?.size === "wall");
-    }
+  it("ของตกแต่งทุกชิ้นมีภาพขนาดตรงกับขนาดของมัน (ติดผนัง 64×32 ตั้งพื้นชิ้นใหญ่ 64×64 ชิ้นเล็ก 32×64) และผังของโถงกับโรงเก็บหุ่นไม่มีของตกแต่งตายตัว", () => {
     const width = { wall: 2, big: 2, small: 1 };
     const height = { wall: 32, big: 64, small: 64 };
     for (const [name, decor] of Object.entries(DECOR)) expect(sizes.get(decor.prop), name).toEqual([width[decor.size] * TILE, height[decor.size]]);
+    // ของตกแต่งของโถงและโรงเก็บหุ่นเป็นของที่ผู้เล่นวางเองทั้งหมด (src/game/decor.ts)
+    for (const difficulty of DIFFICULTIES) for (const map of [hallMapOf(difficulty), hangarMapOf(difficulty)]) expect(count(map, "decor"), difficulty).toBe(0);
   });
 
   it("ห้องเรียนของแมพ 1 มีจอตัวอย่างและวิดีโอเสริมของหัวข้อนั้นห้องละหนึ่งจอ ติดผนัง", () => {

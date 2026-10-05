@@ -7,8 +7,8 @@ import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
 import { ADVICE, adviseBag, adviseWeapon, idealBag, missingAdvice, wishList } from "./loadout";
-import { bagOf, earnedCredits, gearOf, ownedDecor, stockLeft } from "./shop";
-import { CATALOG } from "./shop.config";
+import { bagOf, decorIn, earnedCredits, gearOf, modulesOf, ownedDecor, stockLeft } from "./shop";
+import { BIT_SLOTS, CATALOG } from "./shop.config";
 import { REWARDS } from "./shop.config";
 
 const miss = { type: "check", correct: false, timeMs: 1000 } as const;
@@ -416,6 +416,7 @@ describe("เครดิตวิจัยและร้านสหกรณ�
     const geared = base + itemPower("armor", "heavy") + POWER.weapon.sword + POWER.chip.charger + POWER.perItem;
     expect(guardianPowerOf(store())).toBe(geared);
     store().buy("module-laser");
+    store().toggleModule("laser");
     store().buy("outfit-engineer");
     store().equip("outfit", "engineer");
     expect(guardianPowerOf(store())).toBe(geared + POWER.module.laser + POWER.outfit.engineer);
@@ -672,26 +673,57 @@ describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
     expect(store().shop.bought).toEqual({ "easy:repair-kit": 3, "normal:repair-kit": 1 });
   });
 
-  it("ของตกแต่งโถง: ซื้อแล้วเลือกวางในช่องของโถงแต่ละแมพ ขนาดต้องตรงกับช่อง ชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ", () => {
+  it("ของตกแต่งแบบวางอิสระ: วางได้ทุกจุดที่ว่างของโถงและโรงเก็บหุ่น ย้ายและเอาออกได้ แต่ละห้องของแต่ละแมพตกแต่งแยกกัน ห้องเรียนตกแต่งไม่ได้", () => {
     clearMap1();
+    store().exitToHall();
     expect(ownedDecor(store().shop)).toEqual(["window", "plant"]);
-    expect(store().shop.decor.easy).toEqual({ wall1: "window", small1: "plant" });
+    expect(decorIn(store().shop, "easy", "hall")).toEqual([{ decor: "window", col: 3, row: 1 }, { decor: "plant", col: 1, row: 5 }]);
     expect(store().buy("decor-sofa")).toBeNull();
-    store().placeDecor({ id: "big1", size: "big" }, "sofa");
-    expect(store().shop.decor.easy).toMatchObject({ big1: "sofa" });
-    // ขนาดไม่ตรงกับช่อง หรือของที่ยังไม่มี: วางไม่ได้
-    store().placeDecor({ id: "wall2", size: "wall" }, "sofa");
-    store().placeDecor({ id: "big2", size: "big" }, "aquarium");
-    expect(store().shop.decor.easy).toEqual({ wall1: "window", small1: "plant", big1: "sofa" });
-    // ย้ายไปช่องอื่นของแมพเดียวกัน และเอาออก
-    store().placeDecor({ id: "big2", size: "big" }, "sofa");
-    expect(store().shop.decor.easy).toEqual({ wall1: "window", small1: "plant", big2: "sofa" });
-    store().placeDecor({ id: "small1", size: "small" }, null);
-    expect(store().shop.decor.easy).toEqual({ wall1: "window", big2: "sofa" });
-    // โถงของแมพ 2 ตกแต่งแยกกัน ของชิ้นเดียวกันใช้ได้ทุกแมพ
+    expect(store().placeDecor({ decor: "sofa", col: 12, row: 5 })).toBeNull();
+    // ของที่ยังไม่มี ที่ที่มีวัตถุอยู่ จุดยืนหน้าประตู และผนังที่มีประตู: วางไม่ได้
+    expect(store().placeDecor({ decor: "aquarium", col: 6, row: 5 })).toBe("owned");
+    expect(store().placeDecor({ decor: "sofa", col: 2, row: 8 })).toBe("floor");
+    expect(store().placeDecor({ decor: "plant", col: 2, row: 2 })).toBe("access");
+    expect(store().placeDecor({ decor: "window", col: 2, row: 1 })).toBe("wall");
+    expect(decorIn(store().shop, "easy", "hall")).toEqual([{ decor: "window", col: 3, row: 1 }, { decor: "plant", col: 1, row: 5 }, { decor: "sofa", col: 12, row: 5 }]);
+    // ย้าย: ชิ้นเดิมไปอยู่ที่ใหม่ ไม่ซ้ำ
+    expect(store().placeDecor({ decor: "sofa", col: 14, row: 6 })).toBeNull();
+    expect(decorIn(store().shop, "easy", "hall").filter((p) => p.decor === "sofa")).toEqual([{ decor: "sofa", col: 14, row: 6 }]);
+    store().removeDecor("plant");
+    expect(decorIn(store().shop, "easy", "hall").map((p) => p.decor)).toEqual(["window", "sofa"]);
+    // โรงเก็บหุ่นตกแต่งแยกจากโถง ของชิ้นเดียวกันวางได้ทั้งสองห้อง
+    store().enterHangar();
+    expect(decorIn(store().shop, "easy", "hangar")).toEqual([]);
+    expect(store().placeDecor({ decor: "sofa", col: 15, row: 6 })).toBeNull();
+    expect(store().shop.decor).toMatchObject({ "easy:hall": [{ decor: "window" }, { decor: "sofa" }], "easy:hangar": [{ decor: "sofa", col: 15, row: 6 }] });
+    store().removeDecor(null);
+    expect(decorIn(store().shop, "easy", "hangar")).toEqual([]);
+    // โถงของแมพ 2 ตกแต่งแยกกัน
+    store().exitToHall();
     store().travel("normal");
-    store().placeDecor({ id: "big1", size: "big" }, "sofa");
-    expect(store().shop.decor).toMatchObject({ easy: { big2: "sofa" }, normal: { big1: "sofa" } });
+    expect(decorIn(store().shop, "normal", "hall")).toEqual([]);
+    expect(store().placeDecor({ decor: "sofa", col: 9, row: 6 })).toBeNull();
+    expect(decorIn(store().shop, "easy", "hall").map((p) => p.decor)).toEqual(["window", "sofa"]);
+    // ห้องเรียนตกแต่งไม่ได้
+    store().enterRoom(1);
+    expect(store().placeDecor({ decor: "plant", col: 5, row: 5 })).toBe("room");
+  });
+
+  it("โมดูลของพี่บิต: ซื้อแล้วต้องติดตั้งที่แท่นชาร์จ ติดตั้งได้ 2 ชิ้น เฉพาะชิ้นที่ติดตั้งมีผลในด่านต่อสู้", () => {
+    clearMap1();
+    for (const id of ["module-scanner", "module-toolkit", "module-laser"]) expect(store().buy(id), id).toBeNull();
+    expect(modulesOf(store().shop)).toEqual([]);
+    store().toggleModule("laser");
+    store().toggleModule("scanner");
+    expect(modulesOf(store().shop)).toEqual(["scanner", "laser"]);
+    // ช่องเต็ม: ชิ้นที่สามติดตั้งไม่ได้จนกว่าจะถอดชิ้นอื่น โมดูลที่ยังไม่ซื้อติดตั้งไม่ได้
+    store().toggleModule("toolkit");
+    store().toggleModule("medic");
+    expect(modulesOf(store().shop)).toEqual(["scanner", "laser"]);
+    store().toggleModule("scanner");
+    store().toggleModule("toolkit");
+    expect(modulesOf(store().shop)).toEqual(["toolkit", "laser"]);
+    expect(BIT_SLOTS).toBe(2);
   });
 
   it("NPC ของแมพ 2: ฟังเรื่องราวแล้วจำไว้ หมอสนามให้ของใช้ครั้งเดียว และถามตอบของดร.ไอรีนใช้สองหัวข้อ", () => {

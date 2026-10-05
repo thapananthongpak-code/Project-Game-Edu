@@ -4901,23 +4901,23 @@
       "status": "generated"
     },
     {
-      "id": "PR-G07",
+      "id": "PR-G08",
       "kind": "prop",
-      "name": "แท่นปรับแต่งพี่บิต (วางบนพื้น)",
+      "name": "แท่นชาร์จพี่บิต (ติดตั้งโมดูลและคอสตูม แทนแท่นปรับแต่งแบบวางราบ PR-G07 ที่เลิกใช้)",
       "requested": true,
       "size": [
         64,
-        32
+        64
       ],
       "files": {
-        "pr_bit_pad": "props/pr_bit_pad.png"
+        "pr_bit_dock": "props/pr_bit_dock.png"
       },
       "pixellab": {
         "tool": "create_image_pixflux",
         "arguments": {
-          "description": "a flat round glowing cyan customization pad on the floor with a holographic ring and small wrench and gear symbols around the edge, flat floor object seen from above, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "description": "a small robot charging dock station: a round glowing cyan landing pad on a white base with two short charging arms holding cables and a small control post with green lights, 3/4 top-down view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
           "width": 64,
-          "height": 32,
+          "height": 64,
           "no_background": true,
           "view": "low top-down",
           "outline": "single color outline",
@@ -4925,8 +4925,8 @@
           "detail": "medium detail"
         },
         "fetchTool": "get_image",
-        "id": "a5e0dc4a-dfa1-4ca9-8525-157479e2e054",
-        "generatedAt": "2026-10-03T06:11:11.695Z"
+        "id": "adcdd695-b684-4c30-bfac-261896912c49",
+        "generatedAt": "2026-10-05T06:35:32.663Z"
       },
       "status": "generated"
     },
@@ -5591,6 +5591,172 @@
       "status": "generated"
     },
     {
+      "id": "GD-25",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + หมัด",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_fist": "guardian/gd_spike_fist.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now wearing dark crimson armor plates covered with short steel spikes on its shoulders, chest, forearms and knees, tougher silhouette, same pose, same colors elsewhere, no weapon, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "dee4ce5f-3754-4d81-af26-531c2b97e515",
+        "generatedAt": "2026-10-05T06:30:27.880Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-26",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + ดาบพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_sword": "guardian/gd_spike_sword.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long glowing cyan energy sword in its front fist on the right side of the image, the handle passes through the closed fingers, the blade points up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-02/image.png",
+          "usage_description": "the sword weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "b566534f-7bac-4a79-965c-5b56f26b8930",
+        "generatedAt": "2026-10-05T06:32:06.273Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-27",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + ปืนเลเซอร์",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_blaster": "guardian/gd_spike_blaster.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a white and cyan laser blaster pistol in its front fist on the right side of the image, fingers wrapped around the grip, barrel aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-03/image.png",
+          "usage_description": "the blaster weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "4f2bf475-0295-473a-b775-784f36cc4829",
+        "generatedAt": "2026-10-05T06:32:06.282Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-28",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + ค้อนพลังงาน",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_hammer": "guardian/gd_spike_hammer.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-04/image.png",
+          "usage_description": "the hammer weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "356e02df-9038-4d50-870c-5f3f34fdf60e",
+        "generatedAt": "2026-10-05T06:32:05.711Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-29",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + หอกสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_lance": "guardian/gd_spike_lance.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-05/image.png",
+          "usage_description": "the lance weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "52186205-0937-4879-8d53-87b0a7a9c222",
+        "generatedAt": "2026-10-05T06:32:12.953Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-30",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + ปืนใหญ่พลาสม่า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_cannon": "guardian/gd_spike_cannon.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-06/image.png",
+          "usage_description": "the cannon weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "280f4123-6a79-4275-a0db-e38c3b2c0a26",
+        "generatedAt": "2026-10-05T06:32:13.491Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "GC-01",
       "kind": "guardianchip",
       "name": "อุปกรณ์ของชิปเร่งพลัง (ชุดบูสเตอร์ติดหลัง)",
@@ -5643,6 +5809,58 @@
       },
       "status": "generated",
       "note": "ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ติดหลัง ตอน build ดึงเฉพาะส่วนอุปกรณ์ที่อยู่นอกเงาของหุ่นเดิม (BT-00) ออกมาเป็นชั้นภาพที่วาดหลังตัวหุ่น (chip_layer) จึงใช้ได้กับทุกเกราะและอาวุธ"
+    },
+    {
+      "id": "GC-03",
+      "kind": "guardianchip",
+      "name": "อุปกรณ์ของชิปล็อกเป้า (ชุดเล็งเป้าติดหลัง)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_chip_focus": "guardian/gd_chip_focus.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot, completely unchanged, with a targeting pack mounted on its back: a red glowing targeting scope lens on a dark articulated arm rising above its right shoulder and a small dark sensor box above its left shoulder, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "6fd688b2-7f8c-4e67-83de-2cf741b554bf",
+        "generatedAt": "2026-10-05T06:31:34.853Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GC-04",
+      "kind": "guardianchip",
+      "name": "อุปกรณ์ของชิปซ่อมตัวเอง (ชุดแขนซ่อมติดหลัง)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_chip_regen": "guardian/gd_chip_regen.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot, completely unchanged, with a repair pack mounted on its back: two folded white robotic repair arms with blue glowing tips rising above both shoulders behind the head and a blue glowing coolant canister between them, keep the robot's pose, colors, size and position exactly the same",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "1147e3d5-3850-429f-8ec5-b462db3b982c",
+        "generatedAt": "2026-10-05T06:31:05.534Z"
+      },
+      "status": "generated"
     },
     {
       "id": "SC-01",
@@ -7573,6 +7791,96 @@
       "status": "generated"
     },
     {
+      "id": "GR-13",
+      "kind": "icon",
+      "name": "เกราะหนาม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_armor_spike": "gear/gr_armor_spike.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "dark crimson robot chest armor covered with short steel spikes on the shoulders and chest, front view, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4ee8d919-a0fe-4d29-8227-f98202b7eed4",
+        "generatedAt": "2026-10-05T06:32:44.454Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-14",
+      "kind": "icon",
+      "name": "ชิปล็อกเป้า",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_chip_focus": "gear/gr_chip_focus.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "red computer microchip with gold pins and a glowing white crosshair target symbol on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "abf2ebba-3581-4a29-8b9d-a43ee1a63c16",
+        "generatedAt": "2026-10-05T06:33:21.227Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-15",
+      "kind": "icon",
+      "name": "ชิปซ่อมตัวเอง",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_chip_regen": "gear/gr_chip_regen.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "blue computer microchip with gold pins and a glowing cyan wrench symbol on top, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e8608608-5ac2-49e8-be8c-5c696b192b32",
+        "generatedAt": "2026-10-05T06:33:51.628Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "BT-07",
       "kind": "battle",
       "name": "บอสร่างที่ 2 (หันซ้าย)",
@@ -8219,6 +8527,66 @@
         "fetchTool": "get_image",
         "id": "00ab0b34-3a50-4f9d-a15b-250783ba17bf",
         "generatedAt": "2026-10-02T14:10:37.567Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-10",
+      "kind": "icon",
+      "name": "โมดูลช่างซ่อมของพี่บิต",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_toolkit": "items/it_module_toolkit.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small white robot module shaped like a toolbox with an orange wrench and a screwdriver sticking out, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5c631341-6656-439f-9397-74d782585e9b",
+        "generatedAt": "2026-10-05T06:34:20.850Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-11",
+      "kind": "icon",
+      "name": "โมดูลตัวล่อของพี่บิต",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_decoy": "items/it_module_decoy.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hologram projector module emitting a translucent cyan copy of a tiny robot above it, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "84a6a8fc-0ab6-4530-86fe-a842495ab428",
+        "generatedAt": "2026-10-05T06:34:52.164Z"
       },
       "status": "generated"
     },

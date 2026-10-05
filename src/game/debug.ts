@@ -22,6 +22,7 @@ export function installDebugHook(game: Phaser.Game): void {
         interactables: scene?.interactables.map(({ id, x, y, enabled }) => ({ id, x, y, enabled: enabled ? enabled() : true })) ?? [],
         companion: scene?.companionPosition ?? null,
         avatar: scene?.player ? scene.avatarState : null,
+        decor: scene?.decorInfo ?? [],
         bay: key === SCENE.hangar ? (scene as HangarScene).bayState : null,
         audio: audioDebug(),
         store: { ready, screen, zone, room, overlay, stationIndex, prompt, toast: toast?.text ?? null, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor },

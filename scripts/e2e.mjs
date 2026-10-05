@@ -22,7 +22,8 @@ const { CAMPAIGN } = await import("../src/state/campaign.ts");
 const specOf = (id) => Object.values(CAMPAIGN).flatMap((map) => map.battles).find((battle) => battle.id === id);
 const MAP_NAME = { easy: "แมพ 1: Pixel AI Lab", normal: "แมพ 2: ศูนย์วิจัยภาคสนาม", hard: "แมพ 3: ป้อมปราการภูเขาไฟ" };
 /** ของตกแต่งเริ่มต้นของโถง (STARTER_PLACEMENT ใน progressStore.ts) */
-const STARTER_DECOR = { wall1: "window", small1: "plant" };
+/** ของตกแต่งที่วางไว้ให้ตั้งแต่เริ่มในโถงของแมพ 1 (ShopState.decor รุ่น 9: ตำแหน่งอิสระต่อห้อง) */
+const STARTER_DECOR = { "easy:hall": [{ decor: "window", col: 3, row: 1 }, { decor: "plant", col: 1, row: 5 }] };
 /** รหัสด่านต่อสู้ของห้องในแมพ 1 (src/state/campaign.ts) */
 const easyBattle = (room) => (room === 6 ? "omega" : `k${room}`);
 const NO_SUPPLIES = { "repair-kit": 0, shield: 0, overcharge: 0, analyzer: 0, reboot: 0 };
@@ -788,7 +789,7 @@ async function playRoom1(page) {
   assert.equal((await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length, 6);
   assert.deepEqual((await snap(page)).interactables.map((i) => i.id).filter((id) => ["travel", "decorboard", "shop", "storage", "gate"].includes(id)).sort(), ["decorboard", "gate", "shop", "storage", "travel"], "โถงมีกระดานแผนที่ กระดานตกแต่ง ร้าน กล่องเก็บไอเทม และประตูโรงเก็บหุ่น");
   assert.match(await page.getByTestId("hud-map").innerText(), /แมพ 1/, "HUD บอกแมพที่อยู่");
-  assert.deepEqual((await snap(page)).store.shop.decor, { easy: STARTER_DECOR }, "โถงของแมพ 1 เริ่มด้วยของตกแต่ง 2 ชิ้น");
+  assert.deepEqual((await snap(page)).store.shop.decor, STARTER_DECOR, "โถงของแมพ 1 เริ่มด้วยของตกแต่ง 2 ชิ้น");
   assert.equal((await snap(page)).avatar.texture, "ch_b_lab", "ตัวละครในฉากเป็นแบบที่เลือกตอนลงทะเบียน");
   assert.equal((await snap(page)).companion.texture, "ch_mentor_south", "พี่บิตเริ่มที่รูปมาตรฐาน");
   await assertCanvasFits(page, "โถงทางเดิน");
@@ -1152,9 +1153,9 @@ async function playRoom1(page) {
   assert.deepEqual(await page.locator('[data-testid^="shop-item-outfit-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-outfit-", "")).sort()), ["astronaut", "commander", "hero", "ninja"], "ชุดของแมพถัดไปยังซื้อไม่ได้");
   assert.match(await page.getByTestId("shop-locked-outfit-ninja").innerText(), /วางขายที่แมพ 2/);
   assert.equal(await page.locator('[data-testid^="shop-item-bit-"]').count(), 4, "ร้านมีคอสตูมของพี่บิต 4 แบบ (รูปมาตรฐานไม่ขาย ของร้านพิเศษไม่แสดงจนกว่าจะซื้อ)");
-  assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 3, "ร้านมีโมดูลอัปเกรดของพี่บิต 3 อย่าง");
+  assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 5, "ร้านมีโมดูลของพี่บิต 5 อย่าง");
   // อุปกรณ์ของการ์เดียน: 3 ช่อง (ของแมพ 1 และของแมพถัดไปที่ยังล็อก ของเริ่มต้นและของร้านพิเศษไม่แสดง) แต่ละชิ้นบอกค่าพลังที่เพิ่ม
-  for (const [slot, count, locked] of [["weapon", 4, ["cannon", "hammer"]], ["armor", 2, ["guard"]], ["chip", 2, ["retry"]]]) {
+  for (const [slot, count, locked] of [["weapon", 4, ["cannon", "hammer"]], ["armor", 3, ["guard", "spike"]], ["chip", 4, ["regen", "retry"]]]) {
     assert.equal(await page.locator(`[data-testid^="shop-item-${slot}-"]`).count(), count, `ร้านมี${slot} ${count} แบบ`);
     assert.deepEqual(await page.locator(`[data-testid^="shop-item-${slot}-"][data-locked="true"]`).evaluateAll((rows, prefix) => rows.map((row) => row.dataset.testid.replace(prefix, "")).sort(), `shop-item-${slot}-`), locked, `${slot} ของแมพถัดไปยังล็อก`);
   }
@@ -1189,7 +1190,7 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: { easy: STARTER_DECOR } });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
@@ -1298,11 +1299,11 @@ async function playRoom(page, room) {
     assert.deepEqual(await shop.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", "")).sort()), ["bit-explorer", "paint-emerald"], "ร้านพิเศษมีเฉพาะของของร้านนี้");
     await shot(page, "13-npc-shop");
     await page.getByTestId("shop-buy-bit-explorer").click();
-    assert.match(await page.getByTestId("shop-owned-bit-explorer").innerText(), /ใช้ที่แท่นปรับแต่งพี่บิตในโรงเก็บหุ่น/);
+    assert.match(await page.getByTestId("shop-owned-bit-explorer").innerText(), /ใช้ที่แท่นชาร์จพี่บิตในโรงเก็บหุ่น/);
     assert.equal((await snap(page)).companion.texture, "ch_mentor_south", "ซื้อแล้วยังไม่เปลี่ยนชุดให้เอง");
     await page.getByTestId("shop-close").click();
     await page.waitForTimeout(350);
-    log("NPC ป้ามาร์ธา (ร้านพิเศษ): ขายเฉพาะของของร้าน ซื้อคอสตูมนักสำรวจแล้วไปเปลี่ยนที่แท่นปรับแต่งพี่บิต");
+    log("NPC ป้ามาร์ธา (ร้านพิเศษ): ขายเฉพาะของของร้าน ซื้อคอสตูมนักสำรวจแล้วไปเปลี่ยนที่แท่นชาร์จพี่บิต");
   }
   if (room === 4) {
     await page.waitForTimeout(300);
@@ -1337,7 +1338,7 @@ async function playRoom(page, room) {
   }
   await goToHangar(page);
   if (room === 3) {
-    // แท่นปรับแต่งพี่บิต: เปลี่ยนคอสตูมที่ซื้อจากร้านพิเศษ
+    // แท่นชาร์จพี่บิต: เปลี่ยนคอสตูมที่ซื้อจากร้านพิเศษ
     await walkTo(page, "bitpad");
     assert.match((await snap(page)).store.prompt, /พี่บิต/);
     await act(page);
@@ -2194,7 +2195,7 @@ async function useAnalyzer(page) {
 const roomIds = async (page) => (await snap(page)).interactables.map((i) => i.id).filter((id) => !/^(npc|pickup)-/.test(id)).sort();
 const npcIds = async (page) => (await snap(page)).interactables.map((i) => i.id).filter((id) => id.startsWith("npc-")).map((id) => id.slice(4)).sort();
 
-// ---------------------------------------------------------------- แมพ 2 และแมพ 3: ข้อมูลบันทึกตั้งต้น (รุ่น 8)
+// ---------------------------------------------------------------- แมพ 2 และแมพ 3: ข้อมูลบันทึกตั้งต้น (รุ่น 9)
 
 const NOW = new Date().toISOString();
 const WON = { won: true, wins: 1, sorties: 1, asked: 6, correct: 6 };
@@ -2205,11 +2206,11 @@ const doneRoom = (topic) => ({ stationsSeen: 0, minigameDone: topic < 6, stars: 
 const doneRooms = (topics) => Object.fromEntries(topics.map((topic) => [topic, doneRoom(topic)]));
 const assessmentOf = (form) => ({ form, correctByTopic: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, items: [], completedAt: NOW });
 const wonAll = (map) => Object.fromEntries(CAMPAIGN[map].battles.map((battle) => [battle.id, WON]));
-const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: { easy: STARTER_DECOR }, ...patch });
+const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, ...patch });
 const MAP1_STORY = ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "ending"];
 /** ผู้เล่นที่ผ่านแมพ 1 ครบแล้ว (ชนะไคจูทุกตัว ทำแบบทดสอบหลังเรียนแล้ว) ยังอยู่ที่แมพ 1 */
 const travelerSave = (patch = {}) => ({
-  version: 8,
+  version: 9,
   updatedAt: NOW,
   profile: { name: "นักเดินทาง", difficulty: "easy", classCode: "", avatar: "a" },
   pretest: assessmentOf("A"),
@@ -2226,6 +2227,27 @@ const creditsOf = async (page) => Number(await page.getByTestId("credits").getAt
 const doorCount = async (page) => (await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length;
 /** สถานะของทุกแมพบนกระดานแผนที่ เช่น { easy: ["here", "true"], normal: ["open", "false"], hard: ["locked", "false"] } */
 const travelStatus = (page) => page.locator('[data-testid="travel"] li').evaluateAll((rows) => Object.fromEntries(rows.map((row) => [row.dataset.testid.replace("travel-", ""), [row.dataset.status, row.dataset.cleared]])));
+
+/** จุดบนจอของช่องในผัง (กระดานตกแต่ง): กลางช่อง หรือเลื่อนไปทางซ้าย dx ช่อง (0 = ขอบซ้ายของช่อง) */
+async function cellPoint(page, col, row, dx = 0.5) {
+  const box = await page.getByTestId("decor-grid").boundingBox();
+  const cell = box.width / 20;
+  return { x: box.x + (col + dx) * cell, y: box.y + (row + 0.5) * cell };
+}
+async function clickCell(page, col, row) {
+  const point = await cellPoint(page, col, row);
+  await page.mouse.click(point.x, point.y);
+}
+/** เลื่อนกรอบเลือกของกระดานตกแต่งด้วยปุ่มลูกศรไปที่ช่อง */
+async function moveCursor(page, col, row) {
+  for (let guard = 0; guard < 40; guard++) {
+    const [c, r] = (await page.getByTestId("decor-grid").getAttribute("data-cursor")).split(",").map(Number);
+    if (c === col && r === row) return;
+    await page.keyboard.press(c < col ? "ArrowRight" : c > col ? "ArrowLeft" : r < row ? "ArrowDown" : "ArrowUp");
+  }
+  throw new Error(`เลื่อนกรอบไปที่ ${col},${row} ไม่ได้`);
+}
+const decorPlaced = async (page) => (await page.getByTestId("decor").getAttribute("data-placed")).split(";").filter(Boolean).sort();
 
 /** เดินไปที่กระดานแผนที่แล้วเปิด */
 async function openTravel(page) {
@@ -2260,7 +2282,7 @@ async function playNormal(page) {
   await page.getByTestId("shop").waitFor();
   assert.deepEqual([await page.getByTestId("shop-item-weapon-hammer").getAttribute("data-locked"), await page.getByTestId("shop-item-weapon-cannon").getAttribute("data-locked")], ["false", "true"], "ชนะไคจูของแมพ 1 ครบ: ของของแมพ 2 วางขาย ของแมพ 3 ยังล็อก");
   assert.match(await page.getByTestId("shop-locked-weapon-cannon").innerText(), /วางขายที่แมพ 3/);
-  assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 22, "ร้านแสดงของตกแต่งโถง 22 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 20 ชิ้น)");
+  assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 22, "ร้านแสดงของตกแต่งห้อง 22 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 20 ชิ้น)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-decor-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-decor-", "")).sort()), ["fountain", "statue"]);
   await page.getByTestId("shop-buy-decor-sofa").click();
   await page.getByTestId("shop-buy-decor-neon").click();
@@ -2268,32 +2290,95 @@ async function playNormal(page) {
   assert.equal(await page.getByTestId("shop-item-decor-sofa").getAttribute("data-owned"), "true");
   await shot(page, "35-shop-decor");
 
-  // --- กระดานตกแต่ง: วางของที่มีในช่องขนาดเดียวกัน ของชิ้นหนึ่งวางได้ช่องเดียวต่อแมพ เอาออกได้
+  // --- กระดานตกแต่ง: ลากวางของตกแต่งบนฉากจริงได้อิสระ ไม่มีช่องที่กำหนด จำกัดจำนวนต่อห้อง ไม่บังจุดใช้งาน
   await page.getByTestId("shop-open-decor").click();
   const decor = page.getByTestId("decor");
   await decor.waitFor();
-  assert.equal(await decor.getAttribute("data-map"), "easy");
-  const slotState = () => page.locator('[data-testid^="decor-slot-"]').evaluateAll((rows) => Object.fromEntries(rows.map((row) => [row.dataset.testid.replace("decor-slot-", ""), `${row.dataset.size}:${row.dataset.decor}`])));
-  assert.deepEqual(await slotState(), { wall1: "wall:window", wall2: "wall:", big1: "big:", big2: "big:", small1: "small:plant", small2: "small:", small3: "small:" }, "โถงมีช่องตกแต่ง 7 ช่อง 3 ขนาด เริ่มด้วยหน้าต่างและกระถางต้นไม้");
-  assert.equal(await page.getByTestId("decor-big1-neon").count(), 0, "ช่องตั้งพื้นวางของติดผนังไม่ได้");
-  await page.getByTestId("decor-big1-sofa").click();
-  assert.match(await page.getByTestId("decor-notice").innerText(), /โซฟา/);
-  await page.getByTestId("decor-big2-sofa").click();
-  await page.getByTestId("decor-wall2-neon").click();
-  await page.getByTestId("decor-wall1-none").click();
-  assert.deepEqual(await slotState(), { wall1: "wall:", wall2: "wall:neon", big1: "big:", big2: "big:sofa", small1: "small:plant", small2: "small:", small3: "small:" }, "ย้ายโซฟาไปช่องใหม่ ช่องเดิมว่าง เอาหน้าต่างออกได้");
+  await page.getByTestId("decor-grid").waitFor();
+  assert.deepEqual([await decor.getAttribute("data-map"), await decor.getAttribute("data-room"), await decor.getAttribute("data-count"), await decor.getAttribute("data-limit")], ["easy", "hall", "2", "8"]);
+  assert.deepEqual(await decorPlaced(page), ["plant@1,5", "window@3,1"], "โถงของแมพ 1 เริ่มด้วยหน้าต่างและกระถางต้นไม้");
+  // แตะของแล้วแตะจุดที่ต้องการ
+  await page.getByTestId("decor-pick-sofa").click();
+  assert.equal(await decor.getAttribute("data-held"), "sofa");
+  await clickCell(page, 12, 5);
+  assert.deepEqual(await decorPlaced(page), ["plant@1,5", "sofa@12,5", "window@3,1"]);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /วางโซฟา.*3\/8/);
+  // ของที่วางแล้วเห็นในฉากทันทีและกันทางเดิน
+  let scene = await snap(page);
+  assert.deepEqual(scene.decor.find((d) => d.prop === "pr_decor_sofa"), { prop: "pr_decor_sofa", col: 12, row: 5, solid: true });
+  assert.ok(scene.map.blocked.includes("12,5") && scene.map.blocked.includes("13,5"));
+  // ของติดผนัง: ทับประตูโรงเก็บหุ่นไม่ได้ วางบนผนังที่ว่างได้
+  await page.getByTestId("decor-pick-neon").click();
+  await clickCell(page, 9, 1);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ของติดผนังต้องวางบนผนังด้านบนตรงที่ว่าง/);
+  assert.equal(await decor.getAttribute("data-held"), "neon", "วางไม่ได้: ยังถือของชิ้นนั้นอยู่");
+  await clickCell(page, 12, 1);
+  assert.ok((await decorPlaced(page)).includes("neon@12,1"));
+  // จุดยืนหน้าประตูวางไม่ได้
+  await page.getByTestId("decor-pick-plant").click();
+  await clickCell(page, 2, 2);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /จุดยืนหน้าประตูหรือจุดใช้งาน/);
+  await page.getByTestId("decor-pick-plant").click();
+  assert.equal(await decor.getAttribute("data-held"), "");
+  // ลากของที่วางอยู่ไปที่ใหม่ (โซฟากว้าง 2 ช่อง: จับตรงกลางแล้วปล่อยกลางช่อง 15–16)
+  const from = await cellPoint(page, 13, 5, 0);
+  const to = await cellPoint(page, 16, 6, 0);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 4 });
+  assert.equal(await decor.getAttribute("data-held"), "sofa", "ลากของที่วางอยู่: ถือชิ้นนั้น");
+  await page.mouse.move(to.x, to.y, { steps: 4 });
+  await page.mouse.up();
+  assert.ok((await decorPlaced(page)).includes("sofa@15,6"), `ลากโซฟาไปวางที่ใหม่: ${await decorPlaced(page)}`);
+  // ลากจากแถบของตกแต่งไปวางบนฉาก
+  const chip = await page.getByTestId("decor-pick-plant").boundingBox();
+  const spot = await cellPoint(page, 6, 4);
+  await page.mouse.move(chip.x + chip.width / 2, chip.y + chip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(spot.x, spot.y, { steps: 6 });
+  await page.mouse.up();
+  assert.ok((await decorPlaced(page)).includes("plant@6,4"), `ลากกระถางจากแถบไปวาง: ${await decorPlaced(page)}`);
   await shot(page, "35-decor-board");
+  // คีย์บอร์ด: เลื่อนกรอบไปที่กระถาง Enter หยิบ เลื่อน 2 ช่อง Enter วาง แล้ว Delete เอาออก
+  await page.getByTestId("decor-grid").focus();
+  await moveCursor(page, 6, 4);
+  await page.keyboard.press("Enter");
+  assert.equal(await decor.getAttribute("data-held"), "plant");
+  await moveCursor(page, 8, 4);
+  await page.keyboard.press("Enter");
+  assert.ok((await decorPlaced(page)).includes("plant@8,4"));
+  await page.keyboard.press("Delete");
+  assert.deepEqual(await decorPlaced(page), ["neon@12,1", "sofa@15,6", "window@3,1"], "Delete เอาของในกรอบออก");
+  assert.match(await page.getByTestId("decor-count").innerText(), /3\/8/);
+  // ย้ายแถบของขึ้นบนได้เมื่อบังจุดที่อยากวาง
+  await page.getByTestId("decor-flip").click();
+  assert.equal(await page.getByTestId("decor-panel").getAttribute("data-top"), "true");
   await page.getByTestId("decor-close").click();
   await page.waitForTimeout(400);
-  assert.deepEqual((await snap(page)).store.shop.decor, { easy: { wall2: "neon", big2: "sofa", small1: "plant" } });
+  assert.deepEqual((await snap(page)).store.shop.decor["easy:hall"], [{ decor: "window", col: 3, row: 1 }, { decor: "neon", col: 12, row: 1 }, { decor: "sofa", col: 15, row: 6 }]);
   await shot(page, "35-hall-decorated");
   await walkTo(page, "decorboard");
-  assert.match((await snap(page)).store.prompt, /กระดานตกแต่งโถง/);
+  assert.match((await snap(page)).store.prompt, /กระดานตกแต่งห้อง/);
   await act(page);
   await decor.waitFor();
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  log("ตกแต่งโถง: ซื้อของตกแต่งที่ร้าน เลือกวางในช่อง 3 ขนาดของโถงได้เอง ของชิ้นหนึ่งวางได้ช่องเดียว เอาออกได้ เปิดได้จากร้านและกระดานตกแต่ง");
+  // โรงเก็บหุ่นตกแต่งได้เหมือนโถง แยกกัน จำกัด 6 ชิ้น
+  await goToHangar(page);
+  await walkTo(page, "decorboard");
+  await act(page);
+  await decor.waitFor();
+  await page.getByTestId("decor-grid").waitFor();
+  assert.deepEqual([await decor.getAttribute("data-room"), await decor.getAttribute("data-count"), await decor.getAttribute("data-limit")], ["hangar", "0", "6"]);
+  await page.getByTestId("decor-pick-sofa").click();
+  await clickCell(page, 15, 6);
+  assert.deepEqual(await decorPlaced(page), ["sofa@15,6"]);
+  await shot(page, "35-hangar-decorated");
+  await page.getByTestId("decor-close").click();
+  await page.waitForTimeout(350);
+  assert.deepEqual((await snap(page)).decor.map((d) => d.prop), ["pr_decor_sofa"]);
+  await backToHall(page);
+  log("ตกแต่งห้อง: ลากวางของตกแต่งบนฉากจริงได้อิสระ (แตะวาง ลากย้าย ลากจากแถบ คีย์บอร์ด) ของติดผนังเกาะผนังที่ว่าง จุดยืนหน้าประตูวางไม่ได้ จำกัด 8 ชิ้นในโถง 6 ชิ้นในโรงเก็บหุ่น ตกแต่งแยกกันทุกห้อง");
 
   // --- กระดานแผนที่: แมพ 2 เปิดแล้ว แมพ 3 ยังล็อก เดินทางไปแมพ 2
   await openTravel(page);
@@ -2797,7 +2882,7 @@ async function playHard(page) {
   await page.getByTestId("shop").waitFor();
   assert.equal(await page.locator('[data-testid^="shop-item-"][data-locked="true"]').count(), 0, "มาถึงแมพ 3: ของทุกชิ้นวางขายแล้ว");
   for (const id of ["weapon-cannon", "outfit-researcher", "supply-reboot", "supply-analyzer", "supply-overcharge", "module-scanner", "module-medic"]) await page.getByTestId(`shop-buy-${id}`).click();
-  assert.equal(await page.getByTestId("shop-buy-module-scanner").count(), 0, "โมดูลซื้อได้ครั้งเดียว ติดตั้งถาวร");
+  assert.equal(await page.getByTestId("shop-buy-module-scanner").count(), 0, "โมดูลซื้อได้ครั้งเดียว");
   assert.equal(await page.getByTestId("shop-buy-supply-reboot").isDisabled(), true, "แกนสำรองถือได้ชิ้นเดียว");
   assert.match(await page.getByTestId("shop-buy-supply-reboot").innerText(), /ถือเต็มแล้ว \(1\)/);
   assert.deepEqual([(await snap(page)).avatar.texture, (await snap(page)).store.shop.weapon], ["ch_a_lab", "fist"], "ร้านขายอย่างเดียว");
@@ -2844,6 +2929,26 @@ async function playHard(page) {
   assert.deepEqual([replayed?.beat, replayed.art.at(-1)], ["ending-normal", "st_map3"], "ดูบทส่งท้ายของแมพ 2 ซ้ำได้ ช่องสุดท้ายพาไปแมพ 3");
   await page.waitForTimeout(300);
   log("เครื่องฉายในโรงเก็บหุ่น: เรื่องราวของทั้ง 3 แมพเรียงตอน ตอนที่ดูแล้วดูซ้ำได้ ตอนที่ยังไม่ถึงล็อก");
+
+  // --- แท่นชาร์จพี่บิต: ติดตั้งโมดูลที่ซื้อไว้ได้ 2 ชิ้น เฉพาะชิ้นที่ติดตั้งมีผลในด่านต่อสู้
+  await walkTo(page, "bitpad");
+  assert.match((await snap(page)).store.prompt, /แท่นชาร์จพี่บิต/);
+  await act(page);
+  const dock = page.getByTestId("bitpad");
+  await dock.waitFor();
+  assert.equal(await dock.getAttribute("data-modules"), "", "ซื้อแล้วยังไม่ติดตั้งให้เอง");
+  assert.deepEqual(await dock.locator('[data-testid^="bitpad-module-"]').evaluateAll((rows) => rows.map((row) => `${row.dataset.testid.replace("bitpad-module-", "")}:${row.dataset.owned}`)), ["scanner:true", "toolkit:false", "laser:false", "decoy:false", "medic:true"]);
+  await page.getByTestId("bitpad-toggle-scanner").click();
+  await page.getByTestId("bitpad-toggle-medic").click();
+  assert.equal(await dock.getAttribute("data-modules"), "scanner,medic");
+  assert.deepEqual(await dock.locator('[data-testid^="bitpad-slot-"]').evaluateAll((slots) => slots.map((slot) => slot.dataset.module)), ["scanner", "medic"]);
+  await page.getByTestId("bitpad-toggle-medic").click();
+  assert.equal(await dock.getAttribute("data-modules"), "scanner", "ถอดโมดูลได้");
+  await page.getByTestId("bitpad-toggle-medic").click();
+  await shot(page, "33-hard-bitdock");
+  await page.getByTestId("bitpad-close").click();
+  await page.waitForTimeout(300);
+  assert.deepEqual((await snap(page)).store.shop.modules, ["scanner", "medic"]);
 
   // --- จุดปรับแต่งก่อนออกรบ: ชุดที่ตู้เสื้อผ้า อาวุธและเกราะที่แท่นการ์เดียน
   await walkTo(page, "wardrobe");

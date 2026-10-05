@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now wearing dark crimson armor plates covered with short steel spikes on its shoulders, chest, forearms and knees, tougher silhouette, same pose, same colors elsewhere, no weapon, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "dee4ce5f-3754-4d81-af26-531c2b97e515",
+  "generatedAt": "2026-10-05T06:30:27.880Z"
+}

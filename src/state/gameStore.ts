@@ -25,8 +25,9 @@ import {
   type SyncStatus,
 } from "./progressStore";
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
-import { creditBalance, type Earning, equip, type EquipKind, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift } from "./shop";
-import type { Avatar, Decor, DecorSize, Supply } from "./shop.config";
+import type { DecorArea, DecorPlacement, PlaceError } from "../game/decor";
+import { creditBalance, type Earning, equip, type EquipKind, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, toggleModule } from "./shop";
+import type { Avatar, BitModule, Decor, Supply } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
@@ -143,7 +144,12 @@ interface GameState {
   /** รับของช่วยเหลือจาก NPC (ครั้งเดียว) */
   claimGift: (id: NpcId) => void;
   /** วางของตกแต่งในช่องของโถงของแมพนี้ (null = เอาออก) */
-  placeDecor: (slot: { id: string; size: DecorSize }, decor: Decor | null) => void;
+  /** วางหรือย้ายของตกแต่งในห้องที่ผู้เล่นอยู่ (โถงหรือโรงเก็บหุ่น) คืนเหตุที่วางไม่ได้ หรือ null ถ้าสำเร็จ */
+  placeDecor: (placement: DecorPlacement) => PlaceError | "owned" | "room" | null;
+  /** เอาของตกแต่งออกจากห้องที่ผู้เล่นอยู่ (null = เอาออกทั้งห้อง) */
+  removeDecor: (decor: Decor | null) => void;
+  /** ติดตั้งหรือถอดโมดูลของพี่บิต (แท่นชาร์จพี่บิต) */
+  toggleModule: (module: BitModule) => void;
   setMusicCue: (cue: MusicCue | null) => void;
   /** ใช้ของหนึ่งชิ้นในด่านต่อสู้ คืน false ถ้าไม่มีของ */
   consumeSupply: (supply: Supply) => boolean;
@@ -308,7 +314,20 @@ export const useGameStore = create<GameState>()((set, get) => {
       set({ shop: receiveGift(get().shop, id) });
       updateNpc(id, () => ({ gifted: true, met: true }));
     },
-    placeDecor: (slot, decor) => set({ shop: placeDecor(get().shop, difficultyOf(get()), slot, decor) }),
+    placeDecor: (placement) => {
+      const state = get();
+      const area = decorAreaOf(state);
+      if (!area) return "room";
+      const result = placeDecor(state.shop, difficultyOf(state), area, placement);
+      if (typeof result === "string") return result;
+      set({ shop: result });
+      return null;
+    },
+    removeDecor: (decor) => {
+      const area = decorAreaOf(get());
+      if (area) set({ shop: removeDecor(get().shop, difficultyOf(get()), area, decor) });
+    },
+    toggleModule: (module) => set({ shop: toggleModule(get().shop, module) }),
     setMusicCue: (musicCue) => {
       const current = get().musicCue;
       if (current?.name !== musicCue?.name || (current?.variant ?? 0) !== (musicCue?.variant ?? 0)) set({ musicCue });
@@ -399,6 +418,9 @@ export const mapUnlocked = (state: Pick<GameState, "profile" | "battles">, map: 
 
 /** แมพไกลสุดที่เปิดแล้ว ใช้ตัดสินว่าของในร้านชิ้นใดวางขายแล้ว */
 export const reachedMap = (state: Pick<GameState, "profile" | "battles">): Difficulty => [...DIFFICULTIES].reverse().find((map) => mapUnlocked(state, map)) ?? "easy";
+
+/** ห้องที่ผู้เล่นอยู่และตกแต่งได้: โถงหรือโรงเก็บหุ่นของแมพที่อยู่ (ห้องเรียนตกแต่งไม่ได้ = null) */
+export const decorAreaOf = (state: Pick<GameState, "screen">): DecorArea | null => (state.screen === "hall" ? "hall" : state.screen === "hangar" ? "hangar" : null);
 
 /** โครงของแมพที่ผู้เล่นอยู่: ห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
 export const planOf = (state: Level): DifficultySpec => campaignOf(state.profile?.difficulty);

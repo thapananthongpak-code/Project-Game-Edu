@@ -1,31 +1,96 @@
 import { playSfx } from "../audio/engine";
-import { ui } from "../content/ui-strings";
+import { fmt, ui } from "../content/ui-strings";
 import { useGameStore } from "../state/gameStore";
-import { BIT_MODULES, BIT_SKINS } from "../state/shop.config";
+import { modulesOf } from "../state/shop";
+import { BIT_MODULES, BIT_SKINS, BIT_SLOTS } from "../state/shop.config";
 import { art } from "./art";
 import { ItemIcon } from "./BagPicker";
 import { useDialog } from "./useDialog";
 
 type ItemId = keyof typeof ui.shop.items;
 
-/** แท่นปรับแต่งพี่บิตในโรงเก็บหุ่น: เปลี่ยนคอสตูม และดูโมดูลอัปเกรดที่ติดตั้งแล้ว (GDD ข้อ 13) */
+/**
+ * แท่นชาร์จพี่บิตในโรงเก็บหุ่น (GDD ข้อ 13): ติดตั้งโมดูลให้พี่บิตได้ BIT_SLOTS ชิ้นจากที่ซื้อไว้ (เหมือนแท่นการ์เดียน) และเปลี่ยนคอสตูม
+ * โมดูลที่ติดตั้งเท่านั้นที่มีผลในด่านต่อสู้ ผู้เล่นจึงต้องเลือกให้เหมาะกับด่าน
+ */
 export function BitPad() {
   const shop = useGameStore((s) => s.shop);
   const equip = useGameStore((s) => s.equip);
+  const toggleModule = useGameStore((s) => s.toggleModule);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const skins = BIT_SKINS.filter((skin) => skin === "classic" || shop.owned.includes(`bit-${skin}`));
+  const installed = modulesOf(shop);
+  const full = installed.length >= BIT_SLOTS;
 
   return (
-    <div className="fixed inset-0 z-30 overflow-y-auto bg-ink/85 p-2 sm:p-4" data-testid="bitpad">
+    <div className="fixed inset-0 z-30 overflow-y-auto bg-ink/85 p-2 sm:p-4" data-testid="bitpad" data-modules={installed.join(",")}>
       <div ref={dialog} role="dialog" aria-modal="true" aria-label={ui.bitPad.title} tabIndex={-1} className="panel mx-auto flex max-w-2xl flex-col gap-3 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-extrabold text-teal-dark">🛠 {ui.bitPad.title}</h2>
+          <h2 className="text-lg font-extrabold text-teal-dark">🔌 {ui.bitPad.title}</h2>
           <button type="button" className="btn btn-ghost !min-h-9 text-sm" data-testid="bitpad-close" onClick={closeOverlay}>
             {ui.bitPad.close}
           </button>
         </div>
-        <p className="text-sm text-slate">{ui.bitPad.intro}</p>
+        <p className="text-sm text-slate">{fmt(ui.bitPad.intro, { n: BIT_SLOTS })}</p>
+
+        {/* พี่บิตบนแท่นชาร์จ พร้อมช่องโมดูลที่ติดตั้งอยู่ */}
+        <div className="flex items-center gap-3 rounded-lg border-[3px] border-ink bg-teal-light p-2" data-testid="bitpad-slots">
+          <img src={art.bit(shop.bit)} alt="" className="pixelated h-20 w-20 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 text-sm font-extrabold">{fmt(ui.bitPad.slots, { n: installed.length, total: BIT_SLOTS })}</div>
+            <div className="flex gap-2">
+              {Array.from({ length: BIT_SLOTS }, (_, i) => {
+                const module = installed[i];
+                return module ? (
+                  <span key={i} className="flex min-h-12 flex-1 items-center gap-1 rounded-lg border-[3px] border-ink bg-hint px-2 text-sm font-bold" data-testid={`bitpad-slot-${i}`} data-module={module}>
+                    <ItemIcon value={`module-${module}`} className="h-8 w-8 shrink-0" />
+                    {ui.shop.items[`module-${module}` as ItemId].name}
+                  </span>
+                ) : (
+                  <span key={i} className="flex min-h-12 flex-1 items-center justify-center rounded-lg border-[3px] border-dashed border-slate text-sm font-bold text-slate" data-testid={`bitpad-slot-${i}`} data-module="">
+                    {ui.bitPad.emptySlot}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <section>
+          <h3 className="mb-1 text-xs font-bold text-slate">{ui.bitPad.modules}</h3>
+          <ul className="flex flex-col gap-1">
+            {BIT_MODULES.map((module) => {
+              const owned = shop.owned.includes(`module-${module}`);
+              const on = installed.includes(module);
+              const strings = ui.shop.items[`module-${module}` as ItemId];
+              return (
+                <li key={module} className={`flex items-center gap-2 rounded-md border-2 border-ink px-2 py-1 ${on ? "bg-hint" : owned ? "bg-paper" : "border-dashed bg-cream"}`} data-testid={`bitpad-module-${module}`} data-owned={owned} data-installed={on}>
+                  <ItemIcon value={`module-${module}`} className={`h-8 w-8 shrink-0 ${owned ? "" : "opacity-50 grayscale"}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-extrabold">{strings.name}</span>
+                    <span className="block text-xs text-slate">{strings.detail}</span>
+                  </span>
+                  {owned ? (
+                    <button
+                      type="button"
+                      className={`btn !min-h-9 shrink-0 !px-2 text-xs ${on ? "btn-ghost" : ""}`}
+                      aria-pressed={on}
+                      disabled={!on && full}
+                      data-testid={`bitpad-toggle-${module}`}
+                      onClick={() => (playSfx("equip"), toggleModule(module))}
+                    >
+                      {on ? ui.bitPad.uninstall : full ? ui.bitPad.full : ui.bitPad.install}
+                    </button>
+                  ) : (
+                    <span className="shrink-0 rounded border-2 border-ink bg-cream px-2 text-xs font-bold">{ui.bitPad.missing}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate">{ui.bitPad.skins}</h3>
           <div role="radiogroup" aria-label={ui.bitPad.skins} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -47,25 +112,6 @@ export function BitPad() {
               );
             })}
           </div>
-        </section>
-        <section>
-          <h3 className="mb-1 text-xs font-bold text-slate">{ui.bitPad.modules}</h3>
-          <ul className="flex flex-col gap-1">
-            {BIT_MODULES.map((module) => {
-              const owned = shop.owned.includes(`module-${module}`);
-              const strings = ui.shop.items[`module-${module}` as ItemId];
-              return (
-                <li key={module} className={`flex items-center gap-2 rounded-md border-2 border-ink px-2 py-1 ${owned ? "bg-teal-light" : "bg-paper"}`} data-testid={`bitpad-module-${module}`} data-owned={owned}>
-                  <ItemIcon value={`module-${module}`} className={`h-8 w-8 ${owned ? "" : "opacity-50 grayscale"}`} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-extrabold">{strings.name}</span>
-                    <span className="block text-xs text-slate">{strings.detail}</span>
-                  </span>
-                  <span className="shrink-0 rounded border-2 border-ink bg-cream px-2 text-xs font-bold">{owned ? ui.bitPad.installed : ui.bitPad.missing}</span>
-                </li>
-              );
-            })}
-          </ul>
         </section>
       </div>
     </div>

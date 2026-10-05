@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot, completely unchanged, with a repair pack mounted on its back: two folded white robotic repair arms with blue glowing tips rising above both shoulders behind the head and a blue glowing coolant canister between them, keep the robot's pose, colors, size and position exactly the same",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "1147e3d5-3850-429f-8ec5-b462db3b982c",
+  "generatedAt": "2026-10-05T06:31:05.534Z"
+}

@@ -29,11 +29,14 @@ export const BIT_SKINS = ["classic", "ninja", "knight", "wizard", "gold", "explo
 export type BitSkin = (typeof BIT_SKINS)[number];
 
 /**
- * โมดูลอัปเกรดของพี่บิต ซื้อแล้วมีผลถาวรในด่านต่อสู้ (ตัวเลขใน battle.config.ts)
- * laser = พี่บิตยิงเสริมแรงขึ้น, medic = ทุกครั้งที่ยิงเสริม การ์เดียนฟื้นพลัง, scanner = ขอข้อมูลจากพี่บิตได้เพิ่ม
+ * โมดูลของพี่บิต ซื้อแล้วติดตั้งที่แท่นชาร์จพี่บิตได้ BIT_SLOTS ชิ้น โมดูลที่ติดตั้งมีผลในด่านต่อสู้ (ตัวเลขใน battle.config.ts)
+ * scanner = ขอข้อมูลจากพี่บิตได้เพิ่ม, toolkit = ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม, laser = พี่บิตยิงเสริมแรงขึ้น,
+ * decoy = ตัวล่อรับการโจมตีครั้งแรกแทน, medic = ทุกครั้งที่ยิงเสริม การ์เดียนฟื้นพลัง
  */
-export const BIT_MODULES = ["laser", "medic", "scanner"] as const;
+export const BIT_MODULES = ["scanner", "toolkit", "laser", "decoy", "medic"] as const;
 export type BitModule = (typeof BIT_MODULES)[number];
+/** จำนวนโมดูลที่ติดตั้งให้พี่บิตได้พร้อมกัน (ติดตั้งที่แท่นชาร์จพี่บิตในโรงเก็บหุ่น ShopState.modules) */
+export const BIT_SLOTS = 2;
 
 /**
  * ของใช้ในด่านต่อสู้ ใช้แล้วหมดไป
@@ -44,7 +47,7 @@ export const SUPPLIES = ["repair-kit", "shield", "overcharge", "analyzer", "rebo
 export type Supply = (typeof SUPPLIES)[number];
 
 /**
- * ของตกแต่งโถง (GDD ข้อ 19): ซื้อแล้วเลือกวางในช่องตกแต่งของโถงแต่ละแมพได้ ไม่มีผลต่อการเล่น
+ * ของตกแต่งห้อง (GDD ข้อ 19): ซื้อแล้วลากวางเองในโถงและโรงเก็บหุ่นของแต่ละแมพได้ ไม่มีผลต่อการเล่น
  * size = ขนาดของช่องที่วางได้: wall = ติดผนัง (64×32), big = ตั้งพื้นชิ้นใหญ่ (64×64), small = ตั้งพื้นชิ้นเล็ก (32×64) prop = คีย์ภาพใน manifest
  */
 export const DECOR = {
@@ -115,10 +118,13 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "weapon-lance", kind: "weapon", value: "lance", price: 200, tier: "normal", vendor: "smith" },
   { id: "weapon-cannon", kind: "weapon", value: "cannon", price: 240, tier: "hard" },
   { id: "armor-heavy", kind: "armor", value: "heavy", price: 100 },
+  { id: "armor-spike", kind: "armor", value: "spike", price: 160, tier: "normal" },
   { id: "armor-guard", kind: "armor", value: "guard", price: 140, tier: "normal" },
   { id: "armor-titan", kind: "armor", value: "titan", price: 260, tier: "hard", vendor: "keeper" },
   { id: "chip-charger", kind: "chip", value: "charger", price: 80 },
+  { id: "chip-focus", kind: "chip", value: "focus", price: 110 },
   { id: "chip-retry", kind: "chip", value: "retry", price: 140, tier: "normal" },
+  { id: "chip-regen", kind: "chip", value: "regen", price: 180, tier: "hard" },
   { id: "paint-crimson", kind: "paint", value: "crimson", price: 60 },
   { id: "paint-violet", kind: "paint", value: "violet", price: 60 },
   { id: "paint-gold", kind: "paint", value: "gold", price: 90 },
@@ -131,7 +137,9 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "bit-explorer", kind: "bit", value: "explorer", price: 100, vendor: "archivist" },
   { id: "bit-star", kind: "bit", value: "star", price: 100, vendor: "vendor" },
   { id: "module-scanner", kind: "module", value: "scanner", price: 120 },
+  { id: "module-toolkit", kind: "module", value: "toolkit", price: 100 },
   { id: "module-laser", kind: "module", value: "laser", price: 150 },
+  { id: "module-decoy", kind: "module", value: "decoy", price: 160, tier: "normal" },
   { id: "module-medic", kind: "module", value: "medic", price: 180, tier: "normal" },
   { id: "decor-screens", kind: "decor", value: "screens", price: 30 },
   { id: "decor-lamp", kind: "decor", value: "lamp", price: 30 },

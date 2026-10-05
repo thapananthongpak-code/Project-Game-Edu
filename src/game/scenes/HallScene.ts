@@ -1,23 +1,19 @@
-import type * as Phaser from "phaser";
 import { topicOf } from "../../content";
 import { foeName } from "../../content/story";
 import { fmt, ui } from "../../content/ui-strings";
 import { DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex } from "../../state/campaign";
 import { allBattlesWon, difficultyOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore } from "../../state/gameStore";
-import { DECOR } from "../../state/shop.config";
 import { SCENE } from "../constants";
-import { hallMapOf, type MapObject, objectBaseY, objectX, slotsOf } from "../maps";
+import { hallMapOf, type MapObject, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
 /**
  * โถงของแมพที่ผู้เล่นอยู่ (GDD ข้อ 3 และ 15): ประตูห้องตามจำนวนห้องของแมพ เปิดเฉพาะห้องที่ปลดล็อกแล้ว ประตูโรงเก็บหุ่น ร้านสหกรณ์แล็บ
- * กล่องเก็บไอเทม กระดานแผนที่การเดินทาง กระดานตกแต่ง และของตกแต่งที่ผู้เล่นเลือกวางในช่องตกแต่ง (GDD ข้อ 19)
+ * กล่องเก็บไอเทม กระดานแผนที่การเดินทาง กระดานตกแต่ง และของตกแต่งที่ผู้เล่นลากวางเองได้อิสระ (GDD ข้อ 19)
  */
 export class HallScene extends WorldScene {
   private from: { room?: number; hangar?: boolean; travel?: boolean } = {};
   private doors: MapObject[] = [];
-  private slots: { object: MapObject; image: Phaser.GameObjects.Image }[] = [];
-  private decorKey = "";
   /** แมพและห้อง ณ ตอนสร้างฉาก (ฉากนี้เป็นฉากหลังของเมนูและหน้าลงทะเบียนด้วย แมพอาจเปลี่ยนก่อนฉากถูกสร้างใหม่) */
   private world: Difficulty = "easy";
   private zones: DifficultySpec["zones"] = [];
@@ -28,7 +24,6 @@ export class HallScene extends WorldScene {
 
   init(data: { fromRoom?: number; fromHangar?: boolean; fromTravel?: boolean }): void {
     this.from = { room: data.fromRoom, hangar: data.fromHangar, travel: data.fromTravel };
-    this.decorKey = "";
   }
 
   create(): void {
@@ -39,7 +34,6 @@ export class HallScene extends WorldScene {
     const hall = hallMapOf(this.world);
     this.buildMap(hall);
     this.doors = this.objectsOf("door");
-    this.slots = slotsOf(hall).map((object) => ({ object, image: this.placed.get(object) as Phaser.GameObjects.Image }));
 
     for (const door of this.doors) {
       const zone = door.index as number;
@@ -89,18 +83,8 @@ export class HallScene extends WorldScene {
     const cleared = (zone: number) => this.zones[zone - 1].topics.every((topic) => roomProgress(state, topic).core);
     for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");
 
-    // ของตกแต่ง: ช่องที่มีของแสดงภาพของชิ้นนั้น ช่องว่างไม่แสดงอะไร
-    const placed = state.shop.decor[this.world] ?? {};
-    const decorKey = JSON.stringify(placed);
-    if (decorKey !== this.decorKey) {
-      this.decorKey = decorKey;
-      for (const { object, image } of this.slots) {
-        const decor = placed[object.slot?.id ?? ""];
-        image.setVisible(Boolean(decor));
-        if (decor) image.setTexture(DECOR[decor].prop);
-        this.setSlotSolid(object, Boolean(decor));
-      }
-    }
+    // ของตกแต่งที่ผู้เล่นวางเองในโถงของแมพนี้
+    this.syncDecor(this.world, "hall");
 
     const battle = pendingBattle(state);
     const nextZone = this.doors.map((door) => door.index as number).find((zone) => !cleared(zone));

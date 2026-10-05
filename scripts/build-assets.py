@@ -540,10 +540,10 @@ STORY_WINS = {
 EXTRA_FOES = [("BT-09", "bt_kaiju_7", "#F6C343"), ("BT-10", "bt_kaiju_8", "#8B9BB4"), ("BT-11", "bt_kaiju_9", "#F6C343"), ("BT-12", "bt_boss_4", "#FFF4DC"),
               ("BT-13", "bt_kaiju_10", "#F08C2E"), ("BT-14", "bt_kaiju_11", "#B13E53")]
 # หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธ (แก้จาก BT-00 ด้วย edit_image_pro_flash): GD-01..24 = เกราะ × อาวุธ ตามลำดับนี้
-GUARDIAN_ARMORS = ["plate", "heavy", "guard", "titan"]
+GUARDIAN_ARMORS = ["plate", "heavy", "guard", "titan", "spike"]
 GUARDIAN_WEAPONS = ["fist", "sword", "blaster", "hammer", "lance", "cannon"]
 # อุปกรณ์ของชิปที่ติดหลังหุ่น: ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ ตอน build ดึงเฉพาะส่วนอุปกรณ์ออกมาเป็นชั้นภาพหลังตัวหุ่น
-GUARDIAN_CHIPS = [("GC-01", "gd_chip_charger"), ("GC-02", "gd_chip_retry")]
+GUARDIAN_CHIPS = [("GC-01", "gd_chip_charger"), ("GC-02", "gd_chip_retry"), ("GC-03", "gd_chip_focus"), ("GC-04", "gd_chip_regen")]
 GUARDIAN_VARIANTS = [(f"GD-{a * 6 + w + 1:02d}", f"gd_{armor}_{weapon}") for a, armor in enumerate(GUARDIAN_ARMORS) for w, weapon in enumerate(GUARDIAN_WEAPONS)]
 # ฉากหลังของเรื่องราว NPC (ฉากเปล่า ตอน build วางตัวละครของเกมลงไป)
 SCENE_BACKDROPS = [("SC-01", "bg_scene_lab"), ("SC-02", "bg_scene_hangar"), ("SC-03", "bg_scene_gym"), ("SC-04", "bg_scene_archive"), ("SC-05", "bg_scene_factory"), ("SC-06", "bg_scene_market"),
@@ -567,7 +567,8 @@ NPC_PANELS = {
 EXTRA_BACKDROPS = [("BG-07", 7), ("BG-08", 8), ("BG-09", 9), ("BG-10", 10)]
 # ไอคอนของใช้และโมดูลของพี่บิต (แสดงใน HTML แทนอีโมจิ): (รหัส, ไฟล์)
 ITEM_ICONS = [("IT-01", "it_repair_kit"), ("IT-02", "it_shield"), ("IT-03", "it_overcharge"), ("IT-04", "it_analyzer"), ("IT-05", "it_reboot"),
-              ("IT-06", "it_module_scanner"), ("IT-07", "it_module_laser"), ("IT-08", "it_module_medic"), ("IT-09", "it_credit")]
+              ("IT-06", "it_module_scanner"), ("IT-07", "it_module_laser"), ("IT-08", "it_module_medic"), ("IT-09", "it_credit"),
+              ("IT-10", "it_module_toolkit"), ("IT-11", "it_module_decoy")]
 KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
 # วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
 ROOM_PROPS = [
@@ -598,7 +599,8 @@ BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX
              ("FX-17", "fx_hammer", "east"), ("FX-18", "fx_lance", "east"), ("FX-19", "fx_zap", "west"), ("FX-20", "fx_shell", "west"), ("FX-21", "fx_sting", "west"), ("FX-22", "fx_halo", "west")]
 # ไอคอนอุปกรณ์ของการ์เดียน (ร้าน กล่องเก็บไอเทม ด่านต่อสู้): (รหัส, ไฟล์)
 GEAR_ICONS = [("GR-01", "gr_fist"), ("GR-02", "gr_sword"), ("GR-03", "gr_blaster"), ("GR-04", "gr_armor_plate"), ("GR-05", "gr_armor_heavy"), ("GR-06", "gr_armor_guard"),
-              ("GR-07", "gr_chip_retry"), ("GR-08", "gr_chip_charger"), ("GR-09", "gr_hammer"), ("GR-10", "gr_lance"), ("GR-11", "gr_cannon"), ("GR-12", "gr_armor_titan")]
+              ("GR-07", "gr_chip_retry"), ("GR-08", "gr_chip_charger"), ("GR-09", "gr_hammer"), ("GR-10", "gr_lance"), ("GR-11", "gr_cannon"), ("GR-12", "gr_armor_titan"),
+              ("GR-13", "gr_armor_spike"), ("GR-14", "gr_chip_focus"), ("GR-15", "gr_chip_regen")]
 GEAR_SETTINGS = {"no_background": True, "outline": "single color black outline", "shading": "basic shading", "detail": "medium detail"}
 # ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
 DECOR_PROPS = [
@@ -787,7 +789,7 @@ def main():
         prop("PR-G04", "pr_hologram", (32, 64), lambda: draw_block(32, 64, SCREEN, TEAL)),
         prop("PR-G05", "pr_guardian_bay", (96, 64), lambda: draw_block(96, 64, STEEL, YELLOW)),
         prop("PR-G06", "pr_core_case", (64, 64), lambda: draw_block(64, 64, MIST, TEAL)),
-        prop("PR-G07", "pr_bit_pad", (64, 32), lambda: draw_block(64, 32, SCREEN, TEAL)),
+        prop("PR-G08", "pr_bit_dock", (64, 64), lambda: draw_block(64, 64, SCREEN, TEAL)),
         *[{**image(asset_id, base, (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "guardian", {}, "guardian"),
            "pixellab": {"tool": "edit_image_pro_flash", "arguments": {"description": prompts[base]}, "fetchTool": "get_image"}} for asset_id, base in GUARDIAN_VARIANTS],
         *[{**image(asset_id, base, (128, 128), lambda: Image.new("RGBA", (128, 128), (0, 0, 0, 0)), "guardianchip", {}, "guardian"),

@@ -1,10 +1,13 @@
 import * as Phaser from "phaser";
 import { fmt, ui } from "../../content/ui-strings";
+import type { Difficulty } from "../../state/campaign";
 import { quizUnlocked, useGameStore, type WorldLabel } from "../../state/gameStore";
+import { decorIn } from "../../state/shop";
 import { type NpcId, type NpcRecord, NPCS, questReady } from "../../state/npcs";
 import { touchInput } from "../../state/input";
 import { type CharacterSheet, sheetKey, wangKey } from "./BootScene";
 import { BASE_WIDTH, type Direction, MAP_COLS, MAP_ROWS, MAP_TOP, mentorTexture, playerTexture, TILE } from "../constants";
+import { type DecorArea, decorObject } from "../decor";
 import { blockedCells, cellSpot, type GameMap, interactSpot, isFloorCell, type MapObject, objectBaseY, objectX } from "../maps";
 
 const PLAYER_SPEED = 120;
@@ -52,8 +55,9 @@ export abstract class WorldScene extends Phaser.Scene {
   /** ของในเควสเสริม: เห็นและเก็บได้เฉพาะตอนที่รับเควสแล้วและยังไม่ได้เก็บชิ้นนั้น */
   private pickups: { image: Phaser.GameObjects.Image; visible: () => boolean }[] = [];
   private npcs: NpcId[] = [];
-  /** กล่องชนของช่องตกแต่งตั้งพื้น: กันทางเดินเฉพาะตอนมีของวางอยู่ (HallScene เปิดปิดผ่าน setSlotSolid) */
-  private slotBodies = new Map<MapObject, Phaser.GameObjects.Zone>();
+  /** ของตกแต่งที่ผู้เล่นวางเองในห้องนี้ (โถงและโรงเก็บหุ่น): วัตถุ ภาพ และตัวกันชน สร้างใหม่เมื่อผู้เล่นจัดห้อง (syncDecor) */
+  private decor: { object: MapObject; image: Phaser.GameObjects.Image; zone: Phaser.GameObjects.Zone | null }[] = [];
+  private decorKey: string | null = null;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private facing: Direction = "south";
   private actionReadyAt = 0;
@@ -72,7 +76,7 @@ export abstract class WorldScene extends Phaser.Scene {
 
   /** ผังและช่องที่วัตถุกันทางเดิน (สำหรับการทดสอบอัตโนมัติ) */
   get mapInfo(): { shape: string[]; blocked: string[] } {
-    return { shape: this.map.shape, blocked: this.map.objects.flatMap(blockedCells).map((cell) => `${cell.col},${cell.row}`) };
+    return { shape: this.map.shape, blocked: [...this.map.objects, ...this.decor.map((item) => item.object)].flatMap(blockedCells).map((cell) => `${cell.col},${cell.row}`) };
   }
 
   /** วาดพื้น ผนัง และวัตถุทั้งหมดของแผนที่ พร้อมตัวกันชน */
@@ -81,7 +85,8 @@ export abstract class WorldScene extends Phaser.Scene {
     this.placed = new Map();
     this.pickups = [];
     this.npcs = [];
-    this.slotBodies = new Map();
+    this.decor = [];
+    this.decorKey = null;
     this.markerTarget = "";
     const isFloor = (col: number, row: number) => isFloorCell(map, col, row);
     const wang = this.registry.get(wangKey(map.tileset)) as Record<string, number> | undefined;
@@ -133,10 +138,32 @@ export abstract class WorldScene extends Phaser.Scene {
     return Number.isFinite(left) ? { left, right } : null;
   }
 
-  /** ช่องตกแต่งตั้งพื้น: กันทางเดินเมื่อมีของวาง ช่องว่างเดินผ่านได้ */
-  protected setSlotSolid(object: MapObject, solid: boolean): void {
-    const zone = this.slotBodies.get(object);
-    if (zone?.body) (zone.body as Phaser.Physics.Arcade.StaticBody).enable = solid;
+  /**
+   * แสดงของตกแต่งที่ผู้เล่นวางเองในห้องนี้ตามที่บันทึกไว้ (เรียกทุกเฟรม สร้างใหม่เฉพาะเมื่อการจัดวางเปลี่ยน)
+   * ของตั้งพื้นกันทางเดินเหมือนวัตถุอื่น ถ้าผู้เล่นยืนอยู่ตรงที่ของถูกวางลงมา ย้ายผู้เล่นไปจุดเริ่มของห้อง
+   */
+  protected syncDecor(world: Difficulty, area: DecorArea): void {
+    const placements = decorIn(useGameStore.getState().shop, world, area);
+    const key = JSON.stringify(placements);
+    if (key === this.decorKey) return;
+    this.decorKey = key;
+    for (const item of this.decor) {
+      item.image.destroy();
+      item.zone?.destroy();
+    }
+    this.decor = placements.map(decorObject).map((object) => ({ object, ...this.placeObject(object) }));
+    if (!this.player) return;
+    const col = Math.floor(this.player.x / TILE);
+    const row = Math.floor((this.player.y - MAP_TOP) / TILE);
+    if (this.decor.some((item) => blockedCells(item.object).some((cell) => cell.col === col && cell.row === row))) {
+      const spot = cellSpot(this.map.spawn.col, this.map.spawn.row);
+      this.player.setPosition(spot.x, spot.y);
+    }
+  }
+
+  /** ของตกแต่งที่แสดงอยู่ (สำหรับการทดสอบอัตโนมัติ) */
+  get decorInfo(): { prop: string; col: number; row: number; solid: boolean }[] {
+    return this.decor.map(({ object, zone }) => ({ prop: object.prop, col: object.col, row: object.row, solid: zone !== null }));
   }
 
   /**
@@ -165,33 +192,22 @@ export abstract class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** วางวัตถุโดยให้ฐานอยู่ตามผัง วัตถุตั้งพื้นกันชนเฉพาะส่วนฐาน */
-  private placeObject(object: MapObject): void {
+  /** วางวัตถุโดยให้ฐานอยู่ตามผัง วัตถุตั้งพื้นกันชนเฉพาะส่วนฐาน คืนภาพและตัวกันชน (ไม่มี = วัตถุที่ไม่กันทางเดิน) */
+  private placeObject(object: MapObject): { image: Phaser.GameObjects.Image; zone: Phaser.GameObjects.Zone | null } {
     const x = objectX(object);
     const baseY = objectBaseY(object);
     // ของที่วางราบกับพื้นอยู่ใต้ตัวละครเสมอ
     const image = this.add.image(x, baseY, object.prop).setOrigin(0.5, 1).setDepth(object.flat ? 1 : baseY);
     this.placed.set(object, image);
-    // ช่องตกแต่งของโถง: ซ่อนไว้จนกว่าฉากจะรู้ว่าผู้เล่นวางอะไร (HallScene) และกันทางเดินเฉพาะตอนมีของวาง
-    if (object.kind === "slot") {
-      image.setVisible(false);
-      if (!object.mount) {
-        const zone = this.addObstacle(x, baseY - 6, Math.max(20, (object.w ?? 1) * TILE - 12), 12);
-        this.slotBodies.set(object, zone);
-        this.setSlotSolid(object, false);
-      }
-      return;
-    }
-    if (object.mount || object.flat) return;
+    if (object.mount || object.flat) return { image, zone: null };
     // กล่องชนอยู่ใต้ส่วนฐานที่มองเห็น ไม่กว้างเกินช่องของวัตถุ
     const maxWidth = (object.w ?? 1) * TILE;
     const base = this.visibleBase(object.prop, image.width, image.height);
     const left = x - image.width / 2 + (base?.left ?? 0);
     const right = x - image.width / 2 + (base?.right ?? image.width - 1) + 1;
     const width = Math.max(14, Math.min(maxWidth, right - left) - 4);
-    this.addObstacle((left + right) / 2, baseY - 6, width, 12);
+    return { image, zone: this.addObstacle((left + right) / 2, baseY - 6, width, 12) };
   }
-
 
   /** NPC และของในเควสเสริมของแผนที่นี้ (ห้องเรียนและโรงเก็บหุ่นของแมพ 3) GDD ข้อ 16 */
   protected addNpcs(): void {
