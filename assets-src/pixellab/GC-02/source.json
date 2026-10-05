@@ -1,0 +1,13 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot, completely unchanged, with a sensor backpack mounted on its back: a green glowing radar dish on a short dark mast rising above its left shoulder and a thin antenna with a green light above its right shoulder, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-00/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "54ac8227-b206-4345-a004-81909b1ed657",
+  "generatedAt": "2026-10-05T05:10:00.000Z",
+  "note": "ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ติดหลัง ตอน build ดึงเฉพาะส่วนอุปกรณ์ที่อยู่นอกเงาของหุ่นเดิม (BT-00) ออกมาเป็นชั้นภาพที่วาดหลังตัวหุ่น (chip_layer) จึงใช้ได้กับทุกเกราะและอาวุธ"
+}

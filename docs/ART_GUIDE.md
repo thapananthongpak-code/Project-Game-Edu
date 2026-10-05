@@ -617,6 +617,10 @@ retro pixel art comic panel illustration, cinematic composition, chunky readable
 | GD-22 | `gd_titan_hammer` | การ์เดียน: เกราะไททัน + ค้อนพลังงาน | 128×128 | แก้จาก gd_titan_fist ด้วย edit_image_pro_flash แบบภาพอ้างอิง (อาวุธจาก gd_plate_hammer): the same robot now firmly gripping a large glowing cyan energy sledgehammer in its front fist on the right side of the image, the hammer handle passes through the closed fingers and the hammer head rests over the shoulder, everything else on the robot unchanged Keep this robot's armor exactly as it is. |
 | GD-23 | `gd_titan_lance` | การ์เดียน: เกราะไททัน + หอกสายฟ้า | 128×128 | แก้จาก gd_titan_fist ด้วย edit_image_pro_flash แบบภาพอ้างอิง (อาวุธจาก gd_plate_lance): the same robot now firmly gripping a long golden lightning lance spear in its front fist on the right side of the image, the shaft passes through the closed fingers, the spear tip points forward and up to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is. |
 | GD-24 | `gd_titan_cannon` | การ์เดียน: เกราะไททัน + ปืนใหญ่พลาสม่า | 128×128 | แก้จาก gd_titan_fist ด้วย edit_image_pro_flash แบบภาพอ้างอิง (อาวุธจาก gd_plate_cannon): the same robot now holding a big white plasma cannon with a glowing magenta muzzle in both hands at its hip on the right side of the image, aimed forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is. |
+| GC-01 | `gd_chip_charger` | อุปกรณ์ของชิปเร่งพลัง (ชุดบูสเตอร์ติดหลัง) | 128×128 | แก้จาก BT-00 ด้วย edit_image_pro_flash: the same robot, completely unchanged, with a booster power pack mounted on its back: two thick orange glowing energy cylinders with brass caps rising above both shoulders behind the head, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same |
+| GC-02 | `gd_chip_retry` | อุปกรณ์ของชิปคิดทบทวน (ชุดเซนเซอร์ติดหลัง) | 128×128 | แก้จาก BT-00 ด้วย edit_image_pro_flash: the same robot, completely unchanged, with a sensor backpack mounted on its back: a green glowing radar dish on a short dark mast rising above its left shoulder and a thin antenna with a green light above its right shoulder, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same |
+
+**อุปกรณ์ของชิป (GC-01, GC-02)** ชิปที่ติดตั้งแสดงเป็นอุปกรณ์ติดหลังหุ่น ไม่ใช่วงกลมเรืองแสงแปะบนอก: แก้ภาพหุ่นตัวเดิมให้มีอุปกรณ์ติดหลัง แล้ว `scripts/build-assets.py` (`chip_layer`) ดึงเฉพาะส่วนที่อยู่นอกเงาของหุ่นเดิมออกมาเป็นชั้นภาพ 128×128 บนผืนเดียวกับภาพ GD-* เกมวาดชั้นนี้หลังตัวหุ่น ตัวหุ่นจึงบังอุปกรณ์เองและใช้ได้กับทุกเกราะทุกอาวุธ
 
 **ไคจูของแมพ 3 วัตถุของโรงเก็บหุ่น และไทล์เซตโรงเก็บหุ่นของแมพ 2 และ 3**
 
@@ -654,7 +658,7 @@ retro pixel art comic panel illustration, cinematic composition, chunky readable
 |---|---|
 | ตัวละคร (ผู้เล่น 2 แบบ × 9 ชุด, พี่บิตทิศเดียวและคอสตูม 6 แบบ, NPC 12 คน) | 37 |
 | ฉากต่อสู้ (หุ่น ไคจู 11 ตัว ร่างที่ 2–4 ของบอส ฉากหลัง 10 ฉาก เอฟเฟกต์การโจมตี 22 ชิ้น) | 47 |
-| หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธ (GD-01..24) | 24 |
+| หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธ (GD-01..24) และอุปกรณ์ของชิป (GC-01, GC-02) | 26 |
 | ฉากหลังของเรื่องราว NPC (SC-01..11) | 11 |
 | ไอคอนอุปกรณ์ของการ์เดียน | 12 |
 | ไอคอนของใช้ โมดูลของพี่บิต และเครดิต (IT-01..09) | 9 |
@@ -668,7 +672,7 @@ retro pixel art comic panel illustration, cinematic composition, chunky readable
 | แกน AI | 8 |
 | กรอบ UI | 8 |
 | ไอคอน UI | 29 |
-| **รวม** | **294** |
+| **รวม** | **296** |
 
 ---
 

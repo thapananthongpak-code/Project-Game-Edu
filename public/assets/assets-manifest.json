@@ -5591,6 +5591,60 @@
       "status": "generated"
     },
     {
+      "id": "GC-01",
+      "kind": "guardianchip",
+      "name": "อุปกรณ์ของชิปเร่งพลัง (ชุดบูสเตอร์ติดหลัง)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_chip_charger": "guardian/gd_chip_charger.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot, completely unchanged, with a booster power pack mounted on its back: two thick orange glowing energy cylinders with brass caps rising above both shoulders behind the head, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "89d865a7-b695-456f-b8cf-5a943efb9ce1",
+        "generatedAt": "2026-10-05T05:10:00.000Z"
+      },
+      "status": "generated",
+      "note": "ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ติดหลัง ตอน build ดึงเฉพาะส่วนอุปกรณ์ที่อยู่นอกเงาของหุ่นเดิม (BT-00) ออกมาเป็นชั้นภาพที่วาดหลังตัวหุ่น (chip_layer) จึงใช้ได้กับทุกเกราะและอาวุธ"
+    },
+    {
+      "id": "GC-02",
+      "kind": "guardianchip",
+      "name": "อุปกรณ์ของชิปคิดทบทวน (ชุดเซนเซอร์ติดหลัง)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_chip_retry": "guardian/gd_chip_retry.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot, completely unchanged, with a sensor backpack mounted on its back: a green glowing radar dish on a short dark mast rising above its left shoulder and a thin antenna with a green light above its right shoulder, joined by a dark metal frame, keep the robot's pose, colors, size and position exactly the same",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "54ac8227-b206-4345-a004-81909b1ed657",
+        "generatedAt": "2026-10-05T05:10:00.000Z"
+      },
+      "status": "generated",
+      "note": "ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ติดหลัง ตอน build ดึงเฉพาะส่วนอุปกรณ์ที่อยู่นอกเงาของหุ่นเดิม (BT-00) ออกมาเป็นชั้นภาพที่วาดหลังตัวหุ่น (chip_layer) จึงใช้ได้กับทุกเกราะและอาวุธ"
+    },
+    {
       "id": "SC-01",
       "kind": "backdrop",
       "name": "ฉากเรื่องราว: ห้องแล็บหุ่นยนต์",

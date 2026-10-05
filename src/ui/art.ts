@@ -24,6 +24,8 @@ export const art = {
   robot: "assets/battle/bt_robot.png",
   /** หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธนั้นจริง (GD-01..24 ภาพเดียวกับหุ่นบนแท่นในโรงเก็บหุ่น) */
   guardian: (armor: Gear["armor"], weapon: Gear["weapon"]): string => `assets/guardian/gd_${armor}_${weapon}.png`,
+  /** อุปกรณ์ของชิปที่ติดหลังหุ่น (ชั้นภาพบนผืนเดียวกับภาพหุ่น วาดหลังตัวหุ่น) */
+  guardianChip: (chip: Exclude<Gear["chip"], "none">): string => `assets/guardian/gd_chip_${chip}.png`,
   player: (avatar: Avatar, outfit: Outfit): string => `assets/characters/ch_${avatar}_${outfit}_south.png`,
   /** พี่บิตตามคอสตูมที่ใช้อยู่ */
   bit: (skin: BitSkin): string => (skin === "classic" ? "assets/characters/ch_mentor_south.png" : `assets/characters/ch_mentor_${skin}_south.png`),

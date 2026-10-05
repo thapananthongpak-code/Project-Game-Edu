@@ -2631,10 +2631,13 @@ async function playNormal(page) {
   // ค้อนที่แพ้ทาง (40 − 20) → ปืนที่ชนะทาง (30 + 20) + เกราะสะท้อน 30 + ชิปคิดทบทวน 30
   assert.equal(Number(await page.getByTestId("guardian-power").getAttribute("data-power")) - powerBefore, 90);
   assert.deepEqual(await page.getByTestId("guardian-model").evaluate((el) => [el.dataset.weapon, el.dataset.armor, el.dataset.chip]), ["blaster", "guard", "retry"]);
+  // ชิปเป็นอุปกรณ์ติดหลังหุ่น (ชั้นภาพก่อนภาพหุ่น จึงอยู่หลังตัวหุ่น) ภาพโหลดได้จริง
+  const chipImage = page.getByTestId("guardian-bay").getByTestId("guardian-chip");
+  assert.deepEqual(await chipImage.evaluate(async (img) => [img.dataset.chip, img.nextElementSibling?.tagName, (img.complete || (await new Promise((done) => img.addEventListener("load", done, { once: true })))) && img.naturalWidth]), ["retry", "IMG", 128]);
   await shot(page, "31-normal-guardian-bay");
   await page.getByTestId("guardian-close").click();
   await page.waitForTimeout(400);
-  assert.deepEqual((await snap(page)).bay, { texture: "gd_guard_blaster", tint: null, chip: true, cores: 5 }, "หุ่นที่จอดอยู่ใส่เกราะสะท้อน ถือปืนเลเซอร์ ชิปเรืองแสงที่อก");
+  assert.deepEqual((await snap(page)).bay, { texture: "gd_guard_blaster", tint: null, chip: true, cores: 5 }, "หุ่นที่จอดอยู่ใส่เกราะสะท้อน ถือปืนเลเซอร์ มีอุปกรณ์ของชิปติดหลัง");
   await walkTo(page, "storage");
   await act(page);
   await page.getByTestId("storage").waitFor();

@@ -339,6 +339,42 @@ def blank_patches(img, patches):
     return img
 
 
+def chip_layer(edited, base, min_size=12, top_limit=40, extend=6):
+    """ชั้นอุปกรณ์ของชิป: ส่วนของภาพที่แก้ซึ่งอยู่นอกเงาของหุ่นเดิม เก็บเฉพาะก้อนที่อยู่เหนือไหล่ (ตัดเส้นขอบที่เพี้ยนเล็กน้อยทิ้ง)
+    แล้วต่อขอบล่างลงไปหลังตัวหุ่นอีกเล็กน้อย เกราะแบบอื่นที่ไหล่ต่างกันจึงไม่เห็นช่องว่าง"""
+    w, h = edited.size
+    bp, ep = base.load(), edited.load()
+    mask = [[bp[x, y][3] < 40 and ep[x, y][3] >= 128 for x in range(w)] for y in range(h)]
+    seen = [[False] * w for _ in range(h)]
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    lp = layer.load()
+    for y0 in range(h):
+        for x0 in range(w):
+            if not mask[y0][x0] or seen[y0][x0]:
+                continue
+            stack, cells = [(x0, y0)], []
+            seen[y0][x0] = True
+            while stack:
+                x, y = stack.pop()
+                cells.append((x, y))
+                for dx in (-1, 0, 1):
+                    for dy in (-1, 0, 1):
+                        nx, ny = x + dx, y + dy
+                        if 0 <= nx < w and 0 <= ny < h and mask[ny][nx] and not seen[ny][nx]:
+                            seen[ny][nx] = True
+                            stack.append((nx, ny))
+            if len(cells) >= min_size and min(y for _, y in cells) <= top_limit:
+                for x, y in cells:
+                    lp[x, y] = ep[x, y]
+    # ต่อขอบล่างของอุปกรณ์เข้าไปหลังตัวหุ่น
+    edges = [(x, y) for x in range(w) for y in range(h - 1) if lp[x, y][3] and not lp[x, y + 1][3] and bp[x, y + 1][3] >= 40]
+    for x, y in edges:
+        for k in range(1, extend + 1):
+            if y + k < h and not lp[x, y + k][3]:
+                lp[x, y + k] = lp[x, y]
+    return layer
+
+
 def synth_walk(stand, frames=WALK_FRAMES, lift=2):
     """เฟรมเดินจากท่ายืนที่ถูกต้องของทิศนั้น (postprocess.synthWalk): ขาซ้ายขวายกสลับกันและตัวยุบลง 1 px ตอนเท้าทั้งสองแตะพื้น
     ใช้กับทิศเหนือของชุดที่แอนิเมชันจากตัวเจนหันตัวกลับมาด้านหน้ากลางทาง (ผ้าคลุมหรือเสื้อด้านหน้าโผล่ตอนเดินขึ้น)"""
@@ -434,6 +470,9 @@ def import_generated(asset, source):
         if list(icon.size) != asset["size"]:
             raise SystemExit(f"{asset['id']}: ภาพต้องมีขนาด {asset['size']} แต่ได้ {icon.size}")
         images[key] = icon
+    elif asset["kind"] == "guardianchip":
+        key = next(iter({**asset["files"], **asset.get("web", {})}))
+        images[key] = chip_layer(Image.open(folder / "image.png").convert("RGBA"), Image.open(SOURCES / "BT-00" / "image.png").convert("RGBA"))
     elif asset["kind"] in ("prop", "battle"):
         key = next(iter({**asset["files"], **asset.get("web", {})}))
         try:
@@ -503,6 +542,8 @@ EXTRA_FOES = [("BT-09", "bt_kaiju_7", "#F6C343"), ("BT-10", "bt_kaiju_8", "#8B9B
 # หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธ (แก้จาก BT-00 ด้วย edit_image_pro_flash): GD-01..24 = เกราะ × อาวุธ ตามลำดับนี้
 GUARDIAN_ARMORS = ["plate", "heavy", "guard", "titan"]
 GUARDIAN_WEAPONS = ["fist", "sword", "blaster", "hammer", "lance", "cannon"]
+# อุปกรณ์ของชิปที่ติดหลังหุ่น: ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ ตอน build ดึงเฉพาะส่วนอุปกรณ์ออกมาเป็นชั้นภาพหลังตัวหุ่น
+GUARDIAN_CHIPS = [("GC-01", "gd_chip_charger"), ("GC-02", "gd_chip_retry")]
 GUARDIAN_VARIANTS = [(f"GD-{a * 6 + w + 1:02d}", f"gd_{armor}_{weapon}") for a, armor in enumerate(GUARDIAN_ARMORS) for w, weapon in enumerate(GUARDIAN_WEAPONS)]
 # ฉากหลังของเรื่องราว NPC (ฉากเปล่า ตอน build วางตัวละครของเกมลงไป)
 SCENE_BACKDROPS = [("SC-01", "bg_scene_lab"), ("SC-02", "bg_scene_hangar"), ("SC-03", "bg_scene_gym"), ("SC-04", "bg_scene_archive"), ("SC-05", "bg_scene_factory"), ("SC-06", "bg_scene_market"),
@@ -749,6 +790,8 @@ def main():
         prop("PR-G07", "pr_bit_pad", (64, 32), lambda: draw_block(64, 32, SCREEN, TEAL)),
         *[{**image(asset_id, base, (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "guardian", {}, "guardian"),
            "pixellab": {"tool": "edit_image_pro_flash", "arguments": {"description": prompts[base]}, "fetchTool": "get_image"}} for asset_id, base in GUARDIAN_VARIANTS],
+        *[{**image(asset_id, base, (128, 128), lambda: Image.new("RGBA", (128, 128), (0, 0, 0, 0)), "guardianchip", {}, "guardian"),
+           "pixellab": {"tool": "edit_image_pro_flash", "arguments": {"description": prompts[base]}, "fetchTool": "get_image"}} for asset_id, base in GUARDIAN_CHIPS],
         *[image(asset_id, base, (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "story", web=True) for asset_id, base in SCENE_BACKDROPS],
         *[core(room) for room in ROOM_COLORS],
         image("BT-00", "bt_robot", (128, 128), lambda: draw_blob(128, PAPER, SCREEN), "battle", {**BATTLE_SETTINGS, "direction": "east"}, "battle", web=True),

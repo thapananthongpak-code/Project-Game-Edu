@@ -316,32 +316,21 @@ canvas {
 .battle-bit-assist {
   animation: battle-assist 0.5s ease-out;
 }
-/* ชิปที่ติดตั้งเรืองแสงที่อกของการ์เดียน (ตำแหน่งตามภาพหุ่น 128×128) เร่งพลัง = ส้ม คิดทบทวน = เขียว */
-.guardian-chip {
-  position: absolute;
-  left: 57%;
-  top: 33%;
-  width: 7%;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  border: 2px solid var(--color-ink);
-}
+/* อุปกรณ์ของชิปที่ติดหลังการ์เดียน (ชั้นภาพหลังตัวหุ่น): ไฟของอุปกรณ์เรืองเบา ๆ เร่งพลัง = ส้ม คิดทบทวน = เขียว */
 .guardian-chip-charger {
-  background: #ffcd75;
-  box-shadow: 0 0 8px 2px #ffcd75;
+  filter: drop-shadow(0 0 3px #ffa300);
 }
 .guardian-chip-retry {
-  background: #38b764;
-  box-shadow: 0 0 8px 2px #38b764;
+  filter: drop-shadow(0 0 3px #38b764);
 }
 @media (prefers-reduced-motion: no-preference) {
   .guardian-chip {
-    animation: guardian-chip-pulse 1.4s ease-in-out infinite;
+    animation: guardian-chip-pulse 1.6s ease-in-out infinite;
   }
 }
 @keyframes guardian-chip-pulse {
   50% {
-    opacity: 0.55;
+    filter: none;
   }
 }
 .battle-shielded {

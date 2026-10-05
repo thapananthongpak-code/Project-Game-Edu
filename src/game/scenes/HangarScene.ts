@@ -19,7 +19,7 @@ const CASE_SLOTS = [-14, 0, 14].flatMap((dx) => [-40, -22].map((dy) => ({ dx, dy
 export class HangarScene extends WorldScene {
   private cores: Phaser.GameObjects.Image[] = [];
   private guardian!: Phaser.GameObjects.Image;
-  private chipGlow!: Phaser.GameObjects.Arc;
+  private chipDevice!: Phaser.GameObjects.Image;
   private looks = "";
   private labelKey = "";
 
@@ -37,12 +37,12 @@ export class HangarScene extends WorldScene {
     const [door] = this.objectsOf("door");
     this.addInteractable(door, "door-entry", () => ui.prompt.backToHall, () => store().exitToHall());
 
-    // แท่นการ์เดียน: หุ่นยืนบนแท่น ภาพของหุ่นเปลี่ยนตามอาวุธและเกราะที่ใส่ ชิปเรืองแสงที่อก
+    // แท่นการ์เดียน: หุ่นยืนบนแท่น ภาพของหุ่นเปลี่ยนตามอาวุธและเกราะที่ใส่ ชิปเป็นอุปกรณ์ติดหลังหุ่น
     const [robot] = this.objectsOf("robot");
     const baseY = objectBaseY(robot);
     this.guardian = this.add.image(objectX(robot), baseY - 10, "gd_plate_fist").setOrigin(0.5, 1).setScale(0.8).setDepth(baseY + 1);
-    this.chipGlow = this.add.circle(objectX(robot) - 4, baseY - 64, 4, 0xffcd75).setStrokeStyle(1, 0x1a1c2c).setDepth(baseY + 2);
-    this.tweens.add({ targets: this.chipGlow, alpha: 0.45, duration: 700, yoyo: true, repeat: -1 });
+    // อุปกรณ์ของชิป: ชั้นภาพบนผืนเดียวกับภาพหุ่น วาดหลังตัวหุ่น (ติดอยู่ที่หลัง ตัวหุ่นบังเอง)
+    this.chipDevice = this.add.image(objectX(robot), baseY - 10, "gd_chip_charger").setOrigin(0.5, 1).setScale(0.8).setDepth(baseY + 0.5).setVisible(false);
     this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().openOverlay("guardian"));
 
     // ตู้กระจกเก็บแกน AI: แกนที่เก็บได้ตั้งอยู่บนชั้นในตู้
@@ -81,7 +81,7 @@ export class HangarScene extends WorldScene {
     return {
       texture: this.guardian.texture.key,
       tint: this.guardian.isTinted ? this.guardian.tintTopLeft : null,
-      chip: this.chipGlow.visible,
+      chip: this.chipDevice.visible,
       cores: this.cores.filter((core) => core.visible).length,
     };
   }
@@ -106,9 +106,9 @@ export class HangarScene extends WorldScene {
       const tint = PAINT_TINT[paint];
       if (tint === null) this.guardian.clearTint();
       else this.guardian.setTint(tint);
-      // ชิปที่ติดตั้งเรืองแสงที่อกของหุ่น: เร่งพลัง = ส้ม คิดทบทวน = เขียว
-      this.chipGlow.setVisible(chip !== "none");
-      this.chipGlow.setFillStyle(chip === "retry" ? 0x38b764 : 0xffcd75);
+      // ชิปที่ติดตั้งเป็นอุปกรณ์ติดหลังหุ่น: เร่งพลัง = ชุดบูสเตอร์ คิดทบทวน = ชุดเซนเซอร์
+      this.chipDevice.setVisible(chip !== "none");
+      if (chip !== "none") this.chipDevice.setTexture(`gd_chip_${chip}`);
     }
     this.syncPickups();
     const labelKey = this.npcKey();
