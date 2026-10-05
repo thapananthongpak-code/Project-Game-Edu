@@ -4,7 +4,7 @@ import { fmt, ui } from "../content/ui-strings";
 import { creditsOf, difficultyOf, guardianPowerOf, reachedMap, useGameStore } from "../state/gameStore";
 import { type Gear, itemPower } from "../state/gear";
 import { bagOf, ownsItem, stockLeft, tierOpen } from "../state/shop";
-import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STARTER_DECOR, type Supply } from "../state/shop.config";
+import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STARTER_DECOR, type Supply, type Theme, THEMES } from "../state/shop.config";
 import { art } from "./art";
 import { ItemIcon } from "./BagPicker";
 import { GearIcon } from "./Storage";
@@ -13,7 +13,7 @@ import { useDialog } from "./useDialog";
 type ItemId = keyof typeof ui.shop.items;
 const DECOR_SIZE = (decor: Decor) => DECOR[decor].size;
 type Kind = ShopItem["kind"];
-const KINDS = ["weapon", "armor", "chip", "supply", "outfit", "bit", "module", "paint", "decor"] as const;
+const KINDS = ["weapon", "armor", "chip", "supply", "outfit", "bit", "module", "paint", "decor", "theme"] as const;
 const GEAR_KINDS: readonly Kind[] = ["weapon", "armor", "chip"];
 
 
@@ -63,6 +63,8 @@ export function Shop() {
       <img src={art.robot} alt="" className="pixelated h-16 w-16" style={{ filter: PAINT_FILTER[value as Paint] }} />
     ) : kind === "decor" ? (
       <img src={art.decor(value as Decor)} alt="" className="pixelated h-16 w-16 object-contain" />
+    ) : kind === "theme" ? (
+      <img src={art.tiles(THEMES[value as Theme].tileset)} alt="" className="pixelated h-16 w-16" />
     ) : (
       <ItemIcon value={kind === "module" ? `module-${value as BitModule}` : (value as Supply)} className="h-16 w-16" />
     );
@@ -70,8 +72,8 @@ export function Shop() {
   const card = (id: string, kind: Kind, value: string, item: ShopItem | null) => {
     const strings = ui.shop.items[id as ItemId];
     const owned = item === null || ownsItem(shop, item);
-    const using = kind === "module" || kind === "decor" ? owned : kind !== "supply" && shop[kind] === value;
-    const gain = kind === "supply" || kind === "decor" ? 0 : itemPower(kind, value);
+    const using = kind === "module" || kind === "decor" || kind === "theme" ? owned : kind !== "supply" && shop[kind] === value;
+    const gain = kind === "supply" || kind === "decor" || kind === "theme" ? 0 : itemPower(kind, value);
     // ของที่วางขายตั้งแต่แมพถัดไป: เห็นได้แต่ยังซื้อไม่ได้
     const lockedTier = item !== null && !tierOpen(item, reached);
     const left = item?.kind === "supply" ? stockLeft(shop, item, map) : null;
@@ -153,9 +155,9 @@ export function Shop() {
             <section key={kind} data-testid={`shop-section-${kind}`}>
               <h3 className="mb-1 text-xs font-bold text-slate">{ui.shop.tabs[kind]}</h3>
               {kind === "weapon" && <p className="mb-1 text-sm text-slate">{ui.shop.gearNote}</p>}
-              {kind === "decor" && (
-                <button type="button" className="btn btn-ghost mb-2 !min-h-9 text-sm" data-testid="shop-open-decor" onClick={() => openOverlay("decor")}>
-                  🎨 {ui.shop.placeDecor}
+              {(kind === "decor" || kind === "theme") && (
+                <button type="button" className="btn btn-ghost mb-2 !min-h-9 text-sm" data-testid={`shop-open-${kind}`} onClick={() => openOverlay("decor")}>
+                  🎨 {kind === "decor" ? ui.shop.placeDecor : ui.shop.placeTheme}
                 </button>
               )}
               <ul className="flex flex-col gap-2">

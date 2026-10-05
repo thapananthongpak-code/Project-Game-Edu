@@ -11,6 +11,14 @@ import { art } from "./art";
 import { Stars } from "./Stars";
 import { useDialog } from "./useDialog";
 
+type GuideKey = keyof typeof ui.questLog.guide;
+/** คู่มือรูปในเกม: รูปของแต่ละจุดจัดตามที่ที่พบ (ชื่อและคำอธิบายอยู่ใน ui.questLog.guide) */
+const GUIDE: { group: keyof typeof ui.questLog.guideGroups; items: [key: GuideKey, prop: string][] }[] = [
+  { group: "hall", items: [["door", "pr_door_open"], ["gate", "pr_hangar_gate"], ["shop", "pr_shop"], ["storage", "pr_storage_box"], ["travel", "pr_travel_board"], ["decorboard", "pr_decor_board"]] },
+  { group: "hangar", items: [["robot", "pr_guardian_bay"], ["corecase", "pr_core_case"], ["console", "pr_mission_console"], ["hologram", "pr_hologram"], ["wardrobe", "pr_wardrobe"], ["bitpad", "pr_bit_dock"]] },
+  { group: "room", items: [["station", "pr_station_terminal"], ["minigame", "pr_r1_learning_machine"], ["review", "pr_notebook_desk"], ["core", "pr_core_pedestal"]] },
+];
+
 /** สมุดเควสและโปรไฟล์: ผู้เล่น ระดับความยาก แกน AI ที่เก็บได้ สมรรถนะที่ผ่าน และขั้นตอนของห้องที่กำลังเล่น */
 export function QuestLog() {
   const room = useGameStore((s) => s.room);
@@ -25,6 +33,7 @@ export function QuestLog() {
   const battles = useGameStore((s) => s.battles);
   const npcs = useGameStore((s) => s.npcs);
   const outfit = useGameStore((s) => s.shop.outfit);
+  const bitSkin = useGameStore((s) => s.shop.bit);
   const credits = useGameStore(creditsOf);
   const audio = useAudioSettings();
   const run = { profile, progress, battles };
@@ -56,6 +65,19 @@ export function QuestLog() {
         { done: p.core, text: ui.questLog.stepCore },
         ...battleStep,
       ];
+
+  /** แถวหนึ่งของคู่มือรูป: รูป ชื่อ และใช้ทำอะไร */
+  const guideRow = (key: GuideKey, src: string) => (
+    <li key={key} className="flex items-center gap-2 rounded-md border-2 border-ink bg-cream p-1.5" data-testid={`guide-${key}`}>
+      <img src={src} alt="" className="pixelated h-12 w-12 shrink-0 rounded border-2 border-ink bg-teal-light object-contain" />
+      <div className="min-w-0 text-sm">
+        <div className="font-extrabold">{ui.questLog.guide[key].name}</div>
+        <div className="text-slate">{ui.questLog.guide[key].use}</div>
+      </div>
+    </li>
+  );
+  // คนในแล็บของแมพที่อยู่ (คนแรก) เป็นภาพตัวอย่างของ NPC
+  const guideNpc = npcsOfMap(difficulty)[0].id;
 
   return (
     <div className="fixed inset-0 z-30 overflow-y-auto bg-ink/85 p-2 sm:p-4" data-testid="questlog">
@@ -118,6 +140,28 @@ export function QuestLog() {
             </div>
           </section>
         )}
+
+        {/* คู่มือรูปในเกม: รูปนี้คืออะไร ใช้ทำอะไร (พับเก็บไว้ เปิดดูเมื่อสงสัย) */}
+        <details className="rounded-md border-2 border-ink bg-paper" data-testid="questlog-guide">
+          <summary className="flex min-h-10 cursor-pointer items-center px-3 font-extrabold text-teal-dark">📖 {ui.questLog.guideTitle}</summary>
+          <div className="flex flex-col gap-3 border-t-2 border-ink p-3">
+            <p className="text-sm text-slate">{ui.questLog.guideIntro}</p>
+            {GUIDE.map(({ group, items }) => (
+              <div key={group}>
+                <h3 className="mb-1 text-xs font-bold text-slate">{ui.questLog.guideGroups[group]}</h3>
+                <ul className="grid gap-2 sm:grid-cols-2">{items.map(([key, prop]) => guideRow(key, art.prop(prop)))}</ul>
+              </div>
+            ))}
+            <div>
+              <h3 className="mb-1 text-xs font-bold text-slate">{ui.questLog.guideGroups.hud}</h3>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {guideRow("npc", art.npc(guideNpc))}
+                {guideRow("bit", art.bit(bitSkin))}
+                {guideRow("credit", art.credit)}
+              </ul>
+            </div>
+          </div>
+        </details>
 
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate" data-testid="profile-cores">

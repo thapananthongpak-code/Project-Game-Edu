@@ -11,8 +11,8 @@ import { emptyField, type FieldProgress } from "./field";
 import { type Armor, ARMORS, bagSizeOf, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
 import { isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_NAME_CHARS } from "./rules";
-import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom } from "../game/decor";
-import { AVATARS, type Avatar, BIT_MODULES, BIT_SKINS, BIT_SLOTS, type BitModule, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply } from "./shop.config";
+import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom, type RoomLayout, STATIONS } from "../game/decor";
+import { AVATARS, type Avatar, BIT_MODULES, BIT_SKINS, BIT_SLOTS, type BitModule, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply, type Theme, THEME_IDS } from "./shop.config";
 
 export const SAVE_VERSION = 9;
 
@@ -62,6 +62,10 @@ export interface ShopState {
   bought: Record<string, number>;
   /** ของตกแต่งที่ผู้เล่นวางเองในโถงและโรงเก็บหุ่นของแต่ละแมพ: คีย์ "<แมพ>:<ห้อง>" -> ของที่วางพร้อมตำแหน่ง (GDD ข้อ 19) */
   decor: Partial<Record<DecorRoom, DecorPlacement[]>>;
+  /** จุดใช้งานที่ผู้เล่นย้ายเองในโถงและโรงเก็บหุ่น: คีย์ "<แมพ>:<ห้อง>" -> ตำแหน่งของจุดที่ย้าย (ไม่มี = ตำแหน่งเริ่มต้น GDD ข้อ 19) */
+  layout: Partial<Record<DecorRoom, RoomLayout>>;
+  /** ธีมสีที่เลือกใช้ในโถงและโรงเก็บหุ่น: คีย์ "<แมพ>:<ห้อง>" -> ธีมที่ซื้อแล้ว (ไม่มี = พื้นและผนังเดิมของแมพ) */
+  theme: Partial<Record<DecorRoom, Theme>>;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -171,6 +175,8 @@ export const emptyShop = (): ShopState => ({
   loadout: [],
   bought: {},
   decor: starterDecor(),
+  layout: {},
+  theme: {},
 });
 
 export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, maps: { normal: {}, hard: {} }, battles: {}, npcs: {}, story: [], shop: emptyShop() });
@@ -249,7 +255,7 @@ function shopOf(raw: unknown): ShopState {
   const base = emptyShop();
   const items = new Map(CATALOG.map((item) => [item.id, item]));
   const owned = [...new Set(Array.isArray(data.owned) ? data.owned.filter((id): id is string => typeof id === "string" && items.has(id) && items.get(id)?.kind !== "supply") : [])];
-  const has = (kind: "outfit" | "paint" | "bit" | "module" | "weapon" | "armor" | "chip" | "decor", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
+  const has = (kind: "outfit" | "paint" | "bit" | "module" | "weapon" | "armor" | "chip" | "decor" | "theme", value: string) => owned.some((id) => items.get(id)?.kind === kind && items.get(id)?.value === value);
   const supplies = { ...base.supplies };
   for (const item of CATALOG) if (item.kind === "supply") supplies[item.value] = Math.min(item.max, Math.floor(count(object(data.supplies)[item.value])));
   const outfit = OUTFITS.find((o) => o === data.outfit) ?? base.outfit;
@@ -298,6 +304,23 @@ function shopOf(raw: unknown): ShopState {
     }
     if (placed.length > 0 && decor[decorRoom(map, "hall")] === undefined) decor[decorRoom(map, "hall")] = placed;
   }
+  // จุดใช้งานที่ย้ายเอง: เก็บเฉพาะจุดที่รู้จักและตำแหน่งที่เป็นช่องในผัง (กติกาตรวจกับผังอีกครั้งตอนแสดง validLayout)
+  // ธีมของห้อง: เฉพาะธีมที่ซื้อแล้ว ข้อมูลรุ่นก่อนไม่มีทั้งสองอย่าง ทุกห้องจึงเป็นค่าเริ่มต้น
+  const layout: ShopState["layout"] = {};
+  const theme: ShopState["theme"] = {};
+  for (const map of DIFFICULTIES) {
+    for (const area of DECOR_AREAS) {
+      const room = decorRoom(map, area);
+      const moved: RoomLayout = {};
+      for (const station of STATIONS) {
+        const { col, row } = object(object(object(data.layout)[room])[station]);
+        if (Number.isInteger(col) && Number.isInteger(row) && (col as number) >= 0 && (col as number) < 20 && (row as number) >= 0 && (row as number) < 11) moved[station] = { col: col as number, row: row as number };
+      }
+      if (Object.keys(moved).length > 0) layout[room] = moved;
+      const chosen = THEME_IDS.find((id) => id === object(data.theme)[room]);
+      if (chosen && has("theme", chosen)) theme[room] = chosen;
+    }
+  }
   // โมดูลของพี่บิตที่ติดตั้ง: เฉพาะที่ซื้อแล้ว ไม่เกิน BIT_SLOTS ข้อมูลรุ่นก่อน (โมดูลทำงานทุกชิ้นที่ซื้อ) ได้ชิ้นแรก ๆ ที่มีติดตั้งให้
   const ownedModules = BIT_MODULES.filter((module) => has("module", module));
   const modules = (Array.isArray(data.modules) ? BIT_MODULES.filter((module) => (data.modules as unknown[]).includes(module) && ownedModules.includes(module)) : ownedModules).slice(0, BIT_SLOTS);
@@ -316,6 +339,8 @@ function shopOf(raw: unknown): ShopState {
     loadout: packed,
     bought,
     decor,
+    layout,
+    theme,
   };
 }
 

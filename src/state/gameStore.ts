@@ -25,9 +25,9 @@ import {
   type SyncStatus,
 } from "./progressStore";
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
-import type { DecorArea, DecorPlacement, PlaceError } from "../game/decor";
-import { creditBalance, type Earning, equip, type EquipKind, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, toggleModule } from "./shop";
-import type { Avatar, BitModule, Decor, Supply } from "./shop.config";
+import type { DecorArea, DecorPlacement, PlaceError, Station } from "../game/decor";
+import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, resetLayout, setTheme, toggleModule } from "./shop";
+import type { Avatar, BitModule, Decor, Supply, Theme } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
@@ -143,11 +143,16 @@ interface GameState {
   meetNpc: (id: NpcId) => void;
   /** รับของช่วยเหลือจาก NPC (ครั้งเดียว) */
   claimGift: (id: NpcId) => void;
-  /** วางของตกแต่งในช่องของโถงของแมพนี้ (null = เอาออก) */
   /** วางหรือย้ายของตกแต่งในห้องที่ผู้เล่นอยู่ (โถงหรือโรงเก็บหุ่น) คืนเหตุที่วางไม่ได้ หรือ null ถ้าสำเร็จ */
   placeDecor: (placement: DecorPlacement) => PlaceError | "owned" | "room" | null;
   /** เอาของตกแต่งออกจากห้องที่ผู้เล่นอยู่ (null = เอาออกทั้งห้อง) */
   removeDecor: (decor: Decor | null) => void;
+  /** ย้ายจุดใช้งานของห้องที่ผู้เล่นอยู่ไปตำแหน่งที่เลือกเอง คืนเหตุที่ย้ายไม่ได้ หรือ null ถ้าสำเร็จ */
+  moveStation: (station: Station, col: number, row: number) => PlaceError | "room" | null;
+  /** คืนจุดใช้งานของห้องที่ผู้เล่นอยู่ไปตำแหน่งเริ่มต้น */
+  resetLayout: () => void;
+  /** เปลี่ยนธีมสีของห้องที่ผู้เล่นอยู่ (null = พื้นและผนังเดิมของแมพ) */
+  setTheme: (theme: Theme | null) => void;
   /** ติดตั้งหรือถอดโมดูลของพี่บิต (แท่นชาร์จพี่บิต) */
   toggleModule: (module: BitModule) => void;
   setMusicCue: (cue: MusicCue | null) => void;
@@ -326,6 +331,23 @@ export const useGameStore = create<GameState>()((set, get) => {
     removeDecor: (decor) => {
       const area = decorAreaOf(get());
       if (area) set({ shop: removeDecor(get().shop, difficultyOf(get()), area, decor) });
+    },
+    moveStation: (station, col, row) => {
+      const state = get();
+      const area = decorAreaOf(state);
+      if (!area) return "room";
+      const result = moveStation(state.shop, difficultyOf(state), area, station, col, row);
+      if (typeof result === "string") return result;
+      set({ shop: result });
+      return null;
+    },
+    resetLayout: () => {
+      const area = decorAreaOf(get());
+      if (area) set({ shop: resetLayout(get().shop, difficultyOf(get()), area) });
+    },
+    setTheme: (theme) => {
+      const area = decorAreaOf(get());
+      if (area) set({ shop: setTheme(get().shop, difficultyOf(get()), area, theme) });
     },
     toggleModule: (module) => set({ shop: toggleModule(get().shop, module) }),
     setMusicCue: (musicCue) => {

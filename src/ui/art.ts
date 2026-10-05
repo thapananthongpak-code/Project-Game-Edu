@@ -40,6 +40,10 @@ export const art = {
   credit: "assets/items/it_credit.png",
   /** ภาพของของตกแต่งห้อง (ภาพเดียวกับที่ฉากเกมใช้) */
   decor: (decor: Decor): string => `assets/props/${DECOR[decor].prop}.png`,
+  /** ภาพของวัตถุในฉาก (ร้าน กระดาน แท่น ฯลฯ) ตามคีย์ภาพใน manifest */
+  prop: (key: string): string => `assets/props/${key}.png`,
+  /** ภาพตัวอย่างของชุดไทล์ (ผนังต่อกับพื้น) ใช้แสดงธีมสีของห้อง */
+  tiles: (tileset: string): string => `assets/tiles/${tileset}_preview.png`,
   backdrop: (room: number): string => `assets/battle/bg_battle_${room}.png`,
   core: (room: number): string => `assets/cores/core_${room}.png`,
   /** ภาพประกอบเนื้อเรื่องหนึ่งช่อง */

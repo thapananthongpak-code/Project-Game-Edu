@@ -8,8 +8,9 @@ import { emptyField, fieldStatus } from "./field";
 import { bagSizeOf, type Gear, guardianPower, matchupOf } from "./gear";
 import { type NpcId, type NpcRecord, npcCredits, NPCS } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
-import { baseMapOf, type DecorArea, type DecorPlacement, decorRoom, type PlaceError, placementError, validPlacements } from "../game/decor";
-import { BIT_MODULES, BIT_SLOTS, type BitModule, CATALOG, DECOR, type Decor, REWARDS, type ShopItem, STARTER_DECOR, type Supply } from "./shop.config";
+import { arrangedMap, baseMapOf, type DecorArea, type DecorPlacement, decorRoom, layoutError, type PlaceError, placementError, type RoomLayout, type Station, stationsIn, validLayout, validPlacements } from "../game/decor";
+import type { GameMap } from "../game/maps";
+import { BIT_MODULES, BIT_SLOTS, type BitModule, CATALOG, DECOR, type Decor, REWARDS, type ShopItem, STARTER_DECOR, type Supply, type Theme, THEME_IDS, THEMES } from "./shop.config";
 
 export interface Earning {
   /** ความคืบหน้ารายหัวข้อของแต่ละแมพ (แมพที่ยังไม่ได้ไปไม่ต้องมี) */
@@ -166,7 +167,7 @@ export const ownedDecor = (shop: ShopState): Decor[] => (Object.keys(DECOR) as D
 /** ของตกแต่งที่วางอยู่ในห้องหนึ่ง (เฉพาะชิ้นที่ยังถูกต้องตามผังและของที่มี) */
 export function decorIn(shop: ShopState, map: Difficulty, area: DecorArea): DecorPlacement[] {
   const owned = ownedDecor(shop);
-  return validPlacements(baseMapOf(map, area), area, (shop.decor[decorRoom(map, area)] ?? []).filter((placement) => owned.includes(placement.decor)));
+  return validPlacements(arrangedBase(shop, map, area), area, (shop.decor[decorRoom(map, area)] ?? []).filter((placement) => owned.includes(placement.decor)));
 }
 
 /**
@@ -176,7 +177,7 @@ export function decorIn(shop: ShopState, map: Difficulty, area: DecorArea): Deco
 export function placeDecor(shop: ShopState, map: Difficulty, area: DecorArea, placement: DecorPlacement): ShopState | PlaceError | "owned" {
   if (!ownedDecor(shop).includes(placement.decor)) return "owned";
   const others = decorIn(shop, map, area).filter((placed) => placed.decor !== placement.decor);
-  const error = placementError(baseMapOf(map, area), area, others, placement);
+  const error = placementError(arrangedBase(shop, map, area), area, others, placement);
   if (error) return error;
   return { ...shop, decor: { ...shop.decor, [decorRoom(map, area)]: [...others, { decor: placement.decor, col: placement.col, row: placement.row }] } };
 }
@@ -185,6 +186,61 @@ export function placeDecor(shop: ShopState, map: Difficulty, area: DecorArea, pl
 export function removeDecor(shop: ShopState, map: Difficulty, area: DecorArea, decor: Decor | null): ShopState {
   const left = decor === null ? [] : decorIn(shop, map, area).filter((placed) => placed.decor !== decor);
   return { ...shop, decor: { ...shop.decor, [decorRoom(map, area)]: left } };
+}
+
+// ---------------------------------------------------------------- จุดใช้งานที่ย้ายเอง และธีมสีของห้อง (GDD ข้อ 19)
+
+/** ตำแหน่งที่ผู้เล่นย้ายจุดใช้งานของห้องนี้ไป (เฉพาะที่ยังใช้ได้กับผังปัจจุบัน) */
+export const layoutIn = (shop: ShopState, map: Difficulty, area: DecorArea): RoomLayout => validLayout(baseMapOf(map, area), shop.layout[decorRoom(map, area)]);
+
+/** ผังของห้องเมื่อย้ายจุดใช้งานตามที่ผู้เล่นจัดแล้ว (ยังไม่รวมของตกแต่งและธีม) กติกาของตกแต่งตรวจกับผังนี้ */
+export const arrangedBase = (shop: ShopState, map: Difficulty, area: DecorArea): GameMap => arrangedMap(baseMapOf(map, area), layoutIn(shop, map, area));
+
+/**
+ * ย้ายจุดใช้งานของห้อง (ร้าน กระดานแผนที่ แท่นชาร์จ ฯลฯ) ไปตำแหน่งที่เลือกเอง คืนสถานะร้านใหม่ หรือเหตุที่ย้ายไม่ได้
+ * ต้องอยู่บนพื้นที่ว่าง ไม่บังช่องยืนหน้าประตูและจุดอื่น และทุกจุดต้องยังเดินถึงได้ (src/game/decor.ts)
+ */
+export function moveStation(shop: ShopState, map: Difficulty, area: DecorArea, station: Station, col: number, row: number): ShopState | PlaceError {
+  const base = baseMapOf(map, area);
+  if (!stationsIn(base).includes(station)) return "floor";
+  const layout: RoomLayout = { ...layoutIn(shop, map, area), [station]: { col, row } };
+  const error = layoutError(base, layout, decorIn(shop, map, area));
+  if (error) return error;
+  return { ...shop, layout: { ...shop.layout, [decorRoom(map, area)]: layout } };
+}
+
+/** คืนจุดใช้งานทุกจุดของห้องไปตำแหน่งเริ่มต้น ของตกแต่งที่ทับตำแหน่งเริ่มต้นถูกเก็บออก (ยังเป็นของผู้เล่น วางใหม่ได้) */
+export function resetLayout(shop: ShopState, map: Difficulty, area: DecorArea): ShopState {
+  const room = decorRoom(map, area);
+  const layout = { ...shop.layout };
+  delete layout[room];
+  const next = { ...shop, layout };
+  return { ...next, decor: { ...shop.decor, [room]: decorIn(next, map, area) } };
+}
+
+/** ธีมที่ผู้เล่นมี (ซื้อแล้ว) */
+export const ownedThemes = (shop: ShopState): Theme[] => THEME_IDS.filter((theme) => shop.owned.includes(`theme-${theme}`));
+
+/** ธีมที่ใช้อยู่ในห้องนี้ (null = พื้นและผนังเดิมของแมพ) */
+export function themeIn(shop: ShopState, map: Difficulty, area: DecorArea): Theme | null {
+  const theme = shop.theme[decorRoom(map, area)];
+  return theme && ownedThemes(shop).includes(theme) ? theme : null;
+}
+
+/** เปลี่ยนธีมของห้อง (null = กลับไปใช้พื้นและผนังเดิมของแมพ) เลือกได้เฉพาะธีมที่ซื้อแล้ว */
+export function setTheme(shop: ShopState, map: Difficulty, area: DecorArea, theme: Theme | null): ShopState {
+  if (theme !== null && !ownedThemes(shop).includes(theme)) return shop;
+  const themes = { ...shop.theme };
+  if (theme === null) delete themes[decorRoom(map, area)];
+  else themes[decorRoom(map, area)] = theme;
+  return { ...shop, theme: themes };
+}
+
+/** ผังที่ฉากใช้วาดห้อง: จุดใช้งานอยู่ตามที่ผู้เล่นย้าย และใช้ชุดไทล์ของธีมที่เลือก (ของตกแต่งวาดแยกด้วย syncDecor) */
+export function roomMap(shop: ShopState, map: Difficulty, area: DecorArea): GameMap {
+  const arranged = arrangedBase(shop, map, area);
+  const theme = themeIn(shop, map, area);
+  return theme ? { ...arranged, tileset: THEMES[theme].tileset } : arranged;
 }
 
 // ---------------------------------------------------------------- ของช่วยเหลือจาก NPC (GDD ข้อ 16)

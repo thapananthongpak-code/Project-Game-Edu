@@ -1654,6 +1654,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_r1_preview": "tiles/ts_r1_preview.png"
+      },
       "status": "generated"
     },
     {
@@ -1708,6 +1711,9 @@
           "1110": 13,
           "1111": 12
         }
+      },
+      "web": {
+        "ts_r2_preview": "tiles/ts_r2_preview.png"
       },
       "status": "generated"
     },
@@ -1764,6 +1770,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_r3_preview": "tiles/ts_r3_preview.png"
+      },
       "status": "generated"
     },
     {
@@ -1818,6 +1827,9 @@
           "1110": 13,
           "1111": 12
         }
+      },
+      "web": {
+        "ts_r4_preview": "tiles/ts_r4_preview.png"
       },
       "status": "generated"
     },
@@ -1874,6 +1886,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_r5_preview": "tiles/ts_r5_preview.png"
+      },
       "status": "generated"
     },
     {
@@ -1928,6 +1943,9 @@
           "1110": 13,
           "1111": 12
         }
+      },
+      "web": {
+        "ts_r6_preview": "tiles/ts_r6_preview.png"
       },
       "status": "generated"
     },
@@ -1984,6 +2002,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_common_preview": "tiles/ts_common_preview.png"
+      },
       "status": "generated"
     },
     {
@@ -2039,6 +2060,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_hangar_preview": "tiles/ts_hangar_preview.png"
+      },
       "status": "generated"
     },
     {
@@ -2093,6 +2117,9 @@
           "1110": 13,
           "1111": 12
         }
+      },
+      "web": {
+        "ts_outpost_preview": "tiles/ts_outpost_preview.png"
       },
       "status": "generated",
       "rejected": [
@@ -2163,6 +2190,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_fortress_preview": "tiles/ts_fortress_preview.png"
+      },
       "status": "generated",
       "rejected": [
         {
@@ -2226,6 +2256,9 @@
           "1111": 12
         }
       },
+      "web": {
+        "ts_hangar2_preview": "tiles/ts_hangar2_preview.png"
+      },
       "status": "generated"
     },
     {
@@ -2280,6 +2313,357 @@
           "1110": 13,
           "1111": 12
         }
+      },
+      "web": {
+        "ts_hangar3_preview": "tiles/ts_hangar3_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-12",
+      "kind": "tileset",
+      "name": "ธีมห้อง ซากุระ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_sakura": "tiles/ts_theme_sakura.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of soft pastel pink floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of white steel wall panels with a pink trim band and small round pink status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "b8aed7ab-1ef4-4069-a3d0-338a4bd39903",
+        "generatedAt": "2026-10-05T07:40:24.282Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_sakura_preview": "tiles/ts_theme_sakura_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-13",
+      "kind": "tileset",
+      "name": "ธีมห้อง มหาสมุทร",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_ocean": "tiles/ts_theme_ocean.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of turquoise aqua blue floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of deep navy blue steel wall panels with a cyan trim band and small round cyan status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "2e9953c4-a289-4516-847a-b75be13bf7f1",
+        "generatedAt": "2026-10-05T07:41:32.455Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_ocean_preview": "tiles/ts_theme_ocean_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-14",
+      "kind": "tileset",
+      "name": "ธีมห้อง ตะวันตกดิน",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_sunset": "tiles/ts_theme_sunset.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of warm terracotta orange floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of dark plum purple steel wall panels with a golden orange trim band and small round orange status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "219428ec-065a-4265-a3ef-972ed8131b77",
+        "generatedAt": "2026-10-05T07:51:02.625Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_sunset_preview": "tiles/ts_theme_sunset_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-15",
+      "kind": "tileset",
+      "name": "ธีมห้อง ราชวัง",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_royal": "tiles/ts_theme_royal.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of rich violet purple floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of dark indigo steel wall panels with a gold trim band and small round gold status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "f34187ea-2ffd-44a8-b202-c629d5505cd8",
+        "generatedAt": "2026-10-05T07:52:22.097Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_royal_preview": "tiles/ts_theme_royal_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-16",
+      "kind": "tileset",
+      "name": "ธีมห้อง หิมะ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_snow": "tiles/ts_theme_snow.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of pale icy white-blue floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of light silver-grey steel wall panels with a sky blue trim band and small round white status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "24a54a16-bc4c-4947-8cdb-9799138ba933",
+        "generatedAt": "2026-10-05T07:53:40.170Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_snow_preview": "tiles/ts_theme_snow_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-17",
+      "kind": "tileset",
+      "name": "ธีมห้อง นีออนยามค่ำ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_midnight": "tiles/ts_theme_midnight.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of black glossy floor slabs with thin glowing cyan grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of black steel wall panels with a magenta neon trim band and small round magenta status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "c8898d64-ed5d-47e4-8144-89aa2feb75c3",
+        "generatedAt": "2026-10-05T07:55:06.847Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_midnight_preview": "tiles/ts_theme_midnight_preview.png"
       },
       "status": "generated"
     },

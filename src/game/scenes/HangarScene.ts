@@ -4,7 +4,7 @@ import type { Difficulty } from "../../state/campaign";
 import { coreTotal, difficultyOf, learningRooms, pendingBattle, roomProgress, useGameStore } from "../../state/gameStore";
 import type { Paint } from "../../state/shop.config";
 import { SCENE } from "../constants";
-import { hangarMapOf, objectBaseY, objectX } from "../maps";
+import { objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
 /** สีย้อมของหุ่นบนแท่นในฉาก Phaser (ฉากต่อสู้ใช้ CSS filter ใน PAINT_FILTER หุ่นเป็นสีขาว การคูณสีจึงได้สีใกล้เคียงกัน) */
@@ -32,7 +32,7 @@ export class HangarScene extends WorldScene {
 
   create(): void {
     this.world = difficultyOf(useGameStore.getState());
-    this.buildMap(hangarMapOf(this.world));
+    this.buildRoom(this.world, "hangar");
     this.looks = "";
     this.labelKey = "";
     const store = () => useGameStore.getState();
@@ -97,6 +97,8 @@ export class HangarScene extends WorldScene {
   }
 
   private syncWithProgress(): void {
+    // ย้ายจุดใช้งานหรือเปลี่ยนธีมที่กระดานตกแต่ง: ฉากถูกสร้างใหม่
+    if (this.syncRoom(this.world, "hangar")) return;
     const state = useGameStore.getState();
     // แกนในตู้: แกนของแมพที่อยู่ แมพที่ไม่มีห้องเรียน (แมพ 3) แสดงแกน 6 ชิ้นจากแมพ 1 ที่ให้พลังงานการ์เดียนอยู่
     const own = coreTotal(state) > 0;

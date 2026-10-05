@@ -4,7 +4,7 @@ import { fmt, ui } from "../../content/ui-strings";
 import { DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex } from "../../state/campaign";
 import { allBattlesWon, difficultyOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore } from "../../state/gameStore";
 import { SCENE } from "../constants";
-import { hallMapOf, type MapObject, objectBaseY, objectX } from "../maps";
+import { type MapObject, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
 /**
@@ -31,8 +31,7 @@ export class HallScene extends WorldScene {
     const zones = planOf(store()).zones;
     this.zones = zones;
     this.world = difficultyOf(store());
-    const hall = hallMapOf(this.world);
-    this.buildMap(hall);
+    this.buildRoom(this.world, "hall");
     this.doors = this.objectsOf("door");
 
     for (const door of this.doors) {
@@ -79,6 +78,8 @@ export class HallScene extends WorldScene {
 
   /** ประตู ป้ายเลขห้อง ลูกศรชี้เป้าหมาย และของตกแต่งตามความคืบหน้าและสิ่งที่ผู้เล่นเลือกวาง */
   private syncWithProgress(): void {
+    // ย้ายจุดใช้งานหรือเปลี่ยนธีมที่กระดานตกแต่ง: ฉากถูกสร้างใหม่
+    if (this.syncRoom(this.world, "hall")) return;
     const state = useGameStore.getState();
     const cleared = (zone: number) => this.zones[zone - 1].topics.every((topic) => roomProgress(state, topic).core);
     for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");

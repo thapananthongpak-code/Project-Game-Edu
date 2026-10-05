@@ -7,7 +7,7 @@ import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
 import { ADVICE, adviseBag, adviseWeapon, idealBag, missingAdvice, wishList } from "./loadout";
-import { bagOf, decorIn, earnedCredits, gearOf, modulesOf, ownedDecor, stockLeft } from "./shop";
+import { bagOf, decorIn, earnedCredits, gearOf, layoutIn, modulesOf, ownedDecor, ownedThemes, roomMap, stockLeft, themeIn } from "./shop";
 import { BIT_SLOTS, CATALOG } from "./shop.config";
 import { REWARDS } from "./shop.config";
 
@@ -707,6 +707,71 @@ describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
     // ห้องเรียนตกแต่งไม่ได้
     store().enterRoom(1);
     expect(store().placeDecor({ decor: "plant", col: 5, row: 5 })).toBe("room");
+  });
+
+  it("ย้ายจุดใช้งานของโถงและโรงเก็บหุ่นได้เอง: ของตกแต่งตรวจกับผังที่ย้ายแล้ว คืนตำแหน่งเริ่มต้นได้ แต่ละห้องจัดแยกกัน", () => {
+    clearMap1();
+    store().exitToHall();
+    const kindAt = (area: "hall" | "hangar", kind: string) => {
+      const object = roomMap(store().shop, "easy", area).objects.find((item) => item.kind === kind);
+      return [object?.col, object?.row];
+    };
+    expect(kindAt("hall", "shop")).toEqual([2, 8]);
+    // ย้ายร้านไปมุมขวา: ที่เดิมของร้านว่าง วางของตกแต่งได้
+    expect(store().moveStation("shop", 15, 5)).toBeNull();
+    expect(kindAt("hall", "shop")).toEqual([15, 5]);
+    expect(layoutIn(store().shop, "easy", "hall")).toEqual({ shop: { col: 15, row: 5 } });
+    expect(store().buy("decor-sofa")).toBeNull();
+    expect(store().placeDecor({ decor: "sofa", col: 2, row: 8 })).toBeNull();
+    expect(store().placeDecor({ decor: "plant", col: 15, row: 6 })).toBe("access");
+    // ที่ที่มีของอยู่ ช่องยืนหน้าประตู และจุดที่โถงไม่มี: ย้ายไม่ได้ ผังไม่เปลี่ยน
+    expect(store().moveStation("travel", 2, 8)).toBe("floor");
+    expect(store().moveStation("travel", 2, 2)).toBe("access");
+    expect(store().moveStation("bitpad", 12, 5)).toBe("floor");
+    expect(kindAt("hall", "travel")).toEqual([8, 8]);
+    // คืนตำแหน่งเริ่มต้น: ร้านกลับที่เดิม โซฟาที่ทับที่เดิมของร้านถูกเก็บออก (ยังเป็นของผู้เล่น)
+    store().resetLayout();
+    expect(kindAt("hall", "shop")).toEqual([2, 8]);
+    expect(store().shop.layout).toEqual({});
+    expect(decorIn(store().shop, "easy", "hall").map((p) => p.decor)).toEqual(["window", "plant"]);
+    expect(ownedDecor(store().shop)).toContain("sofa");
+    // โรงเก็บหุ่นจัดแยกจากโถง: ย้ายแท่นการ์เดียนและแท่นชาร์จได้ ตู้กระจกเก็บแกนย้ายไม่ได้
+    store().enterHangar();
+    expect(store().moveStation("robot", 1, 8)).toBeNull();
+    expect(store().moveStation("bitpad", 16, 5)).toBeNull();
+    expect(kindAt("hangar", "robot")).toEqual([1, 8]);
+    expect(kindAt("hangar", "corecase")).toEqual([12, 4]);
+    expect(store().moveStation("shop", 3, 6)).toBe("floor");
+    expect(store().shop.layout).toEqual({ "easy:hangar": { robot: { col: 1, row: 8 }, bitpad: { col: 16, row: 5 } } });
+    // ห้องเรียนจัดไม่ได้
+    store().exitToHall();
+    store().enterRoom(1);
+    expect(store().moveStation("shop", 15, 5)).toBe("room");
+  });
+
+  it("ธีมสีของห้อง: ซื้อที่ร้านแล้วเลือกใช้กับโถงหรือโรงเก็บหุ่นแยกกันได้ เปลี่ยนเฉพาะชุดไทล์ของห้องนั้น", () => {
+    clearMap1();
+    store().exitToHall();
+    expect(roomMap(store().shop, "easy", "hall").tileset).toBe("ts_common");
+    // ยังไม่ได้ซื้อ: เลือกไม่ได้
+    store().setTheme("sakura");
+    expect(themeIn(store().shop, "easy", "hall")).toBeNull();
+    expect(store().buy("theme-sakura")).toBeNull();
+    expect(store().buy("theme-sakura")).toBe("owned");
+    // ธีมของแมพ 3 ยังไม่วางขาย
+    expect(store().buy("theme-midnight")).toBe("locked");
+    expect(ownedThemes(store().shop)).toEqual(["sakura"]);
+    store().setTheme("sakura");
+    expect(roomMap(store().shop, "easy", "hall").tileset).toBe("ts_theme_sakura");
+    expect(roomMap(store().shop, "easy", "hangar").tileset).toBe("ts_hangar");
+    store().enterHangar();
+    store().setTheme("sakura");
+    expect(store().shop.theme).toEqual({ "easy:hall": "sakura", "easy:hangar": "sakura" });
+    store().setTheme(null);
+    expect(roomMap(store().shop, "easy", "hangar").tileset).toBe("ts_hangar");
+    expect(store().shop.theme).toEqual({ "easy:hall": "sakura" });
+    // ธีมและการย้ายจุดใช้งานไม่มีผลต่อค่าพลังรวม
+    expect(guardianPowerOf(store())).toBe(60);
   });
 
   it("โมดูลของพี่บิต: ซื้อแล้วต้องติดตั้งที่แท่นชาร์จ ติดตั้งได้ 2 ชิ้น เฉพาะชิ้นที่ติดตั้งมีผลในด่านต่อสู้", () => {

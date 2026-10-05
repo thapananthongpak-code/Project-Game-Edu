@@ -439,6 +439,17 @@ def import_generated(asset, source):
         asset["files"] = {key: f"tiles/{key}.png"}
         asset["wang"] = {"tileSize": size, "frames": dict(sorted(wang.items()))}
         images[key] = sheet
+        # ตัวอย่างของชุดไทล์สำหรับหน้า HTML (ร้านค้าและกระดานตกแต่ง): ผนังต่อกับพื้น 2×2 ไทล์
+        columns = sheet.width // size
+        def tile(corners):
+            frame = wang[corners]
+            return sheet.crop(((frame % columns) * size, (frame // columns) * size, (frame % columns + 1) * size, (frame // columns + 1) * size))
+        preview = Image.new("RGBA", (size * 2, size * 2))
+        for col in range(2):
+            preview.paste(tile("1100"), (col * size, 0))
+            preview.paste(tile("0000"), (col * size, size))
+        asset["web"] = {f"{key}_preview": f"tiles/{key}_preview.png"}
+        images[f"{key}_preview"] = preview
     elif asset["kind"] == "character":
         key = next(iter(asset["files"]))
         sheet = character_sheet(folder, source.get("postprocess"))
@@ -770,6 +781,19 @@ def main():
                 lambda: draw_floor("#C9B27C", MIST), lambda: draw_wall(PAPER, TEAL, stripe=SCREEN)),
         tileset("TS-11", "ts_hangar3", "ไทล์เซตโรงเก็บหุ่นของแมพ 3", True,
                 lambda: draw_floor("#333C57", INK), lambda: draw_wall("#5D275D", INK, stripe=RED)),
+        # ธีมห้องที่ขายในร้าน (GDD ข้อ 21): ใช้แทนไทล์เซตของโถงหรือโรงเก็บหุ่นของแมพใดก็ได้
+        tileset("TS-12", "ts_theme_sakura", "ธีมห้อง ซากุระ", True,
+                lambda: draw_floor("#F4C2D0", "#E08AA8"), lambda: draw_wall("#F4F4F4", "#C06C8A", stripe="#FF77A8")),
+        tileset("TS-13", "ts_theme_ocean", "ธีมห้อง มหาสมุทร", True,
+                lambda: draw_floor("#5FC9C9", "#2E8A99"), lambda: draw_wall("#1F2A52", "#141A36", stripe="#73EFF7")),
+        tileset("TS-14", "ts_theme_sunset", "ธีมห้อง ตะวันตกดิน", True,
+                lambda: draw_floor("#E0935A", "#A65E2E"), lambda: draw_wall("#4A2545", "#2A1430", stripe="#FFB347")),
+        tileset("TS-15", "ts_theme_royal", "ธีมห้อง ราชวัง", True,
+                lambda: draw_floor("#8E6BC9", "#5B3F99"), lambda: draw_wall("#2B2057", "#17123A", stripe="#FFCD75")),
+        tileset("TS-16", "ts_theme_snow", "ธีมห้อง หิมะ", True,
+                lambda: draw_floor("#E4F1FA", "#A9C7DE"), lambda: draw_wall("#B8C4D0", "#7C8A99", stripe="#73C2FB")),
+        tileset("TS-17", "ts_theme_midnight", "ธีมห้อง นีออนยามค่ำ", True,
+                lambda: draw_floor("#1A1C2C", "#29E0E0"), lambda: draw_wall("#101018", "#05050A", stripe="#FF4FD8")),
         prop("PR-C01", "pr_door_locked", (32, 64), lambda: draw_door(False)),
         prop("PR-C02", "pr_door_open", (32, 64), lambda: draw_door(True)),
         prop("PR-C03", "pr_core_pedestal", (32, 64), draw_pedestal),

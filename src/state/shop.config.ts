@@ -81,6 +81,21 @@ export const DECORS = Object.keys(DECOR) as Decor[];
 export const STARTER_DECOR: readonly Decor[] = ["window", "plant"];
 
 /**
+ * ธีมสีของห้อง (GDD ข้อ 19): ซื้อแล้วเลือกใช้แทนพื้นและผนังของโถงหรือโรงเก็บหุ่นของแมพใดก็ได้ที่กระดานตกแต่ง ไม่มีผลต่อการเล่น
+ * tileset = คีย์ชุดไทล์ใน manifest (ภาพ TS-12..17) ห้องที่ไม่ได้เลือกธีมใช้ชุดไทล์ของแมพนั้นตามเดิม
+ */
+export const THEMES = {
+  sakura: { tileset: "ts_theme_sakura" },
+  ocean: { tileset: "ts_theme_ocean" },
+  sunset: { tileset: "ts_theme_sunset" },
+  royal: { tileset: "ts_theme_royal" },
+  snow: { tileset: "ts_theme_snow" },
+  midnight: { tileset: "ts_theme_midnight" },
+} as const satisfies Record<string, { tileset: string }>;
+export type Theme = keyof typeof THEMES;
+export const THEME_IDS = Object.keys(THEMES) as Theme[];
+
+/**
  * vendor = ขายเฉพาะที่ร้านพิเศษของ NPC คนนั้น (ไม่ระบุ = ร้านสหกรณ์แล็บและตู้เสื้อผ้า)
  * tier = แมพแรกที่ของชิ้นนี้วางขาย (ไม่ระบุ = แมพ 1) ผู้เล่นซื้อได้เมื่อไปถึงแมพนั้นแล้ว (GDD ข้อ 15)
  */
@@ -100,6 +115,7 @@ export type ShopItem =
   | (Sold & { kind: "armor"; value: Armor })
   | (Sold & { kind: "chip"; value: Chip })
   | (Sold & { kind: "decor"; value: Decor })
+  | (Sold & { kind: "theme"; value: Theme })
   /** max = จำนวนที่ถือได้พร้อมกัน, stock = จำนวนที่ร้านขายต่อแมพ (ของใช้มีจำกัด ต้องเลือกว่าจะใช้กับด่านไหน) */
   | (Sold & { kind: "supply"; value: Supply; max: number; stock: number });
 
@@ -161,6 +177,12 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "decor-arcade", kind: "decor", value: "arcade", price: 90, tier: "normal" },
   { id: "decor-fountain", kind: "decor", value: "fountain", price: 100, tier: "hard" },
   { id: "decor-statue", kind: "decor", value: "statue", price: 120, tier: "hard" },
+  { id: "theme-sakura", kind: "theme", value: "sakura", price: 90 },
+  { id: "theme-ocean", kind: "theme", value: "ocean", price: 90 },
+  { id: "theme-sunset", kind: "theme", value: "sunset", price: 110 },
+  { id: "theme-royal", kind: "theme", value: "royal", price: 130, tier: "normal" },
+  { id: "theme-snow", kind: "theme", value: "snow", price: 130, tier: "normal" },
+  { id: "theme-midnight", kind: "theme", value: "midnight", price: 160, tier: "hard" },
   { id: "supply-repair-kit", kind: "supply", value: "repair-kit", price: 25, max: 3, stock: 3 },
   { id: "supply-shield", kind: "supply", value: "shield", price: 20, max: 3, stock: 3 },
   { id: "supply-overcharge", kind: "supply", value: "overcharge", price: 30, max: 3, stock: 2 },

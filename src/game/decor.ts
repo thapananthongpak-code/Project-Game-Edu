@@ -1,5 +1,5 @@
-// ของตกแต่งที่ผู้เล่นวางเองแบบอิสระในโถงและโรงเก็บหุ่น (docs/GDD.md ข้อ 19)
-// ไฟล์นี้เป็นข้อมูลและฟังก์ชันล้วน: กติกาว่าวางตรงไหนได้ จำนวนที่วางได้ต่อห้อง และผังของห้องเมื่อรวมของตกแต่งแล้ว
+// การจัดห้องของผู้เล่นในโถงและโรงเก็บหุ่น (docs/GDD.md ข้อ 19): ของตกแต่งที่วางเองแบบอิสระ และจุดใช้งานที่ย้ายเองได้
+// ไฟล์นี้เป็นข้อมูลและฟังก์ชันล้วน: กติกาว่าวางตรงไหนได้ จำนวนที่วางได้ต่อห้อง และผังของห้องเมื่อรวมของตกแต่งและจุดที่ย้ายแล้ว
 import type { Difficulty } from "../state/campaign";
 import { DECOR, type Decor } from "../state/shop.config";
 import { MAP_COLS } from "./constants";
@@ -92,5 +92,71 @@ export function openCells(base: GameMap, area: DecorArea, placed: readonly Decor
   const cells = [];
   const rows = DECOR[decor].size === "wall" ? [WALL_ROW] : base.shape.map((_, row) => row);
   for (const row of rows) for (let col = 0; col < MAP_COLS; col++) if (placementError(base, area, placed, { decor, col, row }) === null) cells.push({ col, row });
+  return cells;
+}
+
+// ---------------------------------------------------------------- จุดใช้งานที่ผู้เล่นย้ายเองได้ (GDD ข้อ 19)
+
+/**
+ * จุดใช้งานเริ่มต้นของโถงและโรงเก็บหุ่นที่ผู้เล่นย้ายตำแหน่งเองได้ (ชนิดของวัตถุในผัง แต่ละห้องมีชนิดละจุดเดียว)
+ * ที่ย้ายไม่ได้: ประตูและประตูโรงเก็บหุ่น (ติดผนัง ลำดับห้องต้องคงเดิม) ตู้กระจกเก็บแกน AI (ผู้ใช้กำหนดว่าไม่ต้องแก้) และ NPC
+ */
+export const STATIONS = ["shop", "storage", "travel", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"] as const;
+export type Station = (typeof STATIONS)[number];
+/** ตำแหน่งที่ผู้เล่นย้ายจุดใช้งานไป (ช่องซ้ายสุดและแถวของฐาน) จุดที่ไม่อยู่ในนี้อยู่ที่ตำแหน่งเริ่มต้นของผัง */
+export type RoomLayout = Partial<Record<Station, { col: number; row: number }>>;
+
+const isStation = (kind: string): kind is Station => STATIONS.some((station) => station === kind);
+
+/** จุดใช้งานที่ย้ายได้ของห้องนี้ ตามลำดับใน STATIONS */
+export const stationsIn = (base: GameMap): Station[] => STATIONS.filter((station) => base.objects.some((object) => object.kind === station));
+
+/** ผังของห้องเมื่อย้ายจุดใช้งานตามที่ผู้เล่นจัด (ไม่ตรวจกติกา ใช้ layoutError หรือ validLayout ก่อน) */
+export function arrangedMap(base: GameMap, layout: RoomLayout): GameMap {
+  return { ...base, objects: base.objects.map((object) => (isStation(object.kind) && layout[object.kind] ? { ...object, ...layout[object.kind] } : object)) };
+}
+
+/**
+ * ตรวจผังทั้งห้องหลังย้ายจุดใช้งาน (รวมของตกแต่งที่วางอยู่) คืน null ถ้าใช้ได้:
+ * วัตถุตั้งพื้นทุกชิ้นอยู่บนพื้นและไม่ทับกัน (floor) ช่องยืนหน้าประตูและจุดใช้งานทุกจุดรวมทั้งจุดเริ่มว่าง (access)
+ * และเดินจากจุดเริ่มถึงทุกจุดใช้งานได้ (blocks) ผู้เรียนจึงย้ายของจนขังตัวเองหรือปิดทางไปห้องเรียนไม่ได้
+ */
+export function layoutError(base: GameMap, layout: RoomLayout, decor: readonly DecorPlacement[] = []): PlaceError | null {
+  for (const at of Object.values(layout)) if (!Number.isInteger(at.col) || !Number.isInteger(at.row)) return "floor";
+  const arranged = arrangedMap(base, layout);
+  const map = decoratedMap(arranged, decor);
+  const taken = new Set<string>();
+  for (const object of map.objects) {
+    for (const cell of blockedCells(object)) {
+      const at = key(cell.col, cell.row);
+      if (!isFloorCell(base, cell.col, cell.row) || taken.has(at)) return "floor";
+      taken.add(at);
+    }
+  }
+  // ของที่วางราบกับพื้น (ถ้ามี) ต้องไม่ถูกทับ
+  for (const object of map.objects.filter((item) => item.flat)) if (taken.has(key(Math.floor(object.col), object.row))) return "floor";
+  const access = arranged.objects.flatMap(accessCells);
+  if (taken.has(key(base.spawn.col, base.spawn.row))) return "access";
+  if (access.some((cell) => !isFloorCell(base, cell.col, cell.row) || taken.has(key(cell.col, cell.row)))) return "access";
+  const reachable = reachableCells(map);
+  return arranged.objects.every((object) => accessCells(object).some((cell) => reachable.has(key(cell.col, cell.row)))) ? null : "blocks";
+}
+
+/** ตำแหน่งที่ย้ายไว้ซึ่งยังใช้ได้กับผังปัจจุบัน (ข้อมูลที่ผิดหรือขัดกับผังทำให้ทั้งห้องกลับไปตำแหน่งเริ่มต้น) */
+export function validLayout(base: GameMap, layout: RoomLayout | undefined): RoomLayout {
+  if (!layout) return {};
+  const present = stationsIn(base);
+  const kept: RoomLayout = {};
+  for (const station of present) {
+    const at = layout[station];
+    if (at) kept[station] = { col: at.col, row: at.row };
+  }
+  return layoutError(base, kept) === null ? kept : {};
+}
+
+/** ช่องทั้งหมดที่ย้ายจุดใช้งานนี้ไปได้ (ใช้ไฮไลต์บนกระดานตกแต่ง) */
+export function stationCells(base: GameMap, layout: RoomLayout, decor: readonly DecorPlacement[], station: Station): { col: number; row: number }[] {
+  const cells = [];
+  for (let row = 0; row < base.shape.length; row++) for (let col = 0; col < MAP_COLS; col++) if (layoutError(base, { ...layout, [station]: { col, row } }, decor) === null) cells.push({ col, row });
   return cells;
 }

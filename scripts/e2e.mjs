@@ -283,7 +283,13 @@ async function takeAssessment(page, phase, shouldAnswer, press = (locator) => lo
 async function onboard(page, { name, topic1Correct, tap = false, shots = false, started = false, avatar = null }) {
   const difficulty = "easy";
   const press = (locator) => (tap ? locator.tap() : locator.click());
-  if (shots) await shot(page, "00-menu");
+  if (shots) {
+    // หน้าเมนูอธิบายเกมแบบย่อ
+    await page.getByTestId("menu-about").waitFor();
+    assert.equal(await page.locator('[data-testid="menu-about"] li').count(), 5);
+    assert.match(await page.getByTestId("menu-about").innerText(), /เกมนี้เล่นอย่างไร[\s\S]*แกน AI[\s\S]*สู้ไคจู[\s\S]*คู่มือรูปในเกม/);
+    await shot(page, "00-menu");
+  }
   if (!started) await press(page.getByRole("button", { name: "เริ่มเกมใหม่" }));
   await page.getByTestId("player-name").fill(name);
   assert.equal(await page.getByTestId("avatar-a").getAttribute("aria-checked"), "true");
@@ -809,6 +815,13 @@ async function playRoom1(page) {
   await page.getByTestId("sound-music").click();
   assert.deepEqual((await snap(page)).audio.settings, { music: true, sfx: false }, "สมุดเควสเปิดปิดดนตรีและเสียงประกอบแยกกันได้");
   await page.getByTestId("sound-sfx").click();
+  // คู่มือรูปในเกม: รูปของแต่ละจุดคืออะไร ใช้ทำอะไร
+  await page.locator('[data-testid="questlog-guide"] summary').click();
+  assert.equal(await page.locator('[data-testid^="guide-"]').count(), 19, "คู่มือรูป: โถง 6 โรงเก็บหุ่น 6 ห้องเรียน 4 และบนจอ 3");
+  assert.match(await page.getByTestId("guide-shop").innerText(), /ร้านสหกรณ์แล็บ[\s\S]*ซื้อ/);
+  assert.match(await page.getByTestId("guide-travel").innerText(), /กระดานแผนที่[\s\S]*เดินทางไปแมพอื่น/);
+  await page.getByTestId("guide-travel").scrollIntoViewIfNeeded();
+  await shot(page, "01-questlog-guide");
   await page.getByRole("button", { name: "ปิด", exact: true }).click();
   assert.deepEqual(JSON.parse(await page.evaluate(() => localStorage.getItem("ai-trainer-quest-settings"))), { music: true, sfx: true });
   assert.equal((await snap(page)).audio.playing, "lab:0");
@@ -1190,7 +1203,7 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {} });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
@@ -2206,7 +2219,7 @@ const doneRoom = (topic) => ({ stationsSeen: 0, minigameDone: topic < 6, stars: 
 const doneRooms = (topics) => Object.fromEntries(topics.map((topic) => [topic, doneRoom(topic)]));
 const assessmentOf = (form) => ({ form, correctByTopic: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, items: [], completedAt: NOW });
 const wonAll = (map) => Object.fromEntries(CAMPAIGN[map].battles.map((battle) => [battle.id, WON]));
-const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, ...patch });
+const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, ...patch });
 const MAP1_STORY = ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "ending"];
 /** ผู้เล่นที่ผ่านแมพ 1 ครบแล้ว (ชนะไคจูทุกตัว ทำแบบทดสอบหลังเรียนแล้ว) ยังอยู่ที่แมพ 1 */
 const travelerSave = (patch = {}) => ({
@@ -2284,6 +2297,8 @@ async function playNormal(page) {
   assert.match(await page.getByTestId("shop-locked-weapon-cannon").innerText(), /วางขายที่แมพ 3/);
   assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 22, "ร้านแสดงของตกแต่งห้อง 22 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 20 ชิ้น)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-decor-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-decor-", "")).sort()), ["fountain", "statue"]);
+  assert.equal(await page.locator('[data-testid^="shop-item-theme-"]').count(), 6, "ร้านขายธีมสีของห้อง 6 แบบ");
+  assert.deepEqual(await page.locator('[data-testid^="shop-item-theme-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-theme-", ""))), ["midnight"]);
   await page.getByTestId("shop-buy-decor-sofa").click();
   await page.getByTestId("shop-buy-decor-neon").click();
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), String(start - 120), "โซฟา 60 + ป้ายนีออน 60");
@@ -2361,8 +2376,86 @@ async function playNormal(page) {
   assert.match((await snap(page)).store.prompt, /กระดานตกแต่งห้อง/);
   await act(page);
   await decor.waitFor();
-  await page.keyboard.press("Escape");
+
+  // --- ย้ายจุดใช้งานเริ่มต้นของห้องได้เอง: ปุ่มปรับแต่งอยู่ที่หัวของแถบจัดวาง
+  const layoutOf = async () => Object.fromEntries((await decor.getAttribute("data-layout")).split(";").map((entry) => entry.split("@")));
+  const spotOf = async (id) => (await snap(page)).interactables.filter((i) => i.id === id).map((i) => Math.round(i.x))[0];
+  assert.equal(await decor.getAttribute("data-mode"), "decor");
+  await page.getByTestId("decor-mode-station").click();
+  assert.equal(await decor.getAttribute("data-mode"), "station");
+  assert.deepEqual(await layoutOf(), { shop: "2,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
+  assert.equal(await page.getByTestId("decor-panel").getAttribute("data-top"), "true", "จุดใช้งานของโถงอยู่แถวล่าง: แถบเลื่อนขึ้นบนเองไม่ให้บัง");
+  assert.equal(await page.getByTestId("station-reset").isDisabled(), true);
+  assert.equal(await page.locator('[data-testid^="station-pick-"]').count(), 4, "โถง: ร้าน กล่องเก็บไอเทม กระดานแผนที่ กระดานตกแต่ง (ประตูย้ายไม่ได้)");
+  // แตะชื่อจุดแล้วแตะช่อง: ทับของอื่นไม่ได้ และหน้าจุดต้องมีที่ยืน (โซฟาอยู่ที่ช่อง 15–16 แถว 6)
+  await page.getByTestId("station-pick-shop").click();
+  assert.equal(await decor.getAttribute("data-held"), "shop");
+  await clickCell(page, 5, 8);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ต้องเป็นพื้นที่ว่างและไม่ทับของชิ้นอื่น/);
+  await clickCell(page, 15, 5);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /บังจุดยืนหน้าประตูหรือจุดใช้งานอื่น/);
+  assert.equal((await layoutOf()).shop, "2,8", "ย้ายไม่ได้: ร้านอยู่ที่เดิม และยังถืออยู่");
+  assert.equal(await decor.getAttribute("data-held"), "shop");
+  await clickCell(page, 6, 5);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ย้ายร้านสหกรณ์แล็บแล้ว/);
+  assert.equal((await layoutOf()).shop, "6,5");
+  await page.waitForTimeout(500);
+  assert.equal(await spotOf("shop"), 224, "ร้านในฉากย้ายไปที่ใหม่ทันที");
+  let blocked = (await snap(page)).map.blocked;
+  assert.deepEqual([blocked.includes("6,5"), blocked.includes("7,5"), blocked.includes("2,8")], [true, true, false], "ตัวกันชนย้ายตามร้าน ที่เดิมเดินผ่านได้");
+  // ลากจุดใช้งานบนฉาก: กล่องเก็บไอเทม (ช่อง 5–6 แถว 8) ไปช่อง 9–10 แถว 6
+  const boxFrom = await cellPoint(page, 6, 8, 0);
+  const boxTo = await cellPoint(page, 10, 6, 0);
+  await page.mouse.move(boxFrom.x, boxFrom.y);
+  await page.mouse.down();
+  await page.mouse.move((boxFrom.x + boxTo.x) / 2, (boxFrom.y + boxTo.y) / 2, { steps: 4 });
+  assert.equal(await decor.getAttribute("data-held"), "storage", "ลากจุดใช้งานบนฉาก: ถือจุดนั้น");
+  await page.mouse.move(boxTo.x, boxTo.y, { steps: 4 });
+  await page.mouse.up();
+  assert.equal((await layoutOf()).storage, "9,6", `ลากกล่องเก็บไอเทมไปวางที่ใหม่: ${await decor.getAttribute("data-layout")}`);
+  // คีย์บอร์ด: เลื่อนกรอบไปที่กระดานแผนที่ Enter หยิบ เลื่อนไปช่องใหม่ Enter วาง
+  await page.getByTestId("decor-grid").focus();
+  await moveCursor(page, 8, 8);
+  await page.keyboard.press("Enter");
+  assert.equal(await decor.getAttribute("data-held"), "travel");
+  await moveCursor(page, 16, 8);
+  await page.keyboard.press("Enter");
+  assert.equal((await layoutOf()).travel, "16,8");
+  await shot(page, "35-station-board");
+  // ของตกแต่งตรวจกับผังที่ย้ายแล้ว: ที่เดิมของร้านวางของได้
+  await page.getByTestId("decor-mode-decor").click();
+  await page.getByTestId("decor-pick-plant").click();
+  await clickCell(page, 2, 8);
+  assert.ok((await decorPlaced(page)).includes("plant@2,8"), "ที่เดิมของร้านว่างแล้ว วางของตกแต่งได้");
+  // ธีมสี: ยังไม่ได้ซื้อ มีแต่ธีมเดิมของแมพ
+  await page.getByTestId("decor-mode-theme").click();
+  assert.deepEqual([await page.locator('[data-testid^="theme-pick-"]').count(), await page.getByTestId("theme-pick-default").getAttribute("aria-pressed"), await decor.getAttribute("data-theme")], [1, "true", "default"]);
+  assert.match(await page.getByTestId("decor-panel").innerText(), /ซื้อธีมสีได้ที่ร้านสหกรณ์แล็บ/);
+  await shot(page, "35-theme-board");
+  await page.getByTestId("decor-close").click();
+  await page.waitForTimeout(400);
+  assert.deepEqual((await snap(page)).store.shop.layout, { "easy:hall": { shop: { col: 6, row: 5 }, storage: { col: 9, row: 6 }, travel: { col: 16, row: 8 } } });
+  // เดินไปใช้ร้านที่ย้ายแล้วได้ตามปกติ
+  await walkTo(page, "shop");
+  assert.match((await snap(page)).store.prompt, /ร้านสหกรณ์แล็บ/);
+  await act(page);
+  await page.getByTestId("shop").waitFor();
+  await page.getByTestId("shop-close").click();
   await page.waitForTimeout(350);
+  await shot(page, "35-hall-rearranged");
+  // คืนตำแหน่งเริ่มต้น: ทุกจุดกลับที่เดิม กระถางที่ทับที่เดิมของร้านถูกเก็บออก
+  await walkTo(page, "decorboard");
+  await act(page);
+  await decor.waitFor();
+  await page.getByTestId("decor-mode-station").click();
+  await page.getByTestId("station-reset").click();
+  assert.match(await page.getByTestId("decor-notice").innerText(), /คืนทุกจุดไปตำแหน่งเริ่มต้นแล้ว/);
+  assert.deepEqual(await layoutOf(), { shop: "2,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
+  assert.ok(!(await decorPlaced(page)).includes("plant@2,8"));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  assert.deepEqual([(await snap(page)).store.shop.layout, await spotOf("shop")], [{}, 96]);
+  log("ย้ายจุดใช้งาน: ร้าน กล่องเก็บไอเทม และกระดานแผนที่ย้ายได้ด้วยการแตะ ลาก หรือคีย์บอร์ด ทับของอื่นหรือบังจุดยืนไม่ได้ ฉากและทางเดินเปลี่ยนตามทันที คืนตำแหน่งเริ่มต้นได้");
   // โรงเก็บหุ่นตกแต่งได้เหมือนโถง แยกกัน จำกัด 6 ชิ้น
   await goToHangar(page);
   await walkTo(page, "decorboard");
@@ -2867,6 +2960,8 @@ async function playHard(page) {
     maps: { normal: doneRooms([1, 2, 3, 4, 5]), hard: {} },
     battles: { ...wonAll("easy"), ...wonAll("normal") },
     story: [...MAP1_STORY, "map-normal", "zone-n1", "zone-n2", "zone-n3", "win-n1", "win-n2", "win-n3", "ending-normal"],
+    // มีธีมสีอยู่แล้วหนึ่งแบบ (ไว้ตรวจการเปลี่ยนธีมของห้อง)
+    shop: shopOf({ owned: ["theme-midnight"] }),
   }));
   const arrival = await travelTo(page, "hard", 0);
   assert.deepEqual([arrival?.beat, arrival.art], ["map-hard", ["st_map3", "st_npc_captain_1", "st_boss_4", "st_kaiju_10"]]);
@@ -2896,6 +2991,39 @@ async function playHard(page) {
   assert.deepEqual(await npcIds(page), ["captain", "keeper"]);
   assert.equal((await snap(page)).bay.cores, 6);
   await shot(page, "33-hard-hangar");
+  // --- จัดโรงเก็บหุ่นเอง: ย้ายแท่นชาร์จพี่บิต และเปลี่ยนธีมสีของห้อง (ตู้กระจกเก็บแกนและ NPC ย้ายไม่ได้)
+  assert.equal((await snap(page)).map.tileset, "ts_hangar3");
+  await walkTo(page, "decorboard");
+  await act(page);
+  const planner = page.getByTestId("decor");
+  await planner.waitFor();
+  await page.getByTestId("decor-mode-station").click();
+  assert.deepEqual(await page.locator('[data-testid^="station-pick-"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("station-pick-", ""))), ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
+  await page.getByTestId("station-pick-bitpad").click();
+  await clickCell(page, 9, 6);
+  assert.match(await planner.getAttribute("data-layout"), /bitpad@9,6/);
+  await page.getByTestId("decor-mode-theme").click();
+  assert.equal(await page.locator('[data-testid^="theme-pick-"]').count(), 2);
+  await page.getByTestId("theme-pick-midnight").click();
+  assert.deepEqual([await planner.getAttribute("data-theme"), await page.getByTestId("theme-pick-midnight").getAttribute("aria-pressed")], ["midnight", "true"]);
+  await page.waitForTimeout(500);
+  await shot(page, "33-hard-hangar-theme");
+  await page.getByTestId("decor-close").click();
+  await page.waitForTimeout(400);
+  let arranged = await snap(page);
+  assert.deepEqual([arranged.map.tileset, arranged.bay.cores, arranged.store.shop.theme, arranged.store.shop.layout], ["ts_theme_midnight", 6, { "hard:hangar": "midnight" }, { "hard:hangar": { bitpad: { col: 9, row: 6 } } }], "ธีมและตำแหน่งใหม่มีผลในฉากทันที แกนในตู้ยังอยู่");
+  assert.deepEqual(await npcIds(page), ["captain", "keeper"]);
+  // โหลดหน้าใหม่: การจัดห้องยังอยู่
+  await page.reload();
+  await page.locator('[data-testid="menu-continue"]:not([disabled])').click();
+  await inHall(page);
+  await page.waitForTimeout(400);
+  assert.equal((await snap(page)).map.tileset, "ts_fortress", "ธีมเปลี่ยนเฉพาะห้องที่เลือก โถงยังเป็นธีมเดิม");
+  await goToHangar(page);
+  arranged = await snap(page);
+  assert.equal(arranged.map.tileset, "ts_theme_midnight");
+  assert.ok(arranged.map.blocked.includes("9,6") && arranged.map.blocked.includes("10,6"));
+  log("จัดโรงเก็บหุ่นของแมพ 3: ย้ายแท่นชาร์จพี่บิตและเปลี่ยนธีมสีได้ มีผลในฉากทันทีและยังอยู่หลังโหลดหน้าใหม่ ธีมเปลี่ยนเฉพาะห้องที่เลือก");
   // ถามตอบของกัปตันเรย์ใช้โจทย์ของทุกเรื่อง เปิดเพราะเรียนครบแล้วที่แมพ 1
   const start = await creditsOf(page);
   assert.equal(await doQuiz(page, "captain", 6), 60, "ถามตอบ 6 ข้อ ข้อละ 5 เครดิต × 2");

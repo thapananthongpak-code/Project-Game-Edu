@@ -172,6 +172,23 @@ export function MainMenu() {
             {course.course.unit}
           </p>
         )}
+        {/* คำอธิบายเกมแบบย่อ: เล่นอย่างไรใน 5 บรรทัด */}
+        <section className="mt-4 rounded-md border-2 border-ink bg-paper p-3 text-left" aria-labelledby="menu-about-title" data-testid="menu-about">
+          <h2 id="menu-about-title" className="text-sm font-extrabold text-teal-dark">
+            {ui.menu.aboutTitle}
+          </h2>
+          <ol className="mt-1 flex flex-col gap-1 text-sm">
+            {ui.menu.about.map((step) => (
+              <li key={step.text} className="flex items-start gap-2">
+                <span aria-hidden="true" className="w-5 shrink-0 text-center">
+                  {step.icon}
+                </span>
+                <span>{step.text}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2 text-xs text-slate">{ui.menu.aboutHint}</p>
+        </section>
         <div className="mt-5 flex flex-col gap-3">
           {hasSave && (
             <button type="button" className="btn" disabled={!ready} data-testid="menu-continue" onClick={continueGame}>

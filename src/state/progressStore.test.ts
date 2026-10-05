@@ -48,7 +48,7 @@ const sample: SaveData = {
   story: ["prologue", "zone-n1", "win-n1"],
   shop: {
     spent: 445,
-    owned: ["outfit-engineer", "bit-ninja", "module-scanner", "weapon-sword"],
+    owned: ["outfit-engineer", "bit-ninja", "module-scanner", "weapon-sword", "theme-ocean"],
     supplies: { ...emptyShop().supplies, "repair-kit": 2, reboot: 1 },
     outfit: "engineer",
     paint: "standard",
@@ -60,6 +60,8 @@ const sample: SaveData = {
     loadout: ["repair-kit", "reboot", "repair-kit"],
     bought: { "easy:repair-kit": 2, "normal:reboot": 1 },
     decor: { "easy:hall": [{ decor: "window", col: 3, row: 1 }], "normal:hangar": [{ decor: "plant", col: 3, row: 7 }] },
+    layout: { "easy:hall": { shop: { col: 15, row: 5 } }, "easy:hangar": { bitpad: { col: 2, row: 8 } } },
+    theme: { "easy:hall": "ocean" },
   },
 };
 
@@ -392,6 +394,22 @@ describe("migrateSave", () => {
     const v8 = migrateSave({ ...JSON.parse(JSON.stringify(sample)), version: 8, shop: { ...shop, modules: undefined, decor: { easy: { wall2: "window" } } } }) as SaveData;
     expect(v8.shop.modules).toEqual(["scanner", "laser"]);
     expect(v8.shop.decor).toEqual({ "easy:hall": [{ decor: "window", col: 12, row: 1 }] });
+    // จุดใช้งานที่ย้ายยังอยู่ ธีมที่ไม่ได้ซื้อถูกตัด และข้อมูลที่ยังไม่มีทั้งสองอย่างได้ค่าเริ่มต้น
+    expect([v8.shop.layout, v8.shop.theme]).toEqual([sample.shop.layout, {}]);
+    const bare = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop: { ...shop, layout: undefined, theme: undefined } }) as SaveData;
+    expect([bare.shop.layout, bare.shop.theme]).toEqual([{}, {}]);
+  });
+
+  it("จุดใช้งานที่ย้ายและธีมของห้อง: เก็บเฉพาะจุดที่รู้จัก ตำแหน่งที่เป็นช่องในผัง และธีมที่ซื้อแล้ว", () => {
+    const shop = {
+      ...sample.shop,
+      owned: ["theme-ocean"],
+      layout: { "easy:hall": { shop: { col: 15, row: 5 }, corecase: { col: 3, row: 5 }, travel: { col: 2.5, row: 5 }, storage: { col: 40, row: 5 }, door: "junk" }, "moon:hall": { shop: { col: 3, row: 5 } }, "hard:hangar": "junk" },
+      theme: { "easy:hall": "ocean", "easy:hangar": "sakura", "normal:hall": "lava", "moon:hall": "ocean" },
+    };
+    const save = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop }) as SaveData;
+    expect(save.shop.layout).toEqual({ "easy:hall": { shop: { col: 15, row: 5 } } });
+    expect(save.shop.theme).toEqual({ "easy:hall": "ocean" });
   });
 
   it("รูปแบบที่ไม่รู้จัก: คืน null", () => {

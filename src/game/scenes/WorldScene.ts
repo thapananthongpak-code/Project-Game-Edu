@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 import { fmt, ui } from "../../content/ui-strings";
 import type { Difficulty } from "../../state/campaign";
 import { quizUnlocked, useGameStore, type WorldLabel } from "../../state/gameStore";
-import { decorIn } from "../../state/shop";
+import { decorIn, layoutIn, roomMap, themeIn } from "../../state/shop";
 import { type NpcId, type NpcRecord, NPCS, questReady } from "../../state/npcs";
 import { touchInput } from "../../state/input";
 import { type CharacterSheet, sheetKey, wangKey } from "./BootScene";
@@ -58,6 +58,10 @@ export abstract class WorldScene extends Phaser.Scene {
   /** ของตกแต่งที่ผู้เล่นวางเองในห้องนี้ (โถงและโรงเก็บหุ่น): วัตถุ ภาพ และตัวกันชน สร้างใหม่เมื่อผู้เล่นจัดห้อง (syncDecor) */
   private decor: { object: MapObject; image: Phaser.GameObjects.Image; zone: Phaser.GameObjects.Zone | null }[] = [];
   private decorKey: string | null = null;
+  /** การจัดห้องที่ฉากนี้วาดอยู่ (ตำแหน่งจุดใช้งานที่ย้าย และธีม): เปลี่ยนเมื่อไรสร้างฉากใหม่ (syncRoom) */
+  private roomKey: string | null = null;
+  /** ตำแหน่งของผู้เล่นก่อนสร้างฉากใหม่เพราะการจัดห้องเปลี่ยน: กลับมายืนที่เดิมถ้ายังว่าง */
+  private resumeAt: { x: number; y: number } | null = null;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private facing: Direction = "south";
   private actionReadyAt = 0;
@@ -75,13 +79,37 @@ export abstract class WorldScene extends Phaser.Scene {
   }
 
   /** ผังและช่องที่วัตถุกันทางเดิน (สำหรับการทดสอบอัตโนมัติ) */
-  get mapInfo(): { shape: string[]; blocked: string[] } {
-    return { shape: this.map.shape, blocked: [...this.map.objects, ...this.decor.map((item) => item.object)].flatMap(blockedCells).map((cell) => `${cell.col},${cell.row}`) };
+  get mapInfo(): { shape: string[]; blocked: string[]; tileset: string } {
+    return { tileset: this.map.tileset, shape: this.map.shape, blocked: [...this.map.objects, ...this.decor.map((item) => item.object)].flatMap(blockedCells).map((cell) => `${cell.col},${cell.row}`) };
+  }
+
+  private static roomKeyOf(world: Difficulty, area: DecorArea): string {
+    const shop = useGameStore.getState().shop;
+    return JSON.stringify([layoutIn(shop, world, area), themeIn(shop, world, area)]);
+  }
+
+  /** วาดโถงหรือโรงเก็บหุ่นตามที่ผู้เล่นจัด: จุดใช้งานอยู่ตามที่ย้าย พื้นและผนังตามธีมที่เลือก (GDD ข้อ 19) */
+  protected buildRoom(world: Difficulty, area: DecorArea): void {
+    this.buildMap(roomMap(useGameStore.getState().shop, world, area));
+    this.roomKey = WorldScene.roomKeyOf(world, area);
+  }
+
+  /**
+   * ผู้เล่นย้ายจุดใช้งานหรือเปลี่ยนธีมที่กระดานตกแต่ง: สร้างฉากใหม่ตามการจัดล่าสุด ผู้เล่นยืนที่เดิม (เรียกทุกเฟรม)
+   * คืน true เมื่อสั่งสร้างฉากใหม่แล้ว ผู้เรียกควรหยุดงานของเฟรมนี้
+   */
+  protected syncRoom(world: Difficulty, area: DecorArea): boolean {
+    if (this.roomKey === null || WorldScene.roomKeyOf(world, area) === this.roomKey) return false;
+    this.roomKey = null;
+    this.resumeAt = this.player ? { x: this.player.x, y: this.player.y } : null;
+    this.scene.restart();
+    return true;
   }
 
   /** วาดพื้น ผนัง และวัตถุทั้งหมดของแผนที่ พร้อมตัวกันชน */
   protected buildMap(map: GameMap): void {
     this.map = map;
+    this.roomKey = null;
     this.placed = new Map();
     this.pickups = [];
     this.npcs = [];
@@ -333,6 +361,17 @@ export abstract class WorldScene extends Phaser.Scene {
   }
 
   protected createPlayer(x: number, y: number): void {
+    // ฉากถูกสร้างใหม่เพราะการจัดห้องเปลี่ยน: ยืนที่เดิม ถ้าตรงนั้นยังเป็นพื้นว่าง (ไม่มีจุดใช้งานถูกย้ายมาทับ)
+    const resume = this.resumeAt;
+    this.resumeAt = null;
+    if (resume) {
+      const col = Math.floor(resume.x / TILE);
+      const row = Math.floor((resume.y - MAP_TOP) / TILE);
+      const free = isFloorCell(this.map, col, row) && !this.map.objects.flatMap(blockedCells).some((cell) => cell.col === col && cell.row === row);
+      const spot = free ? resume : cellSpot(this.map.spawn.col, this.map.spawn.row);
+      x = spot.x;
+      y = spot.y;
+    }
     const texture = this.wantedTexture();
     // จุดยืนของตัวละครอยู่ที่ y = 60 ของภาพ 64×64 กล่องชนอยู่ที่เท้า
     this.player = this.physics.add.image(x, y, texture, 0).setOrigin(0.5, 60 / 64).setVisible(false);
