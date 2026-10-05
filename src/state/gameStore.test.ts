@@ -478,14 +478,16 @@ describe("เครดิตวิจัยและร้านสหกรณ�
     expect(adviseWeapon(n2, "sword", ["sword", "hammer"])).toMatchObject({ weak: ["strike"], resist: ["blade"], matchups: ["weak"], advantaged: false, better: "hammer", stronger: false, wanted: [] });
     expect(adviseWeapon(n2, "fist", ["hammer"])).toMatchObject({ advantaged: true, better: "hammer", stronger: true });
     expect(adviseWeapon(n2, "hammer", ["hammer", "sword"])).toMatchObject({ advantaged: true, better: null, stronger: false });
-    expect(adviseWeapon(n2, "sword", ["sword"])).toMatchObject({ advantaged: false, better: "fist", wanted: ["hammer"] });
+    expect(adviseWeapon(n2, "sword", ["sword"])).toMatchObject({ advantaged: false, better: "fist", wanted: ["drill", "hammer"] });
+    // อาวุธทางเลือกของประเภทเดียวกันก็ชนะทาง: มีสว่านอยู่ แนะนำสว่าน
+    expect(adviseWeapon(n2, "sword", ["sword", "drill"])).toMatchObject({ better: "drill", wanted: ["hammer"] });
     expect(adviseWeapon(n2, "fist", [])).toMatchObject({ advantaged: true, better: null, wanted: [] });
     // บอสสองร่าง: ดาบชนะทางร่างแรก พอใช้ได้กับร่างที่สอง ส่วนปืนชนะทางร่างที่สองแต่แพ้ทางร่างแรก จึงไม่ชวนเปลี่ยน แต่หอกแรงกว่าดาบ
     const boss = CAMPAIGN.normal.battles[3];
     expect(adviseWeapon(boss, "sword", ["sword", "blaster"])).toMatchObject({ weak: ["blade", "beam"], advantaged: true, better: null });
     expect(adviseWeapon(boss, "sword", ["sword", "blaster", "lance"])).toMatchObject({ better: "lance", stronger: true });
     // ไม่มีอาวุธไหนได้เปรียบ: ไม่ชวนเปลี่ยน บอกอาวุธที่ควรหา
-    expect(adviseWeapon(CAMPAIGN.easy.battles[2], "sword", ["sword"])).toMatchObject({ advantaged: false, better: null, wanted: ["blaster", "cannon"] });
+    expect(adviseWeapon(CAMPAIGN.easy.battles[2], "sword", ["sword"])).toMatchObject({ advantaged: false, better: null, wanted: ["blaster", "bow", "cannon"] });
   });
 
   it("เริ่มเกมใหม่: เนื้อเรื่องและร้านค้ากลับเป็นค่าเริ่มต้น", () => {

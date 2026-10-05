@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "sturdy metal workbench with a vise, a soldering iron, small robot parts and a desk lamp, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "db969fea-1c11-4341-8e0d-c3ea07e25124",
+  "generatedAt": "2026-10-05T11:56:08.128Z"
+}

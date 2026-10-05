@@ -1,0 +1,22 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage lab intern with short dark hair, wearing indigo blue cyber samurai armor with gold trim, layered shoulder guards, a red headband, armored boots, no weapon, no helmet, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงานแบบ ก ชุดซามูไรไซเบอร์ 4 ทิศ + เดิน 6 เฟรม",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "animate": {
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk"
+  },
+  "id": "69054c35-f39a-4e3e-8a82-628441ecea3d",
+  "generatedAt": "2026-10-05T11:59:57.772Z"
+}

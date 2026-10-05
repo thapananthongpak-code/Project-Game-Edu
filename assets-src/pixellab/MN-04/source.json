@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "a gold coin with a star emblem next to a small shopping basket holding a wrench and a blue potion bottle, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "ebce3187-47fe-4af0-8c62-98469bb6056f",
+  "generatedAt": "2026-10-05T11:49:00.518Z"
+}

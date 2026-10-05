@@ -1,0 +1,20 @@
+{
+  "tool": "create_topdown_tileset",
+  "arguments": {
+    "lower_description": "seamless floor tile of brushed light grey steel floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "upper_description": "seamless wall tile of gunmetal grey steel wall panels with an orange trim band and small round orange status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "tile_size": {
+      "width": 32,
+      "height": 32
+    },
+    "mode": "standard",
+    "transition_size": 0,
+    "view": "low top-down",
+    "outline": "lineless",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_topdown_tileset",
+  "id": "4095a58a-20ef-4c70-9658-13491d1e4929",
+  "generatedAt": "2026-10-05T11:59:20.941Z"
+}

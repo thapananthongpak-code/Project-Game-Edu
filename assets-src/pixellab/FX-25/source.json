@@ -1,0 +1,25 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "the head of a golden trident lying horizontally with its three sharp prongs pointing to the right, side view, wrapped in blue electricity, white streak trail on the left behind it, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "east"
+  },
+  "fetchTool": "get_image",
+  "id": "9961edc0-d483-4e61-b8bd-c407b9aa1662",
+  "generatedAt": "2026-10-05T12:03:49.658Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "6dc77969-ac34-4432-b4a5-882ca050234c",
+      "reason": "ได้ตรีศูลตั้งขึ้นชี้ฟ้า เอฟเฟกต์นี้พุ่งแนวนอนไปหาเป้า จึงบรรยายเป็นหัวตรีศูลนอนชี้ไปทางขวา แล้วเจนใหม่",
+      "subject": "three golden trident prongs thrusting to the right wrapped in blue electricity with a white streak trail"
+    }
+  ]
+}

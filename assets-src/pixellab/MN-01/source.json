@@ -1,0 +1,15 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "a small lab learning terminal kiosk with a glowing cyan screen showing a simple open book symbol, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "9fc988e8-9fe2-4dc1-bf6a-4988e4363c40",
+  "generatedAt": "2026-10-05T11:30:36.317Z"
+}

@@ -511,7 +511,7 @@ def art_guide_prompts():
 
 # สีชุดของตัวละครชั่วคราว (ใช้เมื่อยังไม่มีภาพจริง)
 OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57", "researcher": "#C9B27C", "commander": "#FFF4DC",
-                 "astronaut": "#F4F4F4", "ninja": "#1A1C2C", "hero": "#2FB8AC"}
+                 "astronaut": "#F4F4F4", "ninja": "#1A1C2C", "hero": "#2FB8AC", "hoodie": "#2FB8AC", "paramedic": "#F08C2E", "samurai": "#2A4FA3"}
 # ตัวละครผู้เล่น: (รหัส, แบบ, ชุด) แบบ a = ผมสั้น แบบ b = ผมหางม้า
 PLAYER_CHARACTERS = [
     ("CH-01", "a", "lab"), ("CH-07", "b", "lab"),
@@ -519,6 +519,7 @@ PLAYER_CHARACTERS = [
     ("CH-11", "b", "engineer"), ("CH-12", "b", "pilot"), ("CH-13", "b", "guardian"),
     ("CH-14", "a", "researcher"), ("CH-15", "a", "commander"), ("CH-16", "b", "researcher"), ("CH-17", "b", "commander"),
     ("CH-30", "a", "astronaut"), ("CH-31", "a", "ninja"), ("CH-32", "a", "hero"), ("CH-33", "b", "astronaut"), ("CH-34", "b", "ninja"), ("CH-35", "b", "hero"),
+    ("CH-36", "a", "hoodie"), ("CH-37", "a", "paramedic"), ("CH-38", "a", "samurai"), ("CH-39", "b", "hoodie"), ("CH-40", "b", "paramedic"), ("CH-41", "b", "samurai"),
 ]
 # ภาพประกอบเนื้อเรื่องที่เจนจาก Pixel Lab: (รหัส, ไฟล์)
 STORY_PANELS = [
@@ -556,6 +557,9 @@ GUARDIAN_WEAPONS = ["fist", "sword", "blaster", "hammer", "lance", "cannon"]
 # อุปกรณ์ของชิปที่ติดหลังหุ่น: ภาพต้นฉบับคือหุ่นทั้งตัวที่มีอุปกรณ์ ตอน build ดึงเฉพาะส่วนอุปกรณ์ออกมาเป็นชั้นภาพหลังตัวหุ่น
 GUARDIAN_CHIPS = [("GC-01", "gd_chip_charger"), ("GC-02", "gd_chip_retry"), ("GC-03", "gd_chip_focus"), ("GC-04", "gd_chip_regen")]
 GUARDIAN_VARIANTS = [(f"GD-{a * 6 + w + 1:02d}", f"gd_{armor}_{weapon}") for a, armor in enumerate(GUARDIAN_ARMORS) for w, weapon in enumerate(GUARDIAN_WEAPONS)]
+# อาวุธที่เพิ่มทีหลัง: รหัสต่อท้ายจาก GD-31 (อาวุธละ 5 ภาพตามลำดับเกราะ) รหัสของภาพชุดแรกจึงไม่เลื่อน
+GUARDIAN_WEAPONS_ADDED = ["drill", "bow", "trident"]
+GUARDIAN_VARIANTS += [(f"GD-{31 + n * 5 + a}", f"gd_{armor}_{weapon}") for n, weapon in enumerate(GUARDIAN_WEAPONS_ADDED) for a, armor in enumerate(GUARDIAN_ARMORS)]
 # ฉากหลังของเรื่องราว NPC (ฉากเปล่า ตอน build วางตัวละครของเกมลงไป)
 SCENE_BACKDROPS = [("SC-01", "bg_scene_lab"), ("SC-02", "bg_scene_hangar"), ("SC-03", "bg_scene_gym"), ("SC-04", "bg_scene_archive"), ("SC-05", "bg_scene_factory"), ("SC-06", "bg_scene_market"),
                    ("SC-07", "bg_scene_studio"), ("SC-08", "bg_scene_forge"), ("SC-09", "bg_scene_outpost"), ("SC-10", "bg_scene_clinic"), ("SC-11", "bg_scene_fortress")]
@@ -599,7 +603,8 @@ ROOM_PROPS = [
 ]
 
 # คอสตูมของพี่บิต: (รหัส, ชื่อคอสตูม) ไฟล์คือ ch_mentor_<ชื่อ>_south
-BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-24", "gold"), ("CH-25", "explorer"), ("CH-26", "star")]
+BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-24", "gold"), ("CH-25", "explorer"), ("CH-26", "star"),
+             ("CH-27", "pirate"), ("CH-28", "chef"), ("CH-29", "dragon")]
 # NPC ประจำห้อง: (รหัส, ไฟล์)
 NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director"),
         ("NP-07", "npc_smith"), ("NP-08", "npc_ranger"), ("NP-09", "npc_medic"), ("NP-10", "npc_sage"), ("NP-11", "npc_captain"), ("NP-12", "npc_keeper")]
@@ -607,11 +612,14 @@ NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archiv
 BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX-03", "fx_bolt", "east"), ("FX-04", "fx_fireball", "west"), ("FX-05", "fx_shield", "east"), ("FX-06", "fx_spark", "east"),
              ("FX-07", "fx_fist", "east"), ("FX-08", "fx_sword", "east"), ("FX-09", "fx_beam", "east"), ("FX-10", "fx_bite", "west"), ("FX-11", "fx_scrap", "west"),
              ("FX-12", "fx_pincer", "west"), ("FX-13", "fx_swarm", "west"), ("FX-14", "fx_wave", "west"), ("FX-15", "fx_ruin", "west"), ("FX-16", "fx_stun", "east"),
-             ("FX-17", "fx_hammer", "east"), ("FX-18", "fx_lance", "east"), ("FX-19", "fx_zap", "west"), ("FX-20", "fx_shell", "west"), ("FX-21", "fx_sting", "west"), ("FX-22", "fx_halo", "west")]
+             ("FX-17", "fx_hammer", "east"), ("FX-18", "fx_lance", "east"), ("FX-19", "fx_zap", "west"), ("FX-20", "fx_shell", "west"), ("FX-21", "fx_sting", "west"), ("FX-22", "fx_halo", "west"),
+             ("FX-23", "fx_drill", "east"), ("FX-24", "fx_arrow", "east"), ("FX-25", "fx_trident", "east")]
 # ไอคอนอุปกรณ์ของการ์เดียน (ร้าน กล่องเก็บไอเทม ด่านต่อสู้): (รหัส, ไฟล์)
 GEAR_ICONS = [("GR-01", "gr_fist"), ("GR-02", "gr_sword"), ("GR-03", "gr_blaster"), ("GR-04", "gr_armor_plate"), ("GR-05", "gr_armor_heavy"), ("GR-06", "gr_armor_guard"),
               ("GR-07", "gr_chip_retry"), ("GR-08", "gr_chip_charger"), ("GR-09", "gr_hammer"), ("GR-10", "gr_lance"), ("GR-11", "gr_cannon"), ("GR-12", "gr_armor_titan"),
-              ("GR-13", "gr_armor_spike"), ("GR-14", "gr_chip_focus"), ("GR-15", "gr_chip_regen")]
+              ("GR-13", "gr_armor_spike"), ("GR-14", "gr_chip_focus"), ("GR-15", "gr_chip_regen"), ("GR-16", "gr_drill"), ("GR-17", "gr_bow"), ("GR-18", "gr_trident")]
+# ไอคอนของกล่อง "เกมนี้เล่นอย่างไร" ที่หน้าเมนู (หน้า HTML อย่างเดียว): (รหัส, ไฟล์)
+MENU_ICONS = [("MN-01", "ic_menu_learn"), ("MN-02", "ic_menu_core"), ("MN-03", "ic_menu_battle"), ("MN-04", "ic_menu_shop"), ("MN-05", "ic_menu_travel")]
 GEAR_SETTINGS = {"no_background": True, "outline": "single color black outline", "shading": "basic shading", "detail": "medium detail"}
 # ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
 DECOR_PROPS = [
@@ -619,6 +627,8 @@ DECOR_PROPS = [
     ("PR-D13", "pr_decor_neon", (64, 32)), ("PR-D14", "pr_decor_clock", (64, 32)), ("PR-D15", "pr_decor_banner", (64, 32)),
     ("PR-D16", "pr_decor_aquarium", (64, 64)), ("PR-D17", "pr_decor_arcade", (64, 64)), ("PR-D18", "pr_decor_statue", (64, 64)), ("PR-D19", "pr_decor_sofa", (64, 64)), ("PR-D20", "pr_decor_fountain", (64, 64)),
     ("PR-D21", "pr_decor_robot_pet", (32, 64)), ("PR-D22", "pr_decor_telescope", (32, 64)), ("PR-D23", "pr_decor_flag", (32, 64)),
+    ("PR-D24", "pr_decor_starmap", (64, 32)), ("PR-D25", "pr_decor_shelf", (64, 32)), ("PR-D26", "pr_decor_terrarium", (64, 64)), ("PR-D27", "pr_decor_workbench", (64, 64)),
+    ("PR-D28", "pr_decor_jukebox", (32, 64)), ("PR-D29", "pr_decor_beanbag", (32, 64)), ("PR-D30", "pr_decor_globe", (32, 64)),
     ("PR-H06", "pr_travel_board", (64, 64)), ("PR-H07", "pr_decor_board", (32, 64)),
     ("PR-D01", "pr_decor_window", (64, 32)), ("PR-D02", "pr_decor_wall_screens", (64, 32)), ("PR-D03", "pr_decor_rug", (64, 64)),
     ("PR-D04", "pr_decor_crates", (32, 64)), ("PR-D05", "pr_decor_vending", (32, 64)), ("PR-D06", "pr_decor_lamp", (32, 64)),
@@ -794,6 +804,14 @@ def main():
                 lambda: draw_floor("#E4F1FA", "#A9C7DE"), lambda: draw_wall("#B8C4D0", "#7C8A99", stripe="#73C2FB")),
         tileset("TS-17", "ts_theme_midnight", "ธีมห้อง นีออนยามค่ำ", True,
                 lambda: draw_floor("#1A1C2C", "#29E0E0"), lambda: draw_wall("#101018", "#05050A", stripe="#FF4FD8")),
+        tileset("TS-18", "ts_theme_gold", "ธีมห้อง ทองคำ", True,
+                lambda: draw_floor("#E8C24A", "#B58A1F"), lambda: draw_wall("#F4F0E0", "#B8A878", stripe="#FFCD75")),
+        tileset("TS-19", "ts_theme_crimson", "ธีมห้อง แดงเพลิง", True,
+                lambda: draw_floor("#B13E53", "#7A2436"), lambda: draw_wall("#333C57", "#1A1C2C", stripe="#EF4444")),
+        tileset("TS-20", "ts_theme_lemon", "ธีมห้อง เลมอน", True,
+                lambda: draw_floor("#F7E98E", "#D1BE4F"), lambda: draw_wall("#8FC7EE", "#5D9BC9", stripe="#FFFFFF")),
+        tileset("TS-21", "ts_theme_steel", "ธีมห้อง เหล็กกล้า", True,
+                lambda: draw_floor("#C5CCD6", "#8C96A3"), lambda: draw_wall("#566170", "#333C57", stripe="#F08C2E")),
         prop("PR-C01", "pr_door_locked", (32, 64), lambda: draw_door(False)),
         prop("PR-C02", "pr_door_open", (32, 64), lambda: draw_door(True)),
         prop("PR-C03", "pr_core_pedestal", (32, 64), draw_pedestal),
@@ -824,6 +842,7 @@ def main():
         *[kaiju(n) for n in KAIJU_COLORS],
         *[battle_fx(*spec) for spec in BATTLE_FX],
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "gear", web=True) for asset_id, base in GEAR_ICONS],
+        *[image(asset_id, base, (64, 64), lambda: draw_blob(64, YELLOW, PAPER), "icon", GEAR_SETTINGS, "items", web=True) for asset_id, base in MENU_ICONS],
         image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         image("BT-08", "bt_boss_3", (128, 128), lambda: draw_blob(128, INK, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         *[image(asset_id, base, (128, 128), (lambda color=color: draw_blob(128, color, INK)), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True) for asset_id, base, color in EXTRA_FOES],

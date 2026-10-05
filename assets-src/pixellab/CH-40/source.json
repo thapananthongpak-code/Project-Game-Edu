@@ -1,0 +1,22 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "teenage girl lab intern with dark hair tied in a high ponytail, wearing a white and orange field paramedic uniform with a teal medical cross patch on the shoulder, a small first aid pouch on the belt and orange gloves, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "นักฝึกงานแบบ ข ชุดแพทย์สนาม 4 ทิศ + เดิน 6 เฟรม",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "animate": {
+    "template_animation_id": "walking-6-frames",
+    "animation_name": "walk"
+  },
+  "id": "02334c57-5a7f-4016-8d75-120fc4f6f56d",
+  "generatedAt": "2026-10-05T12:01:16.155Z"
+}

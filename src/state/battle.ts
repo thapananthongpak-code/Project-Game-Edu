@@ -29,9 +29,9 @@ export interface BattleSetup {
   dodges: number;
 }
 
-/** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของแมพ บวกเกราะ (หนัก ไททัน) และเครื่องแบบ (ชุดเกราะผู้พิทักษ์ ชุดฮีโร่การ์เดียน) */
+/** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของแมพ บวกเกราะ (หนัก ไททัน) และเครื่องแบบ (ชุดเกราะผู้พิทักษ์ ชุดซามูไรไซเบอร์ ชุดฮีโร่การ์เดียน) */
 export const robotMaxOf = (difficulty: Difficulty | undefined, outfit: Outfit, gear: Gear, coreBonus = 0): number =>
-  campaignOf(difficulty).robotHp + armorHp(gear.armor) + (outfit === "guardian" ? BATTLE.perks.guardianHp : outfit === "hero" ? BATTLE.perks.heroHp : 0) + coreBonus;
+  campaignOf(difficulty).robotHp + armorHp(gear.armor) + (outfit === "guardian" ? BATTLE.perks.guardianHp : outfit === "hero" ? BATTLE.perks.heroHp : outfit === "samurai" ? BATTLE.perks.samuraiHp : 0) + coreBonus;
 
 /**
  * modules = โมดูลอัปเกรดของพี่บิตที่ซื้อแล้ว gear = อุปกรณ์ของการ์เดียนที่ใส่อยู่
@@ -45,9 +45,9 @@ export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec
     robotMax: robotMaxOf(difficulty, outfit, gear, coreBonus),
     hints: level.battleHints + (outfit === "researcher" ? BATTLE.perks.researcherHints : 0) + (has("scanner") ? BATTLE.modules.scannerHints : 0),
     assistDamage: (outfit === "commander" ? BATTLE.perks.commanderAssist : BATTLE.assistDamage) + (has("laser") ? BATTLE.modules.laserAssist : 0),
-    assistHeal: has("medic") ? BATTLE.modules.medicHeal : 0,
+    assistHeal: (has("medic") ? BATTLE.modules.medicHeal : 0) + (outfit === "paramedic" ? BATTLE.perks.paramedicHeal : 0),
     repairHeal: BATTLE.repairKitHeal + (outfit === "engineer" ? BATTLE.perks.engineerHeal : 0) + (has("toolkit") ? BATTLE.modules.toolkitHeal : 0),
-    startShield: outfit === "pilot",
+    startShield: outfit === "pilot" || outfit === "samurai",
     formResetsOnRetry: level.formResetsOnRetry,
     gear,
     guards: gear.armor === "guard" ? GEAR.guard.blocksPerForm : 0,

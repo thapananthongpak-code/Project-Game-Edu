@@ -305,8 +305,13 @@ describe("ของจากร้านและเครื่องแบบ 
     expect(setupOf("normal", "n1", "commander").assistDamage).toBe(BATTLE.perks.commanderAssist);
     expect(setupOf("normal", "n1", "hero").robotMax).toBe(CAMPAIGN.normal.robotHp + BATTLE.perks.heroHp);
     expect(setupOf("normal", "n1", "ninja").dodges).toBe(BATTLE.perks.ninjaDodges);
-    // ทุกชุดในร้านให้อะไรบางอย่างที่ต่างจากชุดเริ่มต้น (ชุดนักบินอวกาศให้ที่กระเป๋า ไม่ใช่ในการต่อสู้โดยตรง: bagSizeOf)
-    for (const outfit of OUTFITS.filter((o) => o !== "lab" && o !== "astronaut")) expect(setupOf("normal", "n1", outfit), outfit).not.toEqual(base);
+    // ชุดแพทย์สนาม: พี่บิตยิงเสริมแล้วฟื้นพลัง (รวมกับโมดูลพยาบาลได้) ชุดซามูไรไซเบอร์: พลังสูงสุด +1 และเริ่มพร้อมโล่
+    expect(setupOf("normal", "n1", "paramedic").assistHeal).toBe(BATTLE.perks.paramedicHeal);
+    expect(battleSetup("normal", CAMPAIGN.normal.battles[0], "paramedic", ["medic"]).assistHeal).toBe(BATTLE.perks.paramedicHeal + BATTLE.modules.medicHeal);
+    expect([setupOf("normal", "n1", "samurai").robotMax, setupOf("normal", "n1", "samurai").startShield]).toEqual([CAMPAIGN.normal.robotHp + BATTLE.perks.samuraiHp, true]);
+    // ทุกชุดในร้านให้อะไรบางอย่างที่ต่างจากชุดเริ่มต้น (ชุดนักบินอวกาศให้ที่กระเป๋า ไม่ใช่ในการต่อสู้โดยตรง: bagSizeOf ชุดฮู้ดดี้เป็นชุดลำลอง ไม่มีสิทธิพิเศษ)
+    for (const outfit of OUTFITS.filter((o) => o !== "lab" && o !== "astronaut" && o !== "hoodie")) expect(setupOf("normal", "n1", outfit), outfit).not.toEqual(base);
+    expect(setupOf("normal", "n1", "hoodie")).toEqual(base);
     expect(bagSizeOf("astronaut")).toBe(BAG_SIZE + 1);
     expect(bagSizeOf("lab")).toBe(BAG_SIZE);
   });
@@ -507,8 +512,9 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     }
     // บอสของแมพ 3 แต่ละร่างแพ้ทางอาวุธคนละประเภท: อาวุธชิ้นเดียวชนะทางได้ร่างเดียว และแพ้ทางอีกร่างหนึ่งเสมอ
     expect(new Set(CAMPAIGN.hard.battles.at(-1)!.forms.map((form) => form.weak)).size).toBe(3);
-    // อาวุธมีประเภทละ 2 แบบ
-    for (const kind of WEAPON_CLASSES) expect(Object.values(WEAPON).filter((spec) => spec.class === kind), kind).toHaveLength(2);
+    // อาวุธมีประเภทละ 3 แบบ: พื้นฐาน แบบที่เก่งกว่า และแบบทางเลือกที่ได้ความสามารถของอีกประเภท
+    for (const kind of WEAPON_CLASSES) expect(Object.values(WEAPON).filter((spec) => spec.class === kind), kind).toHaveLength(3);
+    expect([WEAPON.drill, WEAPON.trident, WEAPON.bow]).toEqual([{ class: "strike", pierce: true }, { class: "blade", stunEvery: 3 }, { class: "beam", critEvery: 3 }]);
   });
 
   it("ตีเกินพลังที่คู่ต่อสู้เหลือ: บันทึกส่วนที่เกิน (wasted) แถบพลังจึงลดน้อยกว่าตัวเลขได้ และส่วนที่เกินไม่ทบไปร่างถัดไป", () => {

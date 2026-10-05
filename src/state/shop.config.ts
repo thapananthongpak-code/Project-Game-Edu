@@ -9,23 +9,25 @@ export const AVATARS = ["a", "b"] as const;
 export type Avatar = (typeof AVATARS)[number];
 
 /** ชุดของผู้เล่น ชุดแรกเป็นชุดเริ่มต้นที่ทุกคนมี ชุดอื่นเป็นเครื่องแบบที่ให้สิทธิพิเศษในด่านต่อสู้ (ตัวเลขใน battle.config.ts) */
-export const OUTFITS = ["lab", "engineer", "pilot", "researcher", "guardian", "commander", "astronaut", "ninja", "hero"] as const;
+export const OUTFITS = ["lab", "hoodie", "engineer", "pilot", "researcher", "guardian", "commander", "astronaut", "paramedic", "ninja", "samurai", "hero"] as const;
 export type Outfit = (typeof OUTFITS)[number];
 
 /** สีของหุ่นการ์เดียนในฉากต่อสู้ สีแรกเป็นสีเริ่มต้น ค่าคือ CSS filter ที่ย้อมภาพหุ่นทั้งตัว (ตัวหุ่นเป็นสีขาว หมุนสีอย่างเดียวจึงแทบไม่เห็น) */
-export const PAINTS = ["standard", "crimson", "violet", "gold", "emerald", "sakura"] as const;
+export const PAINTS = ["standard", "crimson", "violet", "gold", "azure", "shadow", "emerald", "sakura"] as const;
 export type Paint = (typeof PAINTS)[number];
 export const PAINT_FILTER: Record<Paint, string> = {
   standard: "none",
   crimson: "sepia(1) saturate(4.5) hue-rotate(-48deg)",
   violet: "sepia(1) saturate(3.2) hue-rotate(215deg)",
   gold: "sepia(1) saturate(3.4) hue-rotate(2deg) brightness(1.05)",
+  azure: "sepia(1) saturate(3.4) hue-rotate(165deg)",
+  shadow: "grayscale(1) brightness(0.55) contrast(1.25)",
   emerald: "sepia(1) saturate(3.6) hue-rotate(75deg)",
   sakura: "sepia(1) saturate(2.6) hue-rotate(-75deg) brightness(1.1)",
 };
 
 /** คอสตูมของพี่บิต (ภาพ CH-02 และ CH-21..26) เป็นของตกแต่ง ไม่มีผลในการต่อสู้ classic = รูปเดิมที่ทุกคนมี */
-export const BIT_SKINS = ["classic", "ninja", "knight", "wizard", "gold", "explorer", "star"] as const;
+export const BIT_SKINS = ["classic", "ninja", "pirate", "knight", "wizard", "chef", "dragon", "gold", "explorer", "star"] as const;
 export type BitSkin = (typeof BIT_SKINS)[number];
 
 /**
@@ -73,6 +75,13 @@ export const DECOR = {
   pet: { prop: "pr_decor_robot_pet", size: "small" },
   telescope: { prop: "pr_decor_telescope", size: "small" },
   flag: { prop: "pr_decor_flag", size: "small" },
+  starmap: { prop: "pr_decor_starmap", size: "wall" },
+  shelf: { prop: "pr_decor_shelf", size: "wall" },
+  terrarium: { prop: "pr_decor_terrarium", size: "big" },
+  workbench: { prop: "pr_decor_workbench", size: "big" },
+  jukebox: { prop: "pr_decor_jukebox", size: "small" },
+  beanbag: { prop: "pr_decor_beanbag", size: "small" },
+  globe: { prop: "pr_decor_globe", size: "small" },
 } as const satisfies Record<string, { prop: string; size: DecorSize }>;
 export type DecorSize = "wall" | "big" | "small";
 export type Decor = keyof typeof DECOR;
@@ -91,6 +100,10 @@ export const THEMES = {
   royal: { tileset: "ts_theme_royal" },
   snow: { tileset: "ts_theme_snow" },
   midnight: { tileset: "ts_theme_midnight" },
+  lemon: { tileset: "ts_theme_lemon" },
+  crimson: { tileset: "ts_theme_crimson" },
+  steel: { tileset: "ts_theme_steel" },
+  gold: { tileset: "ts_theme_gold" },
 } as const satisfies Record<string, { tileset: string }>;
 export type Theme = keyof typeof THEMES;
 export const THEME_IDS = Object.keys(THEMES) as Theme[];
@@ -120,17 +133,23 @@ export type ShopItem =
   | (Sold & { kind: "supply"; value: Supply; max: number; stock: number });
 
 export const CATALOG: readonly ShopItem[] = [
+  { id: "outfit-hoodie", kind: "outfit", value: "hoodie", price: 80 },
   { id: "outfit-engineer", kind: "outfit", value: "engineer", price: 100 },
   { id: "outfit-pilot", kind: "outfit", value: "pilot", price: 150 },
   { id: "outfit-researcher", kind: "outfit", value: "researcher", price: 180 },
   { id: "outfit-guardian", kind: "outfit", value: "guardian", price: 250 },
   { id: "outfit-astronaut", kind: "outfit", value: "astronaut", price: 220, tier: "normal" },
   { id: "outfit-ninja", kind: "outfit", value: "ninja", price: 260, tier: "normal" },
+  { id: "outfit-paramedic", kind: "outfit", value: "paramedic", price: 240, tier: "normal" },
   { id: "outfit-commander", kind: "outfit", value: "commander", price: 300, tier: "normal" },
+  { id: "outfit-samurai", kind: "outfit", value: "samurai", price: 320, tier: "hard" },
   { id: "outfit-hero", kind: "outfit", value: "hero", price: 350, tier: "hard" },
+  { id: "weapon-drill", kind: "weapon", value: "drill", price: 100 },
   { id: "weapon-sword", kind: "weapon", value: "sword", price: 120 },
   { id: "weapon-blaster", kind: "weapon", value: "blaster", price: 120 },
   { id: "weapon-hammer", kind: "weapon", value: "hammer", price: 160, tier: "normal" },
+  { id: "weapon-trident", kind: "weapon", value: "trident", price: 150, tier: "normal" },
+  { id: "weapon-bow", kind: "weapon", value: "bow", price: 150, tier: "normal" },
   { id: "weapon-lance", kind: "weapon", value: "lance", price: 200, tier: "normal", vendor: "smith" },
   { id: "weapon-cannon", kind: "weapon", value: "cannon", price: 240, tier: "hard" },
   { id: "armor-heavy", kind: "armor", value: "heavy", price: 100 },
@@ -144,11 +163,16 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "paint-crimson", kind: "paint", value: "crimson", price: 60 },
   { id: "paint-violet", kind: "paint", value: "violet", price: 60 },
   { id: "paint-gold", kind: "paint", value: "gold", price: 90 },
+  { id: "paint-azure", kind: "paint", value: "azure", price: 70 },
+  { id: "paint-shadow", kind: "paint", value: "shadow", price: 90, tier: "normal" },
   { id: "paint-emerald", kind: "paint", value: "emerald", price: 70, vendor: "archivist" },
   { id: "paint-sakura", kind: "paint", value: "sakura", price: 70, vendor: "vendor" },
   { id: "bit-ninja", kind: "bit", value: "ninja", price: 80 },
+  { id: "bit-pirate", kind: "bit", value: "pirate", price: 90 },
   { id: "bit-knight", kind: "bit", value: "knight", price: 120 },
   { id: "bit-wizard", kind: "bit", value: "wizard", price: 120 },
+  { id: "bit-chef", kind: "bit", value: "chef", price: 110, tier: "normal" },
+  { id: "bit-dragon", kind: "bit", value: "dragon", price: 160, tier: "hard" },
   { id: "bit-gold", kind: "bit", value: "gold", price: 200 },
   { id: "bit-explorer", kind: "bit", value: "explorer", price: 100, vendor: "archivist" },
   { id: "bit-star", kind: "bit", value: "star", price: 100, vendor: "vendor" },
@@ -167,6 +191,10 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "decor-sofa", kind: "decor", value: "sofa", price: 60 },
   { id: "decor-pet", kind: "decor", value: "pet", price: 70 },
   { id: "decor-aquarium", kind: "decor", value: "aquarium", price: 80 },
+  { id: "decor-beanbag", kind: "decor", value: "beanbag", price: 40 },
+  { id: "decor-starmap", kind: "decor", value: "starmap", price: 50 },
+  { id: "decor-jukebox", kind: "decor", value: "jukebox", price: 60 },
+  { id: "decor-terrarium", kind: "decor", value: "terrarium", price: 70 },
   { id: "decor-crates", kind: "decor", value: "crates", price: 30, tier: "normal" },
   { id: "decor-toolrack", kind: "decor", value: "toolrack", price: 40, tier: "normal" },
   { id: "decor-tanks", kind: "decor", value: "tanks", price: 50, tier: "normal" },
@@ -175,13 +203,20 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "decor-banner", kind: "decor", value: "banner", price: 60, tier: "normal" },
   { id: "decor-telescope", kind: "decor", value: "telescope", price: 70, tier: "normal" },
   { id: "decor-arcade", kind: "decor", value: "arcade", price: 90, tier: "normal" },
+  { id: "decor-shelf", kind: "decor", value: "shelf", price: 50, tier: "normal" },
+  { id: "decor-globe", kind: "decor", value: "globe", price: 60, tier: "normal" },
+  { id: "decor-workbench", kind: "decor", value: "workbench", price: 70, tier: "normal" },
   { id: "decor-fountain", kind: "decor", value: "fountain", price: 100, tier: "hard" },
   { id: "decor-statue", kind: "decor", value: "statue", price: 120, tier: "hard" },
   { id: "theme-sakura", kind: "theme", value: "sakura", price: 90 },
   { id: "theme-ocean", kind: "theme", value: "ocean", price: 90 },
   { id: "theme-sunset", kind: "theme", value: "sunset", price: 110 },
+  { id: "theme-lemon", kind: "theme", value: "lemon", price: 90 },
+  { id: "theme-crimson", kind: "theme", value: "crimson", price: 110 },
   { id: "theme-royal", kind: "theme", value: "royal", price: 130, tier: "normal" },
   { id: "theme-snow", kind: "theme", value: "snow", price: 130, tier: "normal" },
+  { id: "theme-steel", kind: "theme", value: "steel", price: 110, tier: "normal" },
+  { id: "theme-gold", kind: "theme", value: "gold", price: 150, tier: "normal" },
   { id: "theme-midnight", kind: "theme", value: "midnight", price: 160, tier: "hard" },
   { id: "supply-repair-kit", kind: "supply", value: "repair-kit", price: 25, max: 3, stock: 3 },
   { id: "supply-shield", kind: "supply", value: "shield", price: 20, max: 3, stock: 3 },

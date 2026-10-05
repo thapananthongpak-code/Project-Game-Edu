@@ -8,7 +8,7 @@ import { objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
 /** สีย้อมของหุ่นบนแท่นในฉาก Phaser (ฉากต่อสู้ใช้ CSS filter ใน PAINT_FILTER หุ่นเป็นสีขาว การคูณสีจึงได้สีใกล้เคียงกัน) */
-const PAINT_TINT: Record<Paint, number | null> = { standard: null, crimson: 0xff8a8a, violet: 0xb79cff, gold: 0xffd56b, emerald: 0x86e6a8, sakura: 0xffb6d5 };
+const PAINT_TINT: Record<Paint, number | null> = { standard: null, crimson: 0xff8a8a, violet: 0xb79cff, gold: 0xffd56b, azure: 0x7cc4ff, shadow: 0x6f7686, emerald: 0x86e6a8, sakura: 0xffb6d5 };
 
 /** ตำแหน่งของแกน AI ในตู้กระจก (ชั้นบน 3 ชิ้น ชั้นล่าง 3 ชิ้น) เทียบกับฐานของตู้ */
 const CASE_SLOTS = [-14, 0, 14].flatMap((dx) => [-40, -22].map((dy) => ({ dx, dy }))).sort((a, b) => a.dy - b.dy || a.dx - b.dx);

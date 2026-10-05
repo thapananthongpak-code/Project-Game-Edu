@@ -1,0 +1,25 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "one glowing cyan energy arrow projectile flying horizontally to the right, side view, straight thin shaft, sharp arrowhead on the right end, small fletching on the left end, white streak trail behind it, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "east"
+  },
+  "fetchTool": "get_image",
+  "id": "2bcda77c-e35e-47ff-8df7-8a7b5c5c3c7d",
+  "generatedAt": "2026-10-05T12:03:11.046Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "4274d71a-b99c-4fe4-bef3-1530888f89b8",
+      "reason": "ได้ลูกศรชี้เฉียงขึ้นแบบเคอร์เซอร์ ไม่ใช่ลูกธนูพุ่งแนวนอน จึงบรรยายเป็นลูกธนูมองจากด้านข้างพุ่งไปทางขวา แล้วเจนใหม่",
+      "subject": "glowing cyan light arrow flying to the right with a white streak trail"
+    }
+  ]
+}

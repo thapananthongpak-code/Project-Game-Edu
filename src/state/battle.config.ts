@@ -41,7 +41,7 @@ export const BATTLE = {
   /** พลังที่หุ่นฟื้นเมื่อคู่ต่อสู้กลายร่าง */
   transformHeal: 2,
   /** สิทธิพิเศษของเครื่องแบบ (ชุดจากร้าน) */
-  perks: { engineerHeal: 1, guardianHp: 1, researcherHints: 1, commanderAssist: 2, heroHp: 2, ninjaDodges: 1 },
+  perks: { engineerHeal: 1, guardianHp: 1, researcherHints: 1, commanderAssist: 2, heroHp: 2, ninjaDodges: 1, paramedicHeal: 1, samuraiHp: 1 },
   /** โมดูลของพี่บิต (ติดตั้งได้ BIT_SLOTS ชิ้น): ยิงเสริมแรงขึ้น พลังที่หุ่นฟื้นเมื่อพี่บิตยิงเสริม จำนวนครั้งขอข้อมูลที่เพิ่ม การโจมตีที่ตัวล่อรับแทน และพลังที่ชุดซ่อมฟื้นเพิ่ม */
   modules: { laserAssist: 1, medicHeal: 1, scannerHints: 1, decoyDodges: 1, toolkitHeal: 1 },
   /** พลังของการ์เดียนเหลือไม่เกินจำนวนนี้: หน้าจอเตือนและเพลงเร่งขึ้น (ไม่มีผลต่อกติกา) */

@@ -974,6 +974,306 @@
       "note": "แอนิเมชันเดินทิศเหนือจากตัวเจนหันตัวกลับมาด้านหน้ากลางทาง (เห็นเสื้อด้านหน้าหรือผ้าคลุมอยู่ข้างหน้า ผู้ใช้แจ้งรอบที่ 7) จึงสร้างเฟรมเดินทิศเหนือจากท่ายืนทิศเหนือตอน build (postprocess.synthWalk) เฟรมเดิมยังอยู่ใน walk/"
     },
     {
+      "id": "CH-36",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดฮู้ดดี้ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_hoodie": "characters/ch_a_hoodie.png"
+      },
+      "web": {
+        "ch_a_hoodie_south": "characters/ch_a_hoodie_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, wearing a cozy oversized teal hoodie with a white stripe across the chest, dark jeans and white sneakers, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดฮู้ดดี้ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "adb9faa9-5e63-47d3-9f70-b34bbe2edb5e",
+        "generatedAt": "2026-10-05T12:02:52.145Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-37",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดแพทย์สนาม 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_paramedic": "characters/ch_a_paramedic.png"
+      },
+      "web": {
+        "ch_a_paramedic_south": "characters/ch_a_paramedic_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, wearing a white and orange field paramedic uniform with a teal medical cross patch on the shoulder, a small first aid pouch on the belt and orange gloves, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดแพทย์สนาม 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "1a773d0e-1052-4775-a9c9-448f050898c8",
+        "generatedAt": "2026-10-05T11:56:55.116Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-38",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ก ชุดซามูไรไซเบอร์ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_a_samurai": "characters/ch_a_samurai.png"
+      },
+      "web": {
+        "ch_a_samurai_south": "characters/ch_a_samurai_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage lab intern with short dark hair, wearing indigo blue cyber samurai armor with gold trim, layered shoulder guards, a red headband, armored boots, no weapon, no helmet, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ก ชุดซามูไรไซเบอร์ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "69054c35-f39a-4e3e-8a82-628441ecea3d",
+        "generatedAt": "2026-10-05T11:59:57.772Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-39",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดฮู้ดดี้ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_hoodie": "characters/ch_b_hoodie.png"
+      },
+      "web": {
+        "ch_b_hoodie_south": "characters/ch_b_hoodie_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, wearing a cozy oversized teal hoodie with a white stripe across the chest, dark jeans and white sneakers, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดฮู้ดดี้ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "d2bf9cd1-883c-4bb7-8629-218c4ba9cac3",
+        "generatedAt": "2026-10-05T11:54:49.192Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-40",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดแพทย์สนาม 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_paramedic": "characters/ch_b_paramedic.png"
+      },
+      "web": {
+        "ch_b_paramedic_south": "characters/ch_b_paramedic_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, wearing a white and orange field paramedic uniform with a teal medical cross patch on the shoulder, a small first aid pouch on the belt and orange gloves, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดแพทย์สนาม 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "02334c57-5a7f-4016-8d75-120fc4f6f56d",
+        "generatedAt": "2026-10-05T12:01:16.155Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-41",
+      "kind": "character",
+      "name": "นักฝึกงานแบบ ข ชุดซามูไรไซเบอร์ 4 ทิศ + เดิน 6 เฟรม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_b_samurai": "characters/ch_b_samurai.png"
+      },
+      "web": {
+        "ch_b_samurai_south": "characters/ch_b_samurai_south.png"
+      },
+      "sheet": {
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "directions": [
+          "south",
+          "north",
+          "east",
+          "west"
+        ],
+        "walkFrames": 6
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "teenage girl lab intern with dark hair tied in a high ponytail, wearing indigo blue cyber samurai armor with gold trim, layered shoulder guards, a red headband, armored boots, no weapon, no helmet, friendly calm face, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "นักฝึกงานแบบ ข ชุดซามูไรไซเบอร์ 4 ทิศ + เดิน 6 เฟรม",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "animate": {
+          "template_animation_id": "walking-6-frames",
+          "animation_name": "walk"
+        },
+        "id": "b7813eb0-5367-4764-8005-43c5b81d5860",
+        "generatedAt": "2026-10-05T11:58:10.061Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "CH-02",
       "kind": "sprite",
       "name": "พี่บิต พี่เลี้ยงหุ่นยนต์",
@@ -1214,6 +1514,110 @@
         "fetchTool": "get_image",
         "id": "ac70e908-e560-4dd4-99c2-9d0159d13ed4",
         "generatedAt": "2026-10-02T08:35:55.235Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-27",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมโจรสลัด",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_pirate_south": "characters/ch_mentor_pirate_south.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same small white robot, same body, same pose and same colors, now wearing a black pirate tricorn hat with a gold trim on its head and a tiny black eyepatch over one eye on its cyan screen face, and holding a tiny brass telescope in one hand, nothing else changed, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "CH-02/south.png"
+        },
+        "fetchTool": "get_image",
+        "id": "43fea5af-f45e-4e44-b529-95a0c5f8163a",
+        "generatedAt": "2026-10-05T12:06:45.994098Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "cf558413-e72a-4b32-926c-2156a54044f8",
+          "reason": "ได้หุ่นหัวกลมนั่งอยู่ในถาดคล้ายเรือ ไม่เหมือนตัวพี่บิตในเกม จึงแก้จากภาพพี่บิตตัวจริง (CH-02) ด้วย edit_image_pro_flash ให้ใส่หมวกโจรสลัดแทน",
+          "subject": "create_image_pixflux: wearing a black pirate tricorn hat with a red bandana underneath and a tiny black eyepatch, holding a tiny brass telescope"
+        }
+      ]
+    },
+    {
+      "id": "CH-28",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมเชฟ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_chef_south": "characters/ch_mentor_chef_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, the same round ball-shaped hovering body with no legs and no feet, wearing a tall white chef hat on top and a tiny white apron on the front, one floating hand holding a tiny frying pan, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "d49a48c3-192c-4af3-95dc-728bc62ddfd9",
+        "generatedAt": "2026-10-05T12:05:08.713Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "e3b3141d-b384-4254-99e2-1be3d42c36a5",
+          "reason": "ได้หุ่นมีขาและลำตัวแบบคน ไม่ใช่พี่บิตตัวกลมลอยได้ จึงย้ำรูปทรงกลมไม่มีขา แล้วเจนใหม่",
+          "subject": "wearing a tall white chef hat and a small white apron, holding a tiny frying pan"
+        }
+      ]
+    },
+    {
+      "id": "CH-29",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมมังกรน้อย",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_dragon_south": "characters/ch_mentor_dragon_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a green dragon costume hood with two small orange horns, tiny wings on its back and a little tail, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e1a92d56-12f6-4556-a157-5b23abd36834",
+        "generatedAt": "2026-10-05T11:54:41.665Z"
       },
       "status": "generated"
     },
@@ -2664,6 +3068,238 @@
       },
       "web": {
         "ts_theme_midnight_preview": "tiles/ts_theme_midnight_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-18",
+      "kind": "tileset",
+      "name": "ธีมห้อง ทองคำ",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_gold": "tiles/ts_theme_gold.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of polished golden yellow floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of ivory white steel wall panels with a gold trim band and small round gold status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "e54557fa-b486-47c0-9615-73fff0373e16",
+        "generatedAt": "2026-10-05T11:55:02.656Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_gold_preview": "tiles/ts_theme_gold_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-19",
+      "kind": "tileset",
+      "name": "ธีมห้อง แดงเพลิง",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_crimson": "tiles/ts_theme_crimson.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of deep crimson red floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of charcoal black steel wall panels with a red trim band and small round red status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "ab5b450f-1c0d-45df-b677-066902dab7d2",
+        "generatedAt": "2026-10-05T11:56:39.456Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_crimson_preview": "tiles/ts_theme_crimson_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-20",
+      "kind": "tileset",
+      "name": "ธีมห้อง เลมอน",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_lemon": "tiles/ts_theme_lemon.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of soft lemon yellow floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of sky blue steel wall panels with a white trim band and small round yellow status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "7a2342d7-37c7-4271-afdc-2d79f5ce211f",
+        "generatedAt": "2026-10-05T11:57:50.661Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_lemon_preview": "tiles/ts_theme_lemon_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-21",
+      "kind": "tileset",
+      "name": "ธีมห้อง เหล็กกล้า",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_theme_steel": "tiles/ts_theme_steel.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of brushed light grey steel floor slabs with subtle grid seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of gunmetal grey steel wall panels with an orange trim band and small round orange status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "4095a58a-20ef-4c70-9658-13491d1e4929",
+        "generatedAt": "2026-10-05T11:59:20.941Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_theme_steel_preview": "tiles/ts_theme_steel_preview.png"
       },
       "status": "generated"
     },
@@ -4202,6 +4838,232 @@
         "fetchTool": "get_image",
         "id": "389ce77c-ed88-4c1e-9b46-986f29396d84",
         "generatedAt": "2026-10-02T14:32:04.992Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D24",
+      "kind": "prop",
+      "name": "แผนที่ดาว (ของตกแต่งผนัง)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_starmap": "props/pr_decor_starmap.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one single rectangular framed star chart panel only, dark navy screen with glowing cyan constellation dots joined by thin lines inside a thin silver frame, no door, no furniture, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "21506192-2212-46e3-bb23-96652f1e77e5",
+        "generatedAt": "2026-10-05T12:04:19.603Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "21970d92-a0df-4e6d-964c-f86552caf799",
+          "reason": "ได้ผนังทั้งฉากมีประตูและตู้ ไม่ใช่แผ่นแผนที่ดาวชิ้นเดียว จึงย้ำว่าเป็นกรอบชิ้นเดียว แล้วเจนใหม่",
+          "subject": "wall-mounted star map panel showing a glowing constellation chart with cyan dots and thin lines in a dark navy frame, no letters"
+        }
+      ]
+    },
+    {
+      "id": "PR-D25",
+      "kind": "prop",
+      "name": "ชั้นของสะสม (ของตกแต่งผนัง)",
+      "requested": true,
+      "size": [
+        64,
+        32
+      ],
+      "files": {
+        "pr_decor_shelf": "props/pr_decor_shelf.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wall-mounted wooden display shelf holding small robot figurines, a tiny gold trophy and a small potted cactus, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b1076589-835b-413d-aa12-0dac1cc20094",
+        "generatedAt": "2026-10-05T12:00:31.256Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D26",
+      "kind": "prop",
+      "name": "สวนจิ๋วในตู้กระจก (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_terrarium": "props/pr_decor_terrarium.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide glass terrarium tank on a metal stand with small ferns, moss, rocks and a tiny glowing mushroom, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ea1bdb61-5fda-46d8-93f9-0c4716cb0fa7",
+        "generatedAt": "2026-10-05T11:55:10.538Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D27",
+      "kind": "prop",
+      "name": "โต๊ะช่าง (ของตกแต่งชิ้นใหญ่)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_workbench": "props/pr_decor_workbench.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "sturdy metal workbench with a vise, a soldering iron, small robot parts and a desk lamp, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "db969fea-1c11-4341-8e0d-c3ea07e25124",
+        "generatedAt": "2026-10-05T11:56:08.128Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D28",
+      "kind": "prop",
+      "name": "ตู้เพลง (ของตกแต่งชิ้นเล็ก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_jukebox": "props/pr_decor_jukebox.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small retro jukebox with glowing cyan and pink light tubes and a round speaker, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "3578f668-e413-45a8-971c-66def6567297",
+        "generatedAt": "2026-10-05T11:56:27.915Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-D29",
+      "kind": "prop",
+      "name": "เก้าอี้บีนแบ็ก (ของตกแต่งชิ้นเล็ก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_beanbag": "props/pr_decor_beanbag.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one big plump round coral orange bean bag chair sitting on the floor, squishy teardrop shape with a soft dent in the middle for sitting, fills most of the frame, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "52d262da-6944-4a82-ab8a-35d2eb68f006",
+        "generatedAt": "2026-10-05T12:04:39.182Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "d3b00c0d-8134-42df-8766-eeb7cfa3342e",
+          "reason": "ได้ก้อนสีแดงเล็ก ๆ รูปร่างไม่เหมือนเก้าอี้ จึงบรรยายรูปทรงและขนาดให้ชัด แล้วเจนใหม่",
+          "subject": "round coral orange bean bag chair with a small teal cushion on top, front view"
+        }
+      ]
+    },
+    {
+      "id": "PR-D30",
+      "kind": "prop",
+      "name": "ลูกโลกโฮโลแกรม (ของตกแต่งชิ้นเล็ก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_globe": "props/pr_decor_globe.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "holographic globe projector pedestal projecting a translucent blue planet with a thin orbit ring, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "7284b06e-11b1-40eb-a6fb-209caf67254c",
+        "generatedAt": "2026-10-05T11:57:08.161Z"
       },
       "status": "generated"
     },
@@ -6141,6 +7003,420 @@
       "status": "generated"
     },
     {
+      "id": "GD-31",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + สว่านเจาะเกราะ",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_drill": "guardian/gd_plate_drill.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now with a large steel power drill gauntlet with a silver conical drill bit and orange accents mounted over its front fist on the right side of the image, the drill bit points forward to the right, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "fac0749e-b386-4d47-bf00-6acab1ae484c",
+        "generatedAt": "2026-10-05T11:31:08.045Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-32",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + สว่านเจาะเกราะ",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_drill": "guardian/gd_heavy_drill.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now with a large steel power drill gauntlet with a silver conical drill bit and orange accents mounted over its front fist on the right side of the image, the drill bit points forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-31/image.png",
+          "usage_description": "the drill gauntlet weapon this robot must wear on its front fist, copy its exact shape, colors and position"
+        },
+        "fetchTool": "get_image",
+        "id": "528db04b-0be4-4b2b-a04b-755070f41945",
+        "generatedAt": "2026-10-05T11:48:24.842Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-33",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + สว่านเจาะเกราะ",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_drill": "guardian/gd_guard_drill.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now with a large steel power drill gauntlet with a silver conical drill bit and orange accents mounted over its front fist on the right side of the image, the drill bit points forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-31/image.png",
+          "usage_description": "the drill gauntlet weapon this robot must wear on its front fist, copy its exact shape, colors and position"
+        },
+        "fetchTool": "get_image",
+        "id": "a8fd17c7-45c2-4c2d-9f55-f4aa298de89e",
+        "generatedAt": "2026-10-05T11:48:25.038Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-34",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + สว่านเจาะเกราะ",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_drill": "guardian/gd_titan_drill.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now with a large steel power drill gauntlet with a silver conical drill bit and orange accents mounted over its front fist on the right side of the image, the drill bit points forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-31/image.png",
+          "usage_description": "the drill gauntlet weapon this robot must wear on its front fist, copy its exact shape, colors and position"
+        },
+        "fetchTool": "get_image",
+        "id": "ed4e02d3-f9ea-429b-b84d-454c0a5c9678",
+        "generatedAt": "2026-10-05T11:48:24.840Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-35",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + สว่านเจาะเกราะ",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_drill": "guardian/gd_spike_drill.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now with a large steel power drill gauntlet with a silver conical drill bit and orange accents mounted over its front fist on the right side of the image, the drill bit points forward to the right, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-31/image.png",
+          "usage_description": "the drill gauntlet weapon this robot must wear on its front fist, copy its exact shape, colors and position"
+        },
+        "fetchTool": "get_image",
+        "id": "e655b99f-6a79-4f2c-a76c-3e3dc2d2c076",
+        "generatedAt": "2026-10-05T11:48:32.088Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-36",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + ธนูลำแสง",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_bow": "guardian/gd_plate_bow.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a white and teal energy bow with a glowing cyan string in its front fist on the right side of the image, the bow is held upright in front of the body, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "34182ed6-73f9-4dee-a71d-ba7f75294ec4",
+        "generatedAt": "2026-10-05T11:31:00.317Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-37",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + ธนูลำแสง",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_bow": "guardian/gd_heavy_bow.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a white and teal energy bow with a glowing cyan string in its front fist on the right side of the image, the bow is held upright in front of the body, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-36/image.png",
+          "usage_description": "the bow weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "65cba75b-878c-44bf-ad68-cd4b7229becd",
+        "generatedAt": "2026-10-05T11:49:05.415Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-38",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + ธนูลำแสง",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_bow": "guardian/gd_guard_bow.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a white and teal energy bow with a glowing cyan string in its front fist on the right side of the image, the bow is held upright in front of the body, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-36/image.png",
+          "usage_description": "the bow weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "27037517-726a-4f6a-8353-01c614e2e677",
+        "generatedAt": "2026-10-05T11:49:26.113Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-39",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + ธนูลำแสง",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_bow": "guardian/gd_titan_bow.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a white and teal energy bow with a glowing cyan string in its front fist on the right side of the image, the bow is held upright in front of the body, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-36/image.png",
+          "usage_description": "the bow weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "2f146f16-8f83-45d5-8cc3-7a55d1a22e3b",
+        "generatedAt": "2026-10-05T11:49:12.462Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-40",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + ธนูลำแสง",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_bow": "guardian/gd_spike_bow.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a white and teal energy bow with a glowing cyan string in its front fist on the right side of the image, the bow is held upright in front of the body, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-36/image.png",
+          "usage_description": "the bow weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "8e08ce06-eec0-4682-8d0e-6057b67e1229",
+        "generatedAt": "2026-10-05T11:49:12.271Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-41",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะมาตรฐาน + ตรีศูลสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_plate_trident": "guardian/gd_plate_trident.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long dark blue trident with three golden prongs crackling with blue electricity in its front fist on the right side of the image, the shaft passes through the closed fingers, the prongs point up and forward, everything else on the robot unchanged",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-00/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "eadbd2ca-04b5-4e67-a73f-1ee6259e3c75",
+        "generatedAt": "2026-10-05T11:31:00.125Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-42",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนัก + ตรีศูลสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_heavy_trident": "guardian/gd_heavy_trident.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long dark blue trident with three golden prongs crackling with blue electricity in its front fist on the right side of the image, the shaft passes through the closed fingers, the prongs point up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-07/image.png",
+          "reference": "GD-41/image.png",
+          "usage_description": "the trident weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "a3f905cc-52d2-4ac8-97a8-9c7070cee054",
+        "generatedAt": "2026-10-05T11:49:56.425Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-43",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะสะท้อน + ตรีศูลสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_guard_trident": "guardian/gd_guard_trident.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long dark blue trident with three golden prongs crackling with blue electricity in its front fist on the right side of the image, the shaft passes through the closed fingers, the prongs point up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-13/image.png",
+          "reference": "GD-41/image.png",
+          "usage_description": "the trident weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "003198b1-79b3-43ab-bb94-56e76822d620",
+        "generatedAt": "2026-10-05T11:50:49.271Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-44",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะไททัน + ตรีศูลสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_titan_trident": "guardian/gd_titan_trident.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long dark blue trident with three golden prongs crackling with blue electricity in its front fist on the right side of the image, the shaft passes through the closed fingers, the prongs point up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-19/image.png",
+          "reference": "GD-41/image.png",
+          "usage_description": "the trident weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "14970688-48b4-4e86-a1da-4ce0426ea7de",
+        "generatedAt": "2026-10-05T11:50:02.789Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GD-45",
+      "kind": "guardian",
+      "name": "การ์เดียน: เกราะหนาม + ตรีศูลสายฟ้า",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {
+        "gd_spike_trident": "guardian/gd_spike_trident.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same robot now firmly gripping a long dark blue trident with three golden prongs crackling with blue electricity in its front fist on the right side of the image, the shaft passes through the closed fingers, the prongs point up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+          "method": "reference",
+          "no_background": true,
+          "source": "GD-25/image.png",
+          "reference": "GD-41/image.png",
+          "usage_description": "the trident weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+        },
+        "fetchTool": "get_image",
+        "id": "ade676b1-baf6-4d2a-860d-1b0e1949caec",
+        "generatedAt": "2026-10-05T11:50:19.922Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "GC-01",
       "kind": "guardianchip",
       "name": "อุปกรณ์ของชิปเร่งพลัง (ชุดบูสเตอร์ติดหลัง)",
@@ -7808,6 +9084,118 @@
       "status": "generated"
     },
     {
+      "id": "FX-23",
+      "kind": "fx",
+      "name": "สว่านเจาะ (พุ่งไปทางขวา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_drill": "battle/fx_drill.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "spinning silver conical drill bit thrusting to the right with orange sparks and a spiral white streak trail, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "8794584a-d0b6-4a6f-a8ad-3eacabef7423",
+        "generatedAt": "2026-10-05T11:52:01.176Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "FX-24",
+      "kind": "fx",
+      "name": "ลูกธนูแสง (พุ่งไปทางขวา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_arrow": "battle/fx_arrow.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one glowing cyan energy arrow projectile flying horizontally to the right, side view, straight thin shaft, sharp arrowhead on the right end, small fletching on the left end, white streak trail behind it, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "2bcda77c-e35e-47ff-8df7-8a7b5c5c3c7d",
+        "generatedAt": "2026-10-05T12:03:11.046Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "4274d71a-b99c-4fe4-bef3-1530888f89b8",
+          "reason": "ได้ลูกศรชี้เฉียงขึ้นแบบเคอร์เซอร์ ไม่ใช่ลูกธนูพุ่งแนวนอน จึงบรรยายเป็นลูกธนูมองจากด้านข้างพุ่งไปทางขวา แล้วเจนใหม่",
+          "subject": "glowing cyan light arrow flying to the right with a white streak trail"
+        }
+      ]
+    },
+    {
+      "id": "FX-25",
+      "kind": "fx",
+      "name": "ตรีศูลสายฟ้าแทง (พุ่งไปทางขวา)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "fx_trident": "battle/fx_trident.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "the head of a golden trident lying horizontally with its three sharp prongs pointing to the right, side view, wrapped in blue electricity, white streak trail on the left behind it, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "side",
+          "outline": "single color black outline",
+          "shading": "medium shading",
+          "detail": "medium detail",
+          "direction": "east"
+        },
+        "fetchTool": "get_image",
+        "id": "9961edc0-d483-4e61-b8bd-c407b9aa1662",
+        "generatedAt": "2026-10-05T12:03:49.658Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "6dc77969-ac34-4432-b4a5-882ca050234c",
+          "reason": "ได้ตรีศูลตั้งขึ้นชี้ฟ้า เอฟเฟกต์นี้พุ่งแนวนอนไปหาเป้า จึงบรรยายเป็นหัวตรีศูลนอนชี้ไปทางขวา แล้วเจนใหม่",
+          "subject": "three golden trident prongs thrusting to the right wrapped in blue electricity with a white streak trail"
+        }
+      ]
+    },
+    {
       "id": "GR-01",
       "kind": "icon",
       "name": "หมัดการ์เดียน (อาวุธเริ่มต้น)",
@@ -8261,6 +9649,262 @@
         "fetchTool": "get_image",
         "id": "e8608608-5ac2-49e8-be8c-5c696b192b32",
         "generatedAt": "2026-10-05T06:33:51.628Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "GR-16",
+      "kind": "icon",
+      "name": "สว่านเจาะเกราะ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_drill": "gear/gr_drill.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one big silver cone-shaped spiral drill bit mounted on a short orange and dark grey armored cylinder, a robot arm drill weapon, pointing diagonally up to the right, only the drill weapon, no handle, no trigger, no hand tool, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "2677dcc2-5e84-4449-a344-e5f5915907c6",
+        "generatedAt": "2026-10-05T12:02:08.642Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "74c6d14c-3114-4d3e-97cc-dbda6bb837c4",
+          "reason": "ได้สว่านไฟฟ้ามือถือแบบเครื่องมือช่าง ไม่เหมือนสว่านติดแขนของหุ่นในภาพ GD-31..35 จึงบรรยายเป็นดอกสว่านทรงกรวยบนกระบอกเกราะ แล้วเจนใหม่",
+          "subject": "large steel power drill gauntlet with a spinning silver conical drill bit and orange accents, held diagonally"
+        }
+      ]
+    },
+    {
+      "id": "GR-17",
+      "kind": "icon",
+      "name": "ธนูลำแสง",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_bow": "gear/gr_bow.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "one curved archery recurve bow with two curved white and teal metal limbs and a thin glowing cyan bowstring stretched between the tips, bow only, no arrow, standing upright, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "63f808c8-201f-4fb3-ac49-f75d93e5ae10",
+        "generatedAt": "2026-10-05T12:02:38.395Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "81b73db4-fc5b-428e-9457-e9c28a877209",
+          "reason": "ได้แท่งคริสตัลคล้ายหอก ไม่เป็นรูปคันธนู จึงบรรยายเป็นคันธนูโค้งมีสายอย่างเดียว ไม่มีลูกธนู แล้วเจนใหม่",
+          "subject": "futuristic white and teal energy bow with a glowing cyan string and one glowing cyan light arrow nocked, held diagonally"
+        }
+      ]
+    },
+    {
+      "id": "GR-18",
+      "kind": "icon",
+      "name": "ตรีศูลสายฟ้า",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "gr_trident": "gear/gr_trident.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "long dark blue trident with three golden prongs crackling with blue electricity and a white and teal grip, held diagonally, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5e04e194-f862-436a-8735-8f9a2a1a7cd1",
+        "generatedAt": "2026-10-05T11:51:40.286Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "MN-01",
+      "kind": "icon",
+      "name": "ไอคอนหน้าเมนู: เรียนในห้องเรียน",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "ic_menu_learn": "items/ic_menu_learn.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a small lab learning terminal kiosk with a glowing cyan screen showing a simple open book symbol, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "9fc988e8-9fe2-4dc1-bf6a-4988e4363c40",
+        "generatedAt": "2026-10-05T11:30:36.317Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "MN-02",
+      "kind": "icon",
+      "name": "ไอคอนหน้าเมนู: แกน AI",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "ic_menu_core": "items/ic_menu_core.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a glowing cyan crystal energy core orb held in a small metal ring cradle with sparkles, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "46cee960-c86a-4876-a87d-da9ffde2c8ce",
+        "generatedAt": "2026-10-05T11:31:06.822Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "MN-03",
+      "kind": "icon",
+      "name": "ไอคอนหน้าเมนู: สู้ไคจู",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "ic_menu_battle": "items/ic_menu_battle.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a glowing cyan energy sword crossed with a steel hammer over a round white and teal shield with an impact star, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "812c9533-c901-436b-8065-1613a3c4ed33",
+        "generatedAt": "2026-10-05T11:48:38.933Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "MN-04",
+      "kind": "icon",
+      "name": "ไอคอนหน้าเมนู: ร้านและเครดิต",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "ic_menu_shop": "items/ic_menu_shop.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a gold coin with a star emblem next to a small shopping basket holding a wrench and a blue potion bottle, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ebce3187-47fe-4af0-8c62-98469bb6056f",
+        "generatedAt": "2026-10-05T11:49:00.518Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "MN-05",
+      "kind": "icon",
+      "name": "ไอคอนหน้าเมนู: เดินทางไปแมพถัดไป",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "ic_menu_travel": "items/ic_menu_travel.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a folded paper map with three round location pins connected by a dotted path and a small compass, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "f0eb5738-4d4b-4384-aa64-9413317fa835",
+        "generatedAt": "2026-10-05T11:49:31.803Z"
       },
       "status": "generated"
     },

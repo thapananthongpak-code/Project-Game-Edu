@@ -94,6 +94,7 @@ export function adviseWeapon(spec: BattleSpec, current: Weapon, owned: readonly 
     advantaged: mine > 0,
     better: more || stronger ? best : null,
     stronger,
-    wanted: WEAPONS.filter((weapon) => !have.includes(weapon) && weight(weapon) > 0 && weight(weapon) > mine && weight(weapon) >= weight(best)),
+    // ชิ้นที่ควรหาเพิ่ม: ได้เปรียบกว่าที่ถืออยู่ และดีกว่าชิ้นที่ดีที่สุดที่มี (ได้เปรียบกว่า หรือได้เปรียบเท่ากันแต่แรงกว่า)
+    wanted: WEAPONS.filter((weapon) => !have.includes(weapon) && weight(weapon) > 0 && weight(weapon) > mine && (weight(weapon) > weight(best) || (weight(weapon) === weight(best) && strength(weapon) > strength(best)))),
   };
 }

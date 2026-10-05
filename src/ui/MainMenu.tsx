@@ -179,10 +179,8 @@ export function MainMenu() {
           </h2>
           <ol className="mt-1 flex flex-col gap-1 text-sm">
             {ui.menu.about.map((step) => (
-              <li key={step.text} className="flex items-start gap-2">
-                <span aria-hidden="true" className="w-5 shrink-0 text-center">
-                  {step.icon}
-                </span>
+              <li key={step.text} className="flex items-center gap-2">
+                <img src={art.menuIcon(step.icon)} alt="" className="pixelated h-9 w-9 shrink-0" />
                 <span>{step.text}</span>
               </li>
             ))}

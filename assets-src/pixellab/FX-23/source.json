@@ -1,0 +1,17 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "spinning silver conical drill bit thrusting to the right with orange sparks and a spiral white streak trail, centered, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "side",
+    "outline": "single color black outline",
+    "shading": "medium shading",
+    "detail": "medium detail",
+    "direction": "east"
+  },
+  "fetchTool": "get_image",
+  "id": "8794584a-d0b6-4a6f-a8ad-3eacabef7423",
+  "generatedAt": "2026-10-05T11:52:01.176Z"
+}

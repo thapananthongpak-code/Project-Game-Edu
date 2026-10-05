@@ -7,10 +7,10 @@ import { type Avatar, type BitModule, type BitSkin, DECOR, type Decor, type Outf
 /** เอฟเฟกต์ของฉากต่อสู้ (docs/ART_GUIDE.md FX-01..22) */
 export type FxArt =
   | "impact" | "slash" | "bolt" | "fireball" | "shield" | "spark" | "fist" | "sword" | "beam" | "bite" | "scrap" | "pincer" | "swarm" | "wave" | "ruin" | "stun"
-  | "hammer" | "lance" | "zap" | "shell" | "sting" | "halo";
+  | "hammer" | "lance" | "zap" | "shell" | "sting" | "halo" | "drill" | "arrow" | "trident";
 
 const GEAR_ART: Record<string, string> = {
-  fist: "fist", sword: "sword", blaster: "blaster", hammer: "hammer", lance: "lance", cannon: "cannon",
+  fist: "fist", sword: "sword", blaster: "blaster", hammer: "hammer", lance: "lance", cannon: "cannon", drill: "drill", bow: "bow", trident: "trident",
   plate: "armor_plate", heavy: "armor_heavy", spike: "armor_spike", guard: "armor_guard", titan: "armor_titan",
   retry: "chip_retry", charger: "chip_charger", focus: "chip_focus", regen: "chip_regen",
 };
@@ -38,6 +38,8 @@ export const art = {
   /** ไอคอนของใช้และโมดูลของพี่บิต (IT-01..08) และเหรียญเครดิตวิจัย (IT-09) */
   item: (value: Supply | `module-${BitModule}`): string => `assets/items/it_${ITEM_ART[value]}.png`,
   credit: "assets/items/it_credit.png",
+  /** ไอคอนพิกเซลของกล่อง "เกมนี้เล่นอย่างไร" ที่หน้าเมนู (MN-01..05) */
+  menuIcon: (name: "learn" | "core" | "battle" | "shop" | "travel"): string => `assets/items/ic_menu_${name}.png`,
   /** ภาพของของตกแต่งห้อง (ภาพเดียวกับที่ฉากเกมใช้) */
   decor: (decor: Decor): string => `assets/props/${DECOR[decor].prop}.png`,
   /** ภาพของวัตถุในฉาก (ร้าน กระดาน แท่น ฯลฯ) ตามคีย์ภาพใน manifest */

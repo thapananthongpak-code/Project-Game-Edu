@@ -2,7 +2,7 @@
 // แกน AI คือแหล่งพลังงานที่ทำให้การ์เดียนออกรบได้ ส่วนความเก่งมาจากอุปกรณ์ 3 ช่อง: อาวุธ เกราะ และชิป
 // ไฟล์นี้เป็นข้อมูลและฟังก์ชันล้วน ไม่ import อะไร ผลของอุปกรณ์ในการต่อสู้คำนวณใน battle.ts
 
-export const WEAPONS = ["fist", "sword", "blaster", "hammer", "lance", "cannon"] as const;
+export const WEAPONS = ["fist", "drill", "sword", "blaster", "hammer", "trident", "bow", "lance", "cannon"] as const;
 export type Weapon = (typeof WEAPONS)[number];
 export const ARMORS = ["plate", "heavy", "spike", "guard", "titan"] as const;
 export type Armor = (typeof ARMORS)[number];
@@ -45,15 +45,19 @@ export interface WeaponSpec {
 }
 
 /**
- * อาวุธ 6 แบบ ประเภทละ 2 แบบ: แบบพื้นฐานของแมพ 1 และแบบที่เก่งกว่าของแมพถัดไป (ความสามารถเดิมแต่ทำงานถี่ขึ้น)
- * ผลทุกอย่างตายตัว เกิดจากการตอบถูกติดต่อกัน ไม่มีการสุ่ม
+ * อาวุธ 9 แบบ ประเภทละ 3 แบบ: แบบพื้นฐานของแมพ 1 แบบที่เก่งกว่าของแมพถัดไป (ความสามารถเดิมแต่ทำงานถี่ขึ้น)
+ * และแบบทางเลือกที่ได้ความสามารถของอีกประเภท (สว่าน: แรงกระแทกที่ทะลุเกราะอย่างเดียว ตรีศูล: คมอาวุธที่ทำให้ติดสตัน ธนู: ลำแสงที่ติดคริติคอล)
+ * ผู้เล่นจึงเลือกประเภทตามจุดอ่อนของคู่ต่อสู้และเลือกความสามารถตามที่ถนัดได้ ผลทุกอย่างตายตัว เกิดจากการตอบถูกติดต่อกัน ไม่มีการสุ่ม
  */
 export const WEAPON: Record<Weapon, WeaponSpec> = {
   fist: { class: "strike" },
+  drill: { class: "strike", pierce: true },
   hammer: { class: "strike", quakeEvery: 3, pierce: true },
   sword: { class: "blade", critEvery: 3 },
+  trident: { class: "blade", stunEvery: 3 },
   lance: { class: "blade", critEvery: 2 },
   blaster: { class: "beam", stunEvery: 3 },
+  bow: { class: "beam", critEvery: 3 },
   cannon: { class: "beam", stunEvery: 2 },
 };
 
@@ -100,12 +104,12 @@ export const bagSizeOf = (outfit: string): number => BAG_SIZE + (outfit === "ast
  */
 export const POWER = {
   perHp: 10,
-  weapon: { fist: 0, sword: 30, blaster: 30, hammer: 40, lance: 45, cannon: 45 } as Record<Weapon, number>,
+  weapon: { fist: 0, drill: 20, sword: 30, blaster: 30, hammer: 40, trident: 30, bow: 30, lance: 45, cannon: 45 } as Record<Weapon, number>,
   /** เกราะหนักและเกราะไททันนับจากพลังสูงสุดที่เพิ่มแล้ว */
   armor: { plate: 0, heavy: 0, spike: 15, guard: 30, titan: 0 } as Record<Armor, number>,
   chip: { none: 0, charger: 20, focus: 20, retry: 30, regen: 30 } as Record<Chip, number>,
   /** สิทธิพิเศษของเครื่องแบบ (ชุดที่เพิ่มพลังสูงสุดนับจากพลังสูงสุดที่เพิ่มแล้ว) */
-  outfit: { lab: 0, engineer: 5, pilot: 10, researcher: 10, guardian: 0, commander: 15, astronaut: 5, ninja: 15, hero: 0 } as Record<string, number>,
+  outfit: { lab: 0, hoodie: 0, engineer: 5, pilot: 10, researcher: 10, guardian: 0, paramedic: 10, commander: 15, astronaut: 5, ninja: 15, samurai: 10, hero: 0 } as Record<string, number>,
   module: { scanner: 10, toolkit: 10, laser: 15, decoy: 15, medic: 20 } as Record<string, number>,
   /** ต่อของใช้หนึ่งชิ้นในกระเป๋า */
   perItem: 5,

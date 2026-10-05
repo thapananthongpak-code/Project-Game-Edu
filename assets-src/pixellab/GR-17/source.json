@@ -1,0 +1,23 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "one curved archery recurve bow with two curved white and teal metal limbs and a thin glowing cyan bowstring stretched between the tips, bow only, no arrow, standing upright, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "outline": "single color black outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "63f808c8-201f-4fb3-ac49-f75d93e5ae10",
+  "generatedAt": "2026-10-05T12:02:38.395Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "81b73db4-fc5b-428e-9457-e9c28a877209",
+      "reason": "ได้แท่งคริสตัลคล้ายหอก ไม่เป็นรูปคันธนู จึงบรรยายเป็นคันธนูโค้งมีสายอย่างเดียว ไม่มีลูกธนู แล้วเจนใหม่",
+      "subject": "futuristic white and teal energy bow with a glowing cyan string and one glowing cyan light arrow nocked, held diagonally"
+    }
+  ]
+}

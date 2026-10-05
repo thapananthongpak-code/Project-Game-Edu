@@ -1063,7 +1063,7 @@ async function playRoom1(page) {
   // ด่านแรก: หมัดการ์เดียนชนะทางกลิตช์ (+20) พลัง 60 + 20 จึงถึงพลังที่แนะนำ ด่านอื่นยังไม่ถึง
   assert.deepEqual(recommended, CAMPAIGN.easy.battles.map((battle, i) => [battle.power, String(i === 0)]), "พลังที่แนะนำของแต่ละด่านตรงกับโครงของแมพ ด่านแรกใช้อุปกรณ์เริ่มต้นได้");
   assert.deepEqual(CAMPAIGN.easy.battles.map((battle) => battle.power), [80, 100, 110, 110, 140, 160]);
-  assert.match(await page.getByTestId("mission-k1").innerText(), /จุดอ่อน: แรงกระแทก \(หมัด ค้อน\)/, "แผงสั่งปฏิบัติการบอกจุดอ่อนของไคจูแต่ละด่าน");
+  assert.match(await page.getByTestId("mission-k1").innerText(), /จุดอ่อน: แรงกระแทก \(หมัด สว่าน ค้อน\)/, "แผงสั่งปฏิบัติการบอกจุดอ่อนของไคจูแต่ละด่าน");
   await shot(page, "08-missions");
   await page.getByTestId("missions-close").click();
   await page.waitForTimeout(300);
@@ -1080,7 +1080,7 @@ async function playRoom1(page) {
   const advice1 = page.getByTestId("weapon-advice");
   assert.deepEqual([await advice1.getAttribute("data-weak"), await advice1.getAttribute("data-advantaged"), await advice1.getAttribute("data-better")], ["strike", "true", ""], "กลิตช์แพ้ทางแรงกระแทก หมัดที่ใส่อยู่ชนะทาง");
   assert.match(await advice1.innerText(), /กลิตช์ แพ้ทางแรงกระแทก/);
-  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["strike", "strong", "▲ อาวุธชนะทาง · จุดอ่อน: แรงกระแทก (หมัด ค้อน)"], "ป้ายบนฉากบอกว่าอาวุธที่ใส่อยู่ชนะทาง");
+  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["strike", "strong", "▲ อาวุธชนะทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"], "ป้ายบนฉากบอกว่าอาวุธที่ใส่อยู่ชนะทาง");
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-armor"), "plate", "การ์เดียนในฉากต่อสู้ใส่เกราะที่ใส่ไว้จริง");
   assert.match(await page.getByTestId("battle-gear-note").innerText(), /หมัดการ์เดียน · เกราะมาตรฐาน · ไม่ใส่ชิป/);
   assert.equal(await page.getByTestId("bag-picker").getAttribute("data-bag"), "", "ยังไม่มีของใช้: กระเป๋าว่าง");
@@ -1162,13 +1162,13 @@ async function playRoom1(page) {
   await page.getByTestId("shop").waitFor();
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "115");
   assert.match(await page.getByTestId("shop-item-outfit-engineer").innerText(), /ในการต่อสู้: ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม \+1/, "เครื่องแบบบอกสิทธิพิเศษในการต่อสู้");
-  assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 8, "ร้านมีชุด 8 แบบ (ชุดเริ่มต้นไม่ขาย ชุดของแมพ 2 และ 3 ยังล็อก)");
-  assert.deepEqual(await page.locator('[data-testid^="shop-item-outfit-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-outfit-", "")).sort()), ["astronaut", "commander", "hero", "ninja"], "ชุดของแมพถัดไปยังซื้อไม่ได้");
+  assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 11, "ร้านมีชุด 11 แบบ (ชุดเริ่มต้นไม่ขาย ชุดของแมพ 2 และ 3 ยังล็อก)");
+  assert.deepEqual(await page.locator('[data-testid^="shop-item-outfit-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-outfit-", "")).sort()), ["astronaut", "commander", "hero", "ninja", "paramedic", "samurai"], "ชุดของแมพถัดไปยังซื้อไม่ได้");
   assert.match(await page.getByTestId("shop-locked-outfit-ninja").innerText(), /วางขายที่แมพ 2/);
-  assert.equal(await page.locator('[data-testid^="shop-item-bit-"]').count(), 4, "ร้านมีคอสตูมของพี่บิต 4 แบบ (รูปมาตรฐานไม่ขาย ของร้านพิเศษไม่แสดงจนกว่าจะซื้อ)");
+  assert.equal(await page.locator('[data-testid^="shop-item-bit-"]').count(), 7, "ร้านมีคอสตูมของพี่บิต 7 แบบ (รูปมาตรฐานไม่ขาย ของร้านพิเศษไม่แสดงจนกว่าจะซื้อ)");
   assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 5, "ร้านมีโมดูลของพี่บิต 5 อย่าง");
   // อุปกรณ์ของการ์เดียน: 3 ช่อง (ของแมพ 1 และของแมพถัดไปที่ยังล็อก ของเริ่มต้นและของร้านพิเศษไม่แสดง) แต่ละชิ้นบอกค่าพลังที่เพิ่ม
-  for (const [slot, count, locked] of [["weapon", 4, ["cannon", "hammer"]], ["armor", 3, ["guard", "spike"]], ["chip", 4, ["regen", "retry"]]]) {
+  for (const [slot, count, locked] of [["weapon", 7, ["bow", "cannon", "hammer", "trident"]], ["armor", 3, ["guard", "spike"]], ["chip", 4, ["regen", "retry"]]]) {
     assert.equal(await page.locator(`[data-testid^="shop-item-${slot}-"]`).count(), count, `ร้านมี${slot} ${count} แบบ`);
     assert.deepEqual(await page.locator(`[data-testid^="shop-item-${slot}-"][data-locked="true"]`).evaluateAll((rows, prefix) => rows.map((row) => row.dataset.testid.replace(prefix, "")).sort(), `shop-item-${slot}-`), locked, `${slot} ของแมพถัดไปยังล็อก`);
   }
@@ -1472,7 +1472,7 @@ async function playRoom(page, room) {
     assert.match(intro, /ยิ่งโจมตีแรง/);
     const hits = [];
     assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "sword", "การ์เดียนถือดาบที่ซื้อมา");
-    assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["weak", "▼ อาวุธแพ้ทาง · จุดอ่อน: แรงกระแทก (หมัด ค้อน)"]);
+    assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["weak", "▼ อาวุธแพ้ทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"]);
     assert.match(intro, /พลังยังไม่ถึงที่แนะนำ ออกปฏิบัติการได้เลย/, "พลังไม่ถึงที่แนะนำก็ออกปฏิบัติการได้");
     const fx = page.getByTestId("battle-fx");
     const sparks = [];
@@ -2295,9 +2295,9 @@ async function playNormal(page) {
   await page.getByTestId("shop").waitFor();
   assert.deepEqual([await page.getByTestId("shop-item-weapon-hammer").getAttribute("data-locked"), await page.getByTestId("shop-item-weapon-cannon").getAttribute("data-locked")], ["false", "true"], "ชนะไคจูของแมพ 1 ครบ: ของของแมพ 2 วางขาย ของแมพ 3 ยังล็อก");
   assert.match(await page.getByTestId("shop-locked-weapon-cannon").innerText(), /วางขายที่แมพ 3/);
-  assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 22, "ร้านแสดงของตกแต่งห้อง 22 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 20 ชิ้น)");
+  assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 29, "ร้านแสดงของตกแต่งห้อง 29 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 27 ชิ้น)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-decor-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-decor-", "")).sort()), ["fountain", "statue"]);
-  assert.equal(await page.locator('[data-testid^="shop-item-theme-"]').count(), 6, "ร้านขายธีมสีของห้อง 6 แบบ");
+  assert.equal(await page.locator('[data-testid^="shop-item-theme-"]').count(), 10, "ร้านขายธีมสีของห้อง 10 แบบ");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-theme-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-theme-", ""))), ["midnight"]);
   await page.getByTestId("shop-buy-decor-sofa").click();
   await page.getByTestId("shop-buy-decor-neon").click();
@@ -2673,7 +2673,7 @@ async function playNormal(page) {
   await openMissions(page);
   assert.deepEqual(await missionStatus(page), { n1: "ready", n2: "locked", n3: "locked", "omega-n": "locked" }, "แมพ 2: ไคจูประจำห้อง 3 ตัว และบอส 1 ตัว");
   assert.match(await page.getByTestId("mission-omega-n").innerText(), /กลายร่างได้ 2 ร่าง/);
-  assert.match(await page.getByTestId("mission-n1").innerText(), /จุดอ่อน: คมอาวุธ \(ดาบ หอก\)/);
+  assert.match(await page.getByTestId("mission-n1").innerText(), /จุดอ่อน: คมอาวุธ \(ดาบ ตรีศูล หอก\)/);
   assert.match(await page.getByTestId("missions-power").innerText(), /ไม่ต้องมีแกน AI/);
   await shot(page, "31-normal-missions");
   await page.getByTestId("missions-close").click();
@@ -2782,7 +2782,7 @@ async function playNormal(page) {
   await page.getByTestId("battle-start").click();
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "hammer");
   turn = await battleTurn(page, true);
-  assert.match(turn.log, /ค้อนทุบเกราะแตก โจมตีเข้าทันที.*การ์เดียนใช้ค้อนทุบ -1/);
+  assert.match(turn.log, /ทะลุเกราะแตกในครั้งเดียว โจมตีเข้าทันที.*การ์เดียนใช้ค้อนทุบ -1/);
   assert.equal(turn.kaiju, armorHp - 1, "ค้อนทุบทะลุเกราะ: ลดพลังได้ตั้งแต่ข้อแรก");
   await shot(page, "31-normal-battle-hammer");
   await winBattle(page, "n2");
@@ -2961,7 +2961,8 @@ async function playHard(page) {
     battles: { ...wonAll("easy"), ...wonAll("normal") },
     story: [...MAP1_STORY, "map-normal", "zone-n1", "zone-n2", "zone-n3", "win-n1", "win-n2", "win-n3", "ending-normal"],
     // มีธีมสีอยู่แล้วหนึ่งแบบ (ไว้ตรวจการเปลี่ยนธีมของห้อง)
-    shop: shopOf({ owned: ["theme-midnight"] }),
+    // และของรอบหลัง: ธนูลำแสง ชุดซามูไรไซเบอร์ คอสตูมมังกรน้อยของพี่บิต (ไว้ตรวจว่าใส่แล้วภาพในฉากเปลี่ยนจริง)
+    shop: shopOf({ owned: ["theme-midnight", "weapon-bow", "outfit-samurai", "bit-dragon"] }),
   }));
   const arrival = await travelTo(page, "hard", 0);
   assert.deepEqual([arrival?.beat, arrival.art], ["map-hard", ["st_map3", "st_npc_captain_1", "st_boss_4", "st_kaiju_10"]]);
@@ -3081,6 +3082,10 @@ async function playHard(page) {
   await page.getByTestId("bitpad-toggle-scanner").click();
   await page.getByTestId("bitpad-toggle-medic").click();
   assert.equal(await dock.getAttribute("data-modules"), "scanner,medic");
+  // คอสตูมใหม่ของพี่บิต: มังกรน้อย เปลี่ยนแล้วพี่บิตในฉากเปลี่ยนทันที
+  await page.getByTestId("bitpad-skin-dragon").click();
+  assert.equal((await snap(page)).companion.texture, "ch_mentor_dragon_south");
+  await page.getByTestId("bitpad-skin-classic").click();
   assert.deepEqual(await dock.locator('[data-testid^="bitpad-slot-"]').evaluateAll((slots) => slots.map((slot) => slot.dataset.module)), ["scanner", "medic"]);
   await page.getByTestId("bitpad-toggle-medic").click();
   assert.equal(await dock.getAttribute("data-modules"), "scanner", "ถอดโมดูลได้");
@@ -3094,6 +3099,11 @@ async function playHard(page) {
   await walkTo(page, "wardrobe");
   await act(page);
   await page.getByTestId("wardrobe").waitFor();
+  // ชุดใหม่: ซามูไรไซเบอร์ (พลังสูงสุด +1 และเริ่มพร้อมโล่) ตัวละครในฉากเปลี่ยนชุดทันที
+  assert.match(await page.getByTestId("wardrobe-outfit-samurai").innerText(), /ชุดซามูไรไซเบอร์[\s\S]*พลังสูงสุดของการ์เดียน \+1 และเริ่มการต่อสู้พร้อมโล่ 1 ชั้น/);
+  await page.getByTestId("wardrobe-outfit-samurai").click();
+  await page.waitForTimeout(300);
+  assert.equal((await snap(page)).avatar.texture, "ch_a_samurai");
   await page.getByTestId("wardrobe-outfit-researcher").click();
   await page.getByTestId("wardrobe-close").click();
   await page.waitForTimeout(300);
@@ -3104,6 +3114,11 @@ async function playHard(page) {
   assert.match(await page.getByTestId("guardian-next").innerText(), /ด่านถัดไป: แมกมาโกเลม/);
   assert.match(await page.getByTestId("guardian-vs-cannon").innerText(), /กับแมกมาโกเลม: ชนะทาง/);
   assert.match(await page.getByTestId("guardian-vs-fist").innerText(), /กับแมกมาโกเลม: แพ้ทาง/);
+  // อาวุธใหม่: ธนูลำแสงเป็นประเภทลำแสงเหมือนปืนใหญ่ จึงชนะทางแมกมาโกเลมด้วย หุ่นบนแท่นถือธนูจริง
+  assert.match(await page.getByTestId("guardian-vs-bow").innerText(), /กับแมกมาโกเลม: ชนะทาง/);
+  await page.getByTestId("guardian-weapon-bow").click();
+  await page.waitForTimeout(300);
+  assert.equal((await snap(page)).bay.texture, "gd_plate_bow", "หุ่นที่จอดอยู่ถือธนูลำแสง");
   await page.getByTestId("guardian-weapon-cannon").click();
   await page.getByTestId("guardian-armor-titan").click();
   await page.getByTestId("guardian-close").click();

@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now firmly gripping a long dark blue trident with three golden prongs crackling with blue electricity in its front fist on the right side of the image, the shaft passes through the closed fingers, the prongs point up and forward, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-19/image.png",
+    "reference": "GD-41/image.png",
+    "usage_description": "the trident weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+  },
+  "fetchTool": "get_image",
+  "id": "14970688-48b4-4e86-a1da-4ce0426ea7de",
+  "generatedAt": "2026-10-05T11:50:02.789Z"
+}

@@ -1,0 +1,24 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "one single rectangular framed star chart panel only, dark navy screen with glowing cyan constellation dots joined by thin lines inside a thin silver frame, no door, no furniture, no letters, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 32,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "21506192-2212-46e3-bb23-96652f1e77e5",
+  "generatedAt": "2026-10-05T12:04:19.603Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "21970d92-a0df-4e6d-964c-f86552caf799",
+      "reason": "ได้ผนังทั้งฉากมีประตูและตู้ ไม่ใช่แผ่นแผนที่ดาวชิ้นเดียว จึงย้ำว่าเป็นกรอบชิ้นเดียว แล้วเจนใหม่",
+      "subject": "wall-mounted star map panel showing a glowing constellation chart with cyan dots and thin lines in a dark navy frame, no letters"
+    }
+  ]
+}

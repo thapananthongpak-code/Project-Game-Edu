@@ -80,6 +80,31 @@ export const GUARDIAN_MOVES: Record<GuardianMove, MoveSpec> = {
     hitAt: 220,
     end: 820,
   },
+  "drill-jab": { pose: "dash", sparks: [{ art: "drill", motion: "pop", at: 180, impact: true }], sounds: [["punch", 200]], hitAt: 200, end: 520 },
+  "drill-break": {
+    pose: "dash",
+    sparks: [{ art: "drill", motion: "shot", at: 0, big: true }, hit(SHOT_MS, true), hit(SHOT_MS + 140, true, -1)],
+    sounds: [["fire", 0], ["crack", SHOT_MS], ["boom", SHOT_MS + 140]],
+    hitAt: SHOT_MS,
+    end: 760,
+    shake: true,
+  },
+  "trident-thrust": { pose: "dash", sparks: [{ art: "trident", motion: "shot", at: 0 }, hit(SHOT_MS)], sounds: [["slash", 120], ["punch", SHOT_MS]], hitAt: SHOT_MS, end: 600 },
+  "trident-storm": {
+    pose: "dash",
+    sparks: [{ art: "trident", motion: "shot", at: 0, big: true }, { art: "zap", motion: "pop", at: SHOT_MS, big: true }, { art: "stun", motion: "pop", at: SHOT_MS + 120, row: 1 }, hit(SHOT_MS + 140, true)],
+    sounds: [["slash", 120], ["crit", SHOT_MS], ["boom", SHOT_MS + 140]],
+    hitAt: SHOT_MS,
+    end: 820,
+  },
+  arrow: { pose: "fire", sparks: [{ art: "arrow", motion: "shot", at: 0 }, hit(SHOT_MS)], sounds: [["laser", 0], ["punch", SHOT_MS]], hitAt: SHOT_MS, end: 600 },
+  "arrow-rain": {
+    pose: "fire",
+    sparks: [{ art: "arrow", motion: "shot", at: 0, big: true, row: 1 }, { art: "arrow", motion: "shot", at: 110, big: true }, { art: "arrow", motion: "shot", at: 220, big: true, row: -1 }, hit(SHOT_MS + 220, true)],
+    sounds: [["laser", 0], ["laser", 110], ["laser", 220], ["boom", SHOT_MS + 220]],
+    hitAt: SHOT_MS + 110,
+    end: 860,
+  },
   // ท่าปิดฉากร่างสุดท้าย: รวมพลังของแกน AI แล้วปล่อยลำแสงใหญ่ ใช้ได้กับทุกอาวุธ
   finisher: {
     pose: "charge",
@@ -233,6 +258,9 @@ const MOVES: Record<Weapon, [normal: GuardianMove, strong: GuardianMove]> = {
   lance: ["thrust", "thunder-thrust"],
   blaster: ["shot", "beam"],
   cannon: ["plasma-shot", "plasma-beam"],
+  drill: ["drill-jab", "drill-break"],
+  trident: ["trident-thrust", "trident-storm"],
+  bow: ["arrow", "arrow-rain"],
 };
 
 /** ท่าของการ์เดียน: อาวุธกำหนดแบบของท่า การโจมตีที่มีผลพิเศษหรือแรงตั้งแต่ 3 ขึ้นไปเป็นท่าแรง และการโจมตีที่ปิดฉากร่างสุดท้ายเป็นลำแสงแกน AI */

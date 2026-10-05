@@ -1,0 +1,14 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same robot now firmly gripping a white and teal energy bow with a glowing cyan string in its front fist on the right side of the image, the bow is held upright in front of the body, everything else on the robot unchanged Keep this robot's armor exactly as it is.",
+    "method": "reference",
+    "no_background": true,
+    "source": "GD-13/image.png",
+    "reference": "GD-36/image.png",
+    "usage_description": "the bow weapon this robot must hold, copy its exact shape, colors and the way it is gripped"
+  },
+  "fetchTool": "get_image",
+  "id": "27037517-726a-4f6a-8353-01c614e2e677",
+  "generatedAt": "2026-10-05T11:49:26.113Z"
+}
