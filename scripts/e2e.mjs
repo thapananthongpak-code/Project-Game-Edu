@@ -876,7 +876,7 @@ async function playRoom1(page) {
   const stations = await listenAll(page, 1, { check: true, shots: true });
   log(`ห้อง 1 บทสนทนา ${stations} สถานี: ข้อความและตารางตรงกับ course.json ทุกหน้า`);
 
-  // --- ติวเตอร์: ถ้าไม่มีคีย์ Claude ต้องได้คำใบ้สำเร็จรูปจาก course.json
+  // --- ติวเตอร์: ถ้าไม่มีคีย์ Gemini ต้องได้คำใบ้สำเร็จรูปจาก course.json
   const tutorResponse = page.waitForResponse((r) => r.url().endsWith("/api/tutor"));
   await page.getByTestId("hud-tutor").click();
   // พิมพ์ด้วยคีย์บอร์ดจริง รวมตัว e, w, a, s, d และเว้นวรรค ซึ่งเป็นปุ่มควบคุมเกม
@@ -895,7 +895,7 @@ async function playRoom1(page) {
   } else {
     await page.getByTestId("tutor-reply").waitFor();
     assert.match(await page.getByTestId("tutor-remaining").innerText(), /ถามได้อีก 7 ครั้ง/);
-    log("ติวเตอร์: ได้คำตอบจาก Claude และหักโควตา 1 ครั้ง");
+    log("ติวเตอร์: ได้คำตอบจาก Gemini และหักโควตา 1 ครั้ง");
   }
   await page.keyboard.press("Escape");
   assert.equal((await snap(page)).store.tutorOpen, false);

@@ -26,7 +26,7 @@ npm run dev        # http://localhost:5173  (แดชบอร์ดผู้�
 |---|---|---|
 | เก็บความคืบหน้าขึ้นฐานข้อมูลกลาง | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | เก็บในเครื่องของผู้เรียนอย่างเดียว |
 | แดชบอร์ดผู้สอน | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TEACHER_PASSWORD` | หน้า `/teacher` แจ้งว่ายังไม่ได้ตั้งค่า |
-| ติวเตอร์ AI (ในห้องเรียนและในด่านต่อสู้) | `ANTHROPIC_API_KEY` | พี่บิตให้คำใบ้สำเร็จรูปจากเนื้อหาของห้อง |
+| ติวเตอร์ AI (ในห้องเรียนและในด่านต่อสู้) | `GEMINI_API_KEY` (คีย์ Gemini API จาก [Google AI Studio](https://aistudio.google.com/apikey)) | พี่บิตให้คำใบ้สำเร็จรูปจากเนื้อหาของห้อง |
 | เข้าสู่ระบบด้วย Google | `VITE_GOOGLE_LOGIN=1` + ตั้งค่าใน Supabase (ข้อ 1.1) | ไม่มีปุ่มบนหน้าเมนู ผู้เรียนเล่นต่อจากเครื่องอื่นด้วยรหัสเล่นต่อ |
 
 คำอธิบายของแต่ละตัวแปรอยู่ใน [.env.example](.env.example)
@@ -74,7 +74,7 @@ npm run dev        # http://localhost:5173  (แดชบอร์ดผู้�
 ```sh
 npx vercel login
 npx vercel link
-for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY TEACHER_PASSWORD ANTHROPIC_API_KEY; do npx vercel env add "$name" production; done
+for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY TEACHER_PASSWORD GEMINI_API_KEY; do npx vercel env add "$name" production; done
 npx vercel --prod
 ```
 
@@ -85,7 +85,7 @@ npx vercel --prod
 1. เปิดเว็บ → เริ่มเกมใหม่ → ต้องมีช่อง **รหัสห้องเรียน** (ถ้าไม่มี แปลว่า `VITE_SUPABASE_*` ยังไม่เข้า build ให้ Redeploy)
 2. ลงทะเบียนด้วยรหัสห้องเรียนทดลอง ทำแบบทดสอบก่อนเรียนให้จบ → เปิดสมุดเควส ต้องขึ้น "บันทึกขึ้นฐานข้อมูลแล้ว" และมีรหัสเล่นต่อ
 3. เปิด `/teacher` ใส่รหัสผ่านครู → ต้องเห็นผู้เรียนทดลอง แล้วใช้ปุ่ม "ลบข้อมูลห้องนี้" ลบข้อมูลทดลองออก
-4. เข้าห้อง 1 กด "ถามพี่บิต" ถามคำถามหนึ่งข้อ → ถ้าตั้ง `ANTHROPIC_API_KEY` แล้วจะได้คำตอบจาก AI และตัวนับคำถามลดลง
+4. เข้าห้อง 1 กด "ถามพี่บิต" ถามคำถามหนึ่งข้อ → ถ้าตั้ง `GEMINI_API_KEY` แล้วจะได้คำตอบจาก AI และตัวนับคำถามลดลง
 5. ถ้าเปิดใช้ Google: หน้าเมนูต้องมีปุ่ม **เข้าสู่ระบบด้วย Google** กดแล้วกลับมาที่เกมโดยเมนูแสดงอีเมลของบัญชี เปิดเกมจากเบราว์เซอร์อื่นแล้วเข้าสู่ระบบบัญชีเดิม ต้องเห็นปุ่ม "เล่นต่อ (ชื่อเดิม)"
 
 ## คำสั่งตรวจสอบ
@@ -97,7 +97,7 @@ npm run validate:content # โครงสร้างเนื้อหา เ�
 npm run verify:content   # เทียบเนื้อหากับไฟล์ Word ต้นฉบับทีละบรรทัด
 npm run check:coverage   # ทุกหัวข้อมีบทสอน เควส คำถามทบทวน ห้องซ่อม ข้อสอบ ด่านต่อสู้ และภาพครบ
 npm run test:e2e         # เล่นจบแมพ 1 (6 ห้อง 6 ด่าน) แมพ 2 และแมพ 3 ด้วย Chrome + เดินทางข้ามแมพ + จัดห้องเอง (ของตกแต่ง ย้ายจุดใช้งาน ธีมสี) + ร้านค้า + เสียง + แดชบอร์ด + คีย์บอร์ดอย่างเดียว + จอสัมผัส + ตรวจการเข้าถึง
-                         # ต้องเปิดเซิร์ฟเวอร์ dev แบบไม่ต่อฐานข้อมูลกลาง: VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= ANTHROPIC_API_KEY= npm run dev
+                         # ต้องเปิดเซิร์ฟเวอร์ dev แบบไม่ต่อฐานข้อมูลกลาง: VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= GEMINI_API_KEY= npm run dev
                          # และอย่าแก้ไฟล์ในโปรเจกต์ระหว่างรัน (หน้าเกมจะโหลดใหม่กลางการทดสอบ)
 npm run test:e2e:cloud   # การซิงก์กับฐานข้อมูลกลางและการเข้าสู่ระบบด้วย Google (Supabase จำลอง) ดูวิธีเปิดเซิร์ฟเวอร์ในหัวไฟล์ scripts/e2e-cloud.mjs
 npm run test:perf        # เวลาโหลดและเฟรมเรตเมื่อถ่วง CPU และเครือข่าย (ต้อง build แล้วเปิด npx vite preview --port 4173)

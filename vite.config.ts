@@ -5,7 +5,7 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 
 /** ฟังก์ชันฝั่งเซิร์ฟเวอร์ใน api/ และตัวแปร environment ที่แต่ละตัวใช้ (ค่าลับ ไม่มี prefix VITE_ จึงไม่ถูกส่งไปที่เบราว์เซอร์) */
 const SERVER_FUNCTIONS = ["tutor", "teacher"] as const;
-const SERVER_ENV = ["ANTHROPIC_API_KEY", "TEACHER_PASSWORD", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+const SERVER_ENV = ["GEMINI_API_KEY", "TEACHER_PASSWORD", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"] as const;
 
 /**
  * ให้ npm run dev และ npm run preview ตอบ /api/tutor และ /api/teacher ได้เหมือนบน Vercel:

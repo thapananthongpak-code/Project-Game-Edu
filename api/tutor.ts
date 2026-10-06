@@ -1,13 +1,12 @@
 // ติวเตอร์ AI "พี่บิต": ฟังก์ชัน serverless ของ Vercel (POST /api/tutor)
 //
-// เรียก Claude API จากฝั่งเซิร์ฟเวอร์เท่านั้น คีย์อ่านจาก ANTHROPIC_API_KEY ใน environment ของเซิร์ฟเวอร์ ไม่ส่งไปที่เบราว์เซอร์
+// เรียก Gemini API ของ Google จากฝั่งเซิร์ฟเวอร์เท่านั้น คีย์อ่านจาก GEMINI_API_KEY ใน environment ของเซิร์ฟเวอร์ ไม่ส่งไปที่เบราว์เซอร์
 // ขอบเขตคำตอบถูกล็อกด้วย system prompt ที่สร้างจาก src/content/course.json ของห้องที่ผู้เล่นอยู่ (เบราว์เซอร์ส่งมาแค่เลขห้องกับบทสนทนา)
 // เมื่อเรียก API ไม่ได้ ถูกปฏิเสธ หรือไม่มีคีย์ ตอบ { fallback: true } ให้ฝั่งเกมแสดงคำใบ้สำเร็จรูปแทน
 //
 // ไฟล์นี้ไม่ import โค้ดจาก src/ เพื่อให้ Vercel build ได้โดยไม่ขึ้นกับการตั้งค่า bundler ของ Vite
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import Anthropic from "@anthropic-ai/sdk";
 
 /** ต้องตรงกับ src/tutor/config.ts (มีเทสต์ตรวจ) */
 export const TUTOR_LIMITS = {
@@ -17,7 +16,8 @@ export const TUTOR_LIMITS = {
   maxReplyChars: 2000,
 } as const;
 
-const MODEL = "claude-opus-5-5";
+const MODEL = "gemini-3.8-flash";
+const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 interface TopicContent {
   id: number;
@@ -45,7 +45,32 @@ export type TutorResult =
   | { status: 200; body: { reply: string; remaining: number } | { fallback: true; reason: string } }
   | { status: 400 | 429; body: { error: string } };
 
-type CreateMessage = (params: Anthropic.Beta.MessageCreateParamsNonStreaming) => Promise<Anthropic.Beta.BetaMessage>;
+/** คำขอของ generateContent เฉพาะฟิลด์ที่ติวเตอร์ใช้ */
+export interface GeminiRequest {
+  systemInstruction: { parts: { text: string }[] };
+  contents: { role: "user" | "model"; parts: { text: string }[] }[];
+  generationConfig: { maxOutputTokens: number; thinkingConfig: { thinkingLevel: "low" } };
+}
+
+/** คำตอบของ generateContent เฉพาะฟิลด์ที่ติวเตอร์อ่าน */
+export interface GeminiResponse {
+  candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
+  promptFeedback?: { blockReason?: string };
+}
+
+/** Gemini ตอบด้วยสถานะที่ไม่ใช่ 2xx หรือเซิร์ฟเวอร์ยังไม่มีคีย์ (`code` = รหัสของ Google เช่น API_KEY_INVALID) */
+export class GeminiError extends Error {
+  readonly status: number;
+  readonly code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = "GeminiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+type Generate = (model: string, request: GeminiRequest) => Promise<GeminiResponse>;
 
 let cachedCourse: CourseContent | undefined;
 
@@ -119,42 +144,68 @@ function parseRequest(body: unknown, course: CourseContent): { room: number; mes
 }
 
 function failureReason(error: unknown): string {
-  if (error instanceof Anthropic.AuthenticationError) return "auth";
-  if (error instanceof Anthropic.RateLimitError) return "rate_limited";
-  if (error instanceof Anthropic.APIConnectionError) return "network";
-  if (error instanceof Anthropic.APIError) return `api_${error.status ?? "error"}`;
+  if (error instanceof GeminiError) {
+    if (error.code === "NO_API_KEY") return "no_key";
+    // คีย์ที่ไม่ถูกต้องได้สถานะ 400 พร้อมรหัส API_KEY_INVALID ไม่ใช่ 401
+    if (error.status === 401 || error.status === 403 || error.code === "API_KEY_INVALID") return "auth";
+    if (error.status === 429) return "rate_limited";
+    return `api_${error.status}`;
+  }
+  // fetch โยน TypeError เมื่อเชื่อมต่อไม่ได้ และ TimeoutError เมื่อเกินเวลารอ
+  if (error instanceof TypeError || (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError"))) return "network";
   return "error";
 }
 
-let client: Anthropic | undefined;
+/** เหตุผลที่ Gemini หยุดเพราะตัวกรองเนื้อหา ไม่ใช่เพราะตอบจบ */
+const BLOCKED = new Set(["SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII"]);
 
-const defaultCreate: CreateMessage = (params) => {
-  // ฟังก์ชัน serverless มีเวลาจำกัด จึงตั้งเวลารอสั้นและลองซ้ำครั้งเดียว
-  client ??= new Anthropic({ timeout: 25_000, maxRetries: 1 });
-  return client.beta.messages.create(params);
+const defaultGenerate: Generate = async (model, request) => {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new GeminiError(0, "NO_API_KEY", "ยังไม่ได้ตั้ง GEMINI_API_KEY");
+  // ฟังก์ชัน serverless มีเวลาจำกัด (30 วินาที) และ Gemini ค้างเป็นบางครั้ง จึงรอครั้งละ 12 วินาทีและลองซ้ำครั้งเดียว
+  for (let attempt = 0; ; attempt++) {
+    const retry = attempt === 0;
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/${model}:generateContent`, {
+        method: "POST",
+        // คีย์ส่งใน header ไม่ใส่ใน URL เพื่อไม่ให้ไปอยู่ใน log
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(12_000),
+      });
+    } catch (error) {
+      if (retry && error instanceof Error && error.name === "TimeoutError") continue;
+      throw error;
+    }
+    if (response.ok) return (await response.json()) as GeminiResponse;
+    if (retry && (response.status === 500 || response.status === 503)) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      continue;
+    }
+    const { error } = ((await response.json().catch(() => ({}))) ?? {}) as { error?: { status?: string; message?: string; details?: { reason?: string }[] } };
+    throw new GeminiError(response.status, error?.details?.find((d) => d.reason)?.reason ?? error?.status ?? "UNKNOWN", error?.message ?? `HTTP ${response.status}`);
+  }
 };
 
-/** ตรวจคำขอ เรียก Claude แล้วคืนผล แยกจากตัวรับ HTTP เพื่อทดสอบได้ด้วย client จำลอง */
-export async function handleTutor(body: unknown, deps: { course?: CourseContent; createMessage?: CreateMessage } = {}): Promise<TutorResult> {
+/** ตรวจคำขอ เรียก Gemini แล้วคืนผล แยกจากตัวรับ HTTP เพื่อทดสอบได้ด้วยตัวเรียกจำลอง */
+export async function handleTutor(body: unknown, deps: { course?: CourseContent; generate?: Generate } = {}): Promise<TutorResult> {
   const course = deps.course ?? loadCourse();
   const request = parseRequest(body, course);
   if ("error" in request) return { status: request.status, body: { error: request.error } };
 
   try {
-    const response = await (deps.createMessage ?? defaultCreate)({
-      model: MODEL,
-      max_tokens: 4096,
-      // เมื่อตัวกรองความปลอดภัยของรุ่นหลักปฏิเสธ ให้เซิร์ฟเวอร์ของ Anthropic ลองรุ่นสำรองในคำขอเดียวกัน
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      // คำตอบสั้นจากเนื้อหาที่ให้ไว้ ไม่ต้องใช้การคิดลึก
-      output_config: { effort: "low" },
-      system: [{ type: "text", text: buildSystemPrompt(course, request.room), cache_control: { type: "ephemeral" } }],
-      messages: request.messages,
+    const response = await (deps.generate ?? defaultGenerate)(MODEL, {
+      systemInstruction: { parts: [{ text: buildSystemPrompt(course, request.room) }] },
+      // Gemini เรียกบทบาทของผู้ช่วยว่า model
+      contents: request.messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+      // คำตอบสั้นจากเนื้อหาที่ให้ไว้ ไม่ต้องใช้การคิดลึก (โทเคนที่ใช้คิดนับรวมใน maxOutputTokens)
+      generationConfig: { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "low" } },
     });
-    if (response.stop_reason === "refusal") return { status: 200, body: { fallback: true, reason: "refusal" } };
-    const reply = response.content
-      .map((block) => (block.type === "text" ? block.text : ""))
+    const candidate = response.candidates?.[0];
+    if (response.promptFeedback?.blockReason || BLOCKED.has(candidate?.finishReason ?? "")) return { status: 200, body: { fallback: true, reason: "refusal" } };
+    const reply = (candidate?.content?.parts ?? [])
+      .map((part) => (part.thought ? "" : (part.text ?? "")))
       .join("")
       .trim();
     if (!reply) return { status: 200, body: { fallback: true, reason: "empty" } };
@@ -162,7 +213,7 @@ export async function handleTutor(body: unknown, deps: { course?: CourseContent;
     return { status: 200, body: { reply, remaining: TUTOR_LIMITS.questionsPerSession - asked } };
   } catch (error) {
     const reason = failureReason(error);
-    console.error(`tutor: เรียก Claude ไม่สำเร็จ (${reason})`);
+    console.error(`tutor: เรียก Gemini ไม่สำเร็จ (${reason})${error instanceof GeminiError ? ` ${error.message}` : ""}`);
     return { status: 200, body: { fallback: true, reason } };
   }
 }

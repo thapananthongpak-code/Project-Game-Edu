@@ -25,7 +25,6 @@
     "balance": "BALANCE_REPORT=1 vitest run src/state/balance.test.ts --silent=false"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.131.0",
     "@supabase/supabase-js": "^2.117.2",
     "phaser": "^3.90.0",
     "react": "^19.3.0",
