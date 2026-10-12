@@ -21,6 +21,7 @@ import { Wardrobe } from "./ui/Wardrobe";
 import { BitPad } from "./ui/BitPad";
 import { TravelMap } from "./ui/TravelMap";
 import { DecorBoard } from "./ui/DecorBoard";
+import { LabPanel } from "./ui/LabPanel";
 import { Extras } from "./ui/Extras";
 import { StageOverlay } from "./ui/StageOverlay";
 import { StoryDialog } from "./ui/StoryDialog";
@@ -60,7 +61,7 @@ export function App() {
   useRoomTimer();
   useAudioDirector();
   useStoryTrigger();
-  const playing = screen === "hall" || screen === "hangar" || screen === "room" || screen === "market";
+  const playing = screen === "hall" || screen === "hangar" || screen === "room" || screen === "market" || screen === "lab";
 
   return (
     <div className="flex h-dvh w-full select-none flex-col overflow-hidden bg-ink">
@@ -89,6 +90,7 @@ export function App() {
       {overlay === "bit" && <BitPad />}
       {overlay === "travel" && <TravelMap />}
       {overlay === "decor" && <DecorBoard />}
+      {overlay === "lab" && <LabPanel />}
       {overlay === "extras" && <Extras />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}

@@ -82,6 +82,8 @@ export const DECOR = {
   jukebox: { prop: "pr_decor_jukebox", size: "small" },
   beanbag: { prop: "pr_decor_beanbag", size: "small" },
   globe: { prop: "pr_decor_globe", size: "small" },
+  /** รางวัลของห้องวิจัย: ได้เมื่อเก็บผลผลิตครบทุกพันธุ์ (src/state/lab.ts) ไม่ขายในร้าน */
+  alienplant: { prop: "pr_plant_moonpod_3", size: "small" },
 } as const satisfies Record<string, { prop: string; size: DecorSize }>;
 export type DecorSize = "wall" | "big" | "small";
 export type Decor = keyof typeof DECOR;
@@ -117,6 +119,8 @@ interface Sold {
   price: number;
   vendor?: NpcId;
   tier?: Difficulty;
+  /** รางวัลจากกิจกรรมในเกม ไม่วางขายในร้านและซื้อไม่ได้ (รหัสอยู่ในรายการเพื่อให้ข้อมูลบันทึกอ่านกลับได้) */
+  reward?: boolean;
 }
 export type ShopItem =
   | (Sold & { kind: "outfit"; value: Outfit })
@@ -130,19 +134,22 @@ export type ShopItem =
   | (Sold & { kind: "decor"; value: Decor })
   | (Sold & { kind: "theme"; value: Theme })
   /** max = จำนวนที่ถือได้พร้อมกัน, stock = จำนวนที่ร้านขายต่อแมพ (ของใช้มีจำกัด ต้องเลือกว่าจะใช้กับด่านไหน) */
-  | (Sold & { kind: "supply"; value: Supply; max: number; stock: number });
+  | (Sold & { kind: "supply"; value: Supply; max: number; stock: number })
+  /** เมล็ดพันธุ์พืชต่างดาวของห้องวิจัย (src/state/lab.ts) stock = จำนวนที่ร้านขายต่อแมพ */
+  | (Sold & { kind: "seed"; value: Seed; stock: number });
 
 /**
  * ย่านร้านค้า (GDD ข้อ 13): ร้านแยกตามประเภทของที่ขาย แต่ละร้านมีเคาน์เตอร์และหน้าต่างของตัวเอง
  * ของแต่ละชนิดอยู่ร้านเดียวเท่านั้น (มีเทสต์ตรวจ) ร้านพิเศษของ NPC ยังอยู่ที่ตัว NPC
  */
-export const STALLS = ["gear", "items", "costume", "decor"] as const;
+export const STALLS = ["gear", "items", "costume", "decor", "plants"] as const;
 export type Stall = (typeof STALLS)[number];
 export const STALL_KINDS: Record<Stall, readonly ShopItem["kind"][]> = {
   gear: ["weapon", "armor", "chip"],
   items: ["supply", "module"],
   costume: ["outfit", "bit", "paint"],
   decor: ["decor", "theme"],
+  plants: ["seed"],
 };
 
 export const CATALOG: readonly ShopItem[] = [
@@ -231,12 +238,36 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "theme-steel", kind: "theme", value: "steel", price: 110, tier: "normal" },
   { id: "theme-gold", kind: "theme", value: "gold", price: 150, tier: "normal" },
   { id: "theme-midnight", kind: "theme", value: "midnight", price: 160, tier: "hard" },
+  { id: "decor-alienplant", kind: "decor", value: "alienplant", price: 0, reward: true },
+  // เมล็ดพันธุ์: กำไรสุทธิของสวน (ผลผลิต − ราคาเมล็ด) × จำนวนที่ซื้อได้ต่อแมพ ตั้งให้กำไรรวมทุกแมพไม่เกิน 15% ของเครดิตสูงสุดที่เกมให้ (มีเทสต์ตรวจ GDD ข้อ 21)
+  { id: "seed-glowfern", kind: "seed", value: "glowfern", price: 10, stock: 5 },
+  { id: "seed-crystalbloom", kind: "seed", value: "crystalbloom", price: 20, stock: 3 },
+  { id: "seed-sunvine", kind: "seed", value: "sunvine", price: 30, stock: 2, tier: "normal" },
+  { id: "seed-moonpod", kind: "seed", value: "moonpod", price: 50, stock: 1, tier: "hard" },
   { id: "supply-repair-kit", kind: "supply", value: "repair-kit", price: 25, max: 3, stock: 3 },
   { id: "supply-shield", kind: "supply", value: "shield", price: 20, max: 3, stock: 3 },
   { id: "supply-overcharge", kind: "supply", value: "overcharge", price: 30, max: 3, stock: 2 },
   { id: "supply-analyzer", kind: "supply", value: "analyzer", price: 30, max: 3, stock: 2 },
   { id: "supply-reboot", kind: "supply", value: "reboot", price: 60, max: 1, stock: 1 },
 ];
+
+/**
+ * ห้องวิจัยพืชต่างดาว (GDD ข้อ 21): พืชโตตามเวลาจริง (บันทึกเวลาที่ปลูก คำนวณระยะตอนเปิดเกม จึงโตต่อแม้ปิดเกม)
+ * growMs = เวลาที่โตเต็มที่ yield = เครดิตที่ได้ตอนเก็บ (กำไรสุทธิ = yield − ราคาเมล็ด) pots = จำนวนกระถางตามแมพไกลสุดที่ไปถึง
+ */
+export const SEEDS = ["glowfern", "crystalbloom", "sunvine", "moonpod"] as const;
+export type Seed = (typeof SEEDS)[number];
+export const LAB = {
+  pots: { easy: 4, normal: 6, hard: 8 } as Record<Difficulty, number>,
+  seeds: {
+    glowfern: { growMs: 10 * 60_000, yield: 14 },
+    crystalbloom: { growMs: 15 * 60_000, yield: 30 },
+    sunvine: { growMs: 20 * 60_000, yield: 44 },
+    moonpod: { growMs: 30 * 60_000, yield: 74 },
+  } as Record<Seed, { growMs: number; yield: number }>,
+  /** ของตกแต่งที่ได้เมื่อเก็บผลผลิตครบทุกพันธุ์อย่างน้อยพันธุ์ละหนึ่งครั้ง */
+  rewardDecor: "alienplant" as Decor,
+} as const;
 
 /** เครดิตวิจัยที่ได้จากความคืบหน้าแต่ละอย่าง */
 export const REWARDS = {

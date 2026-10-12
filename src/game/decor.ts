@@ -101,7 +101,7 @@ export function openCells(base: GameMap, area: DecorArea, placed: readonly Decor
  * จุดใช้งานเริ่มต้นของโถงและโรงเก็บหุ่นที่ผู้เล่นย้ายตำแหน่งเองได้ (ชนิดของวัตถุในผัง แต่ละห้องมีชนิดละจุดเดียว)
  * ที่ย้ายไม่ได้: ประตูและประตูโรงเก็บหุ่น (ติดผนัง ลำดับห้องต้องคงเดิม) ตู้กระจกเก็บแกน AI (ผู้ใช้กำหนดว่าไม่ต้องแก้) และ NPC
  */
-export const STATIONS = ["shop", "storage", "travel", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"] as const;
+export const STATIONS = ["shop", "lab", "storage", "travel", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"] as const;
 export type Station = (typeof STATIONS)[number];
 /**
  * เสาและผนังกั้นกลางห้อง (ช่องผนังที่อยู่ในพื้นที่ของห้อง ไม่ใช่ผนังรอบห้อง) ผู้เล่นย้ายได้เหมือนจุดใช้งาน

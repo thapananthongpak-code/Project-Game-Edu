@@ -27,12 +27,13 @@ import {
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
 import type { DecorArea, DecorPlacement, Piece, PlaceError } from "../game/decor";
 import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, resetLayout, setTheme, toggleModule } from "./shop";
-import type { Avatar, BitModule, Decor, Stall, Supply, Theme } from "./shop.config";
+import { harvest, plant } from "./lab";
+import type { Avatar, BitModule, Decor, Seed, Stall, Supply, Theme } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
-export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room" | "market";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive";
+export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room" | "market" | "lab";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive" | "lab";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
 export interface MusicCue {
@@ -80,6 +81,8 @@ interface GameState {
   shopVendor: NpcId | null;
   /** ร้านในย่านร้านค้าที่เปิดอยู่ (null = ไม่ได้เปิดร้านของย่านร้านค้า) */
   shopStall: Stall | null;
+  /** กระถางของห้องวิจัยที่หน้าต่างกำลังเน้น (เริ่มที่ 0) */
+  labPot: number | null;
   musicCue: MusicCue | null;
   /** หน้าต่างถามพี่บิต เปิดซ้อนบนหน้าต่างอื่นได้ */
   tutorOpen: boolean;
@@ -122,6 +125,14 @@ interface GameState {
   enterHangar: () => void;
   /** เข้าย่านร้านค้า (ออกด้วย exitToHall) */
   enterMarket: () => void;
+  /** เข้าห้องวิจัยพืชต่างดาว (ออกด้วย exitToHall) */
+  enterLab: () => void;
+  /** เปิดหน้าต่างห้องวิจัย เน้นกระถางที่เลือก */
+  openLab: (pot: number) => void;
+  /** ปลูกเมล็ดในกระถางที่ว่าง คืน true ถ้าปลูกได้ */
+  plantSeed: (pot: number, seed: Seed) => boolean;
+  /** เก็บผลผลิตของกระถางที่โตเต็มที่ คืนเครดิตที่ได้ (0 = เก็บไม่ได้) */
+  harvestPot: (pot: number) => number;
   openStory: (beat: string) => void;
   /** ปิดฉากเนื้อเรื่องและบันทึกว่าดูแล้ว */
   finishStory: () => void;
@@ -192,7 +203,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     const current = progress[room] ?? emptyRoom();
     set({ progress: { ...progress, [room]: { ...current, ...patch(current) } } });
   };
-  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
   const updateNpc = (id: NpcId, patch: (record: NpcRecord) => Partial<NpcRecord>) => {
     const { npcs } = get();
     const current = npcs[id] ?? emptyNpc();
@@ -215,6 +226,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     npcId: null,
     shopVendor: null,
     shopStall: null,
+    labPot: null,
     musicCue: null,
     tutorOpen: false,
     tutorRoom: null,
@@ -290,6 +302,21 @@ export const useGameStore = create<GameState>()((set, get) => {
     exitToHall: () => set({ ...closed, screen: "hall" }),
     enterHangar: () => set({ ...closed, screen: "hangar" }),
     enterMarket: () => set({ ...closed, screen: "market" }),
+    enterLab: () => set({ ...closed, screen: "lab" }),
+    openLab: (pot) => set({ overlay: "lab", labPot: pot, prompt: null }),
+    plantSeed: (pot, seed) => {
+      const state = get();
+      const result = plant(state.shop, pot, seed, Date.now(), reachedMap(state));
+      if (typeof result === "string") return false;
+      set({ shop: result });
+      return true;
+    },
+    harvestPot: (pot) => {
+      const result = harvest(get().shop, pot, Date.now());
+      if (typeof result === "string") return 0;
+      set({ shop: result.shop });
+      return result.gained;
+    },
 
     openStory: (beat) => set({ overlay: "story", storyBeat: beat, prompt: null }),
     finishStory: () => {
@@ -382,7 +409,7 @@ export const useGameStore = create<GameState>()((set, get) => {
       set({ overlay: null, stationIndex: null, room: focusAfter(get()) });
     },
     openOverlay: (overlay) => set({ overlay, prompt: null }),
-    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, musicCue: null, room: focusAfter(get()) }),
+    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, musicCue: null, room: focusAfter(get()) }),
     setTutorOpen: (tutorOpen, room) => set({ tutorOpen, tutorRoom: tutorOpen ? (room ?? get().room) : null }),
 
     completeMinigame: (result) => {

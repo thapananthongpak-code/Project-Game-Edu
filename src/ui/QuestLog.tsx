@@ -14,8 +14,9 @@ import { useDialog } from "./useDialog";
 type GuideKey = keyof typeof ui.questLog.guide;
 /** คู่มือรูปในเกม: รูปของแต่ละจุดจัดตามที่ที่พบ (ชื่อและคำอธิบายอยู่ใน ui.questLog.guide) */
 const GUIDE: { group: keyof typeof ui.questLog.guideGroups; items: [key: GuideKey, prop: string][] }[] = [
-  { group: "hall", items: [["door", "pr_door_open"], ["gate", "pr_hangar_gate"], ["shop", "pr_market_gate"], ["storage", "pr_storage_box"], ["travel", "pr_travel_board"], ["decorboard", "pr_decor_board"]] },
-  { group: "market", items: [["stallGear", "pr_stall_gear"], ["stallItems", "pr_stall_items"], ["stallCostume", "pr_stall_costume"], ["stallDecor", "pr_stall_decor"]] },
+  { group: "hall", items: [["door", "pr_door_open"], ["gate", "pr_hangar_gate"], ["shop", "pr_market_gate"], ["lab", "pr_lab_door"], ["storage", "pr_storage_box"], ["travel", "pr_travel_board"], ["decorboard", "pr_decor_board"]] },
+  { group: "market", items: [["stallGear", "pr_stall_gear"], ["stallItems", "pr_stall_items"], ["stallCostume", "pr_stall_costume"], ["stallDecor", "pr_stall_decor"], ["stallPlants", "pr_stall_plants"]] },
+  { group: "lab", items: [["pot", "pr_pot_empty"]] },
   { group: "hangar", items: [["robot", "pr_guardian_bay"], ["corecase", "pr_core_case"], ["console", "pr_mission_console"], ["hologram", "pr_hologram"], ["wardrobe", "pr_wardrobe"], ["bitpad", "pr_bit_dock"]] },
   { group: "room", items: [["station", "pr_station_terminal"], ["minigame", "pr_r1_learning_machine"], ["review", "pr_notebook_desk"], ["core", "pr_core_pedestal"]] },
 ];

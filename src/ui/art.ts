@@ -48,6 +48,8 @@ export const art = {
   tiles: (tileset: string): string => `assets/tiles/${tileset}_preview.png`,
   backdrop: (room: number): string => `assets/battle/bg_battle_${room}.png`,
   core: (room: number): string => `assets/cores/core_${room}.png`,
+  /** พืชต่างดาวของห้องวิจัยแต่ละพันธุ์และระยะ (1 = ต้นอ่อน 2 = กำลังโต 3 = พร้อมเก็บ) และกระถางที่ว่าง */
+  plant: (seed: string, stage: 1 | 2 | 3): string => `assets/props/pr_plant_${seed}_${stage}.png`,
   /** พื้นแผนที่โลกของกระดานแผนที่ (WM-01) และสถานที่ของแต่ละแมพบนแผนที่ (WM-02..04) */
   worldMap: "assets/worldmap/wm_world.png",
   worldSite: (site: "lab" | "outpost" | "fortress"): string => `assets/worldmap/wm_site_${site}.png`,

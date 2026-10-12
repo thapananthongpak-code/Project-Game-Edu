@@ -27,6 +27,7 @@ const STARTER_DECOR = { "easy:hall": [{ decor: "window", col: 3, row: 1 }, { dec
 /** รหัสด่านต่อสู้ของห้องในแมพ 1 (src/state/campaign.ts) */
 const easyBattle = (room) => (room === 6 ? "omega" : `k${room}`);
 const NO_SUPPLIES = { "repair-kit": 0, shield: 0, overcharge: 0, analyzer: 0, reboot: 0 };
+const NO_SEEDS = { glowfern: 0, crystalbloom: 0, sunvine: 0, moonpod: 0 };
 /** NPC ประจำห้อง (src/state/npcs.ts และ src/content/ui-strings.ts) */
 const NPC = {
   mechanic: { name: "ช่างโซอี้", topic: 1, pickups: 3 },
@@ -613,7 +614,7 @@ async function openStall(page, stall) {
     }
   }
   await walkTo(page, `stall-${stall}`);
-  assert.match((await snap(page)).store.prompt, new RegExp(`^${{ gear: "ร้านอุปกรณ์การ์เดียน", items: "ร้านไอเทม", costume: "ร้านคอสตูม", decor: "ร้านตกแต่ง" }[stall]}`));
+  assert.match((await snap(page)).store.prompt, new RegExp(`^${{ gear: "ร้านอุปกรณ์การ์เดียน", items: "ร้านไอเทม", costume: "ร้านคอสตูม", decor: "ร้านตกแต่ง", plants: "ร้านพืช" }[stall]}`));
   await act(page);
   await page.getByTestId("shop").waitFor();
   assert.equal(await page.getByTestId("shop").getAttribute("data-stall"), stall);
@@ -859,7 +860,7 @@ async function playRoom1(page) {
   await page.getByTestId("sound-sfx").click();
   // คู่มือรูปในเกม: รูปของแต่ละจุดคืออะไร ใช้ทำอะไร
   await page.locator('[data-testid="questlog-guide"] summary').click();
-  assert.equal(await page.locator('[data-testid^="guide-"]').count(), 23, "คู่มือรูป: โถง 6 ย่านร้านค้า 4 โรงเก็บหุ่น 6 ห้องเรียน 4 และบนจอ 3");
+  assert.equal(await page.locator('[data-testid^="guide-"]').count(), 26, "คู่มือรูป: โถง 7 ย่านร้านค้า 5 ห้องวิจัย 1 โรงเก็บหุ่น 6 ห้องเรียน 4 และบนจอ 3");
   assert.match(await page.getByTestId("guide-shop").innerText(), /ทางเข้าย่านร้านค้า[\s\S]*ซื้อ/);
   assert.match(await page.getByTestId("guide-travel").innerText(), /กระดานแผนที่[\s\S]*เดินทางไปแมพอื่น/);
   await page.getByTestId("guide-travel").scrollIntoViewIfNeeded();
@@ -1249,7 +1250,7 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {} });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, decor: STARTER_DECOR, layout: {}, theme: {} });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
@@ -2264,7 +2265,7 @@ const doneRoom = (topic) => ({ stationsSeen: 0, minigameDone: topic < 6, stars: 
 const doneRooms = (topics) => Object.fromEntries(topics.map((topic) => [topic, doneRoom(topic)]));
 const assessmentOf = (form) => ({ form, correctByTopic: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, items: [], completedAt: NOW });
 const wonAll = (map) => Object.fromEntries(CAMPAIGN[map].battles.map((battle) => [battle.id, WON]));
-const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, ...patch });
+const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, ...patch });
 const MAP1_STORY = ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "ending"];
 /** ผู้เล่นที่ผ่านแมพ 1 ครบแล้ว (ชนะไคจูทุกตัว ทำแบบทดสอบหลังเรียนแล้ว) ยังอยู่ที่แมพ 1 */
 const travelerSave = (patch = {}) => ({
@@ -2326,6 +2327,99 @@ async function travelTo(page, map, doors) {
   await page.waitForTimeout(400);
   assert.match(await page.getByTestId("hud-map").innerText(), new RegExp(`แมพ ${["easy", "normal", "hard"].indexOf(map) + 1}`));
   return story;
+}
+
+// ---------------------------------------------------------------- ห้องวิจัยพืชต่างดาว (GDD ข้อ 21)
+
+/** ย้อนเวลาที่ปลูกของกระถางไปข้างหลัง (แทนการรอจริง) ผ่าน store ของโหมด dev */
+const ageCrops = (page, index, minutes) =>
+  page.evaluate(
+    ([i, m]) => {
+      const store = window.__aitq.store;
+      const shop = store.getState().shop;
+      store.setState({ shop: { ...shop, pots: { ...shop.pots, [i]: { ...shop.pots[i], plantedAt: Date.now() - m * 60_000 } } } });
+    },
+    [String(index), minutes],
+  );
+
+async function playLab(page) {
+  // จบแมพ 1 แล้ว: ไปถึงแมพ 2 จึงมีกระถาง 6 ใบ เมล็ดเถาสุริยะวางขาย ฝักจันทราของแมพ 3 ยังล็อก
+  await resumeWith(page, travelerSave());
+  const start = await creditsOf(page);
+  await openStall(page, "plants");
+  assert.equal(await page.locator('[data-testid^="shop-item-seed-"]').count(), 4, "ร้านพืชขายเมล็ด 4 พันธุ์");
+  assert.deepEqual(await page.locator('[data-testid^="shop-item-seed-"]').evaluateAll((rows) => rows.map((row) => [row.dataset.testid.replace("shop-item-seed-", ""), row.dataset.locked])), [["glowfern", "false"], ["crystalbloom", "false"], ["sunvine", "false"], ["moonpod", "true"]]);
+  assert.equal(await page.locator('[data-testid^="shop-item-weapon-"]').count(), 0, "ร้านพืชไม่ขายอุปกรณ์");
+  await page.getByTestId("shop-buy-seed-glowfern").click();
+  await page.getByTestId("shop-buy-seed-crystalbloom").click();
+  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), String(start - 30), "เมล็ดเฟิร์น 10 + ดอกคริสตัล 20");
+  assert.equal(await page.getByTestId("shop-buy-seed-moonpod").count(), 0, "เมล็ดของแมพ 3 ซื้อไม่ได้ในแมพ 2");
+  await shot(page, "36-shop-plants");
+  await leaveMarket(page);
+
+  await walkTo(page, "lab");
+  assert.match((await snap(page)).store.prompt, /ห้องวิจัยพืชต่างดาว/);
+  await act(page);
+  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Lab" && window.__aitq.snapshot().interactables.some((i) => i.id.startsWith("pot-")));
+  await page.waitForTimeout(300);
+  let scene = await snap(page);
+  assert.equal(scene.interactables.filter((i) => i.id.startsWith("pot-")).length, 6, "ไปถึงแมพ 2 แล้ว: กระถาง 6 ใบ");
+  assert.deepEqual(scene.pots, Array(6).fill("pr_pot_empty"));
+  assert.match(await page.getByTestId("objective").innerText(), /กระถาง/);
+  await shot(page, "36-lab");
+
+  // ปลูกเฟิร์นเรืองแสงที่กระถางแรก: ต้นอ่อนทันที ยังเก็บไม่ได้
+  await walkTo(page, "pot-0");
+  await act(page);
+  await page.getByTestId("lab").waitFor();
+  assert.equal(await page.getByTestId("lab-pot-0").getAttribute("data-stage"), "empty");
+  await page.getByTestId("lab-plant-0-glowfern").click();
+  assert.deepEqual([await page.getByTestId("lab-pot-0").getAttribute("data-stage"), await page.getByTestId("lab-pot-0").getAttribute("data-seed")], ["sprout", "glowfern"]);
+  assert.equal(await page.getByTestId("lab-harvest-0").count(), 0, "ยังไม่โต: เก็บไม่ได้");
+  assert.match(await page.getByTestId("lab-time-0").innerText(), /เหลืออีก 9 นาที|เหลืออีก 10 นาที/);
+  await shot(page, "36-lab-panel");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(350);
+  assert.equal((await snap(page)).pots[0], "pr_plant_glowfern_1");
+
+  // โตตามเวลาจริง: ผ่านไป 4 นาที = กำลังโต 11 นาที = พร้อมเก็บ (ย้อนเวลาที่ปลูกแทนการรอ)
+  await ageCrops(page, 0, 4);
+  await page.waitForFunction(() => window.__aitq.snapshot().pots[0] === "pr_plant_glowfern_2");
+  await ageCrops(page, 0, 11);
+  await page.waitForFunction(() => window.__aitq.snapshot().pots[0] === "pr_plant_glowfern_3");
+  const before = await creditsOf(page);
+  await walkTo(page, "pot-0");
+  await act(page);
+  await page.getByTestId("lab-harvest-0").click();
+  assert.equal(await creditsOf(page), before + 14, "เก็บเฟิร์นได้ 14 เครดิต");
+  assert.equal(await page.getByTestId("lab-pot-0").getAttribute("data-stage"), "empty", "เก็บแล้วกระถางว่าง");
+  assert.equal(await page.getByTestId("lab-codex-glowfern").getAttribute("data-harvests"), "1");
+  assert.match((await snap(page)).store.toast, /เก็บเฟิร์นเรืองแสงแล้ว ได้ 14 เครดิตวิจัย/);
+  assert.equal((await snap(page)).store.shop.owned.includes("decor-alienplant"), false);
+
+  // สมุดสะสมครบทุกพันธุ์: ได้ของตกแต่งรางวัล (ตั้งผลผลิตของสามพันธุ์ไว้ก่อน แล้วเก็บฝักจันทราที่เหลือ)
+  await page.evaluate(() => {
+    const store = window.__aitq.store;
+    const shop = store.getState().shop;
+    store.setState({ shop: { ...shop, seeds: { ...shop.seeds, moonpod: 1 }, harvests: { ...shop.harvests, crystalbloom: 1, sunvine: 1 } } });
+  });
+  await page.getByTestId("lab-plant-1-moonpod").click();
+  assert.equal(await page.getByTestId("lab-reward").getAttribute("data-got"), "false");
+  await ageCrops(page, 1, 31);
+  await page.getByTestId("lab-harvest-1").click();
+  assert.equal(await page.getByTestId("lab-reward").getAttribute("data-got"), "true");
+  assert.equal((await snap(page)).store.shop.owned.includes("decor-alienplant"), true);
+  // เครดิตจากสวนคำนวณจากจำนวนครั้งที่เก็บ: เฟิร์น 14 + ดอกคริสตัล 30 + เถาสุริยะ 44 (ที่ตั้งไว้) + ฝักจันทรา 74
+  assert.equal(await creditsOf(page), before + 14 + 30 + 44 + 74);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(350);
+
+  // ออกจากห้องวิจัยกลับโถง แล้วของตกแต่งรางวัลเป็นของที่วางได้ (ผ่านกระดานตกแต่ง)
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  assert.equal((await snap(page)).store.screen, "hall");
+  log("ห้องวิจัยพืชต่างดาว: ซื้อเมล็ดที่ร้านพืช ปลูก โตตามเวลาจริง 3 ระยะ เก็บผลผลิตได้เครดิต เก็บครบทุกพันธุ์ได้ของตกแต่งรางวัล");
 }
 
 // ---------------------------------------------------------------- แมพ 2: ศูนย์วิจัยภาคสนาม (GDD ข้อ 15, 16, 17, 19)
@@ -2432,10 +2526,10 @@ async function playNormal(page) {
   assert.equal(await decor.getAttribute("data-mode"), "decor");
   await page.getByTestId("decor-mode-station").click();
   assert.equal(await decor.getAttribute("data-mode"), "station");
-  assert.deepEqual(await layoutOf(), { shop: "2,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
+  assert.deepEqual(await layoutOf(), { shop: "2,8", lab: "14,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
   assert.equal(await page.getByTestId("decor-panel").getAttribute("data-top"), "true", "จุดใช้งานของโถงอยู่แถวล่าง: แถบเลื่อนขึ้นบนเองไม่ให้บัง");
   assert.equal(await page.getByTestId("station-reset").isDisabled(), true);
-  assert.equal(await page.locator('[data-testid^="station-pick-"]').count(), 4, "โถง: ร้าน กล่องเก็บไอเทม กระดานแผนที่ กระดานตกแต่ง (ประตูย้ายไม่ได้)");
+  assert.equal(await page.locator('[data-testid^="station-pick-"]').count(), 5, "โถง: ย่านร้านค้า ห้องวิจัย กล่องเก็บไอเทม กระดานแผนที่ กระดานตกแต่ง (ประตูย้ายไม่ได้)");
   // แตะชื่อจุดแล้วแตะช่อง: ทับของอื่นไม่ได้ และหน้าจุดต้องมีที่ยืน (โซฟาอยู่ที่ช่อง 15–16 แถว 6)
   await page.getByTestId("station-pick-shop").click();
   assert.equal(await decor.getAttribute("data-held"), "shop");
@@ -2499,7 +2593,7 @@ async function playNormal(page) {
   await page.getByTestId("decor-mode-station").click();
   await page.getByTestId("station-reset").click();
   assert.match(await page.getByTestId("decor-notice").innerText(), /คืนทุกจุดและเสาไปตำแหน่งเริ่มต้นแล้ว/);
-  assert.deepEqual(await layoutOf(), { shop: "2,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
+  assert.deepEqual(await layoutOf(), { shop: "2,8", lab: "14,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
   assert.ok(!(await decorPlaced(page)).includes("plant@2,8"));
   await page.keyboard.press("Escape");
   await page.waitForTimeout(500);
@@ -3655,6 +3749,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("lab")) {
+    console.log("เดสก์ท็อป: ห้องวิจัยพืชต่างดาว (ร้านพืช ปลูก โตตามเวลาจริง เก็บผลผลิต)");
+    await playLab(page);
   }
   if (wanted("hard")) {
     console.log("เดสก์ท็อป: แมพ 3 ป้อมปราการ (ไม่มีห้องเรียน ไคจู 2 ตัว บอส 3 ร่าง)");

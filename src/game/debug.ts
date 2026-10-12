@@ -3,6 +3,7 @@ import { audioDebug } from "../audio/engine";
 import { useGameStore } from "../state/gameStore";
 import { SCENE } from "./constants";
 import type { HangarScene } from "./scenes/HangarScene";
+import type { LabScene } from "./scenes/LabScene";
 import type { WorldScene } from "./scenes/WorldScene";
 
 /** ข้อมูลอ่านอย่างเดียวสำหรับการทดสอบอัตโนมัติ (เปิดเฉพาะตอน dev): ตำแหน่งผู้เล่นและจุดโต้ตอบ */
@@ -11,7 +12,7 @@ export function installDebugHook(game: Phaser.Game): void {
     // สำหรับสคริปต์ถ่ายภาพหน้าจอ (ข้ามไปฉากที่ต้องการ) การทดสอบการเล่นจริงไม่ใช้ทางนี้
     store: useGameStore,
     snapshot: () => {
-      const key = [SCENE.room, SCENE.hangar, SCENE.hall, SCENE.market].find((k) => game.scene.isActive(k));
+      const key = [SCENE.room, SCENE.hangar, SCENE.hall, SCENE.market, SCENE.lab].find((k) => game.scene.isActive(k));
       const scene = key ? (game.scene.getScene(key) as WorldScene) : null;
       const { ready, screen, zone, room, overlay, stationIndex, prompt, toast, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor, shopStall } = useGameStore.getState();
       return {
@@ -24,6 +25,7 @@ export function installDebugHook(game: Phaser.Game): void {
         avatar: scene?.player ? scene.avatarState : null,
         decor: scene?.decorInfo ?? [],
         bay: key === SCENE.hangar ? (scene as HangarScene).bayState : null,
+        pots: key === SCENE.lab ? (scene as LabScene).potTextures : null,
         audio: audioDebug(),
         store: { ready, screen, zone, room, overlay, stationIndex, prompt, toast: toast?.text ?? null, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor, shopStall },
       };

@@ -18,6 +18,10 @@ export type ObjectKind =
   | "shop"
   /** เคาน์เตอร์ของร้านหนึ่งในย่านร้านค้า (ดู MapObject.stall) */
   | "stall"
+  /** ทางเข้าห้องวิจัยพืชต่างดาว (โถงของทุกแมพ จุดใช้งานที่ผู้เล่นย้ายได้) */
+  | "lab"
+  /** กระถางของห้องวิจัย (index = เลขกระถางเริ่มที่ 0) */
+  | "pot"
   /** กล่องเก็บไอเทม: อุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (โถงและโรงเก็บหุ่น) */
   | "storage"
   /** กระดานแผนที่การเดินทาง: ไปแมพอื่นที่เปิดแล้ว (โถงของทุกแมพ) */
@@ -124,6 +128,7 @@ const HALLS: Record<Difficulty, GameMap> = {
       { kind: "storage", prop: "pr_storage_box", col: 5, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 8, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 11, row: 8 },
+      { kind: "lab", prop: "pr_lab_door", col: 14, row: 8, w: 2 },
     ],
   },
   // แมพ 2 ศูนย์วิจัยภาคสนาม: ลานไม้มีเสาสองคู่ 3 ประตู
@@ -150,6 +155,7 @@ const HALLS: Record<Difficulty, GameMap> = {
       { kind: "decorboard", prop: "pr_decor_board", col: 5, row: 8 },
       { kind: "storage", prop: "pr_storage_box", col: 12, row: 8, w: 2 },
       { kind: "shop", prop: "pr_market_gate", col: 15, row: 8, w: 2 },
+      { kind: "lab", prop: "pr_lab_door", col: 8, row: 8, w: 2 },
     ],
   },
   // แมพ 3 ป้อมปราการภูเขาไฟ: ลานป้อมเหล็กดำ ไม่มีห้องเรียน (ลุยด่านต่อสู้อย่างเดียว) ประตูโรงเก็บหุ่นตรงกลาง
@@ -175,6 +181,7 @@ const HALLS: Record<Difficulty, GameMap> = {
       { kind: "storage", prop: "pr_storage_box", col: 6, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 12, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 16, row: 8 },
+      { kind: "lab", prop: "pr_lab_door", col: 8, row: 8, w: 2 },
     ],
   },
 };
@@ -184,9 +191,9 @@ export const hallMapOf = (difficulty: Difficulty): GameMap => HALLS[difficulty];
 
 /**
  * ย่านร้านค้า (GDD ข้อ 13): ห้องเดียวต่อแมพ ใช้ชุดไทล์เดียวกับโถงของแมพนั้น ผังตายตัว (ผู้เล่นไม่จัดห้องนี้)
- * ประตูกลับโถงอยู่กลางผนังบน เคาน์เตอร์ของแต่ละร้านเรียงเป็นแถว ช่องกลาง (คอลัมน์ 9) เว้นไว้ให้ร้านที่จะเพิ่มทีหลัง
+ * ประตูกลับโถงอยู่กลางผนังบน เคาน์เตอร์ของแต่ละร้านเรียงเป็นแถว
  */
-export const STALL_COLUMNS: Record<Stall, number> = { gear: 1, items: 5, costume: 13, decor: 17 };
+export const STALL_COLUMNS: Record<Stall, number> = { gear: 1, items: 5, plants: 9, costume: 13, decor: 17 };
 const marketOf = (tileset: string): GameMap => ({
   tileset,
   shape: RECT,
@@ -197,6 +204,23 @@ const marketOf = (tileset: string): GameMap => ({
   ],
 });
 export const marketMapOf = (difficulty: Difficulty): GameMap => marketOf(HALLS[difficulty].tileset);
+
+/**
+ * ห้องวิจัยพืชต่างดาว (GDD ข้อ 21): ห้องเดียวต่อแมพ ใช้ชุดไทล์เดียวกับโถง ผังตายตัว กระถางเรียง 2 แถว แถวละ 4 กระถาง
+ * pots = จำนวนกระถางที่ผู้เล่นใช้ได้ตามแมพไกลสุดที่ไปถึง (ไม่ระบุ = ครบ 8) กระถางที่ยังไม่เปิดไม่อยู่ในผัง
+ */
+export const LAB_POT_SLOTS: { col: number; row: number }[] = [3, 7, 11, 15].flatMap((col) => [4, 7].map((row) => ({ col, row }))).sort((a, b) => a.row - b.row || a.col - b.col);
+export function labMapOf(difficulty: Difficulty, pots: number = LAB_POT_SLOTS.length): GameMap {
+  return {
+    tileset: HALLS[difficulty].tileset,
+    shape: RECT,
+    spawn: { col: 9, row: 3 },
+    objects: [
+      backDoor(9),
+      ...LAB_POT_SLOTS.slice(0, pots).map(({ col, row }, index): MapObject => ({ kind: "pot", prop: "pr_pot_empty", col, row, index })),
+    ],
+  };
+}
 
 /**
  * โรงเก็บหุ่นของแต่ละแมพ (ผังและไทล์เซตต่างกัน) ทุกโรงมีจุดปรับแต่งแยกกันตามที่ผู้ใช้กำหนด:

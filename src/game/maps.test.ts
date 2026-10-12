@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { ROOM_COUNT, stationsOf } from "../content";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { NPCS, npcsOfMap } from "../state/npcs";
-import { DECOR, STALLS } from "../state/shop.config";
+import { DECOR, LAB, STALLS } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, marketMapOf, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, labMapOf, marketMapOf, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
 
 interface ManifestAsset {
   size: [number, number];
@@ -28,6 +28,9 @@ const maps: [string, GameMap][] = [
   ["ย่านร้านค้าแมพ 1", marketMapOf("easy")],
   ["ย่านร้านค้าแมพ 2", marketMapOf("normal")],
   ["ย่านร้านค้าแมพ 3", marketMapOf("hard")],
+  ["ห้องวิจัยแมพ 1 (กระถางครบ)", labMapOf("easy")],
+  ["ห้องวิจัยแมพ 2", labMapOf("normal", LAB.pots.normal)],
+  ["ห้องวิจัยแมพ 3", labMapOf("hard", LAB.pots.hard)],
   ...named("ห้อง", roomMaps),
   ...named("ระดับกลาง ห้อง", normalMaps),
   ...named("ระดับยาก ห้อง", hardMaps),
@@ -129,6 +132,17 @@ describe("แผนที่ของทุกฉาก", () => {
       for (const stall of STALLS) expect(market.objects.find((o) => o.stall === stall)?.prop, stall).toBe(`pr_stall_${stall}`);
       expect(market.tileset).toBe(hallMapOf(difficulty).tileset);
     }
+  });
+
+  it("ห้องวิจัย: ประตูกลับโถงหนึ่งบาน กระถางตามจำนวนที่แมพเปิด เรียงเลข 0 ขึ้นไป และโถงทุกแมพมีทางเข้าห้องวิจัยหนึ่งจุด", () => {
+    for (const difficulty of DIFFICULTIES) {
+      const lab = labMapOf(difficulty, LAB.pots[difficulty]);
+      expect(count(lab, "door"), difficulty).toBe(1);
+      expect(lab.objects.filter((o) => o.kind === "pot").map((o) => o.index), difficulty).toEqual(Array.from({ length: LAB.pots[difficulty] }, (_, i) => i));
+      expect(count(hallMapOf(difficulty), "lab"), difficulty).toBe(1);
+      expect(lab.tileset).toBe(hallMapOf(difficulty).tileset);
+    }
+    expect(LAB.pots.easy < LAB.pots.normal && LAB.pots.normal < LAB.pots.hard).toBe(true);
   });
 
   it("ทุกระดับความยากมีแผนที่ครบทุกห้อง และโถงมีประตูเท่าจำนวนห้อง", () => {

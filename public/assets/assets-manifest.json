@@ -6004,6 +6004,447 @@
       "status": "generated"
     },
     {
+      "id": "PR-L01",
+      "kind": "prop",
+      "name": "ทางเข้าห้องวิจัยพืช (โถง)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_lab_door": "props/pr_lab_door.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "greenhouse laboratory entrance with a glass arch door, white metal frame and green alien plants growing on both sides, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "16307af0-db97-4603-9e6c-f9f069e193f8",
+        "generatedAt": "2026-10-12T03:54:41.842Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L02",
+      "kind": "prop",
+      "name": "กระถางวิจัยที่ว่าง",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_pot_empty": "props/pr_pot_empty.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a round clay planting pot filled with plain dark soil on a short metal stand, only soil, no plant, no leaves, no sprout, no flower, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "57ef8a41-ee91-4ba3-a1cb-e73c380cde28",
+        "generatedAt": "2026-10-12T04:00:14.462Z"
+      },
+      "status": "generated",
+      "postprocess": {
+        "clearAbove": 29
+      },
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "d9ba0ca7-ca9a-40d5-bb0c-068ec7314021"
+        }
+      ]
+    },
+    {
+      "id": "PR-L03",
+      "kind": "prop",
+      "name": "เฟิร์นเรืองแสง ระยะต้นอ่อน",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_glowfern_1": "props/pr_plant_glowfern_1.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a tiny seedling with two small leaves just sprouting from the soil of an alien glowing fern with cyan bioluminescent fronds, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "f936b0da-b89b-4914-af4c-6c4db30bff81",
+        "generatedAt": "2026-10-12T03:56:26.149Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L04",
+      "kind": "prop",
+      "name": "เฟิร์นเรืองแสง ระยะกำลังโต",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_glowfern_2": "props/pr_plant_glowfern_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a half grown young alien glowing fern with several cyan bioluminescent fronds fanning out, no bud, no flower, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e9b1ba49-ffa3-49d1-b2b0-08921cd99168",
+        "generatedAt": "2026-10-12T04:00:40.338Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "831fb8f9-3ca5-415a-bc50-7fec11f1b4c7"
+        }
+      ]
+    },
+    {
+      "id": "PR-L05",
+      "kind": "prop",
+      "name": "เฟิร์นเรืองแสง ระยะพร้อมเก็บ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_glowfern_3": "props/pr_plant_glowfern_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a fully grown plant in full bloom, large and glowing, ready to harvest of an alien glowing fern with cyan bioluminescent fronds, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "39c442df-377a-4aa0-939a-9210ca5da00a",
+        "generatedAt": "2026-10-12T03:57:53.148Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L06",
+      "kind": "prop",
+      "name": "ดอกคริสตัล ระยะต้นอ่อน",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_crystalbloom_1": "props/pr_plant_crystalbloom_1.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a very tiny seedling of an alien crystal flower, only two small green leaves just above the soil, no bud, no flower, no crystal, much smaller than a full plant, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "0b9d1c42-e6d1-49b5-8c04-28d69542191d",
+        "generatedAt": "2026-10-12T04:00:56.554Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "e40081a6-1255-4661-82ec-05b70291cd19"
+        }
+      ]
+    },
+    {
+      "id": "PR-L07",
+      "kind": "prop",
+      "name": "ดอกคริสตัล ระยะกำลังโต",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_crystalbloom_2": "props/pr_plant_crystalbloom_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a half grown young plant with several leaves and a small bud of an alien crystal flower with purple faceted crystal petals, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "21bfc67d-8281-4f70-a447-9dbddae189be",
+        "generatedAt": "2026-10-12T03:59:14.887Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L08",
+      "kind": "prop",
+      "name": "ดอกคริสตัล ระยะพร้อมเก็บ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_crystalbloom_3": "props/pr_plant_crystalbloom_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a fully grown plant in full bloom, large and glowing, ready to harvest of an alien crystal flower with purple faceted crystal petals, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "53afa51e-e294-4741-b716-1c605be515ce",
+        "generatedAt": "2026-10-12T03:54:47.072Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L09",
+      "kind": "prop",
+      "name": "เถาสุริยะ ระยะต้นอ่อน",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_sunvine_1": "props/pr_plant_sunvine_1.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a tiny seedling with two small leaves just sprouting from the soil of an alien sun vine with orange spiral tendrils and glowing orange fruit, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "de197f19-85da-47b4-8f30-9ea9a30d79f4",
+        "generatedAt": "2026-10-12T03:55:35.075Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L10",
+      "kind": "prop",
+      "name": "เถาสุริยะ ระยะกำลังโต",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_sunvine_2": "props/pr_plant_sunvine_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a half grown young plant with several leaves and a small bud of an alien sun vine with orange spiral tendrils and glowing orange fruit, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "0ea6e34c-5866-4919-adef-618ffaf6e68e",
+        "generatedAt": "2026-10-12T03:56:00.747Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L11",
+      "kind": "prop",
+      "name": "เถาสุริยะ ระยะพร้อมเก็บ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_sunvine_3": "props/pr_plant_sunvine_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a fully grown plant in full bloom, large and glowing, ready to harvest of an alien sun vine with orange spiral tendrils and glowing orange fruit, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "12d568cf-1755-4f37-8901-69cde567cabf",
+        "generatedAt": "2026-10-12T03:56:21.618Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L12",
+      "kind": "prop",
+      "name": "ฝักจันทรา ระยะต้นอ่อน",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_moonpod_1": "props/pr_plant_moonpod_1.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a tiny seedling with two small leaves just sprouting from the soil of an alien moon pod plant with pale blue seed pods and a silver glow, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "6cfea4af-8ef8-4669-8a10-33092c62f34a",
+        "generatedAt": "2026-10-12T03:56:53.699Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L13",
+      "kind": "prop",
+      "name": "ฝักจันทรา ระยะกำลังโต",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_moonpod_2": "props/pr_plant_moonpod_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a half grown young plant with several leaves and a small bud of an alien moon pod plant with pale blue seed pods and a silver glow, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "3357a00d-8603-496b-9023-b358e0073743",
+        "generatedAt": "2026-10-12T03:57:50.398Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-L14",
+      "kind": "prop",
+      "name": "ฝักจันทรา ระยะพร้อมเก็บ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_plant_moonpod_3": "props/pr_plant_moonpod_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a fully grown plant in full bloom, large and glowing, ready to harvest of an alien moon pod plant with pale blue seed pods and a silver glow, in a round clay pot on a short metal stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "13f46f88-1753-4c3b-9d67-5ce4666a6d4d",
+        "generatedAt": "2026-10-12T03:58:45.315Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "PR-H01",
       "kind": "prop",
       "name": "ร้านสหกรณ์แล็บ (โถง)",

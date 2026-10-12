@@ -2,9 +2,10 @@ import { useState } from "react";
 import { playSfx } from "../audio/engine";
 import { fmt, ui } from "../content/ui-strings";
 import { creditsOf, difficultyOf, guardianPowerOf, reachedMap, useGameStore } from "../state/gameStore";
+import { LAB } from "../state/shop.config";
 import { type Gear, itemPower } from "../state/gear";
 import { bagOf, ownsItem, stockLeft, tierOpen } from "../state/shop";
-import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STALL_KINDS, STARTER_DECOR, type Supply, type Theme, THEMES } from "../state/shop.config";
+import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type Seed, type ShopItem, STALL_KINDS, STARTER_DECOR, type Supply, type Theme, THEMES } from "../state/shop.config";
 import { art } from "./art";
 import { ItemIcon } from "./BagPicker";
 import { GearIcon } from "./Storage";
@@ -13,7 +14,7 @@ import { useDialog } from "./useDialog";
 type ItemId = keyof typeof ui.shop.items;
 const DECOR_SIZE = (decor: Decor) => DECOR[decor].size;
 type Kind = ShopItem["kind"];
-const KINDS = ["weapon", "armor", "chip", "supply", "outfit", "bit", "module", "paint", "decor", "theme"] as const;
+const KINDS = ["weapon", "armor", "chip", "supply", "seed", "outfit", "bit", "module", "paint", "decor", "theme"] as const;
 const GEAR_KINDS: readonly Kind[] = ["weapon", "armor", "chip"];
 
 
@@ -43,7 +44,7 @@ export function Shop() {
   const stallInfo = stall ? ui.market.stalls[stall] : null;
   const title = seller ? seller.shopName : (stallInfo?.name ?? ui.shop.title);
   // ร้านพิเศษ: เฉพาะของของ NPC คนนั้น ร้านในย่านร้านค้า: ของทั่วไปของประเภทที่ร้านนั้นขาย และของจากร้านพิเศษที่ซื้อมาแล้ว (ไว้สลับใช้)
-  const items = CATALOG.filter((item) => (vendor ? item.vendor === vendor : (!item.vendor || shop.owned.includes(item.id)) && (!stall || STALL_KINDS[stall].includes(item.kind))));
+  const items = CATALOG.filter((item) => (vendor ? item.vendor === vendor : (!item.vendor || shop.owned.includes(item.id)) && !item.reward && (!stall || STALL_KINDS[stall].includes(item.kind))));
 
   const purchase = (item: ShopItem) => {
     const error = buy(item.id);
@@ -67,6 +68,8 @@ export function Shop() {
       <img src={art.decor(value as Decor)} alt="" className="pixelated h-16 w-16 object-contain" />
     ) : kind === "theme" ? (
       <img src={art.tiles(THEMES[value as Theme].tileset)} alt="" className="pixelated h-16 w-16" />
+    ) : kind === "seed" ? (
+      <img src={art.plant(value as Seed, 3)} alt="" className="pixelated h-16 w-16 object-contain" />
     ) : (
       <ItemIcon value={kind === "module" ? `module-${value as BitModule}` : (value as Supply)} className="h-16 w-16" />
     );
@@ -74,11 +77,11 @@ export function Shop() {
   const card = (id: string, kind: Kind, value: string, item: ShopItem | null) => {
     const strings = ui.shop.items[id as ItemId];
     const owned = item === null || ownsItem(shop, item);
-    const using = kind === "module" || kind === "decor" || kind === "theme" ? owned : kind !== "supply" && shop[kind] === value;
-    const gain = kind === "supply" || kind === "decor" || kind === "theme" ? 0 : itemPower(kind, value);
+    const using = kind === "module" || kind === "decor" || kind === "theme" ? owned : kind !== "supply" && kind !== "seed" && shop[kind] === value;
+    const gain = kind === "supply" || kind === "seed" || kind === "decor" || kind === "theme" ? 0 : itemPower(kind, value);
     // ของที่วางขายตั้งแต่แมพถัดไป: เห็นได้แต่ยังซื้อไม่ได้
     const lockedTier = item !== null && !tierOpen(item, reached);
-    const left = item?.kind === "supply" ? stockLeft(shop, item, map) : null;
+    const left = item?.kind === "supply" || item?.kind === "seed" ? stockLeft(shop, item, map) : null;
     return (
       <li key={id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${using ? "bg-hint" : lockedTier ? "border-dashed bg-cream" : "bg-paper"}`} data-testid={`shop-item-${id}`} data-owned={owned} data-using={using} data-locked={lockedTier} data-stock={left ?? undefined}>
         <div className="shrink-0 rounded-md border-2 border-ink bg-teal-light">{picture(kind, value)}</div>
@@ -97,13 +100,18 @@ export function Shop() {
               {fmt(ui.shop.holding, { n: shop.supplies[item.value], max: item.max })} · {fmt(ui.shop.inBag, { n: bag.filter((supply) => supply === item.value).length })} · {left === 0 ? ui.shop.soldOut : fmt(ui.shop.stock, { n: left ?? 0 })}
             </div>
           )}
+          {item && item.kind === "seed" && (
+            <div className="text-xs font-bold text-slate">
+              {fmt(ui.shop.seedInfo, { min: LAB.seeds[item.value].growMs / 60_000, yield: LAB.seeds[item.value].yield })} · {fmt(ui.shop.seedHolding, { n: shop.seeds[item.value] })} · {left === 0 ? ui.shop.soldOut : fmt(ui.shop.stock, { n: left ?? 0 })}
+            </div>
+          )}
           {item && !owned && <div className="text-sm font-bold text-teal-dark">{fmt(ui.shop.price, { n: item.price })}</div>}
         </div>
         {lockedTier ? (
           <span className="shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-xs font-bold" data-testid={`shop-locked-${id}`}>
             🔒 {fmt(ui.shop.locked, { map: ui.difficulty[item?.tier ?? "easy"].name })}
           </span>
-        ) : kind === "supply" || !owned ? (
+        ) : kind === "supply" || kind === "seed" || !owned ? (
           <button type="button" className="btn !min-h-10 shrink-0 text-sm" disabled={owned || left === 0 || (item !== null && balance < item.price)} data-testid={`shop-buy-${id}`} onClick={() => item && purchase(item)}>
             {owned && item?.kind === "supply" ? fmt(ui.shop.full, { n: item.max }) : ui.shop.buy}
           </button>

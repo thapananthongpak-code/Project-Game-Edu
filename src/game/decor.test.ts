@@ -101,7 +101,7 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
         const base = baseMapOf(map, area);
         expect(layoutError(base, {}), `${map} ${area}`).toBeNull();
         const stations = stationsIn(base);
-        expect(stations, `${map} ${area}`).toEqual(area === "hall" ? ["shop", "storage", "travel", "decorboard"] : ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
+        expect(stations, `${map} ${area}`).toEqual(area === "hall" ? ["shop", "lab", "storage", "travel", "decorboard"] : ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
         for (const station of stations) expect(stationCells(base, {}, [], station).length, `${map} ${area} ${station}`).toBeGreaterThanOrEqual(10);
       }
     }

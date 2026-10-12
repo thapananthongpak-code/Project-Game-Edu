@@ -59,6 +59,9 @@ const sample: SaveData = {
     chip: "none",
     loadout: ["repair-kit", "reboot", "repair-kit"],
     bought: { "easy:repair-kit": 2, "normal:reboot": 1 },
+    seeds: { ...emptyShop().seeds, glowfern: 2 },
+    pots: { "1": { seed: "crystalbloom", plantedAt: 1_700_000_000_000 } },
+    harvests: { ...emptyShop().harvests, glowfern: 3 },
     decor: { "easy:hall": [{ decor: "window", col: 3, row: 1 }], "normal:hangar": [{ decor: "plant", col: 3, row: 7 }] },
     layout: { "easy:hall": { shop: { col: 15, row: 5 } }, "easy:hangar": { bitpad: { col: 2, row: 8 } } },
     theme: { "easy:hall": "ocean" },
@@ -410,6 +413,23 @@ describe("migrateSave", () => {
     const save = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop }) as SaveData;
     expect(save.shop.layout).toEqual({ "easy:hall": { shop: { col: 15, row: 5 } } });
     expect(save.shop.theme).toEqual({ "easy:hall": "ocean" });
+  });
+
+  it("ห้องวิจัย: เก็บเมล็ด กระถาง และจำนวนครั้งที่เก็บ ข้อมูลที่ผิดรูปถูกตัดทิ้ง ข้อมูลเก่าที่ไม่มีช่องได้ค่าว่าง", () => {
+    const shop = {
+      ...sample.shop,
+      seeds: { glowfern: 3, crystalbloom: -2, sunvine: "x", moonpod: 99999, junk: 5 },
+      pots: { "0": { seed: "glowfern", plantedAt: 1_700_000_000_000 }, "7": { seed: "moonpod", plantedAt: 5 }, "8": { seed: "moonpod", plantedAt: 5 }, "-1": { seed: "glowfern", plantedAt: 5 }, "1": { seed: "weed", plantedAt: 5 }, "2": { seed: "glowfern", plantedAt: "now" }, "3": "junk" },
+      harvests: { glowfern: 2.7, sunvine: 1, junk: 9 },
+    };
+    const save = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop }) as SaveData;
+    expect(save.shop.seeds).toEqual({ glowfern: 3, crystalbloom: 0, sunvine: 0, moonpod: 9999 });
+    expect(save.shop.pots).toEqual({ "0": { seed: "glowfern", plantedAt: 1_700_000_000_000 }, "7": { seed: "moonpod", plantedAt: 5 } });
+    expect(save.shop.harvests).toEqual({ glowfern: 2, crystalbloom: 0, sunvine: 1, moonpod: 0 });
+    // ข้อมูลรุ่นก่อนที่ไม่มีช่องของห้องวิจัย
+    const { seeds: _s, pots: _p, harvests: _h, ...legacyShop } = JSON.parse(JSON.stringify(sample.shop));
+    const legacy = migrateSave({ ...JSON.parse(JSON.stringify(sample)), shop: legacyShop }) as SaveData;
+    expect([legacy.shop.pots, Object.values(legacy.shop.seeds).every((n) => n === 0), Object.values(legacy.shop.harvests).every((n) => n === 0)]).toEqual([{}, true, true]);
   });
 
   it("รูปแบบที่ไม่รู้จัก: คืน null", () => {

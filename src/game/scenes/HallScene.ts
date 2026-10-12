@@ -12,7 +12,7 @@ import { WorldScene } from "./WorldScene";
  * กล่องเก็บไอเทม กระดานแผนที่การเดินทาง กระดานตกแต่ง และของตกแต่งที่ผู้เล่นลากวางเองได้อิสระ (GDD ข้อ 19)
  */
 export class HallScene extends WorldScene {
-  private from: { room?: number; hangar?: boolean; travel?: boolean; market?: boolean } = {};
+  private from: { room?: number; hangar?: boolean; travel?: boolean; market?: boolean; lab?: boolean } = {};
   private doors: MapObject[] = [];
   /** แมพและห้อง ณ ตอนสร้างฉาก (ฉากนี้เป็นฉากหลังของเมนูและหน้าลงทะเบียนด้วย แมพอาจเปลี่ยนก่อนฉากถูกสร้างใหม่) */
   private world: Difficulty = "easy";
@@ -22,8 +22,8 @@ export class HallScene extends WorldScene {
     super(SCENE.hall);
   }
 
-  init(data: { fromRoom?: number; fromHangar?: boolean; fromTravel?: boolean; fromMarket?: boolean }): void {
-    this.from = { room: data.fromRoom, hangar: data.fromHangar, travel: data.fromTravel, market: data.fromMarket };
+  init(data: { fromRoom?: number; fromHangar?: boolean; fromTravel?: boolean; fromMarket?: boolean; fromLab?: boolean }): void {
+    this.from = { room: data.fromRoom, hangar: data.fromHangar, travel: data.fromTravel, market: data.fromMarket, lab: data.fromLab };
   }
 
   create(): void {
@@ -57,6 +57,8 @@ export class HallScene extends WorldScene {
     this.addInteractable(gate, "gate", () => ui.prompt.hangarGate, () => store().enterHangar());
     const [shop] = this.objectsOf("shop");
     this.addInteractable(shop, "shop", () => ui.prompt.shop, () => store().enterMarket());
+    const [lab] = this.objectsOf("lab");
+    this.addInteractable(lab, "lab", () => ui.prompt.lab, () => store().enterLab());
     const [storage] = this.objectsOf("storage");
     this.addInteractable(storage, "storage", () => ui.prompt.storage, () => store().openOverlay("storage"));
     const [travel] = this.objectsOf("travel");
@@ -65,7 +67,7 @@ export class HallScene extends WorldScene {
     this.addInteractable(board, "decorboard", () => ui.prompt.decorBoard, () => store().openOverlay("decor"));
 
     // แมพที่ไม่มีห้องเรียน (แมพ 3) ไม่มีประตูห้อง: เริ่มที่หน้าประตูโรงเก็บหุ่น
-    const start = this.from.travel ? travel : this.from.market ? shop : this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0] ?? gate);
+    const start = this.from.travel ? travel : this.from.market ? shop : this.from.lab ? lab : this.from.hangar ? gate : (this.doors.find((door) => door.index === this.from.room) ?? this.doors[0] ?? gate);
     const spot = this.spotBelow(start);
     this.createPlayer(spot.x, spot.y);
     this.syncWithProgress();

@@ -11,7 +11,7 @@ export const MAP_TOP = BASE_HEIGHT - MAP_ROWS * TILE;
 /** ผนังด้านบนสูง 2 ไทล์ พื้นเริ่มที่แถว 2 */
 export const FLOOR_TOP = MAP_TOP + 2 * TILE;
 
-export const SCENE = { boot: "Boot", hall: "Hall", hangar: "Hangar", room: "Room", market: "Market" } as const;
+export const SCENE = { boot: "Boot", hall: "Hall", hangar: "Hangar", room: "Room", market: "Market", lab: "Lab" } as const;
 
 export type Direction = "south" | "north" | "east" | "west";
 

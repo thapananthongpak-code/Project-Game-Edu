@@ -489,7 +489,14 @@ def import_generated(asset, source):
     elif asset["kind"] in ("prop", "battle"):
         key = next(iter({**asset["files"], **asset.get("web", {})}))
         try:
-            images[key] = anchor_bottom(Image.open(folder / "image.png"), *asset["size"])
+            raw = Image.open(folder / "image.png").convert("RGBA")
+            # postprocess.clearAbove = แถวบนสุดที่ยังเก็บไว้: ลบส่วนที่อยู่เหนือแถวนั้น (ใช้กับกระถางที่เจนมามีต้นไม้ติดมา)
+            clear_above = (source.get("postprocess") or {}).get("clearAbove")
+            if clear_above is not None:
+                for y in range(min(clear_above, raw.height)):
+                    for x in range(raw.width):
+                        raw.putpixel((x, y), (0, 0, 0, 0))
+            images[key] = anchor_bottom(raw, *asset["size"])
         except SystemExit as error:
             raise SystemExit(f"{asset['id']}: {error}")
     else:
@@ -643,6 +650,14 @@ DECOR_PROPS = [
     # ย่านร้านค้า (รอบที่ 12): ร้านแยก 5 เคาน์เตอร์ และทางเข้าย่านร้านค้าในโถง
     ("PR-M01", "pr_stall_gear", (64, 64)), ("PR-M02", "pr_stall_items", (64, 64)), ("PR-M03", "pr_stall_costume", (64, 64)),
     ("PR-M04", "pr_stall_decor", (64, 64)), ("PR-M05", "pr_stall_plants", (64, 64)), ("PR-M06", "pr_market_gate", (64, 64)),
+]
+# ห้องวิจัยพืชต่างดาว (รอบที่ 12): ทางเข้าในโถง กระถางที่ว่าง และพืช 4 พันธุ์ × 3 ระยะ
+LAB_PROPS = [
+    ("PR-L01", "pr_lab_door", (64, 64)), ("PR-L02", "pr_pot_empty", (32, 64)),
+    ("PR-L03", "pr_plant_glowfern_1", (32, 64)), ("PR-L04", "pr_plant_glowfern_2", (32, 64)), ("PR-L05", "pr_plant_glowfern_3", (32, 64)),
+    ("PR-L06", "pr_plant_crystalbloom_1", (32, 64)), ("PR-L07", "pr_plant_crystalbloom_2", (32, 64)), ("PR-L08", "pr_plant_crystalbloom_3", (32, 64)),
+    ("PR-L09", "pr_plant_sunvine_1", (32, 64)), ("PR-L10", "pr_plant_sunvine_2", (32, 64)), ("PR-L11", "pr_plant_sunvine_3", (32, 64)),
+    ("PR-L12", "pr_plant_moonpod_1", (32, 64)), ("PR-L13", "pr_plant_moonpod_2", (32, 64)), ("PR-L14", "pr_plant_moonpod_3", (32, 64)),
 ]
 # สถานที่บนแผนที่โลก (หน้า HTML): (รหัส, ไฟล์)
 WORLD_SITES = [("WM-02", "wm_site_lab"), ("WM-03", "wm_site_outpost"), ("WM-04", "wm_site_fortress")]
@@ -827,6 +842,7 @@ def main():
         prop("PR-102", "pr_r1_learning_machine", (64, 64), draw_learning_machine),
         *[prop(asset_id, base, size) for asset_id, base, size in ROOM_PROPS],
         *[prop(asset_id, base, size) for asset_id, base, size in DECOR_PROPS],
+        *[prop(asset_id, base, size) for asset_id, base, size in LAB_PROPS],
         prop("PR-H01", "pr_shop", (64, 64), lambda: draw_block(64, 64, YELLOW, SLATE)),
         prop("PR-H05", "pr_storage_box", (64, 64), lambda: draw_block(64, 64, TEAL, SLATE)),
         prop("PR-H02", "pr_hangar_gate", (64, 64), lambda: draw_block(64, 64, STEEL, YELLOW)),

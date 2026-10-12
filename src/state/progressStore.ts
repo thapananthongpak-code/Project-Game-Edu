@@ -12,7 +12,7 @@ import { type Armor, ARMORS, bagSizeOf, type Chip, CHIPS, DEFAULT_GEAR, type Wea
 import { isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_NAME_CHARS } from "./rules";
 import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom, PIECES, type RoomLayout } from "../game/decor";
-import { AVATARS, type Avatar, BIT_MODULES, BIT_SKINS, BIT_SLOTS, type BitModule, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, PAINTS, type Paint, STARTER_DECOR, SUPPLIES, type Supply, type Theme, THEME_IDS } from "./shop.config";
+import { AVATARS, type Avatar, BIT_MODULES, BIT_SKINS, BIT_SLOTS, type BitModule, type BitSkin, CATALOG, type Decor, DECORS, OUTFITS, type Outfit, LAB, PAINTS, type Paint, type Seed, SEEDS, STARTER_DECOR, SUPPLIES, type Supply, type Theme, THEME_IDS } from "./shop.config";
 
 export const SAVE_VERSION = 9;
 
@@ -37,6 +37,13 @@ export interface BattleRecord {
   /** โจทย์ที่ตอบทั้งหมด และที่ตอบถูก สะสมทุกครั้ง */
   asked: number;
   correct: number;
+}
+
+/** กระถางของห้องวิจัยที่มีพืชอยู่ (GDD ข้อ 21): ระยะของพืชคำนวณจากเวลาปัจจุบันลบ plantedAt เสมอ */
+export interface Pot {
+  seed: Seed;
+  /** เวลาที่ปลูก (มิลลิวินาทีตั้งแต่ epoch) */
+  plantedAt: number;
 }
 
 /** ย่านร้านค้า (GDD ข้อ 13) เครดิตคงเหลือ = เครดิตที่ได้จากความคืบหน้า - spent */
@@ -66,6 +73,12 @@ export interface ShopState {
   layout: Partial<Record<DecorRoom, RoomLayout>>;
   /** ธีมสีที่เลือกใช้ในโถงและโรงเก็บหุ่น: คีย์ "<แมพ>:<ห้อง>" -> ธีมที่ซื้อแล้ว (ไม่มี = พื้นและผนังเดิมของแมพ) */
   theme: Partial<Record<DecorRoom, Theme>>;
+  /** เมล็ดพันธุ์ที่ซื้อแล้วและยังไม่ได้ปลูก (ห้องวิจัย GDD ข้อ 21) */
+  seeds: Record<Seed, number>;
+  /** กระถางของห้องวิจัยที่มีพืชอยู่ คีย์คือเลขกระถางเริ่มที่ 0 (ไม่มีคีย์ = กระถางว่าง) */
+  pots: Record<string, Pot>;
+  /** จำนวนครั้งที่เก็บผลผลิตของแต่ละพันธุ์ เครดิตจากสวนคำนวณจากนี้เสมอ (ห้ามเก็บยอดสะสม) */
+  harvests: Record<Seed, number>;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -177,6 +190,9 @@ export const emptyShop = (): ShopState => ({
   decor: starterDecor(),
   layout: {},
   theme: {},
+  seeds: Object.fromEntries(SEEDS.map((seed) => [seed, 0])) as Record<Seed, number>,
+  pots: {},
+  harvests: Object.fromEntries(SEEDS.map((seed) => [seed, 0])) as Record<Seed, number>,
 });
 
 export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, maps: { normal: {}, hard: {} }, battles: {}, npcs: {}, story: [], shop: emptyShop() });
@@ -341,7 +357,31 @@ function shopOf(raw: unknown): ShopState {
     decor,
     layout,
     theme,
+    seeds: seedCounts(data.seeds),
+    pots: potsOf(data.pots),
+    harvests: seedCounts(data.harvests),
   };
+}
+
+/** จำนวนต่อพันธุ์ (เมล็ดที่มี หรือจำนวนครั้งที่เก็บ) ชนิดผิดหรือพันธุ์ที่ไม่รู้จักถูกตัดทิ้ง */
+function seedCounts(raw: unknown): Record<Seed, number> {
+  const source = object(raw);
+  return Object.fromEntries(SEEDS.map((seed) => [seed, Math.min(9999, Math.floor(count(source[seed])))])) as Record<Seed, number>;
+}
+
+/** กระถางที่มีพืช: เลขกระถางต้องอยู่ในจำนวนกระถางสูงสุด พันธุ์ต้องรู้จัก และเวลาที่ปลูกต้องเป็นตัวเลข */
+function potsOf(raw: unknown): Record<string, Pot> {
+  const pots: Record<string, Pot> = {};
+  const maxPots = Math.max(...Object.values(LAB.pots));
+  for (const [key, value] of Object.entries(object(raw))) {
+    const index = /^\d{1,2}$/.test(key) ? Number(key) : -1;
+    const pot = object(value);
+    const seed = SEEDS.find((s) => s === pot.seed);
+    if (index < 0 || index >= maxPots || !seed) continue;
+    const plantedAt = whole(pot.plantedAt);
+    if (plantedAt !== null && plantedAt >= 0) pots[key] = { seed, plantedAt };
+  }
+  return pots;
 }
 
 function npcsOf(raw: unknown): Record<string, NpcRecord> {

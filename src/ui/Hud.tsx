@@ -22,6 +22,7 @@ function useObjective(): string {
 
   if (zone === null) {
     if (screen === "market") return ui.objective.market;
+    if (screen === "lab") return ui.objective.lab;
     if (screen === "hangar") {
       if (battle) return fmt(ui.objective.hangarBattle, { kaiju });
       return allBattlesWon(state) ? ui.objective.hangarDone : ui.objective.hangarIdle;
@@ -93,7 +94,7 @@ export function Hud() {
           <span className="shrink-0 rounded border-2 border-ink bg-teal-light px-1 text-xs font-extrabold" data-testid="hud-map" title={ui.difficulty[map].name}>
             {fmt(ui.hud.map, { n: mapIndex(map) + 1 })}
           </span>
-          <span className="shrink-0 font-extrabold text-teal-dark">{topic ? fmt(ui.hud.room, { n: zone as number }) : screen === "hangar" ? ui.hud.hangar : screen === "market" ? ui.hud.market : ui.hud.hall}</span>
+          <span className="shrink-0 font-extrabold text-teal-dark">{topic ? fmt(ui.hud.room, { n: zone as number }) : screen === "hangar" ? ui.hud.hangar : screen === "market" ? ui.hud.market : screen === "lab" ? ui.hud.lab : ui.hud.hall}</span>
           {topic && (
             <span className="truncate font-semibold" data-testid="hud-topic">
               {multi && `${fmt(ui.hud.topic, { n: room as number })}: `}

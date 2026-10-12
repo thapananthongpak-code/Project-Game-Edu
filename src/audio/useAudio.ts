@@ -35,7 +35,7 @@ export function useAudioDirector(): void {
       if (coreCount(state) > coreCount(previous)) playSfx("core");
       else if (state.overlay !== previous.overlay && state.overlay !== null && previous.overlay === null) playSfx("open");
       else if (state.overlay === null && previous.overlay !== null) playSfx("close");
-      if ((state.screen === "room" || state.screen === "hangar" || state.screen === "hall" || state.screen === "market") && state.screen !== previous.screen && previous.screen !== "menu" && previous.screen !== "onboarding") playSfx("door");
+      if ((state.screen === "room" || state.screen === "hangar" || state.screen === "hall" || state.screen === "market" || state.screen === "lab") && state.screen !== previous.screen && previous.screen !== "menu" && previous.screen !== "onboarding") playSfx("door");
       if (state.npcs !== previous.npcs) {
         const found = (npcs: typeof state.npcs) => Object.values(npcs).reduce((sum, record) => sum + record.found.length, 0);
         if (found(state.npcs) > found(previous.npcs)) playSfx("pickup");

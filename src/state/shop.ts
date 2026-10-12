@@ -10,6 +10,7 @@ import { type NpcId, type NpcRecord, npcCredits, NPCS } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
 import { arrangedMap, baseMapOf, type DecorArea, type DecorPlacement, decorRoom, layoutError, type Piece, piecesIn, type PlaceError, placementError, type RoomLayout, validLayout, validPlacements } from "../game/decor";
 import type { GameMap } from "../game/maps";
+import { gardenCredits } from "./lab";
 import { BIT_MODULES, BIT_SLOTS, type BitModule, CATALOG, DECOR, type Decor, REWARDS, type ShopItem, STARTER_DECOR, type Supply, type Theme, THEME_IDS, THEMES } from "./shop.config";
 
 export interface Earning {
@@ -47,12 +48,14 @@ export function mapCredits(map: Difficulty, { maps, battles, npcs, posttest }: E
 /** เครดิตวิจัยทั้งหมดที่ผู้เล่นได้จากความคืบหน้าของทุกแมพจนถึงตอนนี้ */
 export const earnedCredits = (earning: Earning): number => DIFFICULTIES.reduce((sum, map) => sum + mapCredits(map, earning), 0);
 
-export const creditBalance = (earning: Earning, shop: ShopState): number => Math.max(0, earnedCredits(earning) - shop.spent);
+/** เครดิตคงเหลือ = เครดิตจากความคืบหน้า + เครดิตจากผลผลิตของห้องวิจัย (คำนวณจากจำนวนครั้งที่เก็บ) − เครดิตที่ใช้ */
+export const creditBalance = (earning: Earning, shop: ShopState): number => Math.max(0, earnedCredits(earning) + gardenCredits(shop) - shop.spent);
 
 export const findItem = (id: string): ShopItem | undefined => CATALOG.find((item) => item.id === id);
 
 /** ผู้เล่นมีของชิ้นนี้อยู่แล้วหรือไม่ (ของใช้: ถือเต็มจำนวนสูงสุดแล้ว) */
 export function ownsItem(shop: ShopState, item: ShopItem): boolean {
+  if (item.kind === "seed") return false;
   return item.kind === "supply" ? shop.supplies[item.value] >= item.max : shop.owned.includes(item.id);
 }
 
@@ -60,7 +63,7 @@ export function ownsItem(shop: ShopState, item: ShopItem): boolean {
 export const tierOpen = (item: ShopItem, reached: Difficulty): boolean => mapIndex(item.tier) <= mapIndex(reached);
 
 /** จำนวนของใช้ชนิดนี้ที่ร้านของแมพนี้ยังเหลือขาย */
-export const stockLeft = (shop: ShopState, item: Extract<ShopItem, { kind: "supply" }>, map: Difficulty): number => Math.max(0, item.stock - (shop.bought[`${map}:${item.value}`] ?? 0));
+export const stockLeft = (shop: ShopState, item: Extract<ShopItem, { kind: "supply" | "seed" }>, map: Difficulty): number => Math.max(0, item.stock - (shop.bought[`${map}:${item.value}`] ?? 0));
 
 export type PurchaseError = "unknown" | "owned" | "credits" | "locked" | "sold-out";
 
@@ -76,12 +79,17 @@ export interface ShopContext {
  */
 export function purchase(shop: ShopState, id: string, balance: number, context: ShopContext = { map: "easy", reached: "hard" }): ShopState | PurchaseError {
   const item = findItem(id);
-  if (!item) return "unknown";
+  if (!item || item.reward) return "unknown";
   if (!tierOpen(item, context.reached)) return "locked";
   if (ownsItem(shop, item)) return "owned";
-  if (item.kind === "supply" && stockLeft(shop, item, context.map) <= 0) return "sold-out";
+  if ((item.kind === "supply" || item.kind === "seed") && stockLeft(shop, item, context.map) <= 0) return "sold-out";
   if (balance < item.price) return "credits";
   const spent = shop.spent + item.price;
+  if (item.kind === "seed") {
+    // เมล็ดพันธุ์เก็บไว้ในกล่องของห้องวิจัย ปลูกได้ที่กระถางตอนไหนก็ได้ (src/state/lab.ts)
+    const key = `${context.map}:${item.value}`;
+    return { ...shop, spent, seeds: { ...shop.seeds, [item.value]: shop.seeds[item.value] + 1 }, bought: { ...shop.bought, [key]: (shop.bought[key] ?? 0) + 1 } };
+  }
   if (item.kind === "supply") {
     // ของใช้ที่ซื้อใหม่ลงกระเป๋าให้เลยถ้ายังมีที่ว่าง ไม่เช่นนั้นเก็บไว้ในกล่อง (นับเฉพาะของที่ยังมีจริง ช่องของของที่ใช้หมดแล้วถือว่าว่าง)
     const bag = bagOf(shop);
