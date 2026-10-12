@@ -10,6 +10,7 @@ import { type NpcId, type NpcRecord, npcCredits, NPCS } from "./npcs";
 import type { AssessmentResult, BattleRecord, RoomProgress, ShopState } from "./progressStore";
 import { arrangedMap, baseMapOf, type DecorArea, type DecorPlacement, decorRoom, layoutError, type Piece, piecesIn, type PlaceError, placementError, type RoomLayout, validLayout, validPlacements } from "../game/decor";
 import type { GameMap } from "../game/maps";
+import { dashCredits } from "./dash";
 import { gardenCredits } from "./lab";
 import { BIT_MODULES, BIT_SLOTS, type BitModule, CATALOG, DECOR, type Decor, REWARDS, type ShopItem, STARTER_DECOR, type Supply, type Theme, THEME_IDS, THEMES } from "./shop.config";
 
@@ -48,8 +49,8 @@ export function mapCredits(map: Difficulty, { maps, battles, npcs, posttest }: E
 /** เครดิตวิจัยทั้งหมดที่ผู้เล่นได้จากความคืบหน้าของทุกแมพจนถึงตอนนี้ */
 export const earnedCredits = (earning: Earning): number => DIFFICULTIES.reduce((sum, map) => sum + mapCredits(map, earning), 0);
 
-/** เครดิตคงเหลือ = เครดิตจากความคืบหน้า + เครดิตจากผลผลิตของห้องวิจัย (คำนวณจากจำนวนครั้งที่เก็บ) − เครดิตที่ใช้ */
-export const creditBalance = (earning: Earning, shop: ShopState): number => Math.max(0, earnedCredits(earning) + gardenCredits(shop) - shop.spent);
+/** เครดิตคงเหลือ = เครดิตจากความคืบหน้า + เครดิตจากผลผลิตของห้องวิจัย (คำนวณจากจำนวนครั้งที่เก็บ) + เครดิตจากด่านทางเชื่อมที่ผ่าน − เครดิตที่ใช้ */
+export const creditBalance = (earning: Earning, shop: ShopState): number => Math.max(0, earnedCredits(earning) + gardenCredits(shop) + dashCredits(shop.dash) - shop.spent);
 
 export const findItem = (id: string): ShopItem | undefined => CATALOG.find((item) => item.id === id);
 

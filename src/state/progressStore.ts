@@ -9,6 +9,7 @@ import type { FormId } from "../content/schema";
 import { DIFFICULTIES, type Difficulty, topicsOf } from "./campaign";
 import { emptyField, type FieldProgress } from "./field";
 import { type Armor, ARMORS, bagSizeOf, type Chip, CHIPS, DEFAULT_GEAR, type Weapon, WEAPONS } from "./gear";
+import { DASH_ENTRY } from "./dash";
 import { isNpcId, type NpcRecord, NPCS } from "./npcs";
 import { MAX_NAME_CHARS } from "./rules";
 import { DECOR_AREAS, DECOR_LIMIT, type DecorPlacement, type DecorRoom, decorRoom, PIECES, type RoomLayout } from "../game/decor";
@@ -79,6 +80,8 @@ export interface ShopState {
   pots: Record<string, Pot>;
   /** จำนวนครั้งที่เก็บผลผลิตของแต่ละพันธุ์ เครดิตจากสวนคำนวณจากนี้เสมอ (ห้ามเก็บยอดสะสม) */
   harvests: Record<Seed, number>;
+  /** ด่านทางเชื่อมที่ผ่านหรือข้ามแล้ว และค่าตั้ง "ข้ามทุกด่าน" (รหัสตาม src/state/dash.ts) */
+  dash: string[];
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -193,6 +196,7 @@ export const emptyShop = (): ShopState => ({
   seeds: Object.fromEntries(SEEDS.map((seed) => [seed, 0])) as Record<Seed, number>,
   pots: {},
   harvests: Object.fromEntries(SEEDS.map((seed) => [seed, 0])) as Record<Seed, number>,
+  dash: [],
 });
 
 export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, maps: { normal: {}, hard: {} }, battles: {}, npcs: {}, story: [], shop: emptyShop() });
@@ -360,6 +364,7 @@ function shopOf(raw: unknown): ShopState {
     seeds: seedCounts(data.seeds),
     pots: potsOf(data.pots),
     harvests: seedCounts(data.harvests),
+    dash: [...new Set(Array.isArray(data.dash) ? data.dash.filter((entry): entry is string => typeof entry === "string" && DASH_ENTRY.test(entry)) : [])].slice(0, 40),
   };
 }
 

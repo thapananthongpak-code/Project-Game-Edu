@@ -27,13 +27,14 @@ import {
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
 import type { DecorArea, DecorPlacement, Piece, PlaceError } from "../game/decor";
 import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, resetLayout, setTheme, toggleModule } from "./shop";
+import { DASH_SKIP_ALL, dashDue, dashKey } from "./dash";
 import { harvest, plant } from "./lab";
 import type { Avatar, BitModule, Decor, Seed, Stall, Supply, Theme } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room" | "market" | "lab";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive" | "lab";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive" | "lab" | "dash";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
 export interface MusicCue {
@@ -83,6 +84,8 @@ interface GameState {
   shopStall: Stall | null;
   /** กระถางของห้องวิจัยที่หน้าต่างกำลังเน้น (เริ่มที่ 0) */
   labPot: number | null;
+  /** ห้องที่ด่านทางเชื่อมกำลังเล่นอยู่ก่อนเข้า (ลำดับห้องของแมพ) */
+  dashZone: number | null;
   musicCue: MusicCue | null;
   /** หน้าต่างถามพี่บิต เปิดซ้อนบนหน้าต่างอื่นได้ */
   tutorOpen: boolean;
@@ -119,6 +122,10 @@ interface GameState {
   travel: (map: Difficulty) => boolean;
   /** เข้าห้องลำดับที่ zone ของแมพนี้ */
   enterRoom: (zone: number) => void;
+  /** จบด่านทางเชื่อม: passed = ผ่าน (ได้เครดิต) false = ข้าม แล้วเข้าห้อง */
+  finishDash: (passed: boolean) => void;
+  /** ตั้งค่า "ข้ามด่านทางเชื่อมเสมอ" */
+  setDashSkip: (skip: boolean) => void;
   /** เลือกหัวข้อที่จะทำงานด้วย (ห้องที่มีหลายหัวข้อ) */
   focusTopic: (topic: number) => void;
   exitToHall: () => void;
@@ -203,7 +210,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     const current = progress[room] ?? emptyRoom();
     set({ progress: { ...progress, [room]: { ...current, ...patch(current) } } });
   };
-  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, dashZone: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
   const updateNpc = (id: NpcId, patch: (record: NpcRecord) => Partial<NpcRecord>) => {
     const { npcs } = get();
     const current = npcs[id] ?? emptyNpc();
@@ -227,6 +234,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     shopVendor: null,
     shopStall: null,
     labPot: null,
+    dashZone: null,
     musicCue: null,
     tutorOpen: false,
     tutorRoom: null,
@@ -293,7 +301,26 @@ export const useGameStore = create<GameState>()((set, get) => {
       // หัวข้อที่กำลังทำ = หัวข้อแรกของห้องที่ยังไม่ได้แกน AI (ครบแล้วใช้หัวข้อสุดท้าย)
       const room = topics.find((topic) => !roomProgress(state, topic).core) ?? topics[topics.length - 1] ?? null;
       if (room === null) return;
+      // เข้าห้องครั้งแรก: เล่นด่านทางเชื่อมก่อน (ข้ามได้เสมอ) จบแล้วจึงเข้าห้อง (finishDash)
+      if (dashDue({ map: difficultyOf(state), zone, topics, progress: state.progress, done: state.shop.dash })) {
+        set({ ...closed, overlay: "dash", dashZone: zone, prompt: null });
+        return;
+      }
       set({ ...closed, screen: "room", zone, room, progress: { ...state.progress, [room]: state.progress[room] ?? emptyRoom() } });
+    },
+    finishDash: (passed) => {
+      const state = get();
+      const zone = state.dashZone;
+      if (zone === null) return;
+      const key = dashKey(difficultyOf(state), zone);
+      const entry = passed ? key : `${key}:s`;
+      if (!state.shop.dash.includes(entry)) set({ shop: { ...state.shop, dash: [...state.shop.dash, entry] } });
+      state.enterRoom(zone);
+    },
+    setDashSkip: (skip) => {
+      const { shop } = get();
+      const rest = shop.dash.filter((entry) => entry !== DASH_SKIP_ALL);
+      set({ shop: { ...shop, dash: skip ? [...rest, DASH_SKIP_ALL] : rest } });
     },
     focusTopic: (topic) => {
       const { progress, room } = get();
@@ -409,7 +436,7 @@ export const useGameStore = create<GameState>()((set, get) => {
       set({ overlay: null, stationIndex: null, room: focusAfter(get()) });
     },
     openOverlay: (overlay) => set({ overlay, prompt: null }),
-    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, musicCue: null, room: focusAfter(get()) }),
+    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, dashZone: null, musicCue: null, room: focusAfter(get()) }),
     setTutorOpen: (tutorOpen, room) => set({ tutorOpen, tutorRoom: tutorOpen ? (room ?? get().room) : null }),
 
     completeMinigame: (result) => {

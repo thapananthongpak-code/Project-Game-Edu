@@ -21,6 +21,7 @@ import { Wardrobe } from "./ui/Wardrobe";
 import { BitPad } from "./ui/BitPad";
 import { TravelMap } from "./ui/TravelMap";
 import { DecorBoard } from "./ui/DecorBoard";
+import { DashRun } from "./ui/DashRun";
 import { LabPanel } from "./ui/LabPanel";
 import { Extras } from "./ui/Extras";
 import { StageOverlay } from "./ui/StageOverlay";
@@ -91,6 +92,7 @@ export function App() {
       {overlay === "travel" && <TravelMap />}
       {overlay === "decor" && <DecorBoard />}
       {overlay === "lab" && <LabPanel />}
+      {overlay === "dash" && <DashRun />}
       {overlay === "extras" && <Extras />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}

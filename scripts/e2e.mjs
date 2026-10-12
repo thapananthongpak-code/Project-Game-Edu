@@ -19,6 +19,7 @@ const questOf = (room) => quests.rooms.find((r) => r.room === room);
 const KAIJU = ["กลิตช์", "ไตรฮอร์น", "สแครป", "เกียร์แครบ", "ฝูงมิมิก", "โอเมก้า"];
 /** โครงของแมพ (ข้อมูลล้วนจาก src/state/campaign.ts): พลังของไคจูและพลังที่แนะนำของแต่ละด่าน กติกาตรวจใน unit test สคริปต์นี้ตรวจว่าหน้าจอแสดงตรงกับโครง */
 const { CAMPAIGN } = await import("../src/state/campaign.ts");
+const { DASH, dashKindOf, wavesOf } = await import("../src/state/dash.ts");
 const specOf = (id) => Object.values(CAMPAIGN).flatMap((map) => map.battles).find((battle) => battle.id === id);
 const MAP_NAME = { easy: "แมพ 1: Pixel AI Lab", normal: "แมพ 2: ศูนย์วิจัยภาคสนาม", hard: "แมพ 3: ป้อมปราการภูเขาไฟ" };
 /** ของตกแต่งเริ่มต้นของโถง (STARTER_PLACEMENT ใน progressStore.ts) */
@@ -129,7 +130,16 @@ async function readStory(page, press = (locator) => locator.click()) {
 
 /** รอจนเข้าห้อง (ลำดับห้องของระดับความยาก) แล้วอ่านบรรยายสรุปของห้อง (แสดงเฉพาะครั้งแรกที่เข้า) คืนฉากเนื้อเรื่องที่อ่าน หรือ null */
 const inRoom = async (page, room, press) => {
-  await page.waitForFunction((n) => window.__aitq.snapshot().scene === "Room" && window.__aitq.snapshot().store.zone === n && window.__aitq.snapshot().interactables.length > 0, room);
+  const arrived = (n) => {
+    const s = window.__aitq.snapshot();
+    return (s.scene === "Room" && s.store.zone === n && s.interactables.length > 0) || s.store.overlay === "dash";
+  };
+  await page.waitForFunction(arrived, room);
+  // เข้าห้องครั้งแรก: มีด่านทางเชื่อมก่อน (ข้ามได้เสมอ การเล่นจริงตรวจในชุด dash)
+  if ((await snap(page)).store.overlay === "dash") {
+    await page.getByTestId("dash-skip").click();
+    await page.waitForFunction((n) => window.__aitq.snapshot().scene === "Room" && window.__aitq.snapshot().store.zone === n && window.__aitq.snapshot().interactables.length > 0, room);
+  }
   return readStory(page, press);
 };
 const attr = (label) => JSON.stringify(label);
@@ -1250,7 +1260,7 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, decor: STARTER_DECOR, layout: {}, theme: {} });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: ["easy:1:s"], decor: STARTER_DECOR, layout: {}, theme: {} });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
@@ -2265,7 +2275,7 @@ const doneRoom = (topic) => ({ stationsSeen: 0, minigameDone: topic < 6, stars: 
 const doneRooms = (topics) => Object.fromEntries(topics.map((topic) => [topic, doneRoom(topic)]));
 const assessmentOf = (form) => ({ form, correctByTopic: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, items: [], completedAt: NOW });
 const wonAll = (map) => Object.fromEntries(CAMPAIGN[map].battles.map((battle) => [battle.id, WON]));
-const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, ...patch });
+const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: [], ...patch });
 const MAP1_STORY = ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "ending"];
 /** ผู้เล่นที่ผ่านแมพ 1 ครบแล้ว (ชนะไคจูทุกตัว ทำแบบทดสอบหลังเรียนแล้ว) ยังอยู่ที่แมพ 1 */
 const travelerSave = (patch = {}) => ({
@@ -2420,6 +2430,73 @@ async function playLab(page) {
   await inHall(page);
   assert.equal((await snap(page)).store.screen, "hall");
   log("ห้องวิจัยพืชต่างดาว: ซื้อเมล็ดที่ร้านพืช ปลูก โตตามเวลาจริง 3 ระยะ เก็บผลผลิตได้เครดิต เก็บครบทุกพันธุ์ได้ของตกแต่งรางวัล");
+}
+
+// ---------------------------------------------------------------- ด่านทางเชื่อมก่อนเข้าห้อง (GDD ข้อ 22)
+
+/** วิ่งผ่านด่านทางเชื่อมด้วยบอท: ก่อนแต่ละคลื่นถึง เลื่อนไปช่องที่ปลอดภัยที่ใกล้ที่สุดด้วยปุ่มลูกศร */
+async function dodgeAll(page, zone) {
+  const waves = wavesOf(dashKindOf(zone), zone);
+  let lane = 1;
+  const started = Date.now();
+  for (const wave of waves) {
+    const wait = wave.at * 1000 - 700 - (Date.now() - started);
+    if (wait > 0) await page.waitForTimeout(wait);
+    const safe = [0, 1, 2].filter((l) => !wave.blocked.includes(l));
+    const target = safe.reduce((best, l) => (Math.abs(l - lane) < Math.abs(best - lane) ? l : best), safe[0]);
+    for (; lane < target; lane++) await page.keyboard.press("ArrowRight");
+    for (; lane > target; lane--) await page.keyboard.press("ArrowLeft");
+  }
+}
+
+async function playDash(page) {
+  // แมพ 2 ห้อง 1 ยังไม่เคยเข้า: เข้าครั้งแรกมีด่านทางเชื่อม (ห้องเลขคี่ = หลบสิ่งกีดขวาง)
+  await resumeWith(page, travelerSave());
+  await travelTo(page, "normal", 3);
+  const start = await creditsOf(page);
+  await walkTo(page, "door-1");
+  await act(page);
+  const dash = page.getByTestId("dash");
+  await dash.waitFor();
+  assert.deepEqual([await dash.getAttribute("data-kind"), await dash.getAttribute("data-zone"), await dash.getAttribute("data-phase")], ["obstacles", "1", "ready"]);
+  assert.equal((await snap(page)).store.screen, "hall", "ด่านทางเชื่อมเปิดทับโถง ยังไม่เข้าห้อง");
+  assert.equal(await page.getByTestId("dash-skip").isVisible(), true, "ข้ามได้เสมอ");
+  await shot(page, "37-dash-ready");
+  // ยืนเฉย ๆ: โดนครบ 3 ครั้งแล้วต้องเริ่มใหม่ (ไม่ติดถาวร มีปุ่มลองใหม่และข้ามด่าน)
+  await page.getByTestId("dash-start").click();
+  assert.equal(await dash.getAttribute("data-phase"), "run");
+  await page.waitForFunction(() => document.querySelector('[data-testid="dash"]')?.getAttribute("data-phase") === "lost", undefined, { timeout: 25000 });
+  assert.equal(await page.getByTestId("dash-shield").getAttribute("data-shield"), "0");
+  await shot(page, "37-dash-lost");
+  // ลองใหม่แล้วหลบครบทั้งด่านด้วยปุ่มลูกศร: ผ่าน ได้เครดิต 5 และเข้าห้อง
+  await page.getByTestId("dash-retry").click();
+  assert.equal(await dash.getAttribute("data-phase"), "run");
+  await dodgeAll(page, 1);
+  await page.waitForFunction(() => document.querySelector('[data-testid="dash"]')?.getAttribute("data-phase") === "won", undefined, { timeout: 15000 });
+  assert.equal(await page.getByTestId("dash-shield").getAttribute("data-shield"), String(DASH.shield));
+  await page.getByTestId("dash-go").click();
+  await inRoom(page, 1);
+  assert.deepEqual((await snap(page)).store.shop.dash, ["normal:1"]);
+  assert.equal(await creditsOf(page), start + DASH.reward, "ผ่านด่านทางเชื่อมครั้งแรกได้เครดิตเล็กน้อย");
+  // ออกแล้วเข้าห้องเดิมอีกครั้ง: ไม่มีด่านทางเชื่อมซ้ำ
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await walkTo(page, "door-1");
+  await act(page);
+  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Room");
+  assert.equal(await page.getByTestId("dash").count(), 0);
+
+  // ตั้งค่า "ข้ามด่านทางเชื่อมเสมอ" ที่สมุดเควส: ห้องใหม่เข้าได้ตรง ๆ
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await page.getByRole("button", { name: "สมุดเควส" }).click();
+  await page.getByTestId("dash-skip-setting").click();
+  assert.equal(await page.getByTestId("dash-skip-setting").getAttribute("aria-checked"), "true");
+  await page.getByRole("button", { name: "ปิด", exact: true }).click();
+  assert.ok((await snap(page)).store.shop.dash.includes("skip"));
+  log("ด่านทางเชื่อมก่อนเข้าห้อง: เล่นครั้งแรกของห้อง ยืนเฉยโล่หมดแล้วลองใหม่ได้ หลบครบผ่านได้เครดิต ไม่ถามซ้ำ ข้ามทั้งหมดได้ที่สมุดเควส");
 }
 
 // ---------------------------------------------------------------- แมพ 2: ศูนย์วิจัยภาคสนาม (GDD ข้อ 15, 16, 17, 19)
@@ -3749,6 +3826,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("dash")) {
+    console.log("เดสก์ท็อป: ด่านทางเชื่อมก่อนเข้าห้องครั้งแรก");
+    await playDash(page);
   }
   if (wanted("lab")) {
     console.log("เดสก์ท็อป: ห้องวิจัยพืชต่างดาว (ร้านพืช ปลูก โตตามเวลาจริง เก็บผลผลิต)");
