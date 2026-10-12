@@ -16,7 +16,8 @@ export const TUTOR_LIMITS = {
   maxReplyChars: 2000,
 } as const;
 
-const MODEL = "gemini-3.8-flash";
+/** รุ่นหลัก แล้วรุ่นสำรองที่เบากว่า: ถ้ารุ่นหลักไม่ตอบ (ค้าง โหลดเกิน หรือถูกจำกัดอัตรา) ลองรุ่นสำรองในคำขอเดียวกัน */
+export const MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"] as const;
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 interface TopicContent {
@@ -162,31 +163,23 @@ const BLOCKED = new Set(["SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTEN
 const defaultGenerate: Generate = async (model, request) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new GeminiError(0, "NO_API_KEY", "ยังไม่ได้ตั้ง GEMINI_API_KEY");
-  // ฟังก์ชัน serverless มีเวลาจำกัด (30 วินาที) และ Gemini ค้างเป็นบางครั้ง จึงรอครั้งละ 12 วินาทีและลองซ้ำครั้งเดียว
-  for (let attempt = 0; ; attempt++) {
-    const retry = attempt === 0;
-    let response: Response;
-    try {
-      response = await fetch(`${API_BASE}/${model}:generateContent`, {
-        method: "POST",
-        // คีย์ส่งใน header ไม่ใส่ใน URL เพื่อไม่ให้ไปอยู่ใน log
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify(request),
-        signal: AbortSignal.timeout(12_000),
-      });
-    } catch (error) {
-      if (retry && error instanceof Error && error.name === "TimeoutError") continue;
-      throw error;
-    }
-    if (response.ok) return (await response.json()) as GeminiResponse;
-    if (retry && (response.status === 500 || response.status === 503)) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      continue;
-    }
-    const { error } = ((await response.json().catch(() => ({}))) ?? {}) as { error?: { status?: string; message?: string; details?: { reason?: string }[] } };
-    throw new GeminiError(response.status, error?.details?.find((d) => d.reason)?.reason ?? error?.status ?? "UNKNOWN", error?.message ?? `HTTP ${response.status}`);
-  }
+  // ฟังก์ชัน serverless มีเวลาจำกัด (30 วินาที) และ Gemini ค้างหรือโหลดเกินเป็นบางครั้ง
+  // จึงรอครั้งละ 12 วินาที ไม่ลองซ้ำที่รุ่นเดิม แต่ให้ handleTutor ลองรุ่นสำรองแทน
+  const response = await fetch(`${API_BASE}/${model}:generateContent`, {
+    method: "POST",
+    // คีย์ส่งใน header ไม่ใส่ใน URL เพื่อไม่ให้ไปอยู่ใน log
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+    body: JSON.stringify(request),
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (response.ok) return (await response.json()) as GeminiResponse;
+  const { error } = ((await response.json().catch(() => ({}))) ?? {}) as { error?: { status?: string; message?: string; details?: { reason?: string }[] } };
+  throw new GeminiError(response.status, error?.details?.find((d) => d.reason)?.reason ?? error?.status ?? "UNKNOWN", error?.message ?? `HTTP ${response.status}`);
 };
+
+/** ความล้มเหลวที่ลองรุ่นสำรองได้: รุ่นหลักไม่พร้อมหรือค้าง (ไม่รวมคีย์ผิดหรือคำขอผิดรูป ซึ่งรุ่นสำรองก็ผิดเหมือนกัน) */
+const worthFallback = (error: unknown): boolean =>
+  error instanceof GeminiError ? [429, 500, 502, 503, 504].includes(error.status) : failureReason(error) === "network";
 
 /** ตรวจคำขอ เรียก Gemini แล้วคืนผล แยกจากตัวรับ HTTP เพื่อทดสอบได้ด้วยตัวเรียกจำลอง */
 export async function handleTutor(body: unknown, deps: { course?: CourseContent; generate?: Generate } = {}): Promise<TutorResult> {
@@ -195,13 +188,25 @@ export async function handleTutor(body: unknown, deps: { course?: CourseContent;
   if ("error" in request) return { status: request.status, body: { error: request.error } };
 
   try {
-    const response = await (deps.generate ?? defaultGenerate)(MODEL, {
+    const generate = deps.generate ?? defaultGenerate;
+    const payload: GeminiRequest = {
       systemInstruction: { parts: [{ text: buildSystemPrompt(course, request.room) }] },
       // Gemini เรียกบทบาทของผู้ช่วยว่า model
       contents: request.messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
       // คำตอบสั้นจากเนื้อหาที่ให้ไว้ ไม่ต้องใช้การคิดลึก (โทเคนที่ใช้คิดนับรวมใน maxOutputTokens)
       generationConfig: { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "low" } },
-    });
+    };
+    let response: GeminiResponse | undefined;
+    for (const [index, model] of MODELS.entries()) {
+      try {
+        response = await generate(model, payload);
+        break;
+      } catch (error) {
+        if (index === MODELS.length - 1 || !worthFallback(error)) throw error;
+        console.error(`tutor: ${model} ไม่ตอบ (${failureReason(error)}) ลองรุ่นสำรอง`);
+      }
+    }
+    if (!response) return { status: 200, body: { fallback: true, reason: "empty" } };
     const candidate = response.candidates?.[0];
     if (response.promptFeedback?.blockReason || BLOCKED.has(candidate?.finishReason ?? "")) return { status: 200, body: { fallback: true, reason: "refusal" } };
     const reply = (candidate?.content?.parts ?? [])

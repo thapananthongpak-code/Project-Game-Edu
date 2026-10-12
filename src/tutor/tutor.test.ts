@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildSystemPrompt, type CourseContent, GeminiError, type GeminiRequest, type GeminiResponse, handleTutor, TUTOR_LIMITS } from "../../api/tutor";
+import { buildSystemPrompt, type CourseContent, GeminiError, type GeminiRequest, type GeminiResponse, handleTutor, MODELS, TUTOR_LIMITS } from "../../api/tutor";
 import { course } from "../content";
 import { emptyRoom } from "../state/progressStore";
 import { TUTOR } from "./config";
@@ -151,15 +151,31 @@ describe("ตัวเรียก Gemini จริง (fetch จำลอง)",
       expect(await handleTutor(ask("คำถาม"), { course: content })).toEqual({ status: 200, body: { fallback: true, reason: "auth" } });
     }));
 
-  it("เซิร์ฟเวอร์ของ Google ไม่พร้อมครั้งแรก (503): ลองซ้ำหนึ่งครั้งแล้วได้คำตอบ", () =>
+  it("รุ่นหลักไม่พร้อม (503): ลองรุ่นสำรองในคำขอเดียวกันแล้วได้คำตอบ", () =>
     withKey("test-key", async () => {
       const fetchMock = vi.fn().mockResolvedValueOnce(Response.json({ error: { status: "UNAVAILABLE" } }, { status: 503 })).mockResolvedValueOnce(Response.json(message("คำใบ้")));
       vi.stubGlobal("fetch", fetchMock);
       expect((await handleTutor(ask("คำถาม"), { course: content })).body).toMatchObject({ reply: "คำใบ้" });
+      expect(fetchMock.mock.calls.map(([url]) => String(url).match(/models\/([^:]+):/)?.[1])).toEqual([MODELS[0], MODELS[1]]);
+    }));
+
+  it("คีย์ไม่ถูกต้อง: ไม่ลองรุ่นสำรอง (ผิดเหมือนกัน) เรียกครั้งเดียว", () =>
+    withKey("bad-key", async () => {
+      const fetchMock = vi.fn(async () => Response.json({ error: { status: "INVALID_ARGUMENT", details: [{ reason: "API_KEY_INVALID" }] } }, { status: 400 }));
+      vi.stubGlobal("fetch", fetchMock);
+      expect((await handleTutor(ask("คำถาม"), { course: content })).body).toEqual({ fallback: true, reason: "auth" });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }));
+
+  it("รุ่นสำรองก็ถูกจำกัดอัตรา (429): ตอบ fallback เหตุผล rate_limited หลังลองครบสองรุ่น", () =>
+    withKey("test-key", async () => {
+      const fetchMock = vi.fn(async () => Response.json({ error: { status: "RESOURCE_EXHAUSTED" } }, { status: 429 }));
+      vi.stubGlobal("fetch", fetchMock);
+      expect((await handleTutor(ask("คำถาม"), { course: content })).body).toEqual({ fallback: true, reason: "rate_limited" });
       expect(fetchMock).toHaveBeenCalledTimes(2);
     }));
 
-  it("Gemini ค้างจนเกินเวลารอครั้งแรก: ลองซ้ำหนึ่งครั้งแล้วได้คำตอบ ค้างสองครั้งจึงตอบ fallback", () =>
+  it("Gemini ค้างจนเกินเวลารอครั้งแรก: ลองรุ่นสำรองแล้วได้คำตอบ ค้างทั้งสองรุ่นจึงตอบ fallback", () =>
     withKey("test-key", async () => {
       const timeout = () => Promise.reject(new DOMException("timed out", "TimeoutError"));
       const fetchMock = vi.fn().mockImplementationOnce(timeout).mockResolvedValueOnce(Response.json(message("คำใบ้")));
