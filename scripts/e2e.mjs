@@ -2474,6 +2474,80 @@ async function playLab(page) {
   log("ห้องวิจัยพืชต่างดาว: ซื้อเมล็ดที่ร้านพืช ปลูก โตตามเวลาจริง 3 ระยะ เก็บผลผลิตได้เครดิต เก็บครบทุกพันธุ์ได้ของตกแต่งรางวัล");
 }
 
+// ---------------------------------------------------------------- ลากวางอุปกรณ์บนการ์เดียนและพี่บิต (GDD ข้อ 17 และ 13)
+
+/** ลากด้วยเมาส์จากกลางองค์ประกอบหนึ่งไปกลางอีกองค์ประกอบ (ผ่านจุดกลางทางเพื่อให้เกิดการลากจริง) */
+async function dragBetween(page, from, to) {
+  await from.scrollIntoViewIfNeeded();
+  const a = await from.boundingBox();
+  const b = await to.boundingBox();
+  assert.ok(a && b, "ไม่พบจุดเริ่มหรือปลายทางของการลาก");
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+  await page.mouse.down();
+  await page.mouse.move((a.x + b.x) / 2 + 10, (a.y + b.y) / 2 + 10, { steps: 4 });
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 6 });
+  await page.mouse.up();
+}
+
+async function playGear(page) {
+  await resumeWith(page, travelerSave({ shop: shopOf({ owned: ["weapon-sword", "armor-guard", "chip-focus", "module-scanner", "module-toolkit", "module-laser", "bit-ninja"] }) }));
+  await goToHangar(page);
+
+  // --- แท่นการ์เดียน: ลากอาวุธจากรายการไปวางที่ช่องอาวุธข้างตัวหุ่น
+  await walkTo(page, "robot");
+  await act(page);
+  const bay = page.getByTestId("guardian-bay");
+  await bay.waitFor();
+  const handle = (testid) => page.getByTestId(testid).locator("> span").first();
+  assert.equal(await page.getByTestId("guardian-slot-weapon").getAttribute("data-value"), "fist");
+  await dragBetween(page, handle("guardian-weapon-sword"), page.getByTestId("guardian-slot-weapon"));
+  assert.equal(await page.getByTestId("guardian-slot-weapon").getAttribute("data-value"), "sword", "ลากอาวุธไปวางที่ช่องอาวุธแล้วใส่ได้");
+  assert.equal(await page.getByTestId("guardian-model").getAttribute("data-weapon"), "sword", "หุ่นเปลี่ยนเป็นถืออาวุธทันที");
+  assert.match(await page.getByTestId("guardian-notice").innerText(), /ใส่ดาบแล้ว|ใส่.*แล้ว/);
+  assert.equal((await snap(page)).store.shop.weapon, "sword");
+  // ลากของผิดช่อง: ไม่ใส่และบอกเหตุผล
+  await dragBetween(page, handle("guardian-armor-guard"), page.getByTestId("guardian-slot-weapon"));
+  assert.equal((await snap(page)).store.shop.armor, "plate", "เกราะวางที่ช่องอาวุธไม่ได้");
+  assert.match(await page.getByTestId("guardian-notice").innerText(), /ใส่ช่องนั้นไม่ได้/);
+  // เกราะ ชิป ไปวางที่ช่องของตัวเอง
+  await dragBetween(page, handle("guardian-armor-guard"), page.getByTestId("guardian-slot-armor"));
+  await dragBetween(page, handle("guardian-chip-focus"), page.getByTestId("guardian-slot-chip"));
+  assert.deepEqual([(await snap(page)).store.shop.armor, (await snap(page)).store.shop.chip], ["guard", "focus"]);
+  assert.deepEqual(await page.getByTestId("guardian-model").evaluate((el) => [el.dataset.weapon, el.dataset.armor, el.dataset.chip]), ["sword", "guard", "focus"]);
+  await shot(page, "39-guardian-drag");
+  // ลากออกจากช่องมาวางที่รายการเพื่อถอด (กลับเป็นของเริ่มต้น) และปุ่มถอดทำงานเหมือนกัน
+  await dragBetween(page, page.getByTestId("guardian-slot-weapon").locator("> span").first(), page.getByTestId("guardian-armor-plate"));
+  assert.equal((await snap(page)).store.shop.weapon, "fist", "ลากอาวุธออกจากช่องแล้วถอด");
+  await page.getByTestId("guardian-remove-chip").click();
+  assert.equal((await snap(page)).store.shop.chip, "none");
+  // กดที่ของในรายการเพื่อใส่ทันทีเหมือนเดิม
+  await page.getByTestId("guardian-weapon-sword").click();
+  assert.equal((await snap(page)).store.shop.weapon, "sword");
+  await page.getByTestId("guardian-close").click();
+  await page.waitForTimeout(400);
+  assert.equal((await snap(page)).bay.texture, "gd_guard_sword", "หุ่นบนแท่นเปลี่ยนตามของที่ลากใส่");
+
+  // --- แท่นชาร์จพี่บิต: ลากโมดูลไปวางที่ช่อง ช่องเต็มแล้ววางทับเพื่อสลับ ลากคอสตูมไปวางที่ตัวพี่บิต
+  await walkTo(page, "bitpad");
+  await act(page);
+  await page.getByTestId("bitpad").waitFor();
+  const module = (name) => page.getByTestId(`bitpad-module-${name}`).locator("> span").first();
+  await dragBetween(page, module("scanner"), page.getByTestId("bitpad-slot-0"));
+  await dragBetween(page, module("toolkit"), page.getByTestId("bitpad-slot-1"));
+  assert.equal(await page.getByTestId("bitpad").getAttribute("data-modules"), "scanner,toolkit");
+  await dragBetween(page, module("laser"), page.getByTestId("bitpad-slot-0"));
+  assert.equal(await page.getByTestId("bitpad").getAttribute("data-modules"), "toolkit,laser", "ช่องเต็ม: ลากทับช่องแรกสลับกับโมดูลเดิม");
+  assert.match(await page.getByTestId("bitpad-notice").innerText(), /เปลี่ยนเป็น/);
+  await dragBetween(page, page.getByTestId("bitpad-skin-ninja"), page.getByTestId("bitpad-bit"));
+  assert.equal((await snap(page)).store.shop.bit, "ninja", "ลากคอสตูมไปวางที่ตัวพี่บิตแล้วเปลี่ยน");
+  await dragBetween(page, page.getByTestId("bitpad-slot-0"), page.getByTestId("bitpad-module-scanner"));
+  assert.equal(await page.getByTestId("bitpad").getAttribute("data-modules"), "laser", "ลากโมดูลออกจากช่องมาวางที่รายการเพื่อถอด");
+  await page.getByTestId("bitpad-toggle-scanner").click();
+  assert.equal(await page.getByTestId("bitpad").getAttribute("data-modules"), "scanner,laser", "ปุ่มติดตั้งเดิมยังใช้ได้ (เรียงตามรายการโมดูล)");
+  await shot(page, "39-bitpad-drag");
+  log("ลากวางอุปกรณ์: แท่นการ์เดียน (อาวุธ เกราะ ชิป ถอด วางผิดช่อง) และแท่นพี่บิต (โมดูล สลับ คอสตูม ถอด) ปุ่มเดิมยังใช้ได้");
+}
+
 // ---------------------------------------------------------------- ไกด์นำทางและสอนเล่น (GDD ข้อ 23)
 
 async function playGuide(page) {
@@ -3969,6 +4043,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("gear")) {
+    console.log("เดสก์ท็อป: ลากวางอุปกรณ์บนการ์เดียนและพี่บิต");
+    await playGear(page);
   }
   if (wanted("guide")) {
     console.log("เดสก์ท็อป: ไกด์นำทางและสอนเล่น");
