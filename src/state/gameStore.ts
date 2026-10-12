@@ -27,11 +27,11 @@ import {
 import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
 import type { DecorArea, DecorPlacement, Piece, PlaceError } from "../game/decor";
 import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, resetLayout, setTheme, toggleModule } from "./shop";
-import type { Avatar, BitModule, Decor, Supply, Theme } from "./shop.config";
+import type { Avatar, BitModule, Decor, Stall, Supply, Theme } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
-export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room";
+export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room" | "market";
 export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
@@ -76,8 +76,10 @@ interface GameState {
   battleId: string | null;
   /** NPC ที่กำลังคุยด้วย */
   npcId: NpcId | null;
-  /** ร้านที่เปิดอยู่เป็นร้านพิเศษของ NPC คนนี้ (null = ร้านสหกรณ์แล็บหรือตู้เสื้อผ้า) */
+  /** ร้านที่เปิดอยู่เป็นร้านพิเศษของ NPC คนนี้ (null = ย่านร้านค้าหรือตู้เสื้อผ้า) */
   shopVendor: NpcId | null;
+  /** ร้านในย่านร้านค้าที่เปิดอยู่ (null = ไม่ได้เปิดร้านของย่านร้านค้า) */
+  shopStall: Stall | null;
   musicCue: MusicCue | null;
   /** หน้าต่างถามพี่บิต เปิดซ้อนบนหน้าต่างอื่นได้ */
   tutorOpen: boolean;
@@ -118,6 +120,8 @@ interface GameState {
   focusTopic: (topic: number) => void;
   exitToHall: () => void;
   enterHangar: () => void;
+  /** เข้าย่านร้านค้า (ออกด้วย exitToHall) */
+  enterMarket: () => void;
   openStory: (beat: string) => void;
   /** ปิดฉากเนื้อเรื่องและบันทึกว่าดูแล้ว */
   finishStory: () => void;
@@ -128,8 +132,10 @@ interface GameState {
   equip: (kind: EquipKind, value: string) => void;
   /** จัดของใช้ลงกระเป๋า (ไม่เกิน BAG_SIZE ชิ้น ที่เหลืออยู่ในกล่องเก็บไอเทม) */
   packBag: (wanted: readonly Supply[]) => void;
-  /** เปิดร้าน: ไม่ระบุ = ร้านสหกรณ์แล็บ ระบุ NPC = ร้านพิเศษของคนนั้น */
+  /** เปิดร้าน: ไม่ระบุ = ย่านร้านค้า ระบุ NPC = ร้านพิเศษของคนนั้น */
   openShop: (vendor?: NpcId) => void;
+  /** เปิดหน้าต่างของร้านหนึ่งในย่านร้านค้า */
+  openStall: (stall: Stall) => void;
   openNpc: (id: NpcId) => void;
   /** รับเควสเสริมของ NPC */
   acceptQuest: (id: NpcId) => void;
@@ -186,7 +192,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     const current = progress[room] ?? emptyRoom();
     set({ progress: { ...progress, [room]: { ...current, ...patch(current) } } });
   };
-  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
   const updateNpc = (id: NpcId, patch: (record: NpcRecord) => Partial<NpcRecord>) => {
     const { npcs } = get();
     const current = npcs[id] ?? emptyNpc();
@@ -208,6 +214,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     battleId: null,
     npcId: null,
     shopVendor: null,
+    shopStall: null,
     musicCue: null,
     tutorOpen: false,
     tutorRoom: null,
@@ -282,6 +289,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     },
     exitToHall: () => set({ ...closed, screen: "hall" }),
     enterHangar: () => set({ ...closed, screen: "hangar" }),
+    enterMarket: () => set({ ...closed, screen: "market" }),
 
     openStory: (beat) => set({ overlay: "story", storyBeat: beat, prompt: null }),
     finishStory: () => {
@@ -303,7 +311,8 @@ export const useGameStore = create<GameState>()((set, get) => {
     },
     equip: (kind, value) => set({ shop: equip(get().shop, kind, value) }),
     packBag: (wanted) => set({ shop: packBag(get().shop, wanted) }),
-    openShop: (vendor) => set({ overlay: "shop", shopVendor: vendor ?? null, npcId: null, prompt: null }),
+    openShop: (vendor) => set({ overlay: "shop", shopVendor: vendor ?? null, shopStall: null, npcId: null, prompt: null }),
+    openStall: (stall) => set({ overlay: "shop", shopVendor: null, shopStall: stall, npcId: null, prompt: null }),
     openNpc: (id) => set({ overlay: "npc", npcId: id, prompt: null }),
     acceptQuest: (id) => updateNpc(id, () => ({ accepted: true })),
     collectPickup: (id, index) => {
@@ -373,7 +382,7 @@ export const useGameStore = create<GameState>()((set, get) => {
       set({ overlay: null, stationIndex: null, room: focusAfter(get()) });
     },
     openOverlay: (overlay) => set({ overlay, prompt: null }),
-    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, musicCue: null, room: focusAfter(get()) }),
+    closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, musicCue: null, room: focusAfter(get()) }),
     setTutorOpen: (tutorOpen, room) => set({ tutorOpen, tutorRoom: tutorOpen ? (room ?? get().room) : null }),
 
     completeMinigame: (result) => {

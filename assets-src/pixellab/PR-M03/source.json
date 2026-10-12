@@ -1,0 +1,23 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "clothing boutique market stall with a violet striped awning, a mannequin wearing a colorful jacket, a rack of hanging coats and a few paint cans on the counter, plain awning only with no signboard and no sign above it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 64,
+    "height": 64,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "c3fdb909-5d75-47d0-a8a5-8f98654ce0ac",
+  "generatedAt": "2026-10-11T16:17:41.560Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "987f8a45-c93b-4fca-9989-58f5f5db36f1",
+      "reason": "แถบป้ายบนร้านมีขีดคล้ายตัวอักษร"
+    }
+  ]
+}

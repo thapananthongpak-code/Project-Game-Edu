@@ -285,6 +285,7 @@ async function onboard(page, { name, topic1Correct, tap = false, shots = false, 
   const press = (locator) => (tap ? locator.tap() : locator.click());
   if (shots) {
     // หน้าเมนูอธิบายเกมแบบย่อ
+    await page.getByTestId("menu-howto").click();
     await page.getByTestId("menu-about").waitFor();
     assert.equal(await page.locator('[data-testid="menu-about"] li').count(), 5);
     assert.match(await page.getByTestId("menu-about").innerText(), /เกมนี้เล่นอย่างไร[\s\S]*แกน AI[\s\S]*สู้ไคจู[\s\S]*คู่มือรูปในเกม/);
@@ -567,9 +568,9 @@ const battlePools = (topic) => {
 
 const click = (locator) => locator.click();
 
-/** ออกจากห้อง (หรือโถง) ไปโรงเก็บหุ่น */
+/** ออกจากห้อง ย่านร้านค้า (หรือโถง) ไปโรงเก็บหุ่น */
 async function goToHangar(page) {
-  if ((await snap(page)).store.screen === "room") {
+  if (["room", "market"].includes((await snap(page)).store.screen)) {
     await walkTo(page, "door-entry");
     await act(page);
     await inHall(page);
@@ -581,17 +582,58 @@ async function goToHangar(page) {
   await inHangar(page);
 }
 
-/** เดินกลับโถง (จากห้องหรือโรงเก็บหุ่น) แล้วเปิดร้านสหกรณ์ */
-async function openHallShop(page) {
-  if ((await snap(page)).store.screen !== "hall") {
-    await walkTo(page, "door-entry");
-    await act(page);
-    await inHall(page);
-    await page.waitForTimeout(300);
+/**
+ * เปิดร้านหนึ่งของย่านร้านค้า (gear | items | costume | decor): เดินกลับโถงถ้ายังไม่อยู่ที่นั่น เข้าย่านร้านค้า แล้วเดินไปที่เคาน์เตอร์
+ * ถ้าอยู่ในย่านร้านค้าแล้วหรือเปิดหน้าต่างร้านอื่นอยู่ จะปิดหน้าต่างเดิมแล้วไปเคาน์เตอร์ใหม่
+ */
+let marketShot = false;
+async function openStall(page, stall) {
+  if ((await snap(page)).store.overlay === "shop") {
+    await page.getByTestId("shop-close").click();
+    await page.waitForTimeout(350);
   }
-  await walkTo(page, "shop");
+  if ((await snap(page)).store.screen !== "market") {
+    if ((await snap(page)).store.screen !== "hall") {
+      await walkTo(page, "door-entry");
+      await act(page);
+      await inHall(page);
+      await page.waitForTimeout(300);
+    }
+    await walkTo(page, "shop");
+    assert.match((await snap(page)).store.prompt, /ย่านร้านค้า/);
+    await act(page);
+    await page.waitForFunction(() => {
+      const snapshot = window.__aitq.snapshot();
+      return snapshot.store.screen === "market" && snapshot.scene === "Market" && snapshot.interactables.some((i) => i.id.startsWith("stall-"));
+    });
+    await page.waitForTimeout(300);
+    if (!marketShot) {
+      marketShot = true;
+      await shot(page, "07-market");
+    }
+  }
+  await walkTo(page, `stall-${stall}`);
+  assert.match((await snap(page)).store.prompt, new RegExp(`^${{ gear: "ร้านอุปกรณ์การ์เดียน", items: "ร้านไอเทม", costume: "ร้านคอสตูม", decor: "ร้านตกแต่ง" }[stall]}`));
   await act(page);
   await page.getByTestId("shop").waitFor();
+  assert.equal(await page.getByTestId("shop").getAttribute("data-stall"), stall);
+}
+
+/** ปิดหน้าต่างร้านแล้วเดินออกจากย่านร้านค้ากลับโถง */
+async function leaveMarket(page) {
+  if ((await snap(page)).store.overlay === "shop") {
+    await page.getByTestId("shop-close").click();
+    await page.waitForTimeout(350);
+  }
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await page.waitForTimeout(300);
+}
+
+/** เปิดร้านในย่านร้านค้า (ชื่อเดิมของขั้นตอนที่เปิดร้านจากโถง) */
+async function openHallShop(page, stall) {
+  await openStall(page, stall);
 }
 
 async function backToHall(page) {
@@ -817,8 +859,8 @@ async function playRoom1(page) {
   await page.getByTestId("sound-sfx").click();
   // คู่มือรูปในเกม: รูปของแต่ละจุดคืออะไร ใช้ทำอะไร
   await page.locator('[data-testid="questlog-guide"] summary').click();
-  assert.equal(await page.locator('[data-testid^="guide-"]').count(), 19, "คู่มือรูป: โถง 6 โรงเก็บหุ่น 6 ห้องเรียน 4 และบนจอ 3");
-  assert.match(await page.getByTestId("guide-shop").innerText(), /ร้านสหกรณ์แล็บ[\s\S]*ซื้อ/);
+  assert.equal(await page.locator('[data-testid^="guide-"]').count(), 23, "คู่มือรูป: โถง 6 ย่านร้านค้า 4 โรงเก็บหุ่น 6 ห้องเรียน 4 และบนจอ 3");
+  assert.match(await page.getByTestId("guide-shop").innerText(), /ทางเข้าย่านร้านค้า[\s\S]*ซื้อ/);
   assert.match(await page.getByTestId("guide-travel").innerText(), /กระดานแผนที่[\s\S]*เดินทางไปแมพอื่น/);
   await page.getByTestId("guide-travel").scrollIntoViewIfNeeded();
   await shot(page, "01-questlog-guide");
@@ -1022,10 +1064,8 @@ async function playRoom1(page) {
   assert.equal((await snap(page)).store.screen, "hall");
   log("เส้นทาง 1→6: ได้แกนห้อง 1 แล้ว ห้อง 2 ยังล็อกจนกว่าจะชนะไคจูของห้อง 1");
 
-  // --- ร้านสหกรณ์แล็บ: เครดิตมาจากความคืบหน้า (สถานี 5 ดาว 2 ทบทวน แกน) = 25 + 20 + 10 + 20
-  await walkTo(page, "shop");
-  await act(page);
-  await page.getByTestId("shop").waitFor();
+  // --- ย่านร้านค้า: เครดิตมาจากความคืบหน้า (สถานี 5 ดาว 2 ทบทวน แกน) = 25 + 20 + 10 + 20
+  await openStall(page, "costume");
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "75");
   assert.equal(await page.getByTestId("shop-buy-outfit-engineer").isDisabled(), true, "เครดิตไม่พอ: ซื้อไม่ได้");
   await shot(page, "07-shop");
@@ -1155,18 +1195,21 @@ async function playRoom1(page) {
   await page.getByTestId("wardrobe-close").click();
   await page.waitForTimeout(300);
 
-  // --- ร้านสหกรณ์ในโถง: ร้านขายอย่างเดียว ของที่ซื้อแล้วไปใส่ที่จุดปรับแต่งในโรงเก็บหุ่น
+  // --- ย่านร้านค้า: ร้านขายอย่างเดียว ของที่ซื้อแล้วไปใส่ที่จุดปรับแต่งในโรงเก็บหุ่น แต่ละร้านขายเฉพาะประเภทของตัวเอง
   await backToHall(page);
-  await walkTo(page, "shop");
-  await act(page);
-  await page.getByTestId("shop").waitFor();
+  await openStall(page, "costume");
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "115");
   assert.match(await page.getByTestId("shop-item-outfit-engineer").innerText(), /ในการต่อสู้: ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม \+1/, "เครื่องแบบบอกสิทธิพิเศษในการต่อสู้");
   assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 11, "ร้านมีชุด 11 แบบ (ชุดเริ่มต้นไม่ขาย ชุดของแมพ 2 และ 3 ยังล็อก)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-outfit-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-outfit-", "")).sort()), ["astronaut", "commander", "hero", "ninja", "paramedic", "samurai"], "ชุดของแมพถัดไปยังซื้อไม่ได้");
   assert.match(await page.getByTestId("shop-locked-outfit-ninja").innerText(), /วางขายที่แมพ 2/);
   assert.equal(await page.locator('[data-testid^="shop-item-bit-"]').count(), 7, "ร้านมีคอสตูมของพี่บิต 7 แบบ (รูปมาตรฐานไม่ขาย ของร้านพิเศษไม่แสดงจนกว่าจะซื้อ)");
-  assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 5, "ร้านมีโมดูลของพี่บิต 5 อย่าง");
+  assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 0, "ร้านคอสตูมไม่ขายโมดูล");
+  assert.equal(await page.locator('[data-testid^="shop-item-weapon-"]').count(), 0, "ร้านคอสตูมไม่ขายอาวุธ");
+  await openStall(page, "items");
+  assert.equal(await page.locator('[data-testid^="shop-item-module-"]').count(), 5, "ร้านไอเทมมีโมดูลของพี่บิต 5 อย่าง");
+  assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 0, "ร้านไอเทมไม่ขายชุด");
+  await openStall(page, "gear");
   // อุปกรณ์ของการ์เดียน: 3 ช่อง (ของแมพ 1 และของแมพถัดไปที่ยังล็อก ของเริ่มต้นและของร้านพิเศษไม่แสดง) แต่ละชิ้นบอกค่าพลังที่เพิ่ม
   for (const [slot, count, locked] of [["weapon", 7, ["bow", "cannon", "hammer", "trident"]], ["armor", 3, ["guard", "spike"]], ["chip", 4, ["regen", "retry"]]]) {
     assert.equal(await page.locator(`[data-testid^="shop-item-${slot}-"]`).count(), count, `ร้านมี${slot} ${count} แบบ`);
@@ -1177,12 +1220,15 @@ async function playRoom1(page) {
   assert.match(await page.getByTestId("shop-power-armor-heavy").innerText(), /ค่าพลัง \+20/);
   assert.equal(await page.getByTestId("shop-power").getAttribute("data-power"), "60");
   assert.equal((await snap(page)).audio.playing, "shop:0", "ร้านค้ามีเพลงของตัวเอง");
+  await openStall(page, "items");
   assert.equal(await page.locator('[data-testid^="shop-item-supply-"]').count(), 5, "ร้านมีของใช้ในการต่อสู้ 5 อย่าง");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock))), [3, 3, 2, 2, 1], "ของใช้มีจำนวนจำกัดต่อแมพ");
+  await openStall(page, "costume");
   await page.getByTestId("shop-buy-outfit-engineer").click();
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "15");
   assert.match(await page.getByTestId("shop-owned-outfit-engineer").innerText(), /มีแล้ว · ใส่ที่ตู้เสื้อผ้าในโรงเก็บหุ่น/, "ซื้อแล้วร้านบอกว่าไปใส่ที่ไหน");
   assert.equal((await snap(page)).avatar.texture, "ch_b_lab", "ซื้อแล้วยังไม่สวมให้เอง");
+  await openStall(page, "items");
   assert.equal(await page.getByTestId("shop-buy-supply-shield").isDisabled(), true, "เครดิตเหลือ 15: ซื้อโล่ (20) ไม่ได้");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
@@ -1302,7 +1348,7 @@ async function playRoom(page, room) {
     log("NPC โค้ชแดเนียล (ถามตอบพิเศษ): ล็อกจนกว่าจะได้แกน AI โจทย์มาจากเนื้อหาของเรื่องที่ 2 นับรอบที่ดีที่สุด ได้เครดิต 10 + 10");
   }
   if (room === 3) {
-    // ร้านพิเศษของป้ามาร์ธา: ขายของที่ร้านสหกรณ์ไม่มี ซื้อคอสตูมของพี่บิตแล้วพี่บิตในฉากเปลี่ยนทันที
+    // ร้านพิเศษของป้ามาร์ธา: ขายของที่ย่านร้านค้าไม่มี ซื้อคอสตูมของพี่บิตแล้วพี่บิตในฉากเปลี่ยนทันที
     await page.waitForTimeout(300);
     await talkTo(page, "archivist");
     const shop = page.getByTestId("shop");
@@ -1329,7 +1375,7 @@ async function playRoom(page, room) {
   // --- ด่านต่อสู้ของห้อง: ไคจูแต่ละตัวมีลักษณะต่างกัน
   if (room === 3) {
     // ซื้อของใช้ในการต่อสู้ที่ร้านในโถงก่อนออกปฏิบัติการ
-    await openHallShop(page);
+    await openHallShop(page, "items");
     await page.getByTestId("shop-buy-supply-shield").click();
     await page.getByTestId("shop-buy-supply-repair-kit").click();
     assert.match(await page.getByTestId("shop-notice").innerText(), /ซื้อชุดซ่อมฉุกเฉินแล้ว/);
@@ -1338,7 +1384,7 @@ async function playRoom(page, room) {
     assert.deepEqual((await snap(page)).store.shop.supplies, { ...NO_SUPPLIES, "repair-kit": 1, shield: 1 });
   }
   if (room === 4) {
-    await openHallShop(page);
+    await openHallShop(page, "gear");
     var swordBefore = Number(await page.getByTestId("shop-balance").getAttribute("data-balance"));
     assert.ok(swordBefore >= 120, `เครดิตก่อนด่านที่ 4 ต้องพอซื้ออาวุธหนึ่งชิ้น: ${swordBefore}`);
     await shot(page, "14-shop-gear");
@@ -1403,14 +1449,13 @@ async function playRoom(page, room) {
   if (room === 5) {
     // กระเป๋า: ซื้อของใช้ 4 ชิ้น ลงกระเป๋าให้ 3 ชิ้น ชิ้นที่ 4 อยู่ในกล่อง จัดใหม่ตามคำแนะนำของพี่บิตที่กล่องเก็บไอเทมในโถง
     await backToHall(page);
-    await walkTo(page, "shop");
-    await act(page);
-    await page.getByTestId("shop").waitFor();
+    await openStall(page, "items");
     for (const id of ["supply-overcharge", "supply-overcharge", "supply-shield", "supply-repair-kit"]) await page.getByTestId(`shop-buy-${id}`).click();
     assert.match(await page.getByTestId("shop-item-supply-repair-kit").innerText(), /มีอยู่ 1\/3 · ในกระเป๋า 0/, "กระเป๋าเต็ม 3 ชิ้นแล้ว: ชิ้นที่ 4 เก็บไว้ในกล่อง");
     await page.getByTestId("shop-close").click();
     await page.waitForTimeout(350);
     assert.deepEqual((await snap(page)).store.shop.loadout, ["overcharge", "overcharge", "shield"]);
+    await leaveMarket(page);
     await walkTo(page, "storage");
     await act(page);
     await page.getByTestId("storage").waitFor();
@@ -2239,7 +2284,7 @@ const travelerSave = (patch = {}) => ({
 const creditsOf = async (page) => Number(await page.getByTestId("credits").getAttribute("data-credits"));
 const doorCount = async (page) => (await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length;
 /** สถานะของทุกแมพบนกระดานแผนที่ เช่น { easy: ["here", "true"], normal: ["open", "false"], hard: ["locked", "false"] } */
-const travelStatus = (page) => page.locator('[data-testid="travel"] li').evaluateAll((rows) => Object.fromEntries(rows.map((row) => [row.dataset.testid.replace("travel-", ""), [row.dataset.status, row.dataset.cleared]])));
+const travelStatus = (page) => page.locator('[data-testid="travel-world"] [data-status]').evaluateAll((rows) => Object.fromEntries(rows.map((row) => [row.dataset.testid.replace("travel-", ""), [row.dataset.status, row.dataset.cleared]])));
 
 /** จุดบนจอของช่องในผัง (กระดานตกแต่ง): กลางช่อง หรือเลื่อนไปทางซ้าย dx ช่อง (0 = ขอบซ้ายของช่อง) */
 async function cellPoint(page, col, row, dx = 0.5) {
@@ -2273,6 +2318,7 @@ async function openTravel(page) {
 /** เดินทางไปแมพที่เปิดแล้วจากกระดานแผนที่ รอจนโถงของแมพนั้นพร้อม คืนฉากเนื้อเรื่องตอนมาถึง (มาครั้งแรกเท่านั้น) */
 async function travelTo(page, map, doors) {
   await openTravel(page);
+  await page.getByTestId(`travel-${map}`).click();
   await page.getByTestId(`travel-go-${map}`).click();
   await page.waitForFunction((name) => window.__aitq.snapshot().store.profile.difficulty === name && window.__aitq.snapshot().store.screen === "hall", map);
   const story = await readStory(page);
@@ -2290,11 +2336,10 @@ async function playNormal(page) {
   assert.equal(await doorCount(page), 6);
   assert.match(await page.getByTestId("objective").innerText(), /ชนะไคจูของแมพนี้ครบแล้ว ไปที่กระดานแผนที่เพื่อเดินทางไปแมพ 2/);
   const start = await creditsOf(page);
-  await walkTo(page, "shop");
-  await act(page);
-  await page.getByTestId("shop").waitFor();
+  await openStall(page, "gear");
   assert.deepEqual([await page.getByTestId("shop-item-weapon-hammer").getAttribute("data-locked"), await page.getByTestId("shop-item-weapon-cannon").getAttribute("data-locked")], ["false", "true"], "ชนะไคจูของแมพ 1 ครบ: ของของแมพ 2 วางขาย ของแมพ 3 ยังล็อก");
   assert.match(await page.getByTestId("shop-locked-weapon-cannon").innerText(), /วางขายที่แมพ 3/);
+  await openStall(page, "decor");
   assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 29, "ร้านแสดงของตกแต่งห้อง 29 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 27 ชิ้น)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-decor-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-decor-", "")).sort()), ["fountain", "statue"]);
   assert.equal(await page.locator('[data-testid^="shop-item-theme-"]').count(), 10, "ร้านขายธีมสีของห้อง 10 แบบ");
@@ -2306,7 +2351,10 @@ async function playNormal(page) {
   await shot(page, "35-shop-decor");
 
   // --- กระดานตกแต่ง: ลากวางของตกแต่งบนฉากจริงได้อิสระ ไม่มีช่องที่กำหนด จำกัดจำนวนต่อห้อง ไม่บังจุดใช้งาน
-  await page.getByTestId("shop-open-decor").click();
+  assert.equal(await page.getByTestId("shop-open-decor").count(), 0, "ในย่านร้านค้าไม่มีปุ่มไปกระดานตกแต่ง (กระดานอยู่ในโถงและโรงเก็บหุ่น)");
+  await leaveMarket(page);
+  await walkTo(page, "decorboard");
+  await act(page);
   const decor = page.getByTestId("decor");
   await decor.waitFor();
   await page.getByTestId("decor-grid").waitFor();
@@ -2319,8 +2367,9 @@ async function playNormal(page) {
   assert.deepEqual(await decorPlaced(page), ["plant@1,5", "sofa@12,5", "window@3,1"]);
   assert.match(await page.getByTestId("decor-notice").innerText(), /วางโซฟา.*3\/8/);
   // ของที่วางแล้วเห็นในฉากทันทีและกันทางเดิน
+  await page.waitForTimeout(300);
   let scene = await snap(page);
-  assert.deepEqual(scene.decor.find((d) => d.prop === "pr_decor_sofa"), { prop: "pr_decor_sofa", col: 12, row: 5, solid: true });
+  assert.deepEqual(scene.decor.find((d) => d.prop === "pr_decor_sofa"), { prop: "pr_decor_sofa", col: 12, row: 5, solid: true }, `scene=${scene.scene} decor=${JSON.stringify(scene.decor)} shop.decor=${JSON.stringify(scene.store.shop.decor)}`);
   assert.ok(scene.map.blocked.includes("12,5") && scene.map.blocked.includes("13,5"));
   // ของติดผนัง: ทับประตูโรงเก็บหุ่นไม่ได้ วางบนผนังที่ว่างได้
   await page.getByTestId("decor-pick-neon").click();
@@ -2397,7 +2446,7 @@ async function playNormal(page) {
   assert.equal((await layoutOf()).shop, "2,8", "ย้ายไม่ได้: ร้านอยู่ที่เดิม และยังถืออยู่");
   assert.equal(await decor.getAttribute("data-held"), "shop");
   await clickCell(page, 6, 5);
-  assert.match(await page.getByTestId("decor-notice").innerText(), /ย้าย “ร้านสหกรณ์แล็บ” แล้ว/);
+  assert.match(await page.getByTestId("decor-notice").innerText(), /ย้าย “ย่านร้านค้า” แล้ว/);
   assert.equal((await layoutOf()).shop, "6,5");
   await page.waitForTimeout(500);
   assert.equal(await spotOf("shop"), 224, "ร้านในฉากย้ายไปที่ใหม่ทันที");
@@ -2430,18 +2479,18 @@ async function playNormal(page) {
   // ธีมสี: ยังไม่ได้ซื้อ มีแต่ธีมเดิมของแมพ
   await page.getByTestId("decor-mode-theme").click();
   assert.deepEqual([await page.locator('[data-testid^="theme-pick-"]').count(), await page.getByTestId("theme-pick-default").getAttribute("aria-pressed"), await decor.getAttribute("data-theme")], [1, "true", "default"]);
-  assert.match(await page.getByTestId("decor-panel").innerText(), /ซื้อธีมสีได้ที่ร้านสหกรณ์แล็บ/);
+  assert.match(await page.getByTestId("decor-panel").innerText(), /ซื้อธีมสีได้ที่ย่านร้านค้า/);
   await shot(page, "35-theme-board");
   await page.getByTestId("decor-close").click();
   await page.waitForTimeout(400);
   assert.deepEqual((await snap(page)).store.shop.layout, { "easy:hall": { shop: { col: 6, row: 5 }, storage: { col: 9, row: 6 }, travel: { col: 16, row: 8 } } });
   // เดินไปใช้ร้านที่ย้ายแล้วได้ตามปกติ
   await walkTo(page, "shop");
-  assert.match((await snap(page)).store.prompt, /ร้านสหกรณ์แล็บ/);
-  await act(page);
-  await page.getByTestId("shop").waitFor();
+  assert.match((await snap(page)).store.prompt, /ย่านร้านค้า/);
+  await openStall(page, "decor");
   await page.getByTestId("shop-close").click();
   await page.waitForTimeout(350);
+  await leaveMarket(page);
   await shot(page, "35-hall-rearranged");
   // คืนตำแหน่งเริ่มต้น: ทุกจุดกลับที่เดิม กระถางที่ทับที่เดิมของร้านถูกเก็บออก
   await walkTo(page, "decorboard");
@@ -2476,7 +2525,8 @@ async function playNormal(page) {
   // --- กระดานแผนที่: แมพ 2 เปิดแล้ว แมพ 3 ยังล็อก เดินทางไปแมพ 2
   await openTravel(page);
   assert.deepEqual(await travelStatus(page), { easy: ["here", "true"], normal: ["open", "false"], hard: ["locked", "false"] });
-  assert.match(await page.getByTestId("travel-hard").innerText(), /ต้องชนะไคจูของแมพ 2: ศูนย์วิจัยภาคสนามให้ครบก่อน/);
+  await page.getByTestId("travel-hard").click();
+  assert.match(await page.getByTestId("travel-card").innerText(), /ต้องชนะไคจูของแมพ 2: ศูนย์วิจัยภาคสนามให้ครบก่อน/);
   assert.equal(await page.getByTestId("travel-go-hard").count(), 0, "แมพที่ยังล็อกเดินทางไปไม่ได้");
   await shot(page, "35-travel");
   await page.getByTestId("travel-close").click();
@@ -2491,9 +2541,7 @@ async function playNormal(page) {
   await shot(page, "30-normal-hall");
 
   // --- ของใช้มีจำนวนจำกัดต่อแมพ: ร้านของแมพ 2 มีของชุดใหม่ ซื้อหมดแล้วซื้อเพิ่มไม่ได้
-  await walkTo(page, "shop");
-  await act(page);
-  await page.getByTestId("shop").waitFor();
+  await openStall(page, "items");
   const stockOf = () => page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock)));
   assert.deepEqual(await stockOf(), [3, 3, 2, 2, 1]);
   await page.getByTestId("shop-buy-supply-overcharge").click();
@@ -2505,6 +2553,7 @@ async function playNormal(page) {
   await shot(page, "30-normal-shop");
   await page.getByTestId("shop-close").click();
   await page.waitForTimeout(350);
+  await leaveMarket(page);
 
   // --- กลับไปแมพ 1 ได้เสมอ ความคืบหน้าของแต่ละแมพเก็บแยกกัน กลับมาแมพ 2 ไม่มีฉากมาถึงซ้ำ
   assert.equal(await travelTo(page, "easy", 6), null);
@@ -2646,7 +2695,7 @@ async function playNormal(page) {
   const smithShop = page.getByTestId("shop");
   await smithShop.waitFor();
   assert.equal(await smithShop.getAttribute("data-vendor"), "smith");
-  assert.deepEqual(await smithShop.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", ""))), ["weapon-lance"], "ร้านของลุงบียอร์นขายอาวุธพิเศษที่ร้านสหกรณ์ไม่มี");
+  assert.deepEqual(await smithShop.locator('[data-testid^="shop-item-"]').evaluateAll((items) => items.map((item) => item.dataset.testid.replace("shop-item-", ""))), ["weapon-lance"], "ร้านของลุงบียอร์นขายอาวุธพิเศษที่ย่านร้านค้าไม่มี");
   await shot(page, "30-normal-npc-shop");
   await page.getByTestId("shop-buy-weapon-lance").click();
   assert.equal((await snap(page)).store.shop.weapon, "fist", "ซื้ออาวุธแล้วไปใส่ที่แท่นการ์เดียน");
@@ -2973,11 +3022,11 @@ async function playHard(page) {
   await shot(page, "33-hard-hall");
 
   // --- ร้านของแมพ 3: อุปกรณ์ขั้นสูงสุดวางขาย ซื้อแล้วไปใส่ที่โรงเก็บหุ่น
-  await walkTo(page, "shop");
-  await act(page);
-  await page.getByTestId("shop").waitFor();
-  assert.equal(await page.locator('[data-testid^="shop-item-"][data-locked="true"]').count(), 0, "มาถึงแมพ 3: ของทุกชิ้นวางขายแล้ว");
-  for (const id of ["weapon-cannon", "outfit-researcher", "supply-reboot", "supply-analyzer", "supply-overcharge", "module-scanner", "module-medic"]) await page.getByTestId(`shop-buy-${id}`).click();
+  for (const [stall, ids] of [["gear", ["weapon-cannon"]], ["costume", ["outfit-researcher"]], ["items", ["supply-reboot", "supply-analyzer", "supply-overcharge", "module-scanner", "module-medic"]]]) {
+    await openStall(page, stall);
+    assert.equal(await page.locator('[data-testid^="shop-item-"][data-locked="true"]').count(), 0, `มาถึงแมพ 3: ของทุกชิ้นของร้าน ${stall} วางขายแล้ว`);
+    for (const id of ids) await page.getByTestId(`shop-buy-${id}`).click();
+  }
   assert.equal(await page.getByTestId("shop-buy-module-scanner").count(), 0, "โมดูลซื้อได้ครั้งเดียว");
   assert.equal(await page.getByTestId("shop-buy-supply-reboot").isDisabled(), true, "แกนสำรองถือได้ชิ้นเดียว");
   assert.match(await page.getByTestId("shop-buy-supply-reboot").innerText(), /ถือเต็มแล้ว \(1\)/);

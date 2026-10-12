@@ -146,7 +146,7 @@ export function MainMenu() {
   const continueGame = useGameStore((s) => s.continueGame);
   const account = useGameStore((s) => s.account);
   const audio = useAudioSettings();
-  const [panel, setPanel] = useState<null | "resume" | "reset">(null);
+  const [panel, setPanel] = useState<null | "resume" | "reset" | "howto">(null);
   const name = profile?.name ?? "";
   const soundOn = audio.music || audio.sfx;
 
@@ -156,65 +156,87 @@ export function MainMenu() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-ink/80 p-4">
-      <div className="panel w-full max-w-md p-6 text-center">
-        <div className="flex items-end justify-center gap-1">
-          <img src={art.player("a", "lab")} alt="" className="pixelated h-20 w-20" />
-          <img src={art.bit("classic")} alt="" className="pixelated h-24 w-24" />
-          <img src={art.player("b", "lab")} alt="" className="pixelated h-20 w-20" />
+    <div className="fixed inset-0 z-40 overflow-y-auto bg-ink" data-testid="main-menu">
+      {/* ฉากหลัง: ภาพแล็บยามเย็นเลื่อนช้า ๆ และแถบสีเข้มด้านซ้ายให้ปุ่มและตัวอักษรอ่านง่าย */}
+      <img src={art.menuBackdrop} alt="" aria-hidden="true" className="menu-backdrop pixelated pointer-events-none fixed inset-0 h-full w-full object-cover" />
+      <div className="pointer-events-none fixed inset-0 bg-gradient-to-r from-ink/90 via-ink/55 to-ink/10" aria-hidden="true" />
+      <button
+        type="button"
+        className="btn btn-ghost fixed right-3 top-3 z-10 !min-h-10 !min-w-10 !px-2 text-sm"
+        aria-pressed={soundOn}
+        aria-label={soundOn ? ui.hud.soundOn : ui.hud.soundOff}
+        data-testid="menu-sound"
+        onClick={() => setAudioSettings({ music: !soundOn, sfx: !soundOn })}
+      >
+        <span aria-hidden="true">{soundOn ? "🔊" : "🔇"}</span>
+        <span className="sr-only sm:not-sr-only sm:ml-1">{soundOn ? ui.hud.soundOn : ui.hud.soundOff}</span>
+      </button>
+
+      <div className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col justify-center gap-6 p-4 sm:p-8 md:flex-row md:items-center md:justify-between">
+        <div className="w-full max-w-md shrink-0">
+          {/* โลโก้: ตัวอักษร HTML บนแผงทึบ (กติกา: ข้อความไม่วาดลง canvas) */}
+          <header className="menu-logo rounded-lg border-[3px] border-ink bg-ink/80 px-4 py-3 text-left shadow-[0_5px_0_0_#17636a]">
+            <p className="text-xs font-bold tracking-widest text-hint">{ui.menu.logoKicker}</p>
+            <h1 className="mt-1 text-4xl font-extrabold leading-tight text-paper sm:text-5xl" data-testid="menu-title">
+              {ui.gameTitle}
+            </h1>
+            <p className="mt-1 font-semibold text-teal-light">{ui.menu.tagline}</p>
+            {course.course && (
+              <p className="mt-2 text-xs text-mist">
+                {course.course.code} {course.course.title} · {course.course.unit}
+              </p>
+            )}
+          </header>
+
+          <div className="panel mt-4 p-4 text-center">
+            <div className="flex flex-col gap-3">
+              {hasSave && (
+                <button type="button" className="btn" disabled={!ready} data-testid="menu-continue" onClick={continueGame}>
+                  {!ready ? ui.menu.loading : name ? fmt(ui.menu.continueAs, { name }) : ui.menu.continue}
+                </button>
+              )}
+              <button type="button" className={hasSave ? "btn btn-ghost" : "btn"} disabled={!ready} data-testid="menu-new" onClick={startNew}>
+                {ready || hasSave ? ui.menu.newGame : ui.menu.loading}
+              </button>
+              {ready && cloudEnabled() && panel !== "resume" && (
+                <button type="button" className="btn btn-ghost" data-testid="menu-resume" onClick={() => setPanel("resume")}>
+                  {ui.menu.resume}
+                </button>
+              )}
+              <button type="button" className="btn btn-ghost" aria-expanded={panel === "howto"} data-testid="menu-howto" onClick={() => setPanel(panel === "howto" ? null : "howto")}>
+                {ui.menu.howTo}
+              </button>
+            </div>
+            {panel === "howto" && (
+              /* คำอธิบายเกมแบบย่อ: เล่นอย่างไรใน 5 บรรทัด */
+              <section className="mt-3 rounded-md border-2 border-ink bg-paper p-3 text-left" aria-labelledby="menu-about-title" data-testid="menu-about">
+                <h2 id="menu-about-title" className="text-sm font-extrabold text-teal-dark">
+                  {ui.menu.aboutTitle}
+                </h2>
+                <ol className="mt-1 flex flex-col gap-1 text-sm">
+                  {ui.menu.about.map((step) => (
+                    <li key={step.text} className="flex items-center gap-2">
+                      <img src={art.menuIcon(step.icon)} alt="" className="pixelated h-9 w-9 shrink-0" />
+                      <span>{step.text}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-2 text-xs text-slate">{ui.menu.aboutHint}</p>
+              </section>
+            )}
+            {panel === "resume" && <ResumeForm onClose={() => setPanel(null)} />}
+            {panel === "reset" && <ResetConfirm name={name || ui.questLog.name} shared={cloudEnabled() && (Boolean(profile?.classCode) || account?.provider === "google")} onClose={() => setPanel(null)} />}
+            {ready && googleLoginEnabled() && <GoogleAccount />}
+          </div>
+          <p className="mt-3 text-xs text-mist">{ui.menu.prototype}</p>
         </div>
-        <h1 className="mt-2 text-3xl font-extrabold text-teal-dark">{ui.gameTitle}</h1>
-        <p className="mt-1 font-semibold text-slate">{ui.menu.tagline}</p>
-        {course.course && (
-          <p className="mt-3 text-sm text-slate">
-            {course.course.code} {course.course.title}
-            <br />
-            {course.course.unit}
-          </p>
-        )}
-        {/* คำอธิบายเกมแบบย่อ: เล่นอย่างไรใน 5 บรรทัด */}
-        <section className="mt-4 rounded-md border-2 border-ink bg-paper p-3 text-left" aria-labelledby="menu-about-title" data-testid="menu-about">
-          <h2 id="menu-about-title" className="text-sm font-extrabold text-teal-dark">
-            {ui.menu.aboutTitle}
-          </h2>
-          <ol className="mt-1 flex flex-col gap-1 text-sm">
-            {ui.menu.about.map((step) => (
-              <li key={step.text} className="flex items-center gap-2">
-                <img src={art.menuIcon(step.icon)} alt="" className="pixelated h-9 w-9 shrink-0" />
-                <span>{step.text}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-2 text-xs text-slate">{ui.menu.aboutHint}</p>
-        </section>
-        <div className="mt-5 flex flex-col gap-3">
-          {hasSave && (
-            <button type="button" className="btn" disabled={!ready} data-testid="menu-continue" onClick={continueGame}>
-              {!ready ? ui.menu.loading : name ? fmt(ui.menu.continueAs, { name }) : ui.menu.continue}
-            </button>
-          )}
-          <button type="button" className={hasSave ? "btn btn-ghost" : "btn"} disabled={!ready} data-testid="menu-new" onClick={startNew}>
-            {ready || hasSave ? ui.menu.newGame : ui.menu.loading}
-          </button>
-          {ready && cloudEnabled() && panel !== "resume" && (
-            <button type="button" className="btn btn-ghost" data-testid="menu-resume" onClick={() => setPanel("resume")}>
-              {ui.menu.resume}
-            </button>
-          )}
+
+        {/* ตัวละครยืนหน้าฉาก: ผู้เล่นทั้งสองแบบกับพี่บิต ขยับขึ้นลงเบา ๆ (ปิดเมื่อผู้ใช้ตั้งค่าลดการเคลื่อนไหว) */}
+        <div className="menu-cast pointer-events-none fixed bottom-[5%] left-[50%] hidden items-end justify-center gap-1 md:flex" aria-hidden="true">
+          <img src={art.player("a", "lab")} alt="" className="menu-bob pixelated h-20 w-20 lg:h-28 lg:w-28" style={{ animationDelay: "0s" }} />
+          <img src={art.bit("classic")} alt="" className="menu-bob pixelated h-24 w-24 lg:h-32 lg:w-32" style={{ animationDelay: "0.35s" }} />
+          <img src={art.player("b", "lab")} alt="" className="menu-bob pixelated h-20 w-20 lg:h-28 lg:w-28" style={{ animationDelay: "0.7s" }} />
         </div>
-        {panel === "resume" && <ResumeForm onClose={() => setPanel(null)} />}
-        {panel === "reset" && <ResetConfirm name={name || ui.questLog.name} shared={cloudEnabled() && (Boolean(profile?.classCode) || account?.provider === "google")} onClose={() => setPanel(null)} />}
-        {ready && googleLoginEnabled() && <GoogleAccount />}
-        <button
-          type="button"
-          className="btn btn-ghost mt-3 !min-h-10 text-sm"
-          aria-pressed={soundOn}
-          data-testid="menu-sound"
-          onClick={() => setAudioSettings({ music: !soundOn, sfx: !soundOn })}
-        >
-          <span aria-hidden="true">{soundOn ? "🔊" : "🔇"}</span> {soundOn ? ui.hud.soundOn : ui.hud.soundOff}
-        </button>
-        <p className="mt-4 text-xs text-slate">{ui.menu.prototype}</p>
       </div>
     </div>
   );

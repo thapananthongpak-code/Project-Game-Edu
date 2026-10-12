@@ -7,6 +7,7 @@ import { installDebugHook } from "./debug";
 import { BootScene } from "./scenes/BootScene";
 import { HallScene } from "./scenes/HallScene";
 import { HangarScene } from "./scenes/HangarScene";
+import { MarketScene } from "./scenes/MarketScene";
 import { RoomScene } from "./scenes/RoomScene";
 
 /** ตัวเกม Phaser: สร้างครั้งเดียว แล้วสลับฉากตาม screen ใน store */
@@ -24,7 +25,7 @@ export function PhaserGame() {
       banner: false,
       physics: { default: "arcade", arcade: { gravity: { x: 0, y: 0 } } },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-      scene: [BootScene, HallScene, HangarScene, RoomScene],
+      scene: [BootScene, HallScene, HangarScene, RoomScene, MarketScene],
     });
     if (import.meta.env.DEV) installDebugHook(game);
 
@@ -46,13 +47,14 @@ export function PhaserGame() {
       // ถ้าหยุดฉากทันที วัตถุของฉากจะถูกทำลายขณะที่ update ยังทำงานไม่จบ
       queueMicrotask(() => {
         const start = (key: string, data?: object) => {
-          for (const other of [SCENE.hall, SCENE.hangar, SCENE.room]) if (other !== key) game.scene.stop(other);
+          for (const other of [SCENE.hall, SCENE.hangar, SCENE.room, SCENE.market]) if (other !== key) game.scene.stop(other);
           game.scene.start(key, data);
         };
         if (state.screen === "room" && state.zone !== null) start(SCENE.room, { zone: state.zone });
         else if (state.screen === "hangar") start(SCENE.hangar);
+        else if (state.screen === "market") start(SCENE.market);
         // กลับเมนูจากห้องหรือโรงเก็บหุ่น: ใช้โถงเป็นฉากหลังของเมนู
-        else if (state.screen === "hall" || previous.screen === "room" || previous.screen === "hangar") start(SCENE.hall, { fromRoom: previous.zone ?? 1, fromHangar: previous.screen === "hangar", fromTravel: traveled });
+        else if (state.screen === "hall" || previous.screen === "room" || previous.screen === "hangar" || previous.screen === "market") start(SCENE.hall, { fromRoom: previous.zone ?? 1, fromHangar: previous.screen === "hangar", fromMarket: previous.screen === "market", fromTravel: traveled });
       });
     });
 

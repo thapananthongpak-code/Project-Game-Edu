@@ -5817,6 +5817,193 @@
       "note": "ภาพที่ใช้มาจาก prompt ชุดแรก ไม่ใช่ prompt ใน arguments ตอน build วางบนกรอบโปสเตอร์"
     },
     {
+      "id": "PR-M01",
+      "kind": "prop",
+      "name": "ร้านอุปกรณ์การ์เดียน (ย่านร้านค้า)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_stall_gear": "props/pr_stall_gear.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "armory market stall with a steel counter, a red striped awning, a weapon rack holding a sword and a drill and a cannon, a stack of armor plates beside it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4228808c-9a59-4701-9ba5-1b6cebfdc331",
+        "generatedAt": "2026-10-11T16:11:22.346Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-M02",
+      "kind": "prop",
+      "name": "ร้านไอเทม (ย่านร้านค้า)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_stall_items": "props/pr_stall_items.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "supply market stall with a teal striped awning, wooden shelves of glowing blue energy batteries, red repair kit boxes and small round shield canisters on the counter, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "8583e753-6b9d-4c75-9d8b-99a579a744e7",
+        "generatedAt": "2026-10-11T16:12:11.315Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-M03",
+      "kind": "prop",
+      "name": "ร้านคอสตูม (ย่านร้านค้า)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_stall_costume": "props/pr_stall_costume.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "clothing boutique market stall with a violet striped awning, a mannequin wearing a colorful jacket, a rack of hanging coats and a few paint cans on the counter, plain awning only with no signboard and no sign above it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c3fdb909-5d75-47d0-a8a5-8f98654ce0ac",
+        "generatedAt": "2026-10-11T16:17:41.560Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "987f8a45-c93b-4fca-9989-58f5f5db36f1",
+          "reason": "แถบป้ายบนร้านมีขีดคล้ายตัวอักษร"
+        }
+      ]
+    },
+    {
+      "id": "PR-M04",
+      "kind": "prop",
+      "name": "ร้านตกแต่ง (ย่านร้านค้า)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_stall_decor": "props/pr_stall_decor.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "home decoration market stall with an orange striped awning, a rolled rug, a table lamp, a small potted plant and paint color swatch cards on the counter, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "fa928eb2-7854-4230-97d3-ac8fed4b7300",
+        "generatedAt": "2026-10-11T16:14:04.034Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-M05",
+      "kind": "prop",
+      "name": "ร้านพืช (ย่านร้านค้า)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_stall_plants": "props/pr_stall_plants.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "alien plant nursery market stall with a green striped awning, glowing purple and cyan alien plants in clay pots on the counter, a small watering can, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "8a193dd0-8d9b-4148-916d-0c49a4cc8953",
+        "generatedAt": "2026-10-11T16:14:49.518Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-M06",
+      "kind": "prop",
+      "name": "ทางเข้าย่านร้านค้า (โถง)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_market_gate": "props/pr_market_gate.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "market district entrance archway with a yellow striped awning over an open doorway and two hanging round lanterns, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5d4d5eb9-7bef-49af-9173-f005ff92dd88",
+        "generatedAt": "2026-10-11T16:15:29.132Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "PR-H01",
       "kind": "prop",
       "name": "ร้านสหกรณ์แล็บ (โถง)",
@@ -9907,6 +10094,168 @@
         "generatedAt": "2026-10-05T11:49:31.803Z"
       },
       "status": "generated"
+    },
+    {
+      "id": "WM-01",
+      "kind": "backdrop",
+      "name": "พื้นแผนที่โลกของกระดานแผนที่",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "wm_world": "worldmap/wm_world.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "bird's-eye overhead illustrated world map of three separate islands connected by wooden bridges and dirt paths over a calm blue ocean, bottom left island with green grass and trees, middle island with brown rocky hills and a flat clearing, top right island with black jagged volcanic rock, empty clearings with no buildings on each island, no letters, no signs, retro pixel art, chunky readable shapes, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no letters, no signs, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "high top-down",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "3b47421e-b08d-4e44-b14f-c8127e6f1968",
+        "generatedAt": "2026-10-11T16:11:22.307Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "WM-02",
+      "kind": "icon",
+      "name": "สถานที่บนแผนที่: Pixel AI Lab",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "wm_site_lab": "worldmap/wm_site_lab.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small white research laboratory building with a teal roof, a round glass dome and a radar dish, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c9e27fc4-ee24-41a2-a164-74f74f4ea935",
+        "generatedAt": "2026-10-11T16:12:03.208Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "WM-03",
+      "kind": "icon",
+      "name": "สถานที่บนแผนที่: ศูนย์วิจัยภาคสนาม",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "wm_site_outpost": "worldmap/wm_site_outpost.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "field research outpost with two wooden cabins, a tall antenna tower and a row of solar panels, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1d4984c7-a5d5-4268-8518-cbe9f742f7ea",
+        "generatedAt": "2026-10-11T16:18:39.191Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "WM-04",
+      "kind": "icon",
+      "name": "สถานที่บนแผนที่: ป้อมปราการ",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "wm_site_fortress": "worldmap/wm_site_fortress.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "dark stone fortress with two tall towers, a glowing red gate and sharp spikes on the walls, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "eaa178ab-f197-4ed9-a45f-e4dc6e79ea05",
+        "generatedAt": "2026-10-11T16:16:26.856Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "MN-06",
+      "kind": "backdrop",
+      "name": "ฉากหลังหน้าเมนู",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "mn_title_bg": "menu/mn_title_bg.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wide pixel art scene at dusk in front of a futuristic research laboratory courtyard, a giant friendly white and teal guardian robot standing on the right side, tall dark kaiju monster silhouettes far away on the horizon, purple and orange sky, empty paved ground in the foreground and empty space on the left, side view background scene, retro pixel art, chunky readable shapes, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no letters, no signs, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "side",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "65b96b33-3919-47c4-8a61-2a3466d74b16",
+        "generatedAt": "2026-10-11T16:17:11.559Z"
+      },
+      "status": "generated",
+      "postprocess": {
+        "patches": [
+          [
+            170,
+            132,
+            14,
+            8
+          ]
+        ]
+      }
     },
     {
       "id": "BT-07",

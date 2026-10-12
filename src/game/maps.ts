@@ -2,6 +2,7 @@
 // ไฟล์นี้เป็นข้อมูลล้วน ไม่ import Phaser จึงทดสอบได้ว่าผู้เล่นเดินถึงทุกจุดโต้ตอบ (maps.test.ts)
 import type { Difficulty } from "../state/campaign";
 import type { NpcId } from "../state/npcs";
+import type { Stall } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS, MAP_TOP, TILE } from "./constants";
 
 export type ObjectKind =
@@ -15,6 +16,8 @@ export type ObjectKind =
   | "core"
   | "field"
   | "shop"
+  /** เคาน์เตอร์ของร้านหนึ่งในย่านร้านค้า (ดู MapObject.stall) */
+  | "stall"
   /** กล่องเก็บไอเทม: อุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (โถงและโรงเก็บหุ่น) */
   | "storage"
   /** กระดานแผนที่การเดินทาง: ไปแมพอื่นที่เปิดแล้ว (โถงของทุกแมพ) */
@@ -56,6 +59,8 @@ export interface MapObject {
   npc?: NpcId;
   /** ลำดับสถานี (เริ่มที่ 0) หรือเลขห้องของประตูในโถง */
   index?: number;
+  /** ร้านของเคาน์เตอร์ (วัตถุชนิด stall) */
+  stall?: Stall;
   /** หัวข้อ (1–6) ที่วัตถุนี้เป็นของ ใช้ในห้องที่มีหลายหัวข้อ ไม่ระบุ = หัวข้อเดียวของห้อง หรือ (เครื่องฝึกของระดับยาก) หัวข้อถัดไปที่ยังไม่ผ่าน */
   topic?: number;
 }
@@ -104,7 +109,7 @@ const pickups = (npc: NpcId, cells: [col: number, row: number][]): MapObject[] =
 
 /**
  * โถงของแต่ละแมพ (GDD ข้อ 3 และ 15): ผัง ชุดไทล์ และตำแหน่งของต่างกัน ทุกโถงมีประตูห้องตามจำนวนห้องของแมพ ประตูโรงเก็บหุ่นตรงกลาง
- * ร้านสหกรณ์ กล่องเก็บไอเทม กระดานแผนที่การเดินทาง และกระดานตกแต่ง ของตกแต่งทั้งหมดเป็นของที่ผู้เล่นวางเอง (src/game/decor.ts) ผังจึงมีแต่จุดใช้งาน
+ * ทางเข้าย่านร้านค้า กล่องเก็บไอเทม กระดานแผนที่การเดินทาง และกระดานตกแต่ง ของตกแต่งทั้งหมดเป็นของที่ผู้เล่นวางเอง (src/game/decor.ts) ผังจึงมีแต่จุดใช้งาน
  */
 const HALLS: Record<Difficulty, GameMap> = {
   // แมพ 1 Pixel AI Lab: โถงโล่ง 6 ประตู
@@ -115,7 +120,7 @@ const HALLS: Record<Difficulty, GameMap> = {
     objects: [
       ...[2, 5, 8, 11, 14, 17].map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
-      { kind: "shop", prop: "pr_shop", col: 2, row: 8, w: 2 },
+      { kind: "shop", prop: "pr_market_gate", col: 2, row: 8, w: 2 },
       { kind: "storage", prop: "pr_storage_box", col: 5, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 8, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 11, row: 8 },
@@ -144,7 +149,7 @@ const HALLS: Record<Difficulty, GameMap> = {
       { kind: "travel", prop: "pr_travel_board", col: 2, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 5, row: 8 },
       { kind: "storage", prop: "pr_storage_box", col: 12, row: 8, w: 2 },
-      { kind: "shop", prop: "pr_shop", col: 15, row: 8, w: 2 },
+      { kind: "shop", prop: "pr_market_gate", col: 15, row: 8, w: 2 },
     ],
   },
   // แมพ 3 ป้อมปราการภูเขาไฟ: ลานป้อมเหล็กดำ ไม่มีห้องเรียน (ลุยด่านต่อสู้อย่างเดียว) ประตูโรงเก็บหุ่นตรงกลาง
@@ -166,7 +171,7 @@ const HALLS: Record<Difficulty, GameMap> = {
     spawn: { col: 2, row: 3 },
     objects: [
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
-      { kind: "shop", prop: "pr_shop", col: 2, row: 8, w: 2 },
+      { kind: "shop", prop: "pr_market_gate", col: 2, row: 8, w: 2 },
       { kind: "storage", prop: "pr_storage_box", col: 6, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 12, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 16, row: 8 },
@@ -176,6 +181,22 @@ const HALLS: Record<Difficulty, GameMap> = {
 
 /** โถงของแมพ */
 export const hallMapOf = (difficulty: Difficulty): GameMap => HALLS[difficulty];
+
+/**
+ * ย่านร้านค้า (GDD ข้อ 13): ห้องเดียวต่อแมพ ใช้ชุดไทล์เดียวกับโถงของแมพนั้น ผังตายตัว (ผู้เล่นไม่จัดห้องนี้)
+ * ประตูกลับโถงอยู่กลางผนังบน เคาน์เตอร์ของแต่ละร้านเรียงเป็นแถว ช่องกลาง (คอลัมน์ 9) เว้นไว้ให้ร้านที่จะเพิ่มทีหลัง
+ */
+export const STALL_COLUMNS: Record<Stall, number> = { gear: 1, items: 5, costume: 13, decor: 17 };
+const marketOf = (tileset: string): GameMap => ({
+  tileset,
+  shape: RECT,
+  spawn: { col: 9, row: 3 },
+  objects: [
+    backDoor(9),
+    ...(Object.entries(STALL_COLUMNS) as [Stall, number][]).map(([stall, col]): MapObject => ({ kind: "stall", prop: `pr_stall_${stall}`, col, row: 5, w: 2, stall })),
+  ],
+});
+export const marketMapOf = (difficulty: Difficulty): GameMap => marketOf(HALLS[difficulty].tileset);
 
 /**
  * โรงเก็บหุ่นของแต่ละแมพ (ผังและไทล์เซตต่างกัน) ทุกโรงมีจุดปรับแต่งแยกกันตามที่ผู้ใช้กำหนด:

@@ -1,0 +1,26 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "wide pixel art scene at dusk in front of a futuristic research laboratory courtyard, a giant friendly white and teal guardian robot standing on the right side, tall dark kaiju monster silhouettes far away on the horizon, purple and orange sky, empty paved ground in the foreground and empty space on the left, side view background scene, retro pixel art, chunky readable shapes, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no letters, no signs, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "side",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "65b96b33-3919-47c4-8a61-2a3466d74b16",
+  "generatedAt": "2026-10-11T16:17:11.559Z",
+  "postprocess": {
+    "patches": [
+      [
+        170,
+        132,
+        14,
+        8
+      ]
+    ]
+  }
+}

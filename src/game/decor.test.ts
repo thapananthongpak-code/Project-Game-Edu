@@ -111,7 +111,7 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
     const hall = hallMapOf("easy");
     // ร้านกว้าง 2 ช่อง เริ่มที่ช่อง 2–3 แถว 8 กล่องเก็บไอเทมอยู่ที่ช่อง 5–6 แถว 8
     expect(layoutError(hall, { shop: { col: 14, row: 5 } })).toBeNull();
-    expect(arrangedMap(hall, { shop: { col: 14, row: 5 } }).objects.find((object) => object.kind === "shop")).toMatchObject({ col: 14, row: 5, w: 2, prop: "pr_shop" });
+    expect(arrangedMap(hall, { shop: { col: 14, row: 5 } }).objects.find((object) => object.kind === "shop")).toMatchObject({ col: 14, row: 5, w: 2, prop: "pr_market_gate" });
     expect(layoutError(hall, { shop: { col: 4, row: 8 } })).toBe("floor");
     expect(layoutError(hall, { shop: { col: 18, row: 5 } })).toBe("floor");
     expect(layoutError(hall, { shop: { col: 0, row: 5 } })).toBe("floor");

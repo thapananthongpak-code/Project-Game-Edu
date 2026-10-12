@@ -8,7 +8,7 @@ import { emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
 import { ADVICE, adviseBag, adviseWeapon, idealBag, missingAdvice, wishList } from "./loadout";
 import { bagOf, decorIn, earnedCredits, gearOf, layoutIn, modulesOf, ownedDecor, ownedThemes, roomMap, stockLeft, themeIn } from "./shop";
-import { BIT_SLOTS, CATALOG } from "./shop.config";
+import { BIT_SLOTS, CATALOG, STALL_KINDS, STALLS } from "./shop.config";
 import { REWARDS } from "./shop.config";
 
 const miss = { type: "check", correct: false, timeMs: 1000 } as const;
@@ -291,7 +291,25 @@ describe("เนื้อเรื่อง (GDD 2)", () => {
   });
 });
 
-describe("เครดิตวิจัยและร้านสหกรณ์แล็บ (GDD 13)", () => {
+describe("เครดิตวิจัยและย่านร้านค้า (GDD 13)", () => {
+  it("ย่านร้านค้า: ของทุกชนิดในแคตตาล็อกขายที่ร้านเดียวพอดี และไม่มีร้านที่ว่างเปล่า", () => {
+    const kinds = [...new Set(CATALOG.map((item) => item.kind))].sort();
+    expect(STALLS.flatMap((stall) => STALL_KINDS[stall]).sort()).toEqual(kinds);
+    for (const stall of STALLS) expect(CATALOG.some((item) => !item.vendor && STALL_KINDS[stall].includes(item.kind)), stall).toBe(true);
+  });
+
+  it("เข้าย่านร้านค้าและเปิดร้านได้ ออกแล้วกลับโถง และปิดหน้าต่างร้านแล้วยังอยู่ในย่านร้านค้า", () => {
+    const store = useGameStore.getState();
+    store.enterMarket();
+    expect(useGameStore.getState().screen).toBe("market");
+    useGameStore.getState().openStall("costume");
+    expect([useGameStore.getState().overlay, useGameStore.getState().shopStall, useGameStore.getState().shopVendor]).toEqual(["shop", "costume", null]);
+    useGameStore.getState().closeOverlay();
+    expect([useGameStore.getState().screen, useGameStore.getState().overlay, useGameStore.getState().shopStall]).toEqual(["market", null, null]);
+    useGameStore.getState().exitToHall();
+    expect(useGameStore.getState().screen).toBe("hall");
+  });
+
   const earning = () => earningOf(useGameStore.getState());
   const creditBalance = (_: unknown, __: unknown) => creditsOf(useGameStore.getState());
 

@@ -60,7 +60,7 @@ export function App() {
   useRoomTimer();
   useAudioDirector();
   useStoryTrigger();
-  const playing = screen === "hall" || screen === "hangar" || screen === "room";
+  const playing = screen === "hall" || screen === "hangar" || screen === "room" || screen === "market";
 
   return (
     <div className="flex h-dvh w-full select-none flex-col overflow-hidden bg-ink">

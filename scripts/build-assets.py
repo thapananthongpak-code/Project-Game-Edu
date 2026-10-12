@@ -60,6 +60,8 @@ OBJECT_SETTINGS = {"no_background": True, "view": "low top-down", "outline": "si
 # ภาพของฉากต่อสู้ (แสดงใน HTML) เป็นมุมมองด้านข้าง
 BATTLE_SETTINGS = {"no_background": True, "view": "side", "outline": "single color black outline", "shading": "medium shading", "detail": "medium detail"}
 BACKDROP_SETTINGS = {"no_background": False, "view": "side", "outline": "lineless", "shading": "medium shading", "detail": "medium detail"}
+# พื้นแผนที่โลกของกระดานแผนที่ (หน้า HTML) มองจากด้านบน
+WORLD_SETTINGS = {"no_background": False, "view": "high top-down", "outline": "lineless", "shading": "medium shading", "detail": "medium detail"}
 DIRECTIONS = ("south", "north", "east", "west")
 # แอนิเมชันเดิน: แม่แบบของ Pixel Lab ทิศละ 1 generation แผ่นสไปรต์ของตัวละคร = 4 แถว (ทิศ) × (ยืน 1 + เดิน WALK_FRAMES) คอลัมน์
 WALK_FRAMES = 6
@@ -638,7 +640,12 @@ DECOR_PROPS = [
     ("PR-105", "pr_r1_ring_emblem", (64, 64)), ("PR-205", "pr_r2_cluster_table", (64, 64)), ("PR-207", "pr_r2_compare_board", (64, 64)),
     ("PR-304", "pr_r3_label_printer", (32, 32)), ("PR-306", "pr_r3_compare_board", (64, 64)), ("PR-307", "pr_r3_intake_table", (64, 32)),
     ("PR-507", "pr_r5_light_switch", (32, 32)), ("PR-603", "pr_r6_poster_rock", (32, 32)), ("PR-604", "pr_r6_poster_paper", (32, 32)), ("PR-605", "pr_r6_poster_scissors", (32, 32)),
+    # ย่านร้านค้า (รอบที่ 12): ร้านแยก 5 เคาน์เตอร์ และทางเข้าย่านร้านค้าในโถง
+    ("PR-M01", "pr_stall_gear", (64, 64)), ("PR-M02", "pr_stall_items", (64, 64)), ("PR-M03", "pr_stall_costume", (64, 64)),
+    ("PR-M04", "pr_stall_decor", (64, 64)), ("PR-M05", "pr_stall_plants", (64, 64)), ("PR-M06", "pr_market_gate", (64, 64)),
 ]
+# สถานที่บนแผนที่โลก (หน้า HTML): (รหัส, ไฟล์)
+WORLD_SITES = [("WM-02", "wm_site_lab"), ("WM-03", "wm_site_outpost"), ("WM-04", "wm_site_fortress")]
 
 
 def art_guide_names():
@@ -843,6 +850,9 @@ def main():
         *[battle_fx(*spec) for spec in BATTLE_FX],
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "gear", web=True) for asset_id, base in GEAR_ICONS],
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, YELLOW, PAPER), "icon", GEAR_SETTINGS, "items", web=True) for asset_id, base in MENU_ICONS],
+        image("WM-01", "wm_world", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", WORLD_SETTINGS, "worldmap", web=True),
+        *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "worldmap", web=True) for asset_id, base in WORLD_SITES],
+        image("MN-06", "mn_title_bg", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "menu", web=True),
         image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         image("BT-08", "bt_boss_3", (128, 128), lambda: draw_blob(128, INK, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),
         *[image(asset_id, base, (128, 128), (lambda color=color: draw_blob(128, color, INK)), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True) for asset_id, base, color in EXTRA_FOES],

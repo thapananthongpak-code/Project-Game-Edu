@@ -1,4 +1,4 @@
-// ร้านสหกรณ์แล็บและรางวัลเครดิตวิจัย (docs/GDD.md ข้อ 13)
+// ย่านร้านค้าและรางวัลเครดิตวิจัย (docs/GDD.md ข้อ 13)
 // ตัวเลขและรายการสินค้าทั้งหมดอยู่ที่นี่ ชื่อสินค้าอยู่ใน src/content/ui-strings.ts
 import type { Difficulty } from "./campaign";
 import type { Armor, Chip, Weapon } from "./gear";
@@ -109,7 +109,7 @@ export type Theme = keyof typeof THEMES;
 export const THEME_IDS = Object.keys(THEMES) as Theme[];
 
 /**
- * vendor = ขายเฉพาะที่ร้านพิเศษของ NPC คนนั้น (ไม่ระบุ = ร้านสหกรณ์แล็บและตู้เสื้อผ้า)
+ * vendor = ขายเฉพาะที่ร้านพิเศษของ NPC คนนั้น (ไม่ระบุ = ย่านร้านค้าและตู้เสื้อผ้า)
  * tier = แมพแรกที่ของชิ้นนี้วางขาย (ไม่ระบุ = แมพ 1) ผู้เล่นซื้อได้เมื่อไปถึงแมพนั้นแล้ว (GDD ข้อ 15)
  */
 interface Sold {
@@ -131,6 +131,19 @@ export type ShopItem =
   | (Sold & { kind: "theme"; value: Theme })
   /** max = จำนวนที่ถือได้พร้อมกัน, stock = จำนวนที่ร้านขายต่อแมพ (ของใช้มีจำกัด ต้องเลือกว่าจะใช้กับด่านไหน) */
   | (Sold & { kind: "supply"; value: Supply; max: number; stock: number });
+
+/**
+ * ย่านร้านค้า (GDD ข้อ 13): ร้านแยกตามประเภทของที่ขาย แต่ละร้านมีเคาน์เตอร์และหน้าต่างของตัวเอง
+ * ของแต่ละชนิดอยู่ร้านเดียวเท่านั้น (มีเทสต์ตรวจ) ร้านพิเศษของ NPC ยังอยู่ที่ตัว NPC
+ */
+export const STALLS = ["gear", "items", "costume", "decor"] as const;
+export type Stall = (typeof STALLS)[number];
+export const STALL_KINDS: Record<Stall, readonly ShopItem["kind"][]> = {
+  gear: ["weapon", "armor", "chip"],
+  items: ["supply", "module"],
+  costume: ["outfit", "bit", "paint"],
+  decor: ["decor", "theme"],
+};
 
 export const CATALOG: readonly ShopItem[] = [
   { id: "outfit-hoodie", kind: "outfit", value: "hoodie", price: 80 },

@@ -11,9 +11,9 @@ export function installDebugHook(game: Phaser.Game): void {
     // สำหรับสคริปต์ถ่ายภาพหน้าจอ (ข้ามไปฉากที่ต้องการ) การทดสอบการเล่นจริงไม่ใช้ทางนี้
     store: useGameStore,
     snapshot: () => {
-      const key = [SCENE.room, SCENE.hangar, SCENE.hall].find((k) => game.scene.isActive(k));
+      const key = [SCENE.room, SCENE.hangar, SCENE.hall, SCENE.market].find((k) => game.scene.isActive(k));
       const scene = key ? (game.scene.getScene(key) as WorldScene) : null;
-      const { ready, screen, zone, room, overlay, stationIndex, prompt, toast, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor } = useGameStore.getState();
+      const { ready, screen, zone, room, overlay, stationIndex, prompt, toast, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor, shopStall } = useGameStore.getState();
       return {
         scene: key ?? null,
         // ผังของฉากปัจจุบัน ให้สคริปต์ทดสอบหาเส้นทางเดินเองได้
@@ -25,7 +25,7 @@ export function installDebugHook(game: Phaser.Game): void {
         decor: scene?.decorInfo ?? [],
         bay: key === SCENE.hangar ? (scene as HangarScene).bayState : null,
         audio: audioDebug(),
-        store: { ready, screen, zone, room, overlay, stationIndex, prompt, toast: toast?.text ?? null, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor },
+        store: { ready, screen, zone, room, overlay, stationIndex, prompt, toast: toast?.text ?? null, progress, battles, npcs, profile, pretest, posttest, sync, resumeCode, tutorOpen, story, shop, battleId, storyBeat, npcId, shopVendor, shopStall },
       };
     },
   };

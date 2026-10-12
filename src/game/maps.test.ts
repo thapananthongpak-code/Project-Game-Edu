@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { ROOM_COUNT, stationsOf } from "../content";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
 import { NPCS, npcsOfMap } from "../state/npcs";
-import { DECOR } from "../state/shop.config";
+import { DECOR, STALLS } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS, TILE } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, hardMaps, isFloorCell, type MapObject, marketMapOf, normalMaps, reachableCells, roomMaps, zoneMap } from "./maps";
 
 interface ManifestAsset {
   size: [number, number];
@@ -25,6 +25,9 @@ const maps: [string, GameMap][] = [
   ["โรงเก็บหุ่นแมพ 1", hangarMapOf("easy")],
   ["โรงเก็บหุ่นแมพ 2", hangarMapOf("normal")],
   ["โรงเก็บหุ่นแมพ 3", hangarMapOf("hard")],
+  ["ย่านร้านค้าแมพ 1", marketMapOf("easy")],
+  ["ย่านร้านค้าแมพ 2", marketMapOf("normal")],
+  ["ย่านร้านค้าแมพ 3", marketMapOf("hard")],
   ...named("ห้อง", roomMaps),
   ...named("ระดับกลาง ห้อง", normalMaps),
   ...named("ระดับยาก ห้อง", hardMaps),
@@ -115,6 +118,16 @@ describe("แผนที่ของทุกฉาก", () => {
     // โถงของทุกแมพมีประตูโรงเก็บหุ่น ร้าน กล่องเก็บไอเทม กระดานแผนที่การเดินทาง และกระดานตกแต่ง อย่างละหนึ่ง
     for (const difficulty of DIFFICULTIES) {
       expect(["gate", "shop", "storage", "travel", "decorboard"].map((kind) => count(hallMapOf(difficulty), kind as MapObject["kind"])), difficulty).toEqual([1, 1, 1, 1, 1]);
+    }
+  });
+
+  it("ย่านร้านค้าของทุกแมพ: ประตูกลับโถงหนึ่งบาน เคาน์เตอร์ครบทุกร้านร้านละหนึ่ง และใช้ชุดไทล์เดียวกับโถงของแมพนั้น", () => {
+    for (const difficulty of DIFFICULTIES) {
+      const market = marketMapOf(difficulty);
+      expect(count(market, "door"), difficulty).toBe(1);
+      expect(market.objects.filter((o) => o.kind === "stall").map((o) => o.stall).sort(), difficulty).toEqual([...STALLS].sort());
+      for (const stall of STALLS) expect(market.objects.find((o) => o.stall === stall)?.prop, stall).toBe(`pr_stall_${stall}`);
+      expect(market.tileset).toBe(hallMapOf(difficulty).tileset);
     }
   });
 

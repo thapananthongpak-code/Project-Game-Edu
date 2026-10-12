@@ -4,7 +4,7 @@ import { fmt, ui } from "../content/ui-strings";
 import { creditsOf, difficultyOf, guardianPowerOf, reachedMap, useGameStore } from "../state/gameStore";
 import { type Gear, itemPower } from "../state/gear";
 import { bagOf, ownsItem, stockLeft, tierOpen } from "../state/shop";
-import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STARTER_DECOR, type Supply, type Theme, THEMES } from "../state/shop.config";
+import { type BitModule, type BitSkin, CATALOG, DECOR, type Decor, PAINT_FILTER, type Outfit, type Paint, type ShopItem, STALL_KINDS, STARTER_DECOR, type Supply, type Theme, THEMES } from "../state/shop.config";
 import { art } from "./art";
 import { ItemIcon } from "./BagPicker";
 import { GearIcon } from "./Storage";
@@ -18,7 +18,7 @@ const GEAR_KINDS: readonly Kind[] = ["weapon", "armor", "chip"];
 
 
 /**
- * ร้านสหกรณ์แล็บ ตู้เสื้อผ้า และร้านพิเศษของ NPC (GDD ข้อ 13 และ 16)
+ * ร้านในย่านร้านค้า (อุปกรณ์ ไอเทม คอสตูม ตกแต่ง) และร้านพิเศษของ NPC (GDD ข้อ 13 และ 16) หน้าต่างเดียวกัน กรองรายการตามร้านที่เปิด
  * ซื้ออุปกรณ์ของการ์เดียน (อาวุธ เกราะ ชิป) ชุด คอสตูมและโมดูลอัปเกรดของพี่บิต สีการ์เดียน และของใช้ในการต่อสู้ด้วยเครดิตวิจัย
  * ร้านขายอย่างเดียว ของที่ซื้อแล้วใส่ที่จุดปรับแต่งในโรงเก็บหุ่น: ชุดที่ตู้เสื้อผ้า อุปกรณ์และสีที่แท่นการ์เดียน คอสตูมของพี่บิตที่แท่นชาร์จพี่บิต
  * ร้านพิเศษขายเฉพาะของของ NPC คนนั้น
@@ -27,6 +27,7 @@ export function Shop() {
   const profile = useGameStore((s) => s.profile);
   const shop = useGameStore((s) => s.shop);
   const vendor = useGameStore((s) => s.shopVendor);
+  const stall = useGameStore((s) => s.shopStall);
   const balance = useGameStore(creditsOf);
   const power = useGameStore((s) => guardianPowerOf(s));
   const map = useGameStore(difficultyOf);
@@ -39,9 +40,10 @@ export function Shop() {
   const [notice, setNotice] = useState<string | null>(null);
   const avatar = profile?.avatar ?? "a";
   const seller = vendor === "archivist" || vendor === "vendor" ? ui.npc[vendor] : null;
-  const title = seller ? seller.shopName : ui.shop.title;
-  // ร้านพิเศษ: เฉพาะของของ NPC คนนั้น ร้านสหกรณ์: ของทั่วไป และของจากร้านพิเศษที่ซื้อมาแล้ว (ไว้สลับใช้)
-  const items = CATALOG.filter((item) => (vendor ? item.vendor === vendor : !item.vendor || shop.owned.includes(item.id)));
+  const stallInfo = stall ? ui.market.stalls[stall] : null;
+  const title = seller ? seller.shopName : (stallInfo?.name ?? ui.shop.title);
+  // ร้านพิเศษ: เฉพาะของของ NPC คนนั้น ร้านในย่านร้านค้า: ของทั่วไปของประเภทที่ร้านนั้นขาย และของจากร้านพิเศษที่ซื้อมาแล้ว (ไว้สลับใช้)
+  const items = CATALOG.filter((item) => (vendor ? item.vendor === vendor : (!item.vendor || shop.owned.includes(item.id)) && (!stall || STALL_KINDS[stall].includes(item.kind))));
 
   const purchase = (item: ShopItem) => {
     const error = buy(item.id);
@@ -115,7 +117,7 @@ export function Shop() {
   };
 
   return (
-    <div className="fixed inset-0 z-30 overflow-y-auto bg-ink/85 p-2 sm:p-4" data-testid="shop" data-vendor={vendor ?? undefined}>
+    <div className="fixed inset-0 z-30 overflow-y-auto bg-ink/85 p-2 sm:p-4" data-testid="shop" data-vendor={vendor ?? undefined} data-stall={stall ?? undefined}>
       <div ref={dialog} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="panel mx-auto flex max-w-2xl flex-col gap-3 p-3 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-extrabold text-teal-dark">🛒 {title}</h2>
@@ -140,9 +142,15 @@ export function Shop() {
               {seller.greet}
             </p>
           </div>
+        ) : stall && stallInfo ? (
+          <div className="flex items-center gap-3 rounded-md border-2 border-ink bg-teal-light px-3 py-2" data-testid="shop-stall">
+            <img src={art.prop(`pr_stall_${stall}`)} alt="" className="pixelated h-14 w-14 shrink-0" />
+            <p className="text-sm font-semibold">{stallInfo.greet}</p>
+          </div>
         ) : (
           <p className="text-sm text-slate">{ui.shop.earnNote}</p>
         )}
+        {stall && <p className="text-sm text-slate">{ui.shop.earnNote}</p>}
         <p className="min-h-6 text-sm font-bold text-teal-dark" role="status" data-testid="shop-notice">
           {notice}
         </p>
@@ -155,7 +163,7 @@ export function Shop() {
             <section key={kind} data-testid={`shop-section-${kind}`}>
               <h3 className="mb-1 text-xs font-bold text-slate">{ui.shop.tabs[kind]}</h3>
               {kind === "weapon" && <p className="mb-1 text-sm text-slate">{ui.shop.gearNote}</p>}
-              {(kind === "decor" || kind === "theme") && (
+              {(kind === "decor" || kind === "theme") && !stall && (
                 <button type="button" className="btn btn-ghost mb-2 !min-h-9 text-sm" data-testid={`shop-open-${kind}`} onClick={() => openOverlay("decor")}>
                   🎨 {kind === "decor" ? ui.shop.placeDecor : ui.shop.placeTheme}
                 </button>
