@@ -177,6 +177,16 @@ const defaultGenerate: Generate = async (model, request) => {
   throw new GeminiError(response.status, error?.details?.find((d) => d.reason)?.reason ?? error?.status ?? "UNKNOWN", error?.message ?? `HTTP ${response.status}`);
 };
 
+/**
+ * รุ่นหลักเพิ่งไม่ตอบ: ข้ามไปใช้รุ่นสำรองตรงนี้เลยช่วงสั้น ๆ ผู้เรียนจึงไม่ต้องรอรุ่นหลักค้างทุกคำถาม
+ * (อยู่ในหน่วยความจำของอินสแตนซ์ฟังก์ชัน หมดอายุเอง ไม่มีผลต่อความถูกต้องของคำตอบ)
+ */
+const PRIMARY_REST_MS = 90_000;
+let primaryRestingUntil = 0;
+export const resetModelHealth = (): void => {
+  primaryRestingUntil = 0;
+};
+
 /** ความล้มเหลวที่ลองรุ่นสำรองได้: รุ่นหลักไม่พร้อมหรือค้าง (ไม่รวมคีย์ผิดหรือคำขอผิดรูป ซึ่งรุ่นสำรองก็ผิดเหมือนกัน) */
 const worthFallback = (error: unknown): boolean =>
   error instanceof GeminiError ? [429, 500, 502, 503, 504].includes(error.status) : failureReason(error) === "network";
@@ -198,11 +208,13 @@ export async function handleTutor(body: unknown, deps: { course?: CourseContent;
     };
     let response: GeminiResponse | undefined;
     for (const [index, model] of MODELS.entries()) {
+      if (index === 0 && Date.now() < primaryRestingUntil) continue;
       try {
         response = await generate(model, payload);
         break;
       } catch (error) {
         if (index === MODELS.length - 1 || !worthFallback(error)) throw error;
+        if (index === 0) primaryRestingUntil = Date.now() + PRIMARY_REST_MS;
         console.error(`tutor: ${model} ไม่ตอบ (${failureReason(error)}) ลองรุ่นสำรอง`);
       }
     }

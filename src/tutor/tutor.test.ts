@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { buildSystemPrompt, type CourseContent, GeminiError, type GeminiRequest, type GeminiResponse, handleTutor, MODELS, TUTOR_LIMITS } from "../../api/tutor";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { buildSystemPrompt, type CourseContent, GeminiError, type GeminiRequest, type GeminiResponse, handleTutor, MODELS, resetModelHealth, TUTOR_LIMITS } from "../../api/tutor";
 import { course } from "../content";
 import { emptyRoom } from "../state/progressStore";
 import { TUTOR } from "./config";
@@ -10,6 +10,8 @@ const content = course as unknown as CourseContent;
 const message = (text: string, finishReason = "STOP"): GeminiResponse => ({
   candidates: [{ finishReason, content: { parts: text ? [{ text: "กำลังคิด", thought: true }, { text }] : [] } }],
 });
+
+beforeEach(resetModelHealth);
 
 const ask = (question: string) => ({ room: 1, messages: [{ role: "user", content: question }] });
 
@@ -159,6 +161,20 @@ describe("ตัวเรียก Gemini จริง (fetch จำลอง)",
       expect(fetchMock.mock.calls.map(([url]) => String(url).match(/models\/([^:]+):/)?.[1])).toEqual([MODELS[0], MODELS[1]]);
     }));
 
+  it("รุ่นหลักเพิ่งล้มเหลว: คำถามถัดไปใช้รุ่นสำรองทันทีช่วงสั้น ๆ ไม่รอรุ่นหลักซ้ำ", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const calls: string[] = [];
+    const generate = async (model: string) => {
+      calls.push(model);
+      if (model === MODELS[0]) throw new GeminiError(503, "UNAVAILABLE", "high demand");
+      return message("คำใบ้");
+    };
+    await handleTutor(ask("ข้อ 1"), { course: content, generate });
+    await handleTutor(ask("ข้อ 2"), { course: content, generate });
+    vi.restoreAllMocks();
+    expect(calls).toEqual([MODELS[0], MODELS[1], MODELS[1]]);
+  });
+
   it("คีย์ไม่ถูกต้อง: ไม่ลองรุ่นสำรอง (ผิดเหมือนกัน) เรียกครั้งเดียว", () =>
     withKey("bad-key", async () => {
       const fetchMock = vi.fn(async () => Response.json({ error: { status: "INVALID_ARGUMENT", details: [{ reason: "API_KEY_INVALID" }] } }, { status: 400 }));
@@ -183,6 +199,7 @@ describe("ตัวเรียก Gemini จริง (fetch จำลอง)",
       expect((await handleTutor(ask("คำถาม"), { course: content })).body).toMatchObject({ reply: "คำใบ้" });
       expect(fetchMock).toHaveBeenCalledTimes(2);
 
+      resetModelHealth();
       const stuck = vi.fn().mockImplementation(timeout);
       vi.stubGlobal("fetch", stuck);
       expect((await handleTutor(ask("คำถาม"), { course: content })).body).toEqual({ fallback: true, reason: "network" });
