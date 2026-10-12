@@ -83,7 +83,12 @@ export const DECOR = {
   beanbag: { prop: "pr_decor_beanbag", size: "small" },
   globe: { prop: "pr_decor_globe", size: "small" },
   /** รางวัลของห้องวิจัย: ได้เมื่อเก็บผลผลิตครบทุกพันธุ์ (src/state/lab.ts) ไม่ขายในร้าน */
-  alienplant: { prop: "pr_plant_moonpod_3", size: "small" },
+  alienplant: { prop: "pr_plant_moonpod_2", size: "small" },
+  /** ของแถมจากการเก็บผลผลิตครั้งแรกของแต่ละพันธุ์ (src/state/lab.ts) ไม่ขายในร้าน */
+  fernpot: { prop: "pr_plant_glowfern_3", size: "small" },
+  crystalpot: { prop: "pr_plant_crystalbloom_3", size: "small" },
+  vinepot: { prop: "pr_plant_sunvine_3", size: "small" },
+  moonpot: { prop: "pr_plant_moonpod_3", size: "small" },
 } as const satisfies Record<string, { prop: string; size: DecorSize }>;
 export type DecorSize = "wall" | "big" | "small";
 export type Decor = keyof typeof DECOR;
@@ -135,8 +140,8 @@ export type ShopItem =
   | (Sold & { kind: "theme"; value: Theme })
   /** max = จำนวนที่ถือได้พร้อมกัน, stock = จำนวนที่ร้านขายต่อแมพ (ของใช้มีจำกัด ต้องเลือกว่าจะใช้กับด่านไหน) */
   | (Sold & { kind: "supply"; value: Supply; max: number; stock: number })
-  /** เมล็ดพันธุ์พืชต่างดาวของห้องวิจัย (src/state/lab.ts) stock = จำนวนที่ร้านขายต่อแมพ */
-  | (Sold & { kind: "seed"; value: Seed; stock: number });
+  /** เมล็ดพันธุ์พืชต่างดาวของห้องวิจัย (src/state/lab.ts) stock = จำนวนที่ร้านขายต่อแมพ unlock = รหัสด่านต่อสู้ของไคจูเจ้าของสปอร์ ชนะด่านนี้แล้วจึงซื้อเมล็ดได้ */
+  | (Sold & { kind: "seed"; value: Seed; stock: number; unlock: string });
 
 /**
  * ย่านร้านค้า (GDD ข้อ 13): ร้านแยกตามประเภทของที่ขาย แต่ละร้านมีเคาน์เตอร์และหน้าต่างของตัวเอง
@@ -239,11 +244,15 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "theme-gold", kind: "theme", value: "gold", price: 150, tier: "normal" },
   { id: "theme-midnight", kind: "theme", value: "midnight", price: 160, tier: "hard" },
   { id: "decor-alienplant", kind: "decor", value: "alienplant", price: 0, reward: true },
+  { id: "decor-fernpot", kind: "decor", value: "fernpot", price: 0, reward: true },
+  { id: "decor-crystalpot", kind: "decor", value: "crystalpot", price: 0, reward: true },
+  { id: "decor-vinepot", kind: "decor", value: "vinepot", price: 0, reward: true },
+  { id: "decor-moonpot", kind: "decor", value: "moonpot", price: 0, reward: true },
   // เมล็ดพันธุ์: กำไรสุทธิของสวน (ผลผลิต − ราคาเมล็ด) × จำนวนที่ซื้อได้ต่อแมพ ตั้งให้กำไรรวมทุกแมพไม่เกิน 15% ของเครดิตสูงสุดที่เกมให้ (มีเทสต์ตรวจ GDD ข้อ 21)
-  { id: "seed-glowfern", kind: "seed", value: "glowfern", price: 10, stock: 5 },
-  { id: "seed-crystalbloom", kind: "seed", value: "crystalbloom", price: 20, stock: 3 },
-  { id: "seed-sunvine", kind: "seed", value: "sunvine", price: 30, stock: 2, tier: "normal" },
-  { id: "seed-moonpod", kind: "seed", value: "moonpod", price: 50, stock: 1, tier: "hard" },
+  { id: "seed-glowfern", kind: "seed", value: "glowfern", price: 10, stock: 4, unlock: "k1" },
+  { id: "seed-crystalbloom", kind: "seed", value: "crystalbloom", price: 20, stock: 3, unlock: "k2" },
+  { id: "seed-sunvine", kind: "seed", value: "sunvine", price: 30, stock: 2, unlock: "n1" },
+  { id: "seed-moonpod", kind: "seed", value: "moonpod", price: 50, stock: 1, unlock: "h2" },
   { id: "supply-repair-kit", kind: "supply", value: "repair-kit", price: 25, max: 3, stock: 3 },
   { id: "supply-shield", kind: "supply", value: "shield", price: 20, max: 3, stock: 3 },
   { id: "supply-overcharge", kind: "supply", value: "overcharge", price: 30, max: 3, stock: 2 },
@@ -267,6 +276,18 @@ export const LAB = {
   } as Record<Seed, { growMs: number; yield: number }>,
   /** ของตกแต่งที่ได้เมื่อเก็บผลผลิตครบทุกพันธุ์อย่างน้อยพันธุ์ละหนึ่งครั้ง */
   rewardDecor: "alienplant" as Decor,
+  /**
+   * ของแถมจากการเก็บผลผลิต (ลำดับตายตัวตามจำนวนครั้งที่เก็บ ไม่สุ่ม): ของที่ร้านขายอยู่แล้ว ไม่สร้างของใหม่ที่แรงเกินด่าน
+   * potDecor = ครั้งแรกของแต่ละพันธุ์ได้กระถางของพันธุ์นั้น, supplyEvery = ทุกครั้งที่ 3 ของการเก็บทั้งหมดได้ของใช้หมุนเวียน,
+   * rare = พันธุ์นี้ครั้งที่ n ได้ของชิ้นแรกในรายการที่ยังไม่มี (ไม่เกินหนึ่งครั้งทั้งเกม) gear = เช่นเดียวกัน เป็นอาวุธหรือเกราะ
+   */
+  gifts: {
+    potDecor: { glowfern: "fernpot", crystalbloom: "crystalpot", sunvine: "vinepot", moonpod: "moonpot" } as Record<Seed, Decor>,
+    supplyEvery: 3,
+    supplies: ["repair-kit", "shield", "analyzer", "overcharge"] as Supply[],
+    rare: { seed: "sunvine" as Seed, nth: 2, picks: ["module-medic", "chip-retry", "module-decoy"] },
+    gear: { seed: "moonpod" as Seed, nth: 1, picks: ["armor-guard", "weapon-bow"] },
+  },
 } as const;
 
 /** เครดิตวิจัยที่ได้จากความคืบหน้าแต่ละอย่าง */

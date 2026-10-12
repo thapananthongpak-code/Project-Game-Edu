@@ -226,6 +226,8 @@ export function labMapOf(_difficulty: Difficulty, pots: number = LAB_POT_SLOTS.l
     objects: [
       backDoor(9),
       ...LAB_POT_SLOTS.slice(0, pots).map(({ col, row }, index): MapObject => ({ kind: "pot", prop: "pr_pot_empty", col, row, index })),
+      // กระดานตกแต่งห้องวิจัย (จุดใช้งานที่ย้ายได้เหมือนของโถงและโรงเก็บหุ่น)
+      { kind: "decorboard", prop: "pr_decor_board", col: 18, row: 8 },
     ],
   };
 }

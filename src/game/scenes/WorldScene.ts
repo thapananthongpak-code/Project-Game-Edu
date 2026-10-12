@@ -89,8 +89,10 @@ export abstract class WorldScene extends Phaser.Scene {
   }
 
   /** วาดโถงหรือโรงเก็บหุ่นตามที่ผู้เล่นจัด: จุดใช้งานอยู่ตามที่ย้าย พื้นและผนังตามธีมที่เลือก (GDD ข้อ 19) */
-  protected buildRoom(world: Difficulty, area: DecorArea): void {
-    this.buildMap(roomMap(useGameStore.getState().shop, world, area));
+  protected buildRoom(world: Difficulty, area: DecorArea, keep: (object: MapObject) => boolean = () => true): void {
+    const map = roomMap(useGameStore.getState().shop, world, area);
+    // keep: เลือกวัตถุที่แสดงจริง (เช่น กระถางของห้องวิจัยที่เปิดแล้ว) ผังที่ใช้ตรวจกติกายังเป็นผังเต็ม
+    this.buildMap({ ...map, objects: map.objects.filter(keep) });
     this.roomKey = WorldScene.roomKeyOf(world, area);
   }
 

@@ -571,7 +571,13 @@ GUARDIAN_WEAPONS_ADDED = ["drill", "bow", "trident"]
 GUARDIAN_VARIANTS += [(f"GD-{31 + n * 5 + a}", f"gd_{armor}_{weapon}") for n, weapon in enumerate(GUARDIAN_WEAPONS_ADDED) for a, armor in enumerate(GUARDIAN_ARMORS)]
 # ฉากหลังของเรื่องราว NPC (ฉากเปล่า ตอน build วางตัวละครของเกมลงไป)
 SCENE_BACKDROPS = [("SC-01", "bg_scene_lab"), ("SC-02", "bg_scene_hangar"), ("SC-03", "bg_scene_gym"), ("SC-04", "bg_scene_archive"), ("SC-05", "bg_scene_factory"), ("SC-06", "bg_scene_market"),
-                   ("SC-07", "bg_scene_studio"), ("SC-08", "bg_scene_forge"), ("SC-09", "bg_scene_outpost"), ("SC-10", "bg_scene_clinic"), ("SC-11", "bg_scene_fortress")]
+                   ("SC-07", "bg_scene_studio"), ("SC-08", "bg_scene_forge"), ("SC-09", "bg_scene_outpost"), ("SC-10", "bg_scene_clinic"), ("SC-11", "bg_scene_fortress"), ("SC-12", "bg_scene_greenhouse")]
+# เรื่องราวของห้องวิจัยพืชต่างดาว 3 ช่อง (ข้อความอยู่ใน src/content/story.ts ฉาก lab-intro)
+LAB_PANELS = [
+    ("bg_scene_greenhouse", [("prof",), ("item", "pr_plant_glowfern_3")]),
+    ("bg_scene_greenhouse", [("bit",), ("item", "pr_plant_crystalbloom_2")]),
+    ("bg_scene_greenhouse", [("prof",), ("bit",), ("item", "pr_plant_moonpod_3")]),
+]
 # เรื่องราวของ NPC เรื่องละ 3 ช่อง (ข้อความอยู่ใน ui.npc.stories): ช่อง -> (ฉากหลัง, ตัวละครในช่อง)
 # ตัวละคร: ("npc", id) ยืนบนพื้น ("bit",) พี่บิตลอย ("prof",) ศาสตราจารย์ในจอวิดีโอคอล ("guardian",) หุ่นการ์เดียน ("kaiju", key) ไคจู ("item", key) ของชิ้นเล็ก
 NPC_PANELS = {
@@ -1016,6 +1022,9 @@ def main():
     for npc_id, panels in NPC_PANELS.items():
         for n, (backdrop_key, actors) in enumerate(panels, start=1):
             npc_panel(f"st_npc_{npc_id}_{n}", backdrop_key, actors)
+    # เรื่องราวของห้องวิจัยพืช (st_lab_1..3) ฉากหลังเรือนกระจก ศาสตราจารย์ พี่บิต และพืชในห้อง
+    for n, (backdrop_key, actors) in enumerate(LAB_PANELS, start=1):
+        npc_panel(f"st_lab_{n}", backdrop_key, actors)
 
     fallen_scene(*STORY_VICTORY)
     for key, (backdrop_key, kaiju_key) in STORY_WINS.items():

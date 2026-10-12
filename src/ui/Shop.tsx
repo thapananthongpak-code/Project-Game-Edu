@@ -33,6 +33,7 @@ export function Shop() {
   const power = useGameStore((s) => guardianPowerOf(s));
   const map = useGameStore(difficultyOf);
   const reached = useGameStore(reachedMap);
+  const battles = useGameStore((s) => s.battles);
   const openOverlay = useGameStore((s) => s.openOverlay);
   const bag = bagOf(shop);
   const buy = useGameStore((s) => s.buy);
@@ -80,7 +81,8 @@ export function Shop() {
     const using = kind === "module" || kind === "decor" || kind === "theme" ? owned : kind !== "supply" && kind !== "seed" && shop[kind] === value;
     const gain = kind === "supply" || kind === "seed" || kind === "decor" || kind === "theme" ? 0 : itemPower(kind, value);
     // ของที่วางขายตั้งแต่แมพถัดไป: เห็นได้แต่ยังซื้อไม่ได้
-    const lockedTier = item !== null && !tierOpen(item, reached);
+    const lockedSeed = item?.kind === "seed" && !battles[item.unlock]?.won;
+    const lockedTier = (item !== null && !tierOpen(item, reached)) || lockedSeed;
     const left = item?.kind === "supply" || item?.kind === "seed" ? stockLeft(shop, item, map) : null;
     return (
       <li key={id} className={`flex items-center gap-3 rounded-lg border-[3px] border-ink p-2 ${using ? "bg-hint" : lockedTier ? "border-dashed bg-cream" : "bg-paper"}`} data-testid={`shop-item-${id}`} data-owned={owned} data-using={using} data-locked={lockedTier} data-stock={left ?? undefined}>
@@ -109,7 +111,7 @@ export function Shop() {
         </div>
         {lockedTier ? (
           <span className="shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-xs font-bold" data-testid={`shop-locked-${id}`}>
-            🔒 {fmt(ui.shop.locked, { map: ui.difficulty[item?.tier ?? "easy"].name })}
+            🔒 {item?.kind === "seed" && lockedSeed ? fmt(ui.lab.seedLocked, { kaiju: ui.lab.seeds[item.value].kaiju }) : fmt(ui.shop.locked, { map: ui.difficulty[item?.tier ?? "easy"].name })}
           </span>
         ) : kind === "supply" || kind === "seed" || !owned ? (
           <button type="button" className="btn !min-h-10 shrink-0 text-sm" disabled={owned || left === 0 || (item !== null && balance < item.price)} data-testid={`shop-buy-${id}`} onClick={() => item && purchase(item)}>

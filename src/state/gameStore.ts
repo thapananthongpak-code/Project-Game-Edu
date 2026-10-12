@@ -151,8 +151,8 @@ interface GameState {
   openLab: (pot: number) => void;
   /** ปลูกเมล็ดในกระถางที่ว่าง คืน true ถ้าปลูกได้ */
   plantSeed: (pot: number, seed: Seed) => boolean;
-  /** เก็บผลผลิตของกระถางที่โตเต็มที่ คืนเครดิตที่ได้ (0 = เก็บไม่ได้) */
-  harvestPot: (pot: number) => number;
+  /** เก็บผลผลิตของกระถางที่โตเต็มที่ คืนเครดิตกับของแถมที่ได้ (null = เก็บไม่ได้) */
+  harvestPot: (pot: number) => { gained: number; gifts: string[]; unlocked: boolean } | null;
   openStory: (beat: string) => void;
   /** ปิดฉากเนื้อเรื่องและบันทึกว่าดูแล้ว */
   finishStory: () => void;
@@ -374,10 +374,10 @@ export const useGameStore = create<GameState>()((set, get) => {
       return true;
     },
     harvestPot: (pot) => {
-      const result = harvest(get().shop, pot, Date.now());
-      if (typeof result === "string") return 0;
+      const result = harvest(get().shop, pot, Date.now(), reachedMap(get()));
+      if (typeof result === "string") return null;
       set({ shop: result.shop });
-      return result.gained;
+      return { gained: result.gained, gifts: result.gifts, unlocked: result.unlocked };
     },
 
     openStory: (beat) => set({ overlay: "story", storyBeat: beat, prompt: null }),
@@ -393,7 +393,8 @@ export const useGameStore = create<GameState>()((set, get) => {
     },
     buy: (itemId) => {
       const state = get();
-      const result = purchase(state.shop, itemId, creditBalance(earningOf(state), state.shop), { map: difficultyOf(state), reached: reachedMap(state) });
+      const won = Object.entries(state.battles).flatMap(([id, record]) => (record.won ? [id] : []));
+      const result = purchase(state.shop, itemId, creditBalance(earningOf(state), state.shop), { map: difficultyOf(state), reached: reachedMap(state), won });
       if (typeof result === "string") return result;
       set({ shop: result });
       return null;
@@ -540,7 +541,7 @@ export const mapUnlocked = (state: Pick<GameState, "profile" | "battles">, map: 
 export const reachedMap = (state: Pick<GameState, "profile" | "battles">): Difficulty => [...DIFFICULTIES].reverse().find((map) => mapUnlocked(state, map)) ?? "easy";
 
 /** ห้องที่ผู้เล่นอยู่และตกแต่งได้: โถงหรือโรงเก็บหุ่นของแมพที่อยู่ (ห้องเรียนตกแต่งไม่ได้ = null) */
-export const decorAreaOf = (state: Pick<GameState, "screen">): DecorArea | null => (state.screen === "hall" ? "hall" : state.screen === "hangar" ? "hangar" : null);
+export const decorAreaOf = (state: Pick<GameState, "screen">): DecorArea | null => (state.screen === "hall" ? "hall" : state.screen === "hangar" ? "hangar" : state.screen === "lab" ? "lab" : null);
 
 /** โครงของแมพที่ผู้เล่นอยู่: ห้อง ด่านต่อสู้ และตัวช่วย (src/state/campaign.ts) */
 export const planOf = (state: Level): DifficultySpec => campaignOf(state.profile?.difficulty);
@@ -637,7 +638,7 @@ export const endingBeat = (map: Difficulty): string => (map === "easy" ? "ending
  * บรรยายสรุปของห้อง: เมื่อเข้าห้องนั้นครั้งแรก, บทส่งท้ายของแมพ: เมื่อชนะครบทุกด่านของแมพนั้น
  */
 export function pendingStory(state: Pick<GameState, "screen" | "zone" | "story" | "pretest" | "progress" | "battles" | "profile">): string | null {
-  if (state.screen !== "hall" && state.screen !== "hangar" && state.screen !== "room") return null;
+  if (state.screen !== "hall" && state.screen !== "hangar" && state.screen !== "room" && state.screen !== "lab") return null;
   const unseen = (beat: string) => !state.story.includes(beat);
   if (state.pretest && unseen("prologue")) return "prologue";
   const map = difficultyOf(state);
@@ -645,6 +646,8 @@ export function pendingStory(state: Pick<GameState, "screen" | "zone" | "story" 
   if (arrival && arrival in storyBeats && unseen(arrival)) return arrival;
   const won = planOf(state).battles.find((battle) => state.battles[battle.id]?.won && winBeat(battle.id) in storyBeats && unseen(winBeat(battle.id)));
   if (won) return winBeat(won.id);
+  // ห้องวิจัยพืชต่างดาว: เรื่องที่มาของพืช แสดงเมื่อเข้าห้องครั้งแรก
+  if (state.screen === "lab" && unseen("lab-intro")) return "lab-intro";
   if (state.screen === "room" && state.zone !== null && unseen(zoneBeat(difficultyOf(state), state.zone))) return zoneBeat(difficultyOf(state), state.zone);
   if (allBattlesWon(state) && unseen(endingBeat(map))) return endingBeat(map);
   return null;

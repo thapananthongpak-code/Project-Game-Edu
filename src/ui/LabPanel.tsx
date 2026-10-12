@@ -38,19 +38,21 @@ export function LabPanel() {
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const now = useNow();
+  // ของแถมของการเก็บครั้งล่าสุดในหน้าต่างนี้
+  const [lastGifts, setLastGifts] = useState<string[]>([]);
   const pots = Array.from({ length: potCount(reached) }, (_, index) => index);
   const haveSeeds = SEEDS.filter((seed) => shop.seeds[seed] > 0);
   const rewarded = shop.owned.includes(`decor-${LAB.rewardDecor}`);
 
   const collect = (index: number) => {
     const pot = shop.pots[String(index)];
-    const hadReward = rewarded;
-    const gained = harvestPot(index);
-    if (!pot || gained === 0) return;
+    const result = harvestPot(index);
+    if (!pot || !result) return;
     playSfx("pickup");
-    showToast(fmt(ui.toast.harvested, { name: ui.lab.seeds[pot.seed].name, n: gained }));
-    const after = useGameStore.getState().shop;
-    if (!hadReward && after.owned.includes(`decor-${LAB.rewardDecor}`)) window.setTimeout(() => showToast(ui.toast.rewardDecor), 1800);
+    showToast(fmt(ui.toast.harvested, { name: ui.lab.seeds[pot.seed].name, n: result.gained }));
+    setLastGifts(result.gifts);
+    if (result.gifts.length > 0) window.setTimeout(() => playSfx("star"), 300);
+    if (result.unlocked) window.setTimeout(() => showToast(ui.toast.rewardDecor), 1800);
   };
 
   const sprite = (seed: Seed | null, stage: 1 | 2 | 3) => (seed ? art.plant(seed, stage) : "assets/props/pr_pot_empty.png");
@@ -66,6 +68,11 @@ export function LabPanel() {
         </div>
         <p className="text-sm text-slate">{ui.lab.intro}</p>
 
+        {lastGifts.length > 0 && (
+          <section className="rounded-md border-2 border-ink bg-hint p-2 text-sm font-bold" role="status" data-testid="lab-gifts" data-gifts={lastGifts.join(",")}>
+            {ui.lab.giftTitle}: {lastGifts.map((id) => ui.shop.items[id as keyof typeof ui.shop.items]?.name ?? id).join(" · ")}
+          </section>
+        )}
         <section className="rounded-md border-2 border-ink bg-paper p-2" data-testid="lab-seeds" aria-label={ui.lab.seedBox}>
           <h3 className="text-xs font-bold text-slate">{ui.lab.seedBox}</h3>
           {haveSeeds.length === 0 ? (
@@ -163,6 +170,7 @@ export function LabPanel() {
                   <span>
                     <span className="block font-bold">{ui.lab.seeds[seed].name}</span>
                     <span className="block text-xs text-slate">{n > 0 ? fmt(ui.lab.codexRow, { n, ...info }) : fmt(ui.lab.codexNew, info)}</span>
+                    <span className="block text-xs">{n > 0 ? ui.lab.seeds[seed].note : fmt(ui.lab.noteLocked, { kaiju: ui.lab.seeds[seed].kaiju })}</span>
                   </span>
                 </li>
               );

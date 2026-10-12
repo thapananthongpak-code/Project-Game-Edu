@@ -45,6 +45,12 @@ export const storyBeats: Record<string, StoryLine[]> = {
     line("professor", "st_prologue_4", "แกน AI คือพลังงานของการ์เดียน ทำเควสของแต่ละเรื่องให้ผ่านแล้วจะได้แกนเรื่องละชิ้น แกนหนึ่งชิ้นซ่อมการ์เดียนให้มีพลังออกรบได้หนึ่งด่าน ครบ 6 ชิ้นเมื่อไร การ์เดียนจะกลับมาสมบูรณ์"),
     bright("mentor", "st_prologue_5", "ได้แกนมาแล้วเอาไปเติมพลังที่โรงเก็บหุ่น แล้วพาการ์เดียนออกไปรับมือไคจูด้วยกัน ส่วนอาวุธ เกราะ และชิปซื้อได้ที่ย่านร้านค้าด้วยเครดิตวิจัย ก่อนออกรบพี่บิตจะช่วยแนะนำว่าควรพกอะไรไปบ้าง"),
   ],
+  // ห้องวิจัยพืชต่างดาว: แสดงเมื่อเข้าห้องวิจัยครั้งแรก (ห้องเดียวทุกแมพ จึงนับเป็นตอนของแมพ 1)
+  "lab-intro": [
+    line("professor", "st_lab_1", "ไคจูที่การ์เดียนชนะไม่ได้หายไปไหนเลย ตรงที่มันล้มมีสปอร์เล็ก ๆ หลงเหลืออยู่ ฉันเก็บมาศึกษาที่ห้องนี้"),
+    line("mentor", "st_lab_2", "พี่บิตสแกนแล้ว สปอร์พวกนี้ไม่งอกในดินธรรมดา แต่เมื่อต่อพลังงานจากแกน AI เข้ากระถางมันก็เริ่มโต"),
+    bright("professor", "st_lab_3", "ซื้อเมล็ดที่ร้านพืชได้ เมล็ดแต่ละพันธุ์มาจากไคจูตัวที่เธอชนะ เก็บผลผลิตมาเป็นตัวอย่างวิจัยให้ฉันนะ"),
+  ],
   // ระดับง่าย: ห้องละหัวข้อ
   "room-1": [tense("mentor", "st_kaiju_1", "เรดาร์จับสัญญาณไคจู “กลิตช์” ได้ที่หน้าแล็บ การ์เดียนยังขยับไม่ได้ถ้าไม่มีแกนชิ้นแรก เริ่มจากสถานีที่ 1 กันเลย")],
   "room-2": [tense("mentor", "st_kaiju_2", "ไคจูสามหัว “ไตรฮอร์น” กำลังมุ่งหน้าไปสนามฝึกกลางเมือง แกนชิ้นที่ 2 รออยู่ในห้องนี้")],
@@ -140,7 +146,7 @@ export const storyBeats: Record<string, StoryLine[]> = {
  * ตอนจบของแมพ 1 และ 2 ต่อไปยังตอนมาถึงของแมพถัดไป ทุกฉากใน storyBeats อยู่ในแมพเดียว (มีเทสต์ตรวจ)
  */
 export const STORY_CHAPTERS: Record<Difficulty, string[]> = {
-  easy: ["prologue", "room-1", "win-k1", "room-2", "win-k2", "room-3", "win-k3", "room-4", "win-k4", "room-5", "win-k5", "room-6", "ending"],
+  easy: ["prologue", "room-1", "lab-intro", "win-k1", "room-2", "win-k2", "room-3", "win-k3", "room-4", "win-k4", "room-5", "win-k5", "room-6", "ending"],
   normal: ["map-normal", "zone-n1", "win-n1", "zone-n2", "win-n2", "zone-n3", "win-n3", "ending-normal"],
   hard: ["map-hard", "win-h1", "win-h2", "ending-hard"],
 };
@@ -148,6 +154,7 @@ export const STORY_CHAPTERS: Record<Difficulty, string[]> = {
 /** ชื่อตอนของเรื่องราว */
 export function chapterTitle(map: Difficulty, beat: string): string {
   if (beat === "prologue") return ui.archive.prologue;
+  if (beat === "lab-intro") return ui.archive.lab;
   if (beat.startsWith("map-")) return fmt(ui.archive.arrival, { map: storyNames.maps[map] });
   if (beat.startsWith("ending")) return ui.archive.ending;
   const room = beat.match(/^(?:room-|zone-[nh])(\d)$/);

@@ -72,6 +72,8 @@ export type PurchaseError = "unknown" | "owned" | "credits" | "locked" | "sold-o
 export interface ShopContext {
   map: Difficulty;
   reached: Difficulty;
+  /** รหัสด่านต่อสู้ที่ชนะแล้ว (เมล็ดพันธุ์ซื้อได้เมื่อชนะไคจูเจ้าของสปอร์ ไม่ระบุ = ไม่ตรวจ) */
+  won?: readonly string[];
 }
 
 /**
@@ -82,6 +84,7 @@ export function purchase(shop: ShopState, id: string, balance: number, context: 
   const item = findItem(id);
   if (!item || item.reward) return "unknown";
   if (!tierOpen(item, context.reached)) return "locked";
+  if (item.kind === "seed" && context.won && !context.won.includes(item.unlock)) return "locked";
   if (ownsItem(shop, item)) return "owned";
   if ((item.kind === "supply" || item.kind === "seed") && stockLeft(shop, item, context.map) <= 0) return "sold-out";
   if (balance < item.price) return "credits";

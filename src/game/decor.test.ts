@@ -65,7 +65,7 @@ describe("ของตกแต่งแบบวางอิสระ (GDD 19)"
   });
 
   it("จำกัดจำนวนชิ้นต่อห้อง และของชิ้นหนึ่งวางได้ครั้งเดียวต่อห้อง", () => {
-    expect(DECOR_LIMIT).toEqual({ hall: 8, hangar: 6 });
+    expect(DECOR_LIMIT).toEqual({ hall: 8, hangar: 6, lab: 6 });
     for (const area of DECOR_AREAS) {
       const map = baseMapOf("easy", area);
       const full = fill(map, area, DECORS).slice(0, DECOR_LIMIT[area]);
@@ -101,7 +101,7 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
         const base = baseMapOf(map, area);
         expect(layoutError(base, {}), `${map} ${area}`).toBeNull();
         const stations = stationsIn(base);
-        expect(stations, `${map} ${area}`).toEqual(area === "hall" ? ["shop", "lab", "travel", "decorboard"] : ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
+        expect(stations, `${map} ${area}`).toEqual(area === "hall" ? ["shop", "lab", "travel", "decorboard"] : area === "lab" ? ["decorboard"] : ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
         for (const station of stations) expect(stationCells(base, {}, [], station).length, `${map} ${area} ${station}`).toBeGreaterThanOrEqual(10);
       }
     }

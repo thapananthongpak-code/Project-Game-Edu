@@ -3,14 +3,14 @@
 import type { Difficulty } from "../state/campaign";
 import { DECOR, type Decor } from "../state/shop.config";
 import { MAP_COLS, MAP_ROWS } from "./constants";
-import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, isFloorCell, type MapObject, reachableCells } from "./maps";
+import { accessCells, blockedCells, type GameMap, hallMapOf, hangarMapOf, isFloorCell, labMapOf, type MapObject, reachableCells } from "./maps";
 
-/** ห้องที่ตกแต่งได้ของแต่ละแมพ */
-export const DECOR_AREAS = ["hall", "hangar"] as const;
+/** ห้องที่ตกแต่งได้: โถงและโรงเก็บหุ่นของแต่ละแมพ กับห้องวิจัย (ห้องเดียวทุกแมพ จึงเก็บใต้คีย์ "easy:lab" คีย์เดียว) */
+export const DECOR_AREAS = ["hall", "hangar", "lab"] as const;
 export type DecorArea = (typeof DECOR_AREAS)[number];
 /** คีย์ของห้องใน ShopState.decor เช่น "easy:hall" */
 export type DecorRoom = `${Difficulty}:${DecorArea}`;
-export const decorRoom = (map: Difficulty, area: DecorArea): DecorRoom => `${map}:${area}`;
+export const decorRoom = (map: Difficulty, area: DecorArea): DecorRoom => (area === "lab" ? "easy:lab" : `${map}:${area}`);
 
 /** ของตกแต่งหนึ่งชิ้นที่วางแล้ว: ช่องซ้ายสุดของฐานและแถวของฐาน (ของติดผนังอยู่แถวผนังด้านบน) */
 export interface DecorPlacement {
@@ -20,13 +20,14 @@ export interface DecorPlacement {
 }
 
 /** จำนวนของตกแต่งที่วางได้ต่อห้อง (จำกัดไว้ไม่ให้ห้องรกและไม่ให้ทางเดินตัน) โรงเก็บหุ่นมีจุดปรับแต่งมากกว่าจึงวางได้น้อยกว่า */
-export const DECOR_LIMIT: Record<DecorArea, number> = { hall: 8, hangar: 6 };
+export const DECOR_LIMIT: Record<DecorArea, number> = { hall: 8, hangar: 6, lab: 6 };
 
 /** แถวของผนังด้านบนที่ของติดผนังเกาะอยู่ (แถวถัดลงมาเป็นพื้น) */
 const WALL_ROW = 1;
 
 /** ผังของห้องก่อนวางของตกแต่ง */
-export const baseMapOf = (map: Difficulty, area: DecorArea): GameMap => (area === "hall" ? hallMapOf(map) : hangarMapOf(map));
+/** ห้องวิจัยใช้ผังที่มีกระถางครบ 8 ใบเสมอ (ที่ของกระถางที่ยังไม่เปิดถูกกันไว้ ของตกแต่งจึงไม่ถูกดันออกเมื่อกระถางเพิ่ม) */
+export const baseMapOf = (map: Difficulty, area: DecorArea): GameMap => (area === "hall" ? hallMapOf(map) : area === "hangar" ? hangarMapOf(map) : labMapOf(map));
 
 /** จำนวนช่องที่ของตกแต่งกว้าง */
 export const decorWidth = (decor: Decor): number => (DECOR[decor].size === "small" ? 1 : 2);

@@ -4,7 +4,6 @@ import { difficultyOf, reachedMap, useGameStore } from "../../state/gameStore";
 import { growthOf, potCount } from "../../state/lab";
 import { SEEDS } from "../../state/shop.config";
 import { SCENE } from "../constants";
-import { labMapOf } from "../maps";
 import { WorldScene } from "./WorldScene";
 
 /** ภาพของกระถางหนึ่ง: ว่าง หรือพืชตามพันธุ์และระยะ (ต้นอ่อน 1 กำลังโต 2 พร้อมเก็บ 3) */
@@ -17,6 +16,7 @@ const STAGE_NUMBER = { sprout: 1, growing: 2, ready: 3 } as const;
 export class LabScene extends WorldScene {
   private pots: { index: number; object: ReturnType<WorldScene["objectsOf"]>[number] }[] = [];
   private looks = "";
+  private world: Difficulty = "easy";
 
   constructor() {
     super(SCENE.lab);
@@ -25,7 +25,10 @@ export class LabScene extends WorldScene {
   create(): void {
     const store = () => useGameStore.getState();
     const world: Difficulty = difficultyOf(store());
-    this.buildMap(labMapOf(world, potCount(reachedMap(store()))));
+    // ผังเต็ม 8 กระถางไว้ตรวจการวางของ แต่แสดงเฉพาะกระถางที่แมพไกลสุดที่ไปถึงเปิดแล้ว
+    const open = potCount(reachedMap(store()));
+    this.buildRoom(world, "lab", (object) => object.kind !== "pot" || (object.index as number) < open);
+    this.world = world;
     this.looks = "";
 
     const [door] = this.objectsOf("door");
@@ -44,6 +47,8 @@ export class LabScene extends WorldScene {
         () => store().openLab(index),
       );
     }
+    const [board] = this.objectsOf("decorboard");
+    this.addInteractable(board, "decorboard", () => ui.prompt.decorBoard, () => store().openOverlay("decor"));
     const spot = this.spotBelow(door);
     this.createPlayer(spot.x, spot.y);
     this.syncWithProgress();
@@ -60,6 +65,9 @@ export class LabScene extends WorldScene {
   }
 
   private syncWithProgress(): void {
+    // ย้ายกระดานตกแต่งหรือเปลี่ยนธีม: ฉากถูกสร้างใหม่ ของตกแต่งที่ผู้เล่นวางเองแสดงตามที่บันทึก
+    if (this.syncRoom(this.world, "lab")) return;
+    this.syncDecor(this.world, "lab");
     const { shop } = useGameStore.getState();
     const now = Date.now();
     const textures = this.pots.map(({ index }) => {

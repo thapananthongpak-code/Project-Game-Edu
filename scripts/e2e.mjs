@@ -2373,7 +2373,8 @@ async function playLab(page) {
   const start = await creditsOf(page);
   await openStall(page, "plants");
   assert.equal(await page.locator('[data-testid^="shop-item-seed-"]').count(), 4, "ร้านพืชขายเมล็ด 4 พันธุ์");
-  assert.deepEqual(await page.locator('[data-testid^="shop-item-seed-"]').evaluateAll((rows) => rows.map((row) => [row.dataset.testid.replace("shop-item-seed-", ""), row.dataset.locked])), [["glowfern", "false"], ["crystalbloom", "false"], ["sunvine", "false"], ["moonpod", "true"]]);
+  assert.deepEqual(await page.locator('[data-testid^="shop-item-seed-"]').evaluateAll((rows) => rows.map((row) => [row.dataset.testid.replace("shop-item-seed-", ""), row.dataset.locked])), [["glowfern", "false"], ["crystalbloom", "false"], ["sunvine", "true"], ["moonpod", "true"]], "เมล็ดซื้อได้เมื่อชนะไคจูเจ้าของสปอร์: ชนะกลิตช์และไตรฮอร์นแล้ว ยังไม่ชนะโวลต์อีลและฟีนิกซ์เหล็ก");
+  assert.match(await page.getByTestId("shop-locked-seed-sunvine").innerText(), /ต้องชนะโวลต์อีลก่อน/);
   assert.equal(await page.locator('[data-testid^="shop-item-weapon-"]').count(), 0, "ร้านพืชไม่ขายอุปกรณ์");
   await page.getByTestId("shop-buy-seed-glowfern").click();
   await page.getByTestId("shop-buy-seed-crystalbloom").click();
@@ -2386,7 +2387,12 @@ async function playLab(page) {
   assert.match((await snap(page)).store.prompt, /ห้องวิจัยพืชต่างดาว/);
   await act(page);
   await page.waitForFunction(() => window.__aitq.snapshot().scene === "Lab" && window.__aitq.snapshot().interactables.some((i) => i.id.startsWith("pot-")));
-  await page.waitForTimeout(300);
+  // เข้าห้องวิจัยครั้งแรก: เห็นเรื่องที่มาของพืชเป็นช่องการ์ตูน 3 ช่อง
+  const labStory = await readStory(page);
+  assert.equal(labStory?.beat, "lab-intro");
+  assert.deepEqual(labStory.art, ["st_lab_1", "st_lab_2", "st_lab_3"]);
+  assert.match(labStory.lines.join(" "), /สปอร์/);
+  await page.waitForTimeout(350);
   let scene = await snap(page);
   assert.equal(scene.interactables.filter((i) => i.id.startsWith("pot-")).length, 6, "ไปถึงแมพ 2 แล้ว: กระถาง 6 ใบ");
   assert.deepEqual(scene.pots, Array(6).fill("pr_pot_empty"));
@@ -2419,6 +2425,10 @@ async function playLab(page) {
   assert.equal(await creditsOf(page), before + 14, "เก็บเฟิร์นได้ 14 เครดิต");
   assert.equal(await page.getByTestId("lab-pot-0").getAttribute("data-stage"), "empty", "เก็บแล้วกระถางว่าง");
   assert.equal(await page.getByTestId("lab-codex-glowfern").getAttribute("data-harvests"), "1");
+  // ของแถมครั้งแรกของพันธุ์: กระถางเฟิร์นเรืองแสง (ลำดับตายตัว) และบันทึกวิจัยเปิดอ่านได้
+  assert.equal(await page.getByTestId("lab-gifts").getAttribute("data-gifts"), "decor-fernpot");
+  assert.match(await page.getByTestId("lab-codex-glowfern").innerText(), /สปอร์ของกลิตช์/);
+  assert.match(await page.getByTestId("lab-codex-moonpod").innerText(), /ชนะไคจูตัวนี้แล้วจึงซื้อเมล็ดได้/);
   assert.match((await snap(page)).store.toast, /เก็บเฟิร์นเรืองแสงแล้ว ได้ 14 เครดิตวิจัย/);
   assert.equal((await snap(page)).store.shop.owned.includes("decor-alienplant"), false);
 
@@ -2434,10 +2444,27 @@ async function playLab(page) {
   await page.getByTestId("lab-harvest-1").click();
   assert.equal(await page.getByTestId("lab-reward").getAttribute("data-got"), "true");
   assert.equal((await snap(page)).store.shop.owned.includes("decor-alienplant"), true);
+  // ฝักจันทราครั้งแรก: ได้กระถางของพันธุ์นั้นกับเกราะสะท้อน (ของที่ร้านขายและแมพ 2 เปิดขายแล้ว)
+  assert.equal(await page.getByTestId("lab-gifts").getAttribute("data-gifts"), "decor-moonpot,armor-guard");
+  assert.deepEqual((await snap(page)).store.shop.owned.filter((id) => ["decor-moonpot", "armor-guard", "decor-fernpot"].includes(id)).sort(), ["armor-guard", "decor-fernpot", "decor-moonpot"]);
   // เครดิตจากสวนคำนวณจากจำนวนครั้งที่เก็บ: เฟิร์น 14 + ดอกคริสตัล 30 + เถาสุริยะ 44 (ที่ตั้งไว้) + ฝักจันทรา 74
   assert.equal(await creditsOf(page), before + 14 + 30 + 44 + 74);
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
+
+  // ตกแต่งห้องวิจัยได้: กระดานตกแต่งของห้องนี้ วางของแถมจากการเก็บเกี่ยวได้ 6 ชิ้น กระถางไม่ถูกบัง
+  await walkTo(page, "decorboard");
+  await act(page);
+  const decor = page.getByTestId("decor");
+  await decor.waitFor();
+  assert.deepEqual([await decor.getAttribute("data-room"), await decor.getAttribute("data-limit")], ["lab", "6"]);
+  await page.getByTestId("decor-pick-fernpot").click();
+  await clickCell(page, 5, 6);
+  assert.ok((await decorPlaced(page)).includes("fernpot@5,6"));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  assert.ok((await snap(page)).decor.some((d) => d.prop === "pr_plant_glowfern_3" && d.col === 5 && d.row === 6), "ของที่วางเห็นในห้องวิจัยทันที");
+  assert.equal((await snap(page)).interactables.filter((i) => i.id.startsWith("pot-")).length, 6, "ตกแต่งแล้วกระถางยังครบ");
 
   // ออกจากห้องวิจัยกลับโถง แล้วของตกแต่งรางวัลเป็นของที่วางได้ (ผ่านกระดานตกแต่ง)
   await walkTo(page, "door-entry");
@@ -2527,6 +2554,7 @@ async function playGuide(page) {
   await walkTo(page, "lab");
   await act(page);
   await page.waitForFunction(() => window.__aitq.snapshot().scene === "Lab");
+  assert.equal((await readStory(page))?.beat, "lab-intro");
   assert.equal(await page.getByTestId("guide-tip").count(), 0, "ปิดคำแนะนำแล้ว ห้องวิจัยไม่แสดง");
   await walkTo(page, "door-entry");
   await act(page);
