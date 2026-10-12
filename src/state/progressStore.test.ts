@@ -63,6 +63,7 @@ const sample: SaveData = {
     pots: { "1": { seed: "crystalbloom", plantedAt: 1_700_000_000_000 } },
     harvests: { ...emptyShop().harvests, glowfern: 3 },
     dash: ["easy:1", "normal:2:s"],
+    tips: ["tutorial", "tip:market"],
     decor: { "easy:hall": [{ decor: "window", col: 3, row: 1 }], "normal:hangar": [{ decor: "plant", col: 3, row: 7 }] },
     layout: { "easy:hall": { shop: { col: 15, row: 5 } }, "easy:hangar": { bitpad: { col: 2, row: 8 } } },
     theme: { "easy:hall": "ocean" },

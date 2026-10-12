@@ -28,6 +28,7 @@ import { emptyNpc, type NpcId, type NpcRecord, NPCS } from "./npcs";
 import type { DecorArea, DecorPlacement, Piece, PlaceError } from "../game/decor";
 import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBag, placeDecor, powerOf, purchase, type PurchaseError, receiveGift, removeDecor, resetLayout, setTheme, toggleModule } from "./shop";
 import { DASH_SKIP_ALL, dashDue, dashKey } from "./dash";
+import { GUIDE_STEPS, TIPS_OFF, TUTORIAL_DONE } from "./guide";
 import { harvest, plant } from "./lab";
 import type { Avatar, BitModule, Decor, Seed, Stall, Supply, Theme } from "./shop.config";
 
@@ -86,6 +87,10 @@ interface GameState {
   labPot: number | null;
   /** ห้องที่ด่านทางเชื่อมกำลังเล่นอยู่ก่อนเข้า (ลำดับห้องของแมพ) */
   dashZone: number | null;
+  /** ขั้นของการสอนเล่นที่ผู้เล่นอยู่ (0–4 ไม่เก็บในบันทึก) */
+  guideStep: number;
+  /** ผู้เล่นขอดูการสอนเล่นอีกครั้ง (ไม่เก็บในบันทึก) */
+  guideReplay: boolean;
   musicCue: MusicCue | null;
   /** หน้าต่างถามพี่บิต เปิดซ้อนบนหน้าต่างอื่นได้ */
   tutorOpen: boolean;
@@ -126,6 +131,14 @@ interface GameState {
   finishDash: (passed: boolean) => void;
   /** ตั้งค่า "ข้ามด่านทางเชื่อมเสมอ" */
   setDashSkip: (skip: boolean) => void;
+  /** ผ่านขั้นของการสอนเล่น (นับเฉพาะเมื่อผู้เล่นอยู่ขั้นนั้น) ครบทุกขั้นแล้วถือว่าจบการสอน */
+  advanceGuide: (from: number) => void;
+  /** ข้ามหรือจบการสอนเล่น */
+  skipGuide: () => void;
+  /** ดูการสอนเล่นอีกครั้ง (จากสมุดเควส) */
+  replayGuide: () => void;
+  /** ปิดคำแนะนำของที่หนึ่ง off = ไม่ต้องแสดงคำแนะนำอีก */
+  dismissTip: (id: string, off: boolean) => void;
   /** เลือกหัวข้อที่จะทำงานด้วย (ห้องที่มีหลายหัวข้อ) */
   focusTopic: (topic: number) => void;
   exitToHall: () => void;
@@ -235,6 +248,8 @@ export const useGameStore = create<GameState>()((set, get) => {
     shopStall: null,
     labPot: null,
     dashZone: null,
+    guideStep: 0,
+    guideReplay: false,
     musicCue: null,
     tutorOpen: false,
     tutorRoom: null,
@@ -273,7 +288,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     setAccount: (account) => set({ account }),
 
     // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อและแบบทดสอบก่อนเรียน เริ่มที่แมพ 1 เสมอ (GDD ข้อ 3)
-    newGame: () => set({ ...closed, profile: null, pretest: null, posttest: null, progress: {}, others: {}, battles: {}, npcs: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
+    newGame: () => set({ ...closed, guideStep: 0, guideReplay: false, profile: null, pretest: null, posttest: null, progress: {}, others: {}, battles: {}, npcs: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
     continueGame: () => {
       const { profile, pretest } = get();
       set({ ...closed, screen: profile && pretest ? "hall" : "onboarding" });
@@ -316,6 +331,26 @@ export const useGameStore = create<GameState>()((set, get) => {
       const entry = passed ? key : `${key}:s`;
       if (!state.shop.dash.includes(entry)) set({ shop: { ...state.shop, dash: [...state.shop.dash, entry] } });
       state.enterRoom(zone);
+    },
+    advanceGuide: (from) => {
+      const { guideStep, shop } = get();
+      if (guideStep !== from) return;
+      if (from + 1 >= GUIDE_STEPS.length) set({ guideStep: 0, guideReplay: false, shop: shop.tips.includes(TUTORIAL_DONE) ? shop : { ...shop, tips: [...shop.tips, TUTORIAL_DONE] } });
+      else set({ guideStep: from + 1 });
+    },
+    skipGuide: () => {
+      const { shop } = get();
+      set({ guideStep: 0, guideReplay: false, shop: shop.tips.includes(TUTORIAL_DONE) ? shop : { ...shop, tips: [...shop.tips, TUTORIAL_DONE] } });
+    },
+    replayGuide: () => {
+      const { shop } = get();
+      set({ ...closed, screen: "hall", guideStep: 0, guideReplay: true, shop: { ...shop, tips: shop.tips.filter((tip) => tip !== TUTORIAL_DONE) } });
+    },
+    dismissTip: (id, off) => {
+      const { shop } = get();
+      const tips = [...shop.tips];
+      for (const entry of [`tip:${id}`, ...(off ? [TIPS_OFF] : [])]) if (!tips.includes(entry)) tips.push(entry);
+      set({ shop: { ...shop, tips } });
     },
     setDashSkip: (skip) => {
       const { shop } = get();

@@ -291,7 +291,20 @@ async function takeAssessment(page, phase, shouldAnswer, press = (locator) => lo
 }
 
 /** ขั้นเริ่มเกม: ตั้งชื่อ (ทุกคนเริ่มที่แมพ 1 ไม่มีตัวเลือกระดับความยาก) ทำแบบทดสอบก่อนเรียนโดยให้หัวข้อ 1 ถูกตามจำนวนที่ระบุ หัวข้ออื่นตอบผิด */
-async function onboard(page, { name, topic1Correct, tap = false, shots = false, started = false, avatar = null }) {
+async function onboard(page, options) {
+  const form = await onboardRun(page, options);
+  // การสอนเล่นและคำแนะนำของแต่ละที่ตรวจในชุด guide ชุดอื่นปิดไว้เพื่อไม่ให้แถบไกด์ขยับหน้าจอ
+  if (!options.guide) {
+    await page.evaluate(() => {
+      const store = window.__aitq.store;
+      const shop = store.getState().shop;
+      store.setState({ shop: { ...shop, tips: [...new Set([...shop.tips, "tutorial", "tips-off"])] } });
+    });
+  }
+  return form;
+}
+
+async function onboardRun(page, { name, topic1Correct, tap = false, shots = false, started = false, avatar = null }) {
   const difficulty = "easy";
   const press = (locator) => (tap ? locator.tap() : locator.click());
   if (shots) {
@@ -1260,7 +1273,7 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: ["easy:1:s"], decor: STARTER_DECOR, layout: {}, theme: {} });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: ["easy:1:s"], tips: ["tutorial", "tips-off"], decor: STARTER_DECOR, layout: {}, theme: {} });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
@@ -2275,7 +2288,7 @@ const doneRoom = (topic) => ({ stationsSeen: 0, minigameDone: topic < 6, stars: 
 const doneRooms = (topics) => Object.fromEntries(topics.map((topic) => [topic, doneRoom(topic)]));
 const assessmentOf = (form) => ({ form, correctByTopic: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, items: [], completedAt: NOW });
 const wonAll = (map) => Object.fromEntries(CAMPAIGN[map].battles.map((battle) => [battle.id, WON]));
-const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: [], ...patch });
+const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: [], tips: ["tutorial", "tips-off"], ...patch });
 const MAP1_STORY = ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "ending"];
 /** ผู้เล่นที่ผ่านแมพ 1 ครบแล้ว (ชนะไคจูทุกตัว ทำแบบทดสอบหลังเรียนแล้ว) ยังอยู่ที่แมพ 1 */
 const travelerSave = (patch = {}) => ({
@@ -2430,6 +2443,106 @@ async function playLab(page) {
   await inHall(page);
   assert.equal((await snap(page)).store.screen, "hall");
   log("ห้องวิจัยพืชต่างดาว: ซื้อเมล็ดที่ร้านพืช ปลูก โตตามเวลาจริง 3 ระยะ เก็บผลผลิตได้เครดิต เก็บครบทุกพันธุ์ได้ของตกแต่งรางวัล");
+}
+
+// ---------------------------------------------------------------- ไกด์นำทางและสอนเล่น (GDD ข้อ 23)
+
+async function playGuide(page) {
+  await page.goto(BASE_URL);
+  await page.waitForFunction(() => window.__aitq?.snapshot().store.ready);
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.reload();
+  await page.waitForFunction(() => window.__aitq?.snapshot().store.ready);
+  await onboard(page, { name: "ไกด์", topic1Correct: 1, guide: true });
+  await inHall(page);
+  const bar = page.getByTestId("guide");
+  await bar.waitFor();
+  const stepOf = () => bar.getAttribute("data-step");
+
+  // ขั้น 1: เดิน (ผ่านเมื่อกดปุ่มเดินจริง ไม่ใช่กดถัดไป)
+  assert.equal(await stepOf(), "move");
+  assert.match(await page.getByTestId("guide-step").innerText(), /ขั้นที่ 1\/4/);
+  assert.match(await page.getByTestId("guide-text").innerText(), /ลูกศร/);
+  assert.equal(await page.getByTestId("guide-skip").isVisible(), true, "ข้ามการสอนได้ตั้งแต่ขั้นแรก");
+  await shot(page, "38-guide-move");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForFunction(() => document.querySelector('[data-testid="guide"]')?.getAttribute("data-step") === "questlog");
+
+  // ขั้น 2: เปิดสมุดเควส
+  await page.getByRole("button", { name: "สมุดเควส" }).click();
+  await page.getByTestId("questlog").waitFor();
+  await page.getByRole("button", { name: "ปิด", exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="guide"]')?.getAttribute("data-step") === "goal");
+  await page.waitForTimeout(350);
+
+  // ขั้น 3: อ่านเป้าหมาย แล้วกด "เข้าใจแล้ว"
+  assert.match(await page.getByTestId("guide-text").innerText(), /เป้าหมายถัดไป/);
+  await page.getByTestId("guide-next").click();
+  assert.equal(await stepOf(), "door");
+  await shot(page, "38-guide-door");
+
+  // ขั้น 4: เดินไปประตูห้อง 1 แล้วเข้าห้อง (ด่านทางเชื่อมเปิดก่อน) การสอนจบและไม่ขึ้นอีก
+  await walkTo(page, "door-1");
+  await act(page);
+  await page.getByTestId("dash").waitFor();
+  assert.equal(await page.getByTestId("guide").count(), 0, "จบการสอนแล้ว แถบไกด์หายไป");
+  assert.ok((await snap(page)).store.shop.tips.includes("tutorial"));
+  await page.getByTestId("dash-skip").click();
+  await inRoom(page, 1);
+
+  // คำแนะนำครั้งแรกของห้องเรียน: แสดงครั้งเดียว
+  const tip = page.getByTestId("guide-tip");
+  await tip.waitFor();
+  assert.equal(await tip.getAttribute("data-tip"), "room");
+  await shot(page, "38-guide-tip-room");
+  await page.getByTestId("guide-tip-ok").click();
+  assert.equal(await page.getByTestId("guide-tip").count(), 0);
+  assert.ok((await snap(page)).store.shop.tips.includes("tip:room"));
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await walkTo(page, "door-1");
+  await act(page);
+  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Room");
+  assert.equal(await page.getByTestId("guide-tip").count(), 0, "เข้าห้องเดิมซ้ำไม่แสดงคำแนะนำอีก");
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+
+  // ย่านร้านค้า: คำแนะนำครั้งแรก กด "ไม่ต้องแสดงคำแนะนำอีก" แล้วห้องวิจัยไม่แสดง
+  await walkTo(page, "shop");
+  await act(page);
+  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Market");
+  assert.equal(await page.getByTestId("guide-tip").getAttribute("data-tip"), "market");
+  await page.getByTestId("guide-tip-off").click();
+  assert.deepEqual((await snap(page)).store.shop.tips.filter((t) => t !== "tutorial").sort(), ["tip:market", "tip:room", "tips-off"]);
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await walkTo(page, "lab");
+  await act(page);
+  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Lab");
+  assert.equal(await page.getByTestId("guide-tip").count(), 0, "ปิดคำแนะนำแล้ว ห้องวิจัยไม่แสดง");
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+
+  // ดูการสอนเล่นอีกครั้งจากสมุดเควส (ผู้เล่นที่มีความคืบหน้าแล้วก็ขอดูได้) แล้วข้ามได้
+  await page.getByRole("button", { name: "สมุดเควส" }).click();
+  await page.getByTestId("replay-guide").click();
+  await page.getByTestId("guide").waitFor();
+  assert.equal(await stepOf(), "move");
+  await page.getByTestId("guide-skip").click();
+  assert.equal(await page.getByTestId("guide").count(), 0);
+  assert.ok((await snap(page)).store.shop.tips.includes("tutorial"));
+
+  // ผู้เล่นเดิมที่มีความคืบหน้าอยู่แล้ว: ไม่ถูกบังคับสอน
+  await resumeWith(page, travelerSave({ shop: shopOf({ tips: [] }) }));
+  assert.equal(await page.getByTestId("guide").count(), 0, "ผู้เล่นเดิมไม่เห็นการสอนเล่น");
+  log("ไกด์นำทาง: สอนเล่น 4 ขั้นผ่านเมื่อทำจริง ข้ามได้ทุกเมื่อ คำแนะนำครั้งแรกของห้อง ย่านร้านค้า ห้องวิจัยแสดงครั้งเดียวและปิดได้ ดูการสอนอีกครั้งได้ ผู้เล่นเดิมไม่ถูกสอน");
 }
 
 // ---------------------------------------------------------------- ด่านทางเชื่อมก่อนเข้าห้อง (GDD ข้อ 22)
@@ -3826,6 +3939,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("guide")) {
+    console.log("เดสก์ท็อป: ไกด์นำทางและสอนเล่น");
+    await playGuide(page);
   }
   if (wanted("dash")) {
     console.log("เดสก์ท็อป: ด่านทางเชื่อมก่อนเข้าห้องครั้งแรก");

@@ -40,6 +40,7 @@ export function QuestLog() {
   const audio = useAudioSettings();
   const dashSkip = useGameStore((s) => s.shop.dash.includes("skip"));
   const setDashSkip = useGameStore((s) => s.setDashSkip);
+  const replayGuide = useGameStore((s) => s.replayGuide);
   const run = { profile, progress, battles };
   const power = useGameStore((s) => guardianPowerOf(s));
   const plan = planOf(run);
@@ -142,6 +143,11 @@ export function QuestLog() {
                 </button>
               ))}
             </div>
+            <h3 className="text-xs font-bold text-slate">{ui.guide.replay}</h3>
+            <button type="button" className="btn btn-ghost self-start !min-h-10 text-sm" data-testid="replay-guide" onClick={replayGuide}>
+              {ui.guide.replay}
+            </button>
+            <p className="text-xs text-slate">{ui.guide.replayHint}</p>
             <h3 className="text-xs font-bold text-slate">{ui.dash.settingTitle}</h3>
             <button
               type="button"

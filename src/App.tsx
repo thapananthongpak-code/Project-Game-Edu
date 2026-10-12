@@ -22,6 +22,7 @@ import { BitPad } from "./ui/BitPad";
 import { TravelMap } from "./ui/TravelMap";
 import { DecorBoard } from "./ui/DecorBoard";
 import { DashRun } from "./ui/DashRun";
+import { GuideBar } from "./ui/GuideBar";
 import { LabPanel } from "./ui/LabPanel";
 import { Extras } from "./ui/Extras";
 import { StageOverlay } from "./ui/StageOverlay";
@@ -67,6 +68,7 @@ export function App() {
   return (
     <div className="flex h-dvh w-full select-none flex-col overflow-hidden bg-ink">
       {playing && <Hud />}
+      {playing && <GuideBar />}
       {/* จอแนวตั้ง: ฉากเกมอยู่ด้านบนตามสัดส่วน 16:9 พื้นที่ด้านล่างเป็นของปุ่มสัมผัสและกล่องสนทนา */}
       <main className="relative min-h-0 flex-1 portrait:h-[56.25vw] portrait:flex-none">
         <PhaserGame />
