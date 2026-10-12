@@ -659,6 +659,8 @@ LAB_PROPS = [
     ("PR-L09", "pr_plant_sunvine_1", (32, 64)), ("PR-L10", "pr_plant_sunvine_2", (32, 64)), ("PR-L11", "pr_plant_sunvine_3", (32, 64)),
     ("PR-L12", "pr_plant_moonpod_1", (32, 64)), ("PR-L13", "pr_plant_moonpod_2", (32, 64)), ("PR-L14", "pr_plant_moonpod_3", (32, 64)),
 ]
+# ของประกอบฉากตายตัวของย่านร้านค้า (รอบที่ 13)
+MARKET_PROPS = [("PR-M07", "pr_market_lamp", (32, 64)), ("PR-M08", "pr_market_crates", (32, 64)), ("PR-M09", "pr_market_barrel", (32, 64)), ("PR-M10", "pr_market_flags", (32, 64))]
 # สถานที่บนแผนที่โลก (หน้า HTML): (รหัส, ไฟล์)
 WORLD_SITES = [("WM-02", "wm_site_lab"), ("WM-03", "wm_site_outpost"), ("WM-04", "wm_site_fortress")]
 
@@ -814,6 +816,11 @@ def main():
         tileset("TS-11", "ts_hangar3", "ไทล์เซตโรงเก็บหุ่นของแมพ 3", True,
                 lambda: draw_floor("#333C57", INK), lambda: draw_wall("#5D275D", INK, stripe=RED)),
         # ธีมห้องที่ขายในร้าน (GDD ข้อ 21): ใช้แทนไทล์เซตของโถงหรือโรงเก็บหุ่นของแมพใดก็ได้
+        # ชุดไทล์ประจำห้อง (รอบที่ 13): ย่านร้านค้าเป็นตลาดกลางคืน ห้องวิจัยเป็นเรือนกระจก ห้องละชุดเดียวทุกแมพ
+        tileset("TS-22", "ts_market", "ไทล์เซตย่านร้านค้า", True,
+                lambda: draw_floor("#6B5B4E", "#3B3228"), lambda: draw_wall("#4A3426", "#2A1C14", stripe="#FFA300")),
+        tileset("TS-23", "ts_lab", "ไทล์เซตห้องวิจัยพืช", True,
+                lambda: draw_floor("#C9D1D6", "#6E7B70"), lambda: draw_wall("#F4F4F4", "#9CB2B7", stripe="#2FB8AC")),
         tileset("TS-12", "ts_theme_sakura", "ธีมห้อง ซากุระ", True,
                 lambda: draw_floor("#F4C2D0", "#E08AA8"), lambda: draw_wall("#F4F4F4", "#C06C8A", stripe="#FF77A8")),
         tileset("TS-13", "ts_theme_ocean", "ธีมห้อง มหาสมุทร", True,
@@ -843,6 +850,7 @@ def main():
         *[prop(asset_id, base, size) for asset_id, base, size in ROOM_PROPS],
         *[prop(asset_id, base, size) for asset_id, base, size in DECOR_PROPS],
         *[prop(asset_id, base, size) for asset_id, base, size in LAB_PROPS],
+        *[prop(asset_id, base, size) for asset_id, base, size in MARKET_PROPS],
         prop("PR-H01", "pr_shop", (64, 64), lambda: draw_block(64, 64, YELLOW, SLATE)),
         prop("PR-H05", "pr_storage_box", (64, 64), lambda: draw_block(64, 64, TEAL, SLATE)),
         prop("PR-H02", "pr_hangar_gate", (64, 64), lambda: draw_block(64, 64, STEEL, YELLOW)),

@@ -594,7 +594,8 @@ const click = (locator) => locator.click();
 
 /** ออกจากห้อง ย่านร้านค้า (หรือโถง) ไปโรงเก็บหุ่น */
 async function goToHangar(page) {
-  if (["room", "market"].includes((await snap(page)).store.screen)) {
+  if ((await snap(page)).store.screen === "hangar") return;
+  if (["room", "market", "lab"].includes((await snap(page)).store.screen)) {
     await walkTo(page, "door-entry");
     await act(page);
     await inHall(page);
@@ -859,7 +860,7 @@ async function playRoom1(page) {
   log(`ขั้นเริ่มเกม: ตั้งชื่อ เลือกตัวละคร (ทุกคนเริ่มที่แมพ 1 ไม่มีตัวเลือกระดับความยาก) แบบทดสอบก่อนเรียนชุด ${form} 12 ข้อ (สมรรถนะละ 2 ข้อ ไม่มีตัวเลือกยังไม่รู้) ไม่เฉลย เก็บผลรายข้อและรายสมรรถนะ (หัวข้อ 1 ถูก 1/2) แล้วเห็นบทนำของเนื้อเรื่องเป็นช่องการ์ตูน 5 ช่อง`);
 
   assert.equal((await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length, 6);
-  assert.deepEqual((await snap(page)).interactables.map((i) => i.id).filter((id) => ["travel", "decorboard", "shop", "storage", "gate"].includes(id)).sort(), ["decorboard", "gate", "shop", "storage", "travel"], "โถงมีกระดานแผนที่ กระดานตกแต่ง ร้าน กล่องเก็บไอเทม และประตูโรงเก็บหุ่น");
+  assert.deepEqual((await snap(page)).interactables.map((i) => i.id).filter((id) => ["travel", "decorboard", "shop", "storage", "gate"].includes(id)).sort(), ["decorboard", "gate", "shop", "travel"], "โถงมีกระดานแผนที่ กระดานตกแต่ง ร้าน กล่องเก็บไอเทม และประตูโรงเก็บหุ่น");
   assert.match(await page.getByTestId("hud-map").innerText(), /แมพ 1/, "HUD บอกแมพที่อยู่");
   assert.deepEqual((await snap(page)).store.shop.decor, STARTER_DECOR, "โถงของแมพ 1 เริ่มด้วยของตกแต่ง 2 ชิ้น");
   assert.equal((await snap(page)).avatar.texture, "ch_b_lab", "ตัวละครในฉากเป็นแบบที่เลือกตอนลงทะเบียน");
@@ -1480,6 +1481,7 @@ async function playRoom(page, room) {
     await page.waitForTimeout(350);
     assert.deepEqual((await snap(page)).store.shop.loadout, ["overcharge", "overcharge", "shield"]);
     await leaveMarket(page);
+    await goToHangar(page);
     await walkTo(page, "storage");
     await act(page);
     await page.getByTestId("storage").waitFor();
@@ -2716,14 +2718,14 @@ async function playNormal(page) {
   assert.equal(await decor.getAttribute("data-mode"), "decor");
   await page.getByTestId("decor-mode-station").click();
   assert.equal(await decor.getAttribute("data-mode"), "station");
-  assert.deepEqual(await layoutOf(), { shop: "2,8", lab: "14,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
+  assert.deepEqual(await layoutOf(), { shop: "2,8", lab: "14,8", travel: "8,8", decorboard: "11,8" });
   assert.equal(await page.getByTestId("decor-panel").getAttribute("data-top"), "true", "จุดใช้งานของโถงอยู่แถวล่าง: แถบเลื่อนขึ้นบนเองไม่ให้บัง");
   assert.equal(await page.getByTestId("station-reset").isDisabled(), true);
-  assert.equal(await page.locator('[data-testid^="station-pick-"]').count(), 5, "โถง: ย่านร้านค้า ห้องวิจัย กล่องเก็บไอเทม กระดานแผนที่ กระดานตกแต่ง (ประตูย้ายไม่ได้)");
+  assert.equal(await page.locator('[data-testid^="station-pick-"]').count(), 4, "โถง: ย่านร้านค้า ห้องวิจัย กระดานแผนที่ กระดานตกแต่ง (ประตูย้ายไม่ได้ กล่องเก็บไอเทมอยู่ที่โรงเก็บหุ่น)");
   // แตะชื่อจุดแล้วแตะช่อง: ทับของอื่นไม่ได้ และหน้าจุดต้องมีที่ยืน (โซฟาอยู่ที่ช่อง 15–16 แถว 6)
   await page.getByTestId("station-pick-shop").click();
   assert.equal(await decor.getAttribute("data-held"), "shop");
-  await clickCell(page, 5, 8);
+  await clickCell(page, 8, 8);
   assert.match(await page.getByTestId("decor-notice").innerText(), /ต้องเป็นพื้นที่ว่างและไม่ทับของชิ้นอื่น/);
   await clickCell(page, 15, 5);
   assert.match(await page.getByTestId("decor-notice").innerText(), /บังจุดยืนหน้าประตูหรือจุดใช้งานอื่น/);
@@ -2736,16 +2738,16 @@ async function playNormal(page) {
   assert.equal(await spotOf("shop"), 224, "ร้านในฉากย้ายไปที่ใหม่ทันที");
   let blocked = (await snap(page)).map.blocked;
   assert.deepEqual([blocked.includes("6,5"), blocked.includes("7,5"), blocked.includes("2,8")], [true, true, false], "ตัวกันชนย้ายตามร้าน ที่เดิมเดินผ่านได้");
-  // ลากจุดใช้งานบนฉาก: กล่องเก็บไอเทม (ช่อง 5–6 แถว 8) ไปช่อง 9–10 แถว 6
-  const boxFrom = await cellPoint(page, 6, 8, 0);
+  // ลากจุดใช้งานบนฉาก: ทางเข้าห้องวิจัย (ช่อง 14–15 แถว 8) ไปช่อง 9–10 แถว 6
+  const boxFrom = await cellPoint(page, 15, 8, 0);
   const boxTo = await cellPoint(page, 10, 6, 0);
   await page.mouse.move(boxFrom.x, boxFrom.y);
   await page.mouse.down();
   await page.mouse.move((boxFrom.x + boxTo.x) / 2, (boxFrom.y + boxTo.y) / 2, { steps: 4 });
-  assert.equal(await decor.getAttribute("data-held"), "storage", "ลากจุดใช้งานบนฉาก: ถือจุดนั้น");
+  assert.equal(await decor.getAttribute("data-held"), "lab", "ลากจุดใช้งานบนฉาก: ถือจุดนั้น");
   await page.mouse.move(boxTo.x, boxTo.y, { steps: 4 });
   await page.mouse.up();
-  assert.equal((await layoutOf()).storage, "9,6", `ลากกล่องเก็บไอเทมไปวางที่ใหม่: ${await decor.getAttribute("data-layout")}`);
+  assert.equal((await layoutOf()).lab, "9,6", `ลากทางเข้าห้องวิจัยไปวางที่ใหม่: ${await decor.getAttribute("data-layout")}`);
   // คีย์บอร์ด: เลื่อนกรอบไปที่กระดานแผนที่ Enter หยิบ เลื่อนไปช่องใหม่ Enter วาง
   await page.getByTestId("decor-grid").focus();
   await moveCursor(page, 8, 8);
@@ -2767,7 +2769,7 @@ async function playNormal(page) {
   await shot(page, "35-theme-board");
   await page.getByTestId("decor-close").click();
   await page.waitForTimeout(400);
-  assert.deepEqual((await snap(page)).store.shop.layout, { "easy:hall": { shop: { col: 6, row: 5 }, storage: { col: 9, row: 6 }, travel: { col: 16, row: 8 } } });
+  assert.deepEqual((await snap(page)).store.shop.layout, { "easy:hall": { shop: { col: 6, row: 5 }, lab: { col: 9, row: 6 }, travel: { col: 16, row: 8 } } });
   // เดินไปใช้ร้านที่ย้ายแล้วได้ตามปกติ
   await walkTo(page, "shop");
   assert.match((await snap(page)).store.prompt, /ย่านร้านค้า/);
@@ -2783,7 +2785,7 @@ async function playNormal(page) {
   await page.getByTestId("decor-mode-station").click();
   await page.getByTestId("station-reset").click();
   assert.match(await page.getByTestId("decor-notice").innerText(), /คืนทุกจุดและเสาไปตำแหน่งเริ่มต้นแล้ว/);
-  assert.deepEqual(await layoutOf(), { shop: "2,8", lab: "14,8", storage: "5,8", travel: "8,8", decorboard: "11,8" });
+  assert.deepEqual(await layoutOf(), { shop: "2,8", lab: "14,8", travel: "8,8", decorboard: "11,8" });
   assert.ok(!(await decorPlaced(page)).includes("plant@2,8"));
   await page.keyboard.press("Escape");
   await page.waitForTimeout(500);

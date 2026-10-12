@@ -59,8 +59,6 @@ export class HallScene extends WorldScene {
     this.addInteractable(shop, "shop", () => ui.prompt.shop, () => store().enterMarket());
     const [lab] = this.objectsOf("lab");
     this.addInteractable(lab, "lab", () => ui.prompt.lab, () => store().enterLab());
-    const [storage] = this.objectsOf("storage");
-    this.addInteractable(storage, "storage", () => ui.prompt.storage, () => store().openOverlay("storage"));
     const [travel] = this.objectsOf("travel");
     this.addInteractable(travel, "travel", () => ui.prompt.travel, () => store().openOverlay("travel"));
     const [board] = this.objectsOf("decorboard");

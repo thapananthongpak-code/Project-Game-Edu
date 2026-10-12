@@ -22,7 +22,7 @@ export type ObjectKind =
   | "lab"
   /** กระถางของห้องวิจัย (index = เลขกระถางเริ่มที่ 0) */
   | "pot"
-  /** กล่องเก็บไอเทม: อุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (โถงและโรงเก็บหุ่น) */
+  /** กล่องเก็บไอเทม: อุปกรณ์ของการ์เดียนและกระเป๋าของใช้ (โรงเก็บหุ่น) */
   | "storage"
   /** กระดานแผนที่การเดินทาง: ไปแมพอื่นที่เปิดแล้ว (โถงของทุกแมพ) */
   | "travel"
@@ -113,7 +113,7 @@ const pickups = (npc: NpcId, cells: [col: number, row: number][]): MapObject[] =
 
 /**
  * โถงของแต่ละแมพ (GDD ข้อ 3 และ 15): ผัง ชุดไทล์ และตำแหน่งของต่างกัน ทุกโถงมีประตูห้องตามจำนวนห้องของแมพ ประตูโรงเก็บหุ่นตรงกลาง
- * ทางเข้าย่านร้านค้า กล่องเก็บไอเทม กระดานแผนที่การเดินทาง และกระดานตกแต่ง ของตกแต่งทั้งหมดเป็นของที่ผู้เล่นวางเอง (src/game/decor.ts) ผังจึงมีแต่จุดใช้งาน
+ * ทางเข้าย่านร้านค้า ทางเข้าห้องวิจัย กระดานแผนที่การเดินทาง และกระดานตกแต่ง ของตกแต่งทั้งหมดเป็นของที่ผู้เล่นวางเอง (src/game/decor.ts) ผังจึงมีแต่จุดใช้งาน
  */
 const HALLS: Record<Difficulty, GameMap> = {
   // แมพ 1 Pixel AI Lab: โถงโล่ง 6 ประตู
@@ -125,7 +125,6 @@ const HALLS: Record<Difficulty, GameMap> = {
       ...[2, 5, 8, 11, 14, 17].map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
       { kind: "shop", prop: "pr_market_gate", col: 2, row: 8, w: 2 },
-      { kind: "storage", prop: "pr_storage_box", col: 5, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 8, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 11, row: 8 },
       { kind: "lab", prop: "pr_lab_door", col: 14, row: 8, w: 2 },
@@ -153,7 +152,6 @@ const HALLS: Record<Difficulty, GameMap> = {
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
       { kind: "travel", prop: "pr_travel_board", col: 2, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 5, row: 8 },
-      { kind: "storage", prop: "pr_storage_box", col: 12, row: 8, w: 2 },
       { kind: "shop", prop: "pr_market_gate", col: 15, row: 8, w: 2 },
       { kind: "lab", prop: "pr_lab_door", col: 8, row: 8, w: 2 },
     ],
@@ -178,7 +176,6 @@ const HALLS: Record<Difficulty, GameMap> = {
     objects: [
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
       { kind: "shop", prop: "pr_market_gate", col: 2, row: 8, w: 2 },
-      { kind: "storage", prop: "pr_storage_box", col: 6, row: 8, w: 2 },
       { kind: "travel", prop: "pr_travel_board", col: 12, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 16, row: 8 },
       { kind: "lab", prop: "pr_lab_door", col: 8, row: 8, w: 2 },
@@ -194,25 +191,36 @@ export const hallMapOf = (difficulty: Difficulty): GameMap => HALLS[difficulty];
  * ประตูกลับโถงอยู่กลางผนังบน เคาน์เตอร์ของแต่ละร้านเรียงเป็นแถว
  */
 export const STALL_COLUMNS: Record<Stall, number> = { gear: 1, items: 5, plants: 9, costume: 13, decor: 17 };
+/** ชุดไทล์ประจำห้อง: ย่านร้านค้าและห้องวิจัยแต่ละห้องใช้ชุดเดียวทุกแมพ (ไม่ซ้ำกับโถง) */
+export const MARKET_TILESET = "ts_market";
+export const LAB_TILESET = "ts_lab";
+/** ของประกอบฉากตายตัวของย่านร้านค้า (ห้องนี้ผู้เล่นไม่จัดเอง) */
+const MARKET_PROPS: { prop: string; col: number }[] = [
+  { prop: "pr_market_lamp", col: 3 },
+  { prop: "pr_market_crates", col: 6 },
+  { prop: "pr_market_barrel", col: 12 },
+  { prop: "pr_market_flags", col: 15 },
+];
 const marketOf = (tileset: string): GameMap => ({
   tileset,
   shape: RECT,
   spawn: { col: 9, row: 3 },
   objects: [
     backDoor(9),
+    ...MARKET_PROPS.map(({ prop, col }): MapObject => ({ kind: "decor", prop, col, row: 3 })),
     ...(Object.entries(STALL_COLUMNS) as [Stall, number][]).map(([stall, col]): MapObject => ({ kind: "stall", prop: `pr_stall_${stall}`, col, row: 5, w: 2, stall })),
   ],
 });
-export const marketMapOf = (difficulty: Difficulty): GameMap => marketOf(HALLS[difficulty].tileset);
+export const marketMapOf = (_difficulty: Difficulty): GameMap => marketOf(MARKET_TILESET);
 
 /**
  * ห้องวิจัยพืชต่างดาว (GDD ข้อ 21): ห้องเดียวต่อแมพ ใช้ชุดไทล์เดียวกับโถง ผังตายตัว กระถางเรียง 2 แถว แถวละ 4 กระถาง
  * pots = จำนวนกระถางที่ผู้เล่นใช้ได้ตามแมพไกลสุดที่ไปถึง (ไม่ระบุ = ครบ 8) กระถางที่ยังไม่เปิดไม่อยู่ในผัง
  */
 export const LAB_POT_SLOTS: { col: number; row: number }[] = [3, 7, 11, 15].flatMap((col) => [4, 7].map((row) => ({ col, row }))).sort((a, b) => a.row - b.row || a.col - b.col);
-export function labMapOf(difficulty: Difficulty, pots: number = LAB_POT_SLOTS.length): GameMap {
+export function labMapOf(_difficulty: Difficulty, pots: number = LAB_POT_SLOTS.length): GameMap {
   return {
-    tileset: HALLS[difficulty].tileset,
+    tileset: LAB_TILESET,
     shape: RECT,
     spawn: { col: 9, row: 3 },
     objects: [

@@ -231,12 +231,6 @@ export function MainMenu() {
           <p className="mt-3 text-xs text-mist">{ui.menu.prototype}</p>
         </div>
 
-        {/* ตัวละครยืนหน้าฉาก: ผู้เล่นทั้งสองแบบกับพี่บิต ขยับขึ้นลงเบา ๆ (ปิดเมื่อผู้ใช้ตั้งค่าลดการเคลื่อนไหว) */}
-        <div className="menu-cast pointer-events-none fixed bottom-[5%] left-[50%] hidden items-end justify-center gap-1 md:flex" aria-hidden="true">
-          <img src={art.player("a", "lab")} alt="" className="menu-bob pixelated h-20 w-20 lg:h-28 lg:w-28" style={{ animationDelay: "0s" }} />
-          <img src={art.bit("classic")} alt="" className="menu-bob pixelated h-24 w-24 lg:h-32 lg:w-32" style={{ animationDelay: "0.35s" }} />
-          <img src={art.player("b", "lab")} alt="" className="menu-bob pixelated h-20 w-20 lg:h-28 lg:w-28" style={{ animationDelay: "0.7s" }} />
-        </div>
       </div>
     </div>
   );

@@ -101,7 +101,7 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
         const base = baseMapOf(map, area);
         expect(layoutError(base, {}), `${map} ${area}`).toBeNull();
         const stations = stationsIn(base);
-        expect(stations, `${map} ${area}`).toEqual(area === "hall" ? ["shop", "lab", "storage", "travel", "decorboard"] : ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
+        expect(stations, `${map} ${area}`).toEqual(area === "hall" ? ["shop", "lab", "travel", "decorboard"] : ["storage", "decorboard", "robot", "console", "hologram", "wardrobe", "bitpad"]);
         for (const station of stations) expect(stationCells(base, {}, [], station).length, `${map} ${area} ${station}`).toBeGreaterThanOrEqual(10);
       }
     }
@@ -109,18 +109,18 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
 
   it("ย้ายได้เฉพาะพื้นที่ว่าง ไม่ทับของอื่น ไม่บังช่องยืนหน้าประตูหรือจุดอื่น และหน้าจุดต้องมีที่ยืน", () => {
     const hall = hallMapOf("easy");
-    // ร้านกว้าง 2 ช่อง เริ่มที่ช่อง 2–3 แถว 8 กล่องเก็บไอเทมอยู่ที่ช่อง 5–6 แถว 8
+    // ทางเข้าย่านร้านค้ากว้าง 2 ช่อง เริ่มที่ช่อง 2–3 แถว 8 กระดานแผนที่อยู่ที่ช่อง 8–9 แถว 8
     expect(layoutError(hall, { shop: { col: 14, row: 5 } })).toBeNull();
     expect(arrangedMap(hall, { shop: { col: 14, row: 5 } }).objects.find((object) => object.kind === "shop")).toMatchObject({ col: 14, row: 5, w: 2, prop: "pr_market_gate" });
-    expect(layoutError(hall, { shop: { col: 4, row: 8 } })).toBe("floor");
+    expect(layoutError(hall, { shop: { col: 7, row: 8 } })).toBe("floor");
     expect(layoutError(hall, { shop: { col: 18, row: 5 } })).toBe("floor");
     expect(layoutError(hall, { shop: { col: 0, row: 5 } })).toBe("floor");
     expect(layoutError(hall, { shop: { col: 3.5, row: 5 } })).toBe("floor");
     // แถวล่างสุด: หน้าร้านเป็นผนัง ไม่มีที่ยืน
     expect(layoutError(hall, { shop: { col: 14, row: 9 } })).toBe("access");
-    // ใต้ประตูห้อง 1 (ช่อง 2 แถว 2) และบนช่องยืนหน้ากล่องเก็บไอเทม (แถว 9)
+    // ใต้ประตูห้อง 1 (ช่อง 2 แถว 2) และบนช่องยืนหน้ากระดานแผนที่ (แถว 9)
     expect(layoutError(hall, { shop: { col: 2, row: 2 } })).toBe("access");
-    expect(layoutError(hall, { decorboard: { col: 5, row: 9 } })).toBe("access");
+    expect(layoutError(hall, { decorboard: { col: 8, row: 9 } })).toBe("access");
     // ของตกแต่งที่วางอยู่นับเป็นของที่ทับไม่ได้ และช่องยืนหน้าจุดที่ย้ายมาต้องไม่มีของตกแต่ง
     const sofa: DecorPlacement[] = [{ decor: "sofa", col: 14, row: 6 }];
     expect(layoutError(hall, { shop: { col: 15, row: 6 } }, sofa)).toBe("floor");
@@ -138,7 +138,7 @@ describe("จุดใช้งานที่ผู้เล่นย้าย�
   it("ข้อมูลการย้ายที่ผิดทำให้ห้องกลับไปตำแหน่งเริ่มต้น และของตกแต่งตรวจกับผังที่ย้ายแล้ว", () => {
     const hall = hallMapOf("easy");
     expect(validLayout(hall, { shop: { col: 14, row: 5 } })).toEqual({ shop: { col: 14, row: 5 } });
-    expect(validLayout(hall, { shop: { col: 14, row: 5 }, storage: { col: 15, row: 5 } })).toEqual({});
+    expect(validLayout(hall, { shop: { col: 14, row: 5 }, travel: { col: 15, row: 5 } })).toEqual({});
     expect(validLayout(hall, { console: { col: 14, row: 5 } })).toEqual({});
     expect(validLayout(hall, undefined)).toEqual({});
     // ย้ายร้านออกแล้ว ที่เดิมของร้านวางของตกแต่งได้ และที่ใหม่ของร้านวางไม่ได้

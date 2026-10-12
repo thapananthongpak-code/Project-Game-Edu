@@ -1,0 +1,23 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "tall wooden pole with a crossbar and two large plain red and yellow banner flags hanging from it, no emblem, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "width": 32,
+    "height": 64,
+    "no_background": true,
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "b65d3d0e-a074-48be-b510-c38818d88bdc",
+  "generatedAt": "2026-10-12T06:51:30.010Z",
+  "rejected": [
+    {
+      "tool": "create_image_pixflux",
+      "id": "0d05c581-0e6a-4227-a96a-8631d465b130",
+      "reason": "ภาพผิดจากที่ต้องการ (ลังมีเครื่องหมาย / ธงมีผืนเดียว)"
+    }
+  ]
+}

@@ -2724,6 +2724,134 @@
       "status": "generated"
     },
     {
+      "id": "TS-22",
+      "kind": "tileset",
+      "name": "ไทล์เซตย่านร้านค้า",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_market": "tiles/ts_market.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of dark warm grey cobblestone paving slabs with subtle seams, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of dark brown brick wall panels with an orange trim band and small round warm yellow lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "d2fe9cc0-9416-45b3-ac27-a205d32a59d6",
+        "generatedAt": "2026-10-12T06:46:07.430Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_market_preview": "tiles/ts_market_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-23",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้องวิจัยพืช",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_lab": "tiles/ts_lab.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of warm beige metal floor slabs with subtle grid seams and thin brown soil colored channels, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of teal painted steel wall panels with a white trim band and small round white status lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "7460b33f-66e0-43db-a07b-c3733f9b6c9d",
+        "generatedAt": "2026-10-12T06:56:07.725Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_lab_preview": "tiles/ts_lab_preview.png"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_topdown_tileset",
+          "id": "612c3c7f-26b3-45a5-8883-389f11fd0c59",
+          "reason": "ผนังออกมาเป็นหิมะ ไม่ใช่เรือนกระจก"
+        },
+        {
+          "tool": "create_topdown_tileset",
+          "id": "221a93bd-979b-4df6-8a1d-753a35a347b8",
+          "reason": "ผนังเป็นสีเขียวล้วนไม่มีลาย"
+        }
+      ]
+    },
+    {
       "id": "TS-12",
       "kind": "tileset",
       "name": "ธีมห้อง ซากุระ",
@@ -6443,6 +6571,140 @@
         "generatedAt": "2026-10-12T03:58:45.315Z"
       },
       "status": "generated"
+    },
+    {
+      "id": "PR-M07",
+      "kind": "prop",
+      "name": "ของประกอบฉากย่านร้านค้า: เสาโคมไฟ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_market_lamp": "props/pr_market_lamp.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall black iron street lamp post with a glowing warm yellow lantern on top, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e2fc2964-f00c-420d-8625-8b9b7ebce94d",
+        "generatedAt": "2026-10-12T06:45:06.231Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-M08",
+      "kind": "prop",
+      "name": "ของประกอบฉากย่านร้านค้า: กองลัง",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_market_crates": "props/pr_market_crates.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "stack of three plain wooden shipping crates tied with a rope, plain wood with no markings and no labels, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "79dfb088-6536-4850-84a5-3dc2eb564eba",
+        "generatedAt": "2026-10-12T06:50:59.845Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "fbb2ce4c-ded3-4ad7-818d-ceaccdb25922",
+          "reason": "ภาพผิดจากที่ต้องการ (ลังมีเครื่องหมาย / ธงมีผืนเดียว)"
+        }
+      ]
+    },
+    {
+      "id": "PR-M09",
+      "kind": "prop",
+      "name": "ของประกอบฉากย่านร้านค้า: ถังไม้",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_market_barrel": "props/pr_market_barrel.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "two wooden barrels with iron hoops standing together, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "f3aca819-ae62-4755-b35a-f36cca13b292",
+        "generatedAt": "2026-10-12T06:46:24.569Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-M10",
+      "kind": "prop",
+      "name": "ของประกอบฉากย่านร้านค้า: ราวธง",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_market_flags": "props/pr_market_flags.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall wooden pole with a crossbar and two large plain red and yellow banner flags hanging from it, no emblem, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b65d3d0e-a074-48be-b510-c38818d88bdc",
+        "generatedAt": "2026-10-12T06:51:30.010Z"
+      },
+      "status": "generated",
+      "rejected": [
+        {
+          "tool": "create_image_pixflux",
+          "id": "0d05c581-0e6a-4227-a96a-8631d465b130",
+          "reason": "ภาพผิดจากที่ต้องการ (ลังมีเครื่องหมาย / ธงมีผืนเดียว)"
+        }
+      ]
     },
     {
       "id": "PR-H01",
