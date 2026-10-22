@@ -3409,6 +3409,27 @@ async function playHard(page) {
   await assertCanvasFits(page, "โถงของแมพ 3");
   await shot(page, "33-hard-hall");
 
+  // สมุดเควสของแมพ 3 (ไม่มีห้องเรียน): เคยพังทั้งหน้าเพราะอ่านหัวข้อสุดท้ายของรายการว่าง ต้องเปิดได้และแสดงด่านต่อสู้แทน
+  await page.getByRole("button", { name: "สมุดเควส" }).click();
+  await page.getByTestId("questlog").waitFor();
+  assert.equal(await page.getByTestId("questlog-steps").getAttribute("data-focus"), "battles");
+  assert.equal(await page.locator('[data-testid="questlog-steps"] li').count(), 3, "แมพ 3 มี 3 ด่าน");
+  assert.match(await page.getByTestId("questlog-steps").innerText(), /ปราบบอส/);
+  assert.equal(await page.getByTestId("profile-cores").count(), 0, "แมพ 3 ไม่มีแกน AI ให้เก็บ");
+  await shot(page, "33-hard-questlog");
+  await page.getByRole("button", { name: "ปิด", exact: true }).click();
+  await page.waitForTimeout(350);
+  // หน้าต่างที่เรนเดอร์พัง: ขึ้นข้อความพร้อมปุ่มปิด เกมด้านหลังไม่ถูกล้าง (บังคับพังด้วย NPC ที่ไม่มีอยู่จริง ข้อผิดพลาดที่เกิดจากการบังคับนี้ไม่นับเป็นข้อผิดพลาดของการทดสอบ)
+  const errorsBefore = errors.length;
+  await page.evaluate(() => window.__aitq.store.setState({ overlay: "npc", npcId: "ghost" }));
+  await page.getByTestId("overlay-failed").waitFor();
+  await shot(page, "33-overlay-failed");
+  await page.getByTestId("overlay-failed-close").click();
+  await page.waitForTimeout(350);
+  assert.equal((await snap(page)).store.overlay, null);
+  assert.equal(await page.getByTestId("hud-map").count(), 1, "เกมด้านหลังยังอยู่ ไม่เป็นจอเปล่า");
+  errors.length = errorsBefore;
+
   // --- ร้านของแมพ 3: อุปกรณ์ขั้นสูงสุดวางขาย ซื้อแล้วไปใส่ที่โรงเก็บหุ่น
   for (const [stall, ids] of [["gear", ["weapon-cannon"]], ["costume", ["outfit-researcher"]], ["items", ["supply-reboot", "supply-analyzer", "supply-overcharge", "module-scanner", "module-medic"]]]) {
     await openStall(page, stall);

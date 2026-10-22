@@ -16,11 +16,13 @@ if (window.location.pathname.replace(/\/+$/, "") === "/teacher") {
     ),
   );
 } else {
-  void Promise.all([import("./App"), import("./state/gameStore")]).then(([{ App }, { connectProgressStore }]) => {
+  void Promise.all([import("./App"), import("./state/gameStore"), import("./ui/ErrorBoundary")]).then(([{ App }, { connectProgressStore }, { RootBoundary }]) => {
     void connectProgressStore();
     root.render(
       <StrictMode>
-        <App />
+        <RootBoundary>
+          <App />
+        </RootBoundary>
       </StrictMode>,
     );
   });

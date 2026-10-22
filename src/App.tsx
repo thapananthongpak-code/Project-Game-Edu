@@ -22,6 +22,7 @@ import { BitPad } from "./ui/BitPad";
 import { TravelMap } from "./ui/TravelMap";
 import { DecorBoard } from "./ui/DecorBoard";
 import { DashRun } from "./ui/DashRun";
+import { OverlayBoundary } from "./ui/ErrorBoundary";
 import { GuideBar } from "./ui/GuideBar";
 import { LabPanel } from "./ui/LabPanel";
 import { Extras } from "./ui/Extras";
@@ -75,6 +76,7 @@ export function App() {
       </main>
       {playing && <StageOverlay touch={touch} />}
       {playing && touch && overlay === null && !tutorOpen && <TouchControls />}
+      <OverlayBoundary resetKey={overlay}>
       {overlay === "dialogue" && <DialogueBox />}
       {overlay === "minigame" && <MinigameOverlay />}
       {overlay === "field" && <FieldMission />}
@@ -98,6 +100,7 @@ export function App() {
       {overlay === "extras" && <Extras />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}
+      </OverlayBoundary>
       {tutorOpen && tutorRoom !== null && <TutorPanel />}
       {screen === "onboarding" && <Onboarding />}
       {screen === "menu" && <MainMenu />}

@@ -48,14 +48,17 @@ export function QuestLog() {
   // หัวข้อที่แสดงขั้นตอน: หัวข้อที่กำลังทำ หรือหัวข้อแรกที่ยังไม่ได้แกน AI
   // หัวข้อของแมพที่อยู่ (แมพ 2 และ 3 ไม่มีหัวข้อ 6)
   const topics = course.topics.filter((topic) => topicsOf(difficulty).includes(topic.id));
-  const focus = room ?? topics.find((topic) => !roomProgress(run, topic.id).core)?.id ?? topics[topics.length - 1].id;
-  const p = roomProgress(run, focus);
-  const total = stationsOf(focus).length;
+  // แมพ 3 ไม่มีห้องเรียน (ไม่มีหัวข้อ): ไม่มีหัวข้อที่กำลังทำ ขั้นตอนเป็นรายการด่านต่อสู้ของแมพแทน
+  const focus: number | null = topics.length === 0 ? null : (room ?? topics.find((topic) => !roomProgress(run, topic.id).core)?.id ?? topics[topics.length - 1].id);
+  const p = roomProgress(run, focus ?? 0);
+  const total = focus === null ? 0 : stationsOf(focus).length;
   // ด่านต่อสู้ที่ต้องใช้แกน AI ของหัวข้อนี้
-  const battle = plan.battles.find((b) => b.requires.includes(focus));
+  const battle = focus === null ? undefined : plan.battles.find((b) => b.requires.includes(focus));
   const battleStep = battle ? [{ done: battles[battle.id]?.won ?? false, text: fmt(ui.questLog.stepBattle, { kaiju: foeName(battle.forms[0].art) }) }] : [];
 
-  const steps = isFieldRoom(focus)
+  const steps = focus === null
+    ? plan.battles.map((b) => ({ done: battles[b.id]?.won ?? false, text: fmt(b.boss ? ui.questLog.stepBoss : ui.questLog.stepBattle, { kaiju: foeName(b.forms[0].art) }) }))
+    : isFieldRoom(focus)
     ? [
         { done: fieldComplete(p), text: ui.questLog.stepField },
         { done: posttest !== null, text: ui.questLog.stepPosttest },
@@ -184,6 +187,7 @@ export function QuestLog() {
           </div>
         </details>
 
+        {topics.length > 0 && (
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate" data-testid="profile-cores">
             {fmt(ui.questLog.cores, { n: coreCount({ progress }), total: coreTotal(run) })} · <span data-testid="profile-power" data-power={power}>{fmt(ui.questLog.power, { n: power })}</span>
@@ -204,7 +208,9 @@ export function QuestLog() {
             })}
           </div>
         </section>
+        )}
 
+        {topics.length > 0 && (
         <section>
           <h3 className="mb-1 text-xs font-bold text-slate">{ui.questLog.competencies}</h3>
           <ul className="flex flex-col gap-1">
@@ -231,9 +237,10 @@ export function QuestLog() {
             })}
           </ul>
         </section>
+        )}
 
-        <section>
-          <h3 className="mb-1 text-xs font-bold text-slate">{fmt(ui.questLog.steps, { n: focus })}</h3>
+        <section data-testid="questlog-steps" data-focus={focus ?? "battles"}>
+          <h3 className="mb-1 text-xs font-bold text-slate">{focus === null ? ui.questLog.stepsBattles : fmt(ui.questLog.steps, { n: focus })}</h3>
           <ul className="flex flex-col gap-1">
             {steps.map((step) => (
               <li key={step.text} className="flex items-center gap-2" data-done={step.done}>
