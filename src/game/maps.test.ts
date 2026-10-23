@@ -145,7 +145,7 @@ describe("แผนที่ของทุกฉาก", () => {
       expect(count(lab, "door"), difficulty).toBe(1);
       expect(lab.objects.filter((o) => o.kind === "pot").map((o) => o.index), difficulty).toEqual(Array.from({ length: LAB.pots[difficulty] }, (_, i) => i));
       expect(count(hallMapOf(difficulty), "lab"), difficulty).toBe(1);
-      expect(lab.tileset).toBe("ts_lab");
+      expect(lab.tileset).toBe("ts_garden");
       expect(DIFFICULTIES.map((d) => hallMapOf(d).tileset)).not.toContain(lab.tileset);
     }
     expect(LAB.pots.easy < LAB.pots.normal && LAB.pots.normal < LAB.pots.hard).toBe(true);

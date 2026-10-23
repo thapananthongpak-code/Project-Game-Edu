@@ -59,6 +59,13 @@ async function callTool(name, args, quiet = false) {
   return texts.join("\n");
 }
 
+/** arguments ของแอสเซตที่เรียกเครื่องมือจริง: ถ้ามี `source` (ภาพต้นฉบับใน assets-src/pixellab) ใส่เป็น image_base64 ให้ (ใช้กับ edit_image_pro_flash) */
+function toolArgs(asset) {
+  const { source, ...args } = asset.pixellab.arguments;
+  if (!source) return args;
+  return { ...args, image_base64: readFileSync(new URL(`../assets-src/pixellab/${source}`, import.meta.url)).toString("base64") };
+}
+
 const findAsset = (id) => {
   const asset = JSON.parse(readFileSync(MANIFEST, "utf8")).assets.find((a) => a.id === id);
   if (!asset) {
@@ -139,7 +146,7 @@ if (command === "list") {
 } else if (command === "gen" && target) {
   const asset = findAsset(target);
   console.log(`${asset.id} ${asset.name} -> ${asset.pixellab.tool}`);
-  await callTool(asset.pixellab.tool, asset.pixellab.arguments);
+  await callTool(asset.pixellab.tool, toolArgs(asset));
 } else if (command === "make" && target) {
   // เจน รอจนเสร็จ (รวมแอนิเมชันถ้าแอสเซตกำหนดไว้) แล้วดึงผล ทำทีละชิ้นตามรายการที่ให้ ข้ามชิ้นที่มี source.json แล้ว
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -166,7 +173,7 @@ if (command === "list") {
     console.log(`${asset.id} ${asset.name} -> ${asset.pixellab.tool}`);
     // ชิ้นที่ล้มเหลวไม่หยุดชิ้นถัดไป รันคำสั่งเดิมซ้ำได้ (ชิ้นที่เสร็จแล้วถูกข้าม)
     try {
-      const reply = await callTool(asset.pixellab.tool, asset.pixellab.arguments, true);
+      const reply = await callTool(asset.pixellab.tool, toolArgs(asset), true);
       const id = reply.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)?.[0];
       if (!id) throw new Error(`หา id ในคำตอบไม่พบ\n${reply}`);
       console.log(`  id ${id}`);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAudioDirector } from "./audio/useAudio";
 import { PhaserGame } from "./game/PhaserGame";
-import { pendingStory, useGameStore } from "./state/gameStore";
+import { levelDue, pendingStory, useGameStore } from "./state/gameStore";
 import { Battle } from "./ui/Battle";
 import { Certificate } from "./ui/Certificate";
 import { CoreReward } from "./ui/CoreReward";
@@ -25,6 +25,8 @@ import { DashRun } from "./ui/DashRun";
 import { OverlayBoundary } from "./ui/ErrorBoundary";
 import { GuideBar } from "./ui/GuideBar";
 import { LabPanel } from "./ui/LabPanel";
+import { LevelUp } from "./ui/LevelUp";
+import { Profile } from "./ui/Profile";
 import { Extras } from "./ui/Extras";
 import { StageOverlay } from "./ui/StageOverlay";
 import { StoryDialog } from "./ui/StoryDialog";
@@ -55,6 +57,15 @@ function useStoryTrigger(): void {
   }, [beat, openStory]);
 }
 
+/** เลเวลใหม่: แจกรางวัลและเปิดหน้าต่างฉลองเมื่อผู้เล่นว่างอยู่ (เนื้อเรื่องที่ถึงคิวมาก่อน) */
+function useLevelTrigger(): void {
+  const due = useGameStore((s) => s.ready && s.overlay === null && !s.tutorOpen && s.screen !== "menu" && s.screen !== "onboarding" && pendingStory(s) === null && levelDue(s));
+  const openLevelUp = useGameStore((s) => s.openLevelUp);
+  useEffect(() => {
+    if (due) openLevelUp();
+  }, [due, openLevelUp]);
+}
+
 export function App() {
   const screen = useGameStore((s) => s.screen);
   const overlay = useGameStore((s) => s.overlay);
@@ -64,6 +75,7 @@ export function App() {
   useRoomTimer();
   useAudioDirector();
   useStoryTrigger();
+  useLevelTrigger();
   const playing = screen === "hall" || screen === "hangar" || screen === "room" || screen === "market" || screen === "lab";
 
   return (
@@ -98,6 +110,8 @@ export function App() {
       {overlay === "lab" && <LabPanel />}
       {overlay === "dash" && <DashRun />}
       {overlay === "extras" && <Extras />}
+      {overlay === "profile" && <Profile />}
+      {overlay === "levelup" && <LevelUp />}
       {overlay === "battle" && <Battle />}
       {overlay === "story" && <StoryDialog />}
       </OverlayBoundary>

@@ -14,7 +14,7 @@ export function GuardianModel({ gear, paint, className = "" }: { gear: Gear; pai
   return (
     <div className={`relative ${className}`} data-testid="guardian-model" data-weapon={gear.weapon} data-armor={gear.armor} data-chip={gear.chip}>
       {gear.chip !== "none" && <img src={art.guardianChip(gear.chip)} alt="" className={`guardian-chip guardian-chip-${gear.chip} pixelated absolute inset-0 h-full w-full object-contain`} data-testid="guardian-chip" data-chip={gear.chip} />}
-      <img src={art.guardian(gear.armor, gear.weapon)} alt="" className="pixelated relative h-full w-full object-contain" style={{ filter: PAINT_FILTER[paint] }} />
+      <img src={art.guardian(gear.armor, gear.weapon)} alt="" className={`pixelated relative h-full w-full object-contain ${paint === "aurora" ? "paint-aurora" : ""}`} style={{ filter: PAINT_FILTER[paint] }} />
     </div>
   );
 }

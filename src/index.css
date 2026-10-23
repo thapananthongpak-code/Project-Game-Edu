@@ -680,6 +680,199 @@ canvas {
   transform: rotate(8deg) translateY(6%);
   transition: all 0.6s ease-in;
 }
+/* ไคจู: ภาพปกติกับภาพท่าโจมตี (BT-A*) ซ้อนกัน ช่วงพุ่งเข้าใส่สลับเป็นภาพท่าโจมตี (เวลาเริ่มตาม --at) ถ้าไม่มีภาพท่าโจมตีจะซ่อนด้วย onError */
+.battle-kaiju-body > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.battle-kaiju-atk-img {
+  opacity: 0;
+}
+@keyframes battle-swap-in {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  18%,
+  78% {
+    opacity: 1;
+  }
+}
+@keyframes battle-swap-out {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  18%,
+  78% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .battle-kaiju-atking .battle-kaiju-atk-img {
+    animation: battle-swap-in 0.55s linear both;
+    animation-delay: var(--at, 0ms);
+  }
+  .battle-kaiju-atking .battle-kaiju-base-img {
+    animation: battle-swap-out 0.55s linear both;
+    animation-delay: var(--at, 0ms);
+  }
+}
+/* ออร่าของสถานะที่ติดอยู่ (เกราะ รวมพลัง โกรธ โล่ ป้องกัน บูสต์ รีบูต) ตัวเลขและข้อความบอกสถานะยังอยู่ที่ป้ายสถานะ */
+.battle-aura {
+  position: absolute;
+  inset: 6% 4%;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.battle-aura-armor {
+  border: 4px solid #94b0c2;
+  background: radial-gradient(circle, transparent 55%, rgba(148, 176, 194, 0.55));
+}
+.battle-aura-charge {
+  background: radial-gradient(circle, rgba(255, 205, 117, 0.7), transparent 65%);
+}
+.battle-aura-rage {
+  background: radial-gradient(circle, rgba(228, 59, 68, 0.5), transparent 65%);
+}
+.battle-aura-shield {
+  border: 4px solid #73eff7;
+  background: radial-gradient(circle, transparent 50%, rgba(115, 239, 247, 0.45));
+}
+.battle-aura-guard {
+  border: 4px dashed #3b5dc9;
+}
+.battle-aura-boost {
+  background: radial-gradient(circle, rgba(255, 163, 0, 0.55), transparent 65%);
+}
+.battle-aura-reboot {
+  border: 4px dotted #38b764;
+  background: radial-gradient(circle, rgba(56, 183, 100, 0.4), transparent 65%);
+}
+@keyframes battle-aura-pulse {
+  50% {
+    transform: scale(1.06);
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .battle-aura {
+    animation: battle-aura-pulse 1.2s ease-in-out infinite;
+  }
+}
+/* ติดสตัน: ดาวหมุนเหนือหัว */
+.battle-stars {
+  position: absolute;
+  left: 50%;
+  top: -4%;
+  width: 60%;
+  height: 16%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.battle-stars i {
+  position: absolute;
+  top: 0;
+  font-style: normal;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #ffcd75;
+  text-shadow: 0 0 0 #1a1c2c, 1px 1px 0 #1a1c2c, -1px -1px 0 #1a1c2c;
+}
+.battle-stars i:nth-child(1) {
+  left: 10%;
+}
+.battle-stars i:nth-child(2) {
+  left: 45%;
+}
+.battle-stars i:nth-child(3) {
+  left: 80%;
+}
+@keyframes battle-star-spin {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-30%) rotate(180deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .battle-stars i {
+    animation: battle-star-spin 0.9s ease-in-out infinite;
+  }
+  .battle-stars i:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+  .battle-stars i:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+}
+/* เกราะแตก: เศษกระเด็นออกรอบตัว (ซ่อนอยู่จนถึงเวลาที่เกราะแตก) */
+.battle-shards {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+.battle-shards i {
+  position: absolute;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: #94b0c2;
+  border: 2px solid #1a1c2c;
+  opacity: 0;
+}
+@keyframes battle-shard-fly {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(3.2rem) rotate(240deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .battle-shards i {
+    animation: battle-shard-fly 0.6s ease-out both;
+  }
+}
+/* โดนโจมตี: ภาพวาบขาวแวบเดียว */
+.battle-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  mix-blend-mode: lighten;
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes battle-flash-hit {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .battle-flash {
+    animation: battle-flash-hit 0.25s ease-out both;
+  }
+}
+/* ไคจูขยับตามจังหวะแม้ไม่ถึงตา: หายใจช้ากว่าการ์เดียนเล็กน้อย */
+@keyframes battle-breathe {
+  50% {
+    transform: translateY(-2%) scale(1.025);
+  }
+}
+.battle-idle-late {
+  animation: battle-breathe 2.1s ease-in-out infinite;
+}
 /* ฉากเนื้อเรื่องแบบช่องการ์ตูน (src/ui/StoryDialog.tsx): ภาพของช่องใหม่ค่อย ๆ ปรากฏ */
 @keyframes story-art-in {
   from {
@@ -768,4 +961,54 @@ canvas {
   .menu-logo {
     animation: menu-logo-in 0.6s ease-out both;
   }
+}
+
+/* หน้าต่างเลเวลอัป: เด้งขึ้นมาเบา ๆ (ไม่เคลื่อนไหวถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว) */
+@keyframes levelup-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .levelup-pop {
+    animation: levelup-pop 0.4s ease-out;
+  }
+}
+
+/* สีแสงเหนือ (รางวัลเลเวล 17): สีหุ่นไล่จากฟ้าไปเขียวไปม่วงช้า ๆ ภาพนิ่งสีฟ้าเขียวถ้าตั้งค่าลดการเคลื่อนไหว */
+@keyframes paint-aurora {
+  0%,
+  100% {
+    filter: sepia(1) saturate(4) hue-rotate(150deg) brightness(1.1);
+  }
+  50% {
+    filter: sepia(1) saturate(4) hue-rotate(260deg) brightness(1.1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .paint-aurora {
+    animation: paint-aurora 6s ease-in-out infinite;
+  }
+}
+
+/* ไคจูบนแผนที่โลก: ยังไม่ถึง = เงาดำ ด่านถัดไป = เด้งเบา ๆ */
+.travel-kaiju-locked img {
+  filter: brightness(0) opacity(0.55);
+}
+@keyframes travel-kaiju-next {
+  50% {
+    transform: translate(-50%, -62%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .travel-kaiju-next {
+    animation: travel-kaiju-next 1s ease-in-out infinite;
+  }
+}
+.travel-kaiju-next {
+  box-shadow: 0 0 0 3px #ffcd75;
 }

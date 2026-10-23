@@ -47,6 +47,7 @@ const sample: SaveData = {
   },
   story: ["prologue", "zone-n1", "win-n1"],
   shop: {
+    levelSeen: 1,
     spent: 445,
     owned: ["outfit-engineer", "bit-ninja", "module-scanner", "weapon-sword", "theme-ocean"],
     supplies: { ...emptyShop().supplies, "repair-kit": 2, reboot: 1 },
@@ -115,6 +116,19 @@ describe("LocalProgressStore", () => {
 });
 
 describe("migrateSave", () => {
+  it("เลเวล: ข้อมูลเก่าไม่มี levelSeen ได้เลเวล 1 ค่าผิดรูปถูกตัดให้อยู่ในช่วง และสถิติด่านต่อสู้ที่ผิดรูปถูกทิ้ง", () => {
+    const load = (extra: object) => migrateSave({ version: 9, rooms: {}, ...extra }) as SaveData;
+    expect(load({ shop: {} }).shop.levelSeen).toBe(1);
+    expect(load({ shop: { levelSeen: 9999 } }).shop.levelSeen).toBe(20);
+    expect(load({ shop: { levelSeen: -4 } }).shop.levelSeen).toBe(1);
+    expect(load({ shop: { levelSeen: "x" } }).shop.levelSeen).toBe(1);
+    const save = load({ battles: { k1: { won: true, wins: 1, sorties: 1, asked: 5, correct: 5, streak: 7, untouched: true }, k2: { won: false, wins: 0, sorties: 1, asked: 2, correct: 1, streak: "x", untouched: true } } });
+    expect(save.battles.k1).toMatchObject({ streak: 7, untouched: true });
+    // ยังไม่ชนะ: ไม่นับว่าชนะโดยไม่เสียพลัง ค่าที่ผิดชนิดถูกทิ้ง
+    expect(save.battles.k2.untouched).toBeUndefined();
+    expect(save.battles.k2.streak).toBeUndefined();
+  });
+
   it("รุ่น 1 ของต้นแบบห้อง 1: เก็บความคืบหน้าของห้องไว้ โปรไฟล์และแบบทดสอบก่อนเรียนว่าง", () => {
     // คำตอบที่ผู้เรียนเคยเขียน (reviewAnswers) ไม่ถูกเก็บต่อ เหลือเพียงว่าส่งคำถามทบทวนแล้ว
     const v1 = { state: { progress: { 1: { stationsSeen: 5, minigameDone: true, stars: 3, reviewAnswers: ["a"], reviewDone: true, core: true } } }, version: 1 };

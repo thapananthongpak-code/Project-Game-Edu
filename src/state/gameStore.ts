@@ -30,12 +30,13 @@ import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBa
 import { DASH_SKIP_ALL, dashDue, dashKey } from "./dash";
 import { GUIDE_STEPS, TIPS_OFF, TUTORIAL_DONE } from "./guide";
 import { harvest, plant } from "./lab";
+import { rewardItemsUpTo, statusOf } from "./level";
 import type { Avatar, BitModule, Decor, Seed, Stall, Supply, Theme } from "./shop.config";
 
 export type { RoomProgress } from "./progressStore";
 
 export type Screen = "menu" | "onboarding" | "hall" | "hangar" | "room" | "market" | "lab";
-export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive" | "lab" | "dash";
+export type Overlay = null | "dialogue" | "minigame" | "review" | "reward" | "questlog" | "field" | "posttest" | "certificate" | "story" | "battle" | "shop" | "missions" | "npc" | "storage" | "travel" | "decor" | "extras" | "guardian" | "wardrobe" | "bit" | "archive" | "lab" | "dash" | "profile" | "levelup";
 
 /** เพลงที่หน้าต่างที่เปิดอยู่ขอให้เล่น (ด่านต่อสู้เปลี่ยนตามร่างของบอสและพลังที่เหลือ ฉากเนื้อเรื่องเปลี่ยนตามอารมณ์ของช่อง) */
 export interface MusicCue {
@@ -73,6 +74,8 @@ interface GameState {
   room: number | null;
   overlay: Overlay;
   stationIndex: number | null;
+  /** เลเวลอัปที่กำลังฉลอง: เลเวลเดิม เลเวลใหม่ และรางวัลที่ได้ (src/state/level.ts) */
+  levelUp: { from: number; to: number; items: string[] } | null;
   /** ฉากเนื้อเรื่องที่กำลังแสดง (รหัสใน src/content/story.ts) */
   storyBeat: string | null;
   /** ด่านต่อสู้ที่กำลังเล่น (รหัสด่านใน src/state/campaign.ts) */
@@ -158,7 +161,7 @@ interface GameState {
   finishStory: () => void;
   openBattle: (id: string) => void;
   /** บันทึกผลการออกปฏิบัติการหนึ่งครั้ง */
-  recordBattle: (id: string, result: { won: boolean; asked: number; correct: number }) => void;
+  recordBattle: (id: string, result: { won: boolean; asked: number; correct: number; streak?: number; untouched?: boolean }) => void;
   buy: (itemId: string) => PurchaseError | null;
   equip: (kind: EquipKind, value: string) => void;
   /** จัดของใช้ลงกระเป๋า (ไม่เกิน BAG_SIZE ชิ้น ที่เหลืออยู่ในกล่องเก็บไอเทม) */
@@ -198,6 +201,8 @@ interface GameState {
   openStation: (index: number) => void;
   closeDialogue: (finished: boolean) => void;
   openOverlay: (overlay: Exclude<Overlay, "dialogue">) => void;
+  /** แจกรางวัลของเลเวลที่ถึงใหม่ (ของพิเศษลงกล่องของผู้เล่น) แล้วเปิดหน้าต่างฉลอง ไม่ทำอะไรถ้าไม่มีเลเวลใหม่ */
+  openLevelUp: () => void;
   closeOverlay: () => void;
   setTutorOpen: (open: boolean, room?: number) => void;
   completeMinigame: (result: MinigameState) => void;
@@ -223,7 +228,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     const current = progress[room] ?? emptyRoom();
     set({ progress: { ...progress, [room]: { ...current, ...patch(current) } } });
   };
-  const closed = { zone: null, room: null, overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, dashZone: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
+  const closed = { zone: null, room: null, overlay: null, stationIndex: null, levelUp: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, dashZone: null, musicCue: null, prompt: null, tutorOpen: false, tutorRoom: null } as const;
   const updateNpc = (id: NpcId, patch: (record: NpcRecord) => Partial<NpcRecord>) => {
     const { npcs } = get();
     const current = npcs[id] ?? emptyNpc();
@@ -241,6 +246,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     room: null,
     overlay: null,
     stationIndex: null,
+    levelUp: null,
     storyBeat: null,
     battleId: null,
     npcId: null,
@@ -389,7 +395,9 @@ export const useGameStore = create<GameState>()((set, get) => {
     recordBattle: (id, result) => {
       const { battles } = get();
       const before = battles[id] ?? emptyBattle();
-      set({ battles: { ...battles, [id]: { won: before.won || result.won, wins: before.wins + (result.won ? 1 : 0), sorties: before.sorties + 1, asked: before.asked + result.asked, correct: before.correct + result.correct } } });
+      const streak = Math.max(before.streak ?? 0, result.streak ?? 0);
+      const untouched = before.untouched === true || (result.won && result.untouched === true);
+      set({ battles: { ...battles, [id]: { won: before.won || result.won, wins: before.wins + (result.won ? 1 : 0), sorties: before.sorties + 1, asked: before.asked + result.asked, correct: before.correct + result.correct, ...(streak > 0 ? { streak } : {}), ...(untouched ? { untouched } : {}) } } });
     },
     buy: (itemId) => {
       const state = get();
@@ -472,6 +480,15 @@ export const useGameStore = create<GameState>()((set, get) => {
       set({ overlay: null, stationIndex: null, room: focusAfter(get()) });
     },
     openOverlay: (overlay) => set({ overlay, prompt: null }),
+    openLevelUp: () => {
+      const state = get();
+      const { level } = levelStatusOf(state);
+      const from = state.shop.levelSeen;
+      if (levelPaused || level <= from) return;
+      const items = rewardItemsUpTo(level).filter((id) => !rewardItemsUpTo(from).includes(id));
+      const owned = [...state.shop.owned, ...items.filter((id) => !state.shop.owned.includes(id))];
+      set({ shop: { ...state.shop, owned, levelSeen: level }, overlay: "levelup", levelUp: { from, to: level, items }, prompt: null });
+    },
     closeOverlay: () => set({ overlay: null, stationIndex: null, storyBeat: null, battleId: null, npcId: null, shopVendor: null, shopStall: null, labPot: null, dashZone: null, musicCue: null, room: focusAfter(get()) }),
     setTutorOpen: (tutorOpen, room) => set({ tutorOpen, tutorRoom: tutorOpen ? (room ?? get().room) : null }),
 
@@ -673,6 +690,18 @@ export const earningOf = (state: Pick<GameState, "profile" | "progress" | "other
   npcs: state.npcs,
   posttest: state.posttest,
 });
+
+/** เลเวลและ EXP ของผู้เล่นตอนนี้ (src/state/level.ts) */
+export const levelStatusOf = (state: Pick<GameState, "profile" | "progress" | "others" | "battles" | "npcs" | "posttest" | "shop">) => statusOf({ earning: earningOf(state), shop: state.shop });
+
+/** ปิดการแจกรางวัลเลเวลชั่วคราว: ใช้เฉพาะสคริปต์ทดสอบอัตโนมัติผ่านตัวช่วยของโหมด dev (src/game/debug.ts) ให้ชุดทดสอบเดิมไม่ถูกหน้าต่างเลเวลอัปและเครดิตรางวัลแทรก */
+let levelPaused = false;
+export const pauseLevel = (paused: boolean): void => {
+  levelPaused = paused;
+};
+
+/** มีเลเวลใหม่ที่ยังไม่ได้แจกรางวัลและฉลองหรือไม่ */
+export const levelDue = (state: Pick<GameState, "profile" | "progress" | "others" | "battles" | "npcs" | "posttest" | "shop">): boolean => !levelPaused && levelStatusOf(state).level > state.shop.levelSeen;
 
 export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "others" | "battles" | "npcs" | "posttest" | "shop">): number => creditBalance(earningOf(state), state.shop);
 

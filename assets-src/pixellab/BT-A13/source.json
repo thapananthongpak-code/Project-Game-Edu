@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, spreading all six wings wide and thrusting forward with white-hot energy blazing from its golden chest core, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-08/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "18439619-1005-4fe5-8cee-8b3d0b651e60",
+  "generatedAt": "2026-10-22T07:47:57.806Z"
+}

@@ -520,7 +520,8 @@ def art_guide_prompts():
 
 # สีชุดของตัวละครชั่วคราว (ใช้เมื่อยังไม่มีภาพจริง)
 OUTFIT_COLORS = {"lab": PAPER, "engineer": "#F08C2E", "pilot": "#2A4FA3", "guardian": "#333C57", "researcher": "#C9B27C", "commander": "#FFF4DC",
-                 "astronaut": "#F4F4F4", "ninja": "#1A1C2C", "hero": "#2FB8AC", "hoodie": "#2FB8AC", "paramedic": "#F08C2E", "samurai": "#2A4FA3"}
+                 "astronaut": "#F4F4F4", "ninja": "#1A1C2C", "hero": "#2FB8AC", "hoodie": "#2FB8AC", "paramedic": "#F08C2E", "samurai": "#2A4FA3",
+                 "champion": "#FFD56B", "legend": "#5D275D"}
 # ตัวละครผู้เล่น: (รหัส, แบบ, ชุด) แบบ a = ผมสั้น แบบ b = ผมหางม้า
 PLAYER_CHARACTERS = [
     ("CH-01", "a", "lab"), ("CH-07", "b", "lab"),
@@ -529,6 +530,7 @@ PLAYER_CHARACTERS = [
     ("CH-14", "a", "researcher"), ("CH-15", "a", "commander"), ("CH-16", "b", "researcher"), ("CH-17", "b", "commander"),
     ("CH-30", "a", "astronaut"), ("CH-31", "a", "ninja"), ("CH-32", "a", "hero"), ("CH-33", "b", "astronaut"), ("CH-34", "b", "ninja"), ("CH-35", "b", "hero"),
     ("CH-36", "a", "hoodie"), ("CH-37", "a", "paramedic"), ("CH-38", "a", "samurai"), ("CH-39", "b", "hoodie"), ("CH-40", "b", "paramedic"), ("CH-41", "b", "samurai"),
+    # CH-42..45 (ชุดแชมเปี้ยน/ตำนาน รางวัลเลเวล) รอเจน: Pixel Lab ดาวน์โหลดแอนิเมชันไม่ผ่านรอบนี้ ยังไม่เปิดใช้ในเกม (docs/ART_GUIDE.md ข้อ 5.12)
 ]
 # ภาพประกอบเนื้อเรื่องที่เจนจาก Pixel Lab: (รหัส, ไฟล์)
 STORY_PANELS = [
@@ -619,7 +621,7 @@ ROOM_PROPS = [
 
 # คอสตูมของพี่บิต: (รหัส, ชื่อคอสตูม) ไฟล์คือ ch_mentor_<ชื่อ>_south
 BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-24", "gold"), ("CH-25", "explorer"), ("CH-26", "star"),
-             ("CH-27", "pirate"), ("CH-28", "chef"), ("CH-29", "dragon")]
+             ("CH-27", "pirate"), ("CH-28", "chef"), ("CH-29", "dragon"), ("CH-46", "crown"), ("CH-47", "rainbow")]
 # NPC ประจำห้อง: (รหัส, ไฟล์)
 NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director"),
         ("NP-07", "npc_smith"), ("NP-08", "npc_ranger"), ("NP-09", "npc_medic"), ("NP-10", "npc_sage"), ("NP-11", "npc_captain"), ("NP-12", "npc_keeper")]
@@ -667,6 +669,16 @@ LAB_PROPS = [
 ]
 # ของประกอบฉากตายตัวของย่านร้านค้า (รอบที่ 13)
 MARKET_PROPS = [("PR-M07", "pr_market_lamp", (32, 64)), ("PR-M08", "pr_market_crates", (32, 64)), ("PR-M09", "pr_market_barrel", (32, 64)), ("PR-M10", "pr_market_flags", (32, 64))]
+# ท่าโจมตีของไคจู (รอบที่ 14): (รหัส, ไฟล์, รหัสภาพต้นฉบับใน assets-src/pixellab) แก้ด้วย edit_image_pro_flash
+ATTACK_POSES = [
+    ("BT-A01", "bt_kaiju_1_atk", "BT-01"), ("BT-A02", "bt_kaiju_2_atk", "BT-02"), ("BT-A03", "bt_kaiju_3_atk", "BT-03"), ("BT-A04", "bt_kaiju_4_atk", "BT-04"),
+    ("BT-A05", "bt_kaiju_5_atk", "BT-05"), ("BT-A06", "bt_kaiju_6_atk", "BT-06"), ("BT-A07", "bt_kaiju_7_atk", "BT-09"), ("BT-A08", "bt_kaiju_8_atk", "BT-10"),
+    ("BT-A09", "bt_kaiju_9_atk", "BT-11"), ("BT-A10", "bt_kaiju_10_atk", "BT-13"), ("BT-A11", "bt_kaiju_11_atk", "BT-14"), ("BT-A12", "bt_boss_2_atk", "BT-07"),
+    ("BT-A13", "bt_boss_3_atk", "BT-08"), ("BT-A14", "bt_boss_4_atk", "BT-12"),
+]
+# ของตกแต่งแนวสวนและของวางราบกับพื้นในห้องสวน (รอบที่ 14)
+GARDEN_PROPS = [("PR-N01", "pr_decor_arbor", (64, 64)), ("PR-N02", "pr_decor_watering", (32, 64)), ("PR-N03", "pr_decor_woodbench", (64, 64)),
+                ("PR-N04", "pr_decor_garden_lamp", (32, 64)), ("PR-N05", "pr_garden_path", (64, 64)), ("PR-N06", "pr_garden_flowers", (64, 64))]
 # สถานที่บนแผนที่โลก (หน้า HTML): (รหัส, ไฟล์)
 WORLD_SITES = [("WM-02", "wm_site_lab"), ("WM-03", "wm_site_outpost"), ("WM-04", "wm_site_fortress")]
 
@@ -827,6 +839,8 @@ def main():
                 lambda: draw_floor("#6B5B4E", "#3B3228"), lambda: draw_wall("#4A3426", "#2A1C14", stripe="#FFA300")),
         tileset("TS-23", "ts_lab", "ไทล์เซตห้องวิจัยพืช", True,
                 lambda: draw_floor("#C9D1D6", "#6E7B70"), lambda: draw_wall("#F4F4F4", "#9CB2B7", stripe="#2FB8AC")),
+        tileset("TS-24", "ts_garden", "ไทล์เซตห้องสวน (พื้นหญ้า)", True,
+                lambda: draw_floor("#5FA85B", "#3E7A3D"), lambda: draw_wall("#C9A66B", "#8A6A3C", stripe="#FFCD75")),
         tileset("TS-12", "ts_theme_sakura", "ธีมห้อง ซากุระ", True,
                 lambda: draw_floor("#F4C2D0", "#E08AA8"), lambda: draw_wall("#F4F4F4", "#C06C8A", stripe="#FF77A8")),
         tileset("TS-13", "ts_theme_ocean", "ธีมห้อง มหาสมุทร", True,
@@ -857,6 +871,9 @@ def main():
         *[prop(asset_id, base, size) for asset_id, base, size in DECOR_PROPS],
         *[prop(asset_id, base, size) for asset_id, base, size in LAB_PROPS],
         *[prop(asset_id, base, size) for asset_id, base, size in MARKET_PROPS],
+        *[prop(asset_id, base, size) for asset_id, base, size in GARDEN_PROPS],
+        *[{**image(asset_id, base, (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {}, "battle", web=True),
+           "pixellab": {"tool": "edit_image_pro_flash", "arguments": {"description": prompts[base], "method": "text", "no_background": True, "source": f"{source}/image.png"}, "fetchTool": "get_image"}} for asset_id, base, source in ATTACK_POSES],
         prop("PR-H01", "pr_shop", (64, 64), lambda: draw_block(64, 64, YELLOW, SLATE)),
         prop("PR-H05", "pr_storage_box", (64, 64), lambda: draw_block(64, 64, TEAL, SLATE)),
         prop("PR-H02", "pr_hangar_gate", (64, 64), lambda: draw_block(64, 64, STEEL, YELLOW)),
@@ -881,6 +898,8 @@ def main():
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "gear", web=True) for asset_id, base in GEAR_ICONS],
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, YELLOW, PAPER), "icon", GEAR_SETTINGS, "items", web=True) for asset_id, base in MENU_ICONS],
         image("WM-01", "wm_world", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", WORLD_SETTINGS, "worldmap", web=True),
+        image("WM-05", "wm_world_2", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", WORLD_SETTINGS, "worldmap", web=True),
+        image("WM-06", "wm_world_3", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", WORLD_SETTINGS, "worldmap", web=True),
         *[image(asset_id, base, (64, 64), lambda: draw_blob(64, TEAL, PAPER), "icon", GEAR_SETTINGS, "worldmap", web=True) for asset_id, base in WORLD_SITES],
         image("MN-06", "mn_title_bg", (320, 180), lambda: draw_backdrop(MIST, SLATE), "backdrop", BACKDROP_SETTINGS, "menu", web=True),
         image("BT-07", "bt_boss_2", (128, 128), lambda: draw_blob(128, RED, YELLOW), "battle", {**BATTLE_SETTINGS, "direction": "west"}, "battle", web=True),

@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, raising both heavy fists overhead about to slam down, the lava seams glowing brighter, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-13/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "f9238028-caa6-43b2-8f77-ed94c4587395",
+  "generatedAt": "2026-10-22T07:45:44.059Z"
+}

@@ -20,6 +20,9 @@ const KAIJU = ["กลิตช์", "ไตรฮอร์น", "สแคร�
 /** โครงของแมพ (ข้อมูลล้วนจาก src/state/campaign.ts): พลังของไคจูและพลังที่แนะนำของแต่ละด่าน กติกาตรวจใน unit test สคริปต์นี้ตรวจว่าหน้าจอแสดงตรงกับโครง */
 const { CAMPAIGN } = await import("../src/state/campaign.ts");
 const { DASH, dashKindOf, wavesOf } = await import("../src/state/dash.ts");
+const TITLE_LEVELS = [1, 3, 5, 7, 9, 11, 13, 15, 18, 20];
+const titleIndex = (level) => TITLE_LEVELS.filter((from) => from <= level).length - 1;
+const ui_titles = ["นักฝึกมือใหม่", "นักฝึกฝีมือดี", "ผู้ช่วยการ์เดียน", "นักปฏิบัติการ", "ผู้คุมหุ่นเหล็ก", "หัวหน้าทีมฝึก", "ผู้พิชิตไคจู", "ผู้บัญชาการสนาม", "ยอดนักฝึก", "ผู้พิทักษ์ตำนาน"];
 const specOf = (id) => Object.values(CAMPAIGN).flatMap((map) => map.battles).find((battle) => battle.id === id);
 const MAP_NAME = { easy: "แมพ 1: Pixel AI Lab", normal: "แมพ 2: ศูนย์วิจัยภาคสนาม", hard: "แมพ 3: ป้อมปราการภูเขาไฟ" };
 /** ของตกแต่งเริ่มต้นของโถง (STARTER_PLACEMENT ใน progressStore.ts) */
@@ -59,15 +62,35 @@ const log = (message) => console.log(`  ✓ ${message}`);
 // คำตอบ 401/503 ของ /api/teacher เป็นพฤติกรรมที่ตั้งใจทดสอบ (รหัสผ่านผิด ยังไม่ตั้งค่า) ไม่นับเป็น error
 const expected = (url) => url.includes("/api/teacher");
 function watch(page) {
+  // เครื่องที่โหลดสูงทำให้หน้าเว็บค้างเป็นช่วง ๆ ขยายเวลารอของทุกคำสั่งจาก 30 วินาที
+  page.setDefaultTimeout(90_000);
   page.on("console", (m) => m.type() === "error" && !expected(m.location().url) && errors.push(`console: ${m.text()}`));
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
   page.on("requestfailed", (r) => errors.push(`requestfailed: ${r.url()}`));
   page.on("response", (r) => r.status() >= 400 && !expected(r.url()) && errors.push(`http ${r.status()}: ${r.url()}`));
+  // หน้าต่างเลเวลอัปเด้งขึ้นเองหลังชนะด่านหรือทำชาเลนจ์ ชุดทดสอบทั่วไปปิดให้อัตโนมัติด้วยตัวจับเวลาในหน้า (ชุด level ทดสอบหน้าต่างนี้เองโดยตั้ง window.__keepLevelUp = true)
+  page.addInitScript(() => {
+    // ปิดการแจกรางวัลเลเวลทั้งรอบ ชุดทดสอบเดิมไม่ถูกหน้าต่างเลเวลอัปและเครดิตรางวัลแทรก ชุด level เปิดคืนเองด้วย __aitq.pauseLevel(false)
+    window.__aitqPauseLevel = true;
+    window.__levelUps = [];
+    setInterval(() => {
+      const open = document.querySelector('[data-testid="levelup"]');
+      if (!open || window.__keepLevelUp) return;
+      window.__levelUps.push(Number(open.getAttribute("data-level")));
+      document.querySelector('[data-testid="levelup-close"]')?.click();
+    }, 120);
+  });
 }
 
 // ---------------------------------------------------------------- การเข้าถึง (axe-core) ตรวจทุกหน้าจอที่ถ่ายภาพ
 const axeSource = readFileSync(new URL("../node_modules/axe-core/axe.min.js", import.meta.url), "utf8");
 const a11y = [];
+/** เปิดรายละเอียดเพิ่มเติมของการ์ดก่อนสู้ (ซ่อนไว้ให้การ์ดสั้น) */
+async function openBattleMore(page) {
+  const more = page.getByTestId("battle-more");
+  if ((await more.getAttribute("open")) === null) await more.locator("summary").click();
+}
+
 async function audit(page, name) {
   if (!(await page.evaluate(() => "axe" in window))) await page.evaluate(axeSource);
   const result = await page.evaluate(async () => {
@@ -228,7 +251,19 @@ async function assertCanvasFits(page, where) {
   assert.ok(Math.abs(box.w / box.h - 16 / 9) < 0.01, `${where}: canvas ไม่ใช่ 16:9`);
 }
 
+/** เครดิตรางวัลของเลเวลที่แจกแล้ว (รวมอยู่ในเครดิตที่ HUD และร้านแสดง) */
+const levelBonus = async (page) => (await snap(page)).level.credits;
+
+/** รอให้หน้าต่างเลเวลอัปที่ถึงคิว (เด้งเองหลังชนะด่านหรือทำชาเลนจ์) เปิดและถูกปิดไปก่อน ไม่เช่นนั้นปุ่มโต้ตอบจะถูกกลืนโดยหน้าต่างนั้น */
+const settleLevel = async (page) => {
+  await page.waitForFunction(() => {
+    const snap = window.__aitq?.snapshot();
+    return !snap || (snap.store.overlay !== "levelup" && !(snap.level.due && snap.store.overlay === null && snap.store.screen !== "menu" && snap.store.screen !== "onboarding" && !snap.store.tutorOpen && snap.store.storyBeat === null)) ;
+  });
+  await page.waitForTimeout(280);
+};
 const act = async (page) => {
+  await settleLevel(page);
   await page.keyboard.press("e");
   await page.waitForTimeout(120);
 };
@@ -728,6 +763,7 @@ async function winBattle(page, id, press = click) {
   for (let guard = 0; guard < 60 && (await page.getByTestId("battle").getAttribute("data-stage")) === "fight"; guard++) turns.push(await battleTurn(page, true, press));
   await page.getByTestId("battle-won").waitFor();
   const credits = (await page.getByTestId("battle-credits").count()) ? await page.getByTestId("battle-credits").innerText() : "";
+  const exp = (await page.getByTestId("battle-exp").count()) ? Number(await page.getByTestId("battle-exp").getAttribute("data-exp")) : 0;
   const won = await page.getByTestId("battle-won").innerText();
   assert.equal(await playing(page), "victory:0", "ชนะแล้วเพลงเปลี่ยนเป็นเพลงมีชัย");
   await press(page.getByTestId("battle-finish"));
@@ -736,7 +772,7 @@ async function winBattle(page, id, press = click) {
   assert.equal(record.won, true);
   // ชนะไคจูประจำห้องครั้งแรก: ฉากเนื้อเรื่องหลังชนะ (บอส: บทส่งท้าย) ซ้อมรบซ้ำไม่มีฉาก
   const story = await readStory(page, press);
-  return { turns, credits, record, won, story };
+  return { turns, credits, exp, record, won, story };
 }
 
 /** ด่านต่อสู้ของห้องในระดับง่ายแบบตอบถูกทุกข้อ: ไปโรงเก็บหุ่น สู้ ชนะ กลับโถง */
@@ -1135,6 +1171,7 @@ async function playRoom1(page) {
   assert.equal(await playing(page), "hangar:0", "โรงเก็บหุ่นมีเพลงของตัวเอง");
   await startBattle(page, "k1", KAIJU[0]);
   assert.equal(await playing(page), "tension:0", "หน้าเตรียมออกปฏิบัติการใช้เพลงตึงเครียด");
+  await openBattleMore(page);
   const intro1 = await page.getByTestId("battle-intro").innerText();
   assert.ok(intro1.includes("ตอบถูก การ์เดียนโจมตี"), "หน้าเริ่มด่านอธิบายลักษณะของไคจู");
   assert.match(intro1, /ขอข้อมูลจากพี่บิตได้ 2 ครั้ง/, "ระดับง่ายขอข้อมูลระหว่างสู้ได้ 2 ครั้ง");
@@ -1223,7 +1260,7 @@ async function playRoom1(page) {
   // --- ย่านร้านค้า: ร้านขายอย่างเดียว ของที่ซื้อแล้วไปใส่ที่จุดปรับแต่งในโรงเก็บหุ่น แต่ละร้านขายเฉพาะประเภทของตัวเอง
   await backToHall(page);
   await openStall(page, "costume");
-  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "115");
+  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), String(115 + (await levelBonus(page))), "เครดิตจากความคืบหน้ารวมรางวัลของเลเวลที่แจกแล้ว");
   assert.match(await page.getByTestId("shop-item-outfit-engineer").innerText(), /ในการต่อสู้: ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม \+1/, "เครื่องแบบบอกสิทธิพิเศษในการต่อสู้");
   assert.equal(await page.locator('[data-testid^="shop-item-outfit-"]').count(), 11, "ร้านมีชุด 11 แบบ (ชุดเริ่มต้นไม่ขาย ชุดของแมพ 2 และ 3 ยังล็อก)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-outfit-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-outfit-", "")).sort()), ["astronaut", "commander", "hero", "ninja", "paramedic", "samurai"], "ชุดของแมพถัดไปยังซื้อไม่ได้");
@@ -1250,7 +1287,7 @@ async function playRoom1(page) {
   assert.deepEqual(await page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock))), [3, 3, 2, 2, 1], "ของใช้มีจำนวนจำกัดต่อแมพ");
   await openStall(page, "costume");
   await page.getByTestId("shop-buy-outfit-engineer").click();
-  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), "15");
+  assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), String(15 + (await levelBonus(page))));
   assert.match(await page.getByTestId("shop-owned-outfit-engineer").innerText(), /มีแล้ว · ใส่ที่ตู้เสื้อผ้าในโรงเก็บหุ่น/, "ซื้อแล้วร้านบอกว่าไปใส่ที่ไหน");
   assert.equal((await snap(page)).avatar.texture, "ch_b_lab", "ซื้อแล้วยังไม่สวมให้เอง");
   await openStall(page, "items");
@@ -1274,20 +1311,22 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: ["easy:1:s"], tips: ["tutorial", "tips-off"], decor: STARTER_DECOR, layout: {}, theme: {} });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, levelSeen: 1, dash: ["easy:1:s"], tips: ["tutorial", "tips-off"], decor: STARTER_DECOR, layout: {}, theme: {} });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
   await startBattle(page, "k1", KAIJU[0], { training: true });
   assert.match(await page.getByTestId("battle-title").innerText(), /ซ้อมรบ/);
   assert.match(await page.getByTestId("battle-training").innerText(), /ครั้งละ \+5 อีก 5 ครั้ง/);
+  await openBattleMore(page);
   assert.match(await page.getByTestId("battle-perk").innerText(), /ชุดช่าง/);
   assert.equal(await page.getByTestId("battle-power").getAttribute("data-power"), "85");
   await page.getByTestId("battle-start").click();
   assert.equal(await page.getByTestId("hp-left").getAttribute("data-max"), "6", "พลังสูงสุดยังเท่าเดิม: แกน AI ให้พลังงานออกรบ ไม่ได้อัปเกรดการ์เดียน");
   const replay = await winBattle(page, "k1");
   assert.deepEqual([replay.record.wins, replay.record.sorties, replay.credits, replay.story], [2, 2, "เครดิตวิจัย +5", null], "ซ้อมรบซ้ำ: ได้เครดิต ไม่มีฉากเนื้อเรื่องซ้ำ");
-  assert.equal(await page.getByTestId("credits").getAttribute("data-credits"), "20");
+  assert.equal(await page.getByTestId("credits").getAttribute("data-credits"), String(20 + (await levelBonus(page))));
+  assert.ok(replay.exp >= 10, "ซ้อมรบชนะแสดง EXP ที่ได้ (ซ้อมรบ 10 + ข้อที่ตอบถูก)");
   assert.equal((await snap(page)).store.overlay, null, "ซ้อมรบชนะแล้วไม่เปิดเนื้อเรื่องหรือประตูซ้ำ");
   log("ซ้อมรบ: สู้กับกลิตช์ซ้ำได้ ได้เครดิต +5 ต่อครั้ง พลังสูงสุดของการ์เดียนเท่าเดิมจนกว่าจะซื้ออุปกรณ์");
 
@@ -1516,6 +1555,7 @@ async function playRoom(page, room) {
     await battleTurn(page, true);
     await battleTurn(page, false);
     await page.getByTestId("battle-charging").waitFor();
+    assert.equal(await page.getByTestId("aura-charge").count(), 1, "ไคจูชาร์จพลัง: มีแสงรวมพลังรอบตัว");
     const counter = await battleTurn(page, true);
     assert.match(counter.log, /การ์เดียนใช้หมัดจรวด -2 \(สวนกลับ\)/, "ตาที่ไคจูชาร์จพลัง ตอบถูกสวนกลับ 2 ด้วยท่าแรง");
     assert.equal(await page.getByTestId("battle-fx").getAttribute("data-sparks"), "fist:kaiju,impact:kaiju", "การโจมตีที่แรงตั้งแต่ 2 ขึ้นไปเป็นท่าแรงของอาวุธ: หมัดจรวด");
@@ -1544,7 +1584,7 @@ async function playRoom(page, room) {
     const hits = [];
     assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "sword", "การ์เดียนถือดาบที่ซื้อมา");
     assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["weak", "▼ อาวุธแพ้ทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"]);
-    assert.match(intro, /พลังยังไม่ถึงที่แนะนำ ออกปฏิบัติการได้เลย/, "พลังไม่ถึงที่แนะนำก็ออกปฏิบัติการได้");
+    assert.match(intro, /พลังยังต่ำกว่าที่แนะนำ/, "พลังไม่ถึงที่แนะนำก็ออกปฏิบัติการได้");
     const fx = page.getByTestId("battle-fx");
     const sparks = [];
     for (let i = 0; i < 3; i++) {
@@ -2290,7 +2330,7 @@ const doneRoom = (topic) => ({ stationsSeen: 0, minigameDone: topic < 6, stars: 
 const doneRooms = (topics) => Object.fromEntries(topics.map((topic) => [topic, doneRoom(topic)]));
 const assessmentOf = (form) => ({ form, correctByTopic: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, items: [], completedAt: NOW });
 const wonAll = (map) => Object.fromEntries(CAMPAIGN[map].battles.map((battle) => [battle.id, WON]));
-const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, dash: [], tips: ["tutorial", "tips-off"], ...patch });
+const shopOf = (patch = {}) => ({ spent: 0, owned: [], supplies: NO_SUPPLIES, outfit: "lab", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, decor: STARTER_DECOR, layout: {}, theme: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, levelSeen: 1, dash: [], tips: ["tutorial", "tips-off"], ...patch });
 const MAP1_STORY = ["prologue", "room-1", "room-2", "room-3", "room-4", "room-5", "room-6", "win-k1", "win-k2", "win-k3", "win-k4", "win-k5", "ending"];
 /** ผู้เล่นที่ผ่านแมพ 1 ครบแล้ว (ชนะไคจูทุกตัว ทำแบบทดสอบหลังเรียนแล้ว) ยังอยู่ที่แมพ 1 */
 const travelerSave = (patch = {}) => ({
@@ -2307,10 +2347,81 @@ const travelerSave = (patch = {}) => ({
   shop: shopOf(),
   ...patch,
 });
+/** เลเวล EXP และโปรไฟล์ (GDD ข้อ 27): ป้าย Lv ที่ HUD เปิดโปรไฟล์ แจกรางวัลตอนเลเวลอัป ใช้รางวัลได้เหมือนของอื่น */
+async function playLevel(page) {
+  await resumeWith(page, travelerSave());
+  const before = await snap(page);
+  const level = before.level.level;
+  assert.ok(level >= 8, `ผู้เล่นที่ชนะไคจูแมพ 1 ครบและได้แกนครบควรถึงเลเวล 8 ขึ้นไป (ได้ ${level})`);
+  assert.equal(before.level.due, false, "ชุดทดสอบปิดการแจกรางวัลไว้ก่อน");
+  assert.equal(await page.getByTestId("hud-level").getAttribute("data-level"), String(level));
+  assert.equal((await page.getByTestId("hud-level").innerText()).trim(), `Lv ${level}`);
+  const credits0 = await creditsOf(page);
+
+  // โปรไฟล์: ฉายา เลเวล แถบ EXP สถิติ ชาเลนจ์ และรางวัล (รางวัลที่ถึงเลเวลแล้วแสดงว่าได้แล้ว แต่ยังไม่แจกจนกว่าจะฉลอง)
+  await page.getByTestId("hud-level").click();
+  await page.getByTestId("profile").waitFor();
+  assert.equal(await page.getByTestId("profile").getAttribute("data-level"), String(level));
+  assert.equal(await page.getByTestId("profile").getAttribute("data-exp"), String(before.level.exp));
+  assert.match(await page.getByTestId("profile-level").innerText(), new RegExp(`เลเวล ${level}`));
+  assert.match(await page.getByTestId("profile-next").innerText(), /อีก \d+ EXP ถึงเลเวล/);
+  assert.equal(await page.getByTestId("profile-title").innerText(), ui_titles[titleIndex(level)]);
+  assert.equal(await page.locator('[data-testid="profile-challenges"] [data-challenge]').count(), 20, "ชาเลนจ์ 20 ข้อ");
+  assert.equal(await page.locator('[data-testid="profile-challenges"] [data-challenge="first-win"]').getAttribute("data-done"), "true");
+  assert.equal(await page.locator('[data-testid="profile-challenges"] [data-challenge="clear-hard"]').getAttribute("data-done"), "false", "ยังไม่ได้เล่นแมพ 3");
+  assert.equal(await page.locator('[data-testid="profile-rewards"] [data-reward="paint-camo"]').getAttribute("data-got"), "true");
+  assert.equal(await page.locator('[data-testid="profile-rewards"] [data-reward="paint-aurora"]').getAttribute("data-got"), "false", "สีแสงเหนือเป็นรางวัลเลเวล 18");
+  await shot(page, "40-profile");
+  await page.keyboard.press("Escape");
+  await page.getByTestId("profile").waitFor({ state: "detached" });
+  assert.equal(await creditsOf(page), credits0, "เปิดโปรไฟล์ไม่แจกอะไร");
+  assert.deepEqual((await snap(page)).store.shop.owned.filter((id) => /^(paint|bit)-(camo|crown|platinum|neon|rainbow|aurora)$/.test(id)), []);
+
+  // เปิดการแจกรางวัล: หน้าต่างเลเวลอัปเด้งขึ้นเอง บอกเลเวลเดิม→ใหม่ เครดิต และของพิเศษ แล้วแจกครั้งเดียว
+  await page.evaluate(() => {
+    window.__keepLevelUp = true;
+    window.__aitq.pauseLevel(false);
+  });
+  await page.getByTestId("levelup").waitFor();
+  assert.equal(await page.getByTestId("levelup").getAttribute("data-level"), String(level));
+  assert.match(await page.getByTestId("levelup-detail").innerText(), new RegExp(`เลเวล 1 → เลเวล ${level}`));
+  const bonus = (await snap(page)).level.credits;
+  assert.ok(bonus > 0);
+  assert.equal(await page.getByTestId("levelup-credits").getAttribute("data-credits"), String(bonus));
+  const given = await page.locator('[data-testid="levelup-items"] [data-reward]').evaluateAll((rows) => rows.map((row) => row.dataset.reward));
+  assert.deepEqual(given, ["paint-camo", "bit-crown", "paint-platinum"].concat(level >= 10 ? ["paint-neon"] : []).concat(level >= 15 ? ["bit-rainbow"] : []).concat(level >= 18 ? ["paint-aurora"] : []), "ของพิเศษของทุกเลเวลที่ผ่านมา");
+  await shot(page, "41-levelup");
+  await page.getByTestId("levelup-close").click();
+  await page.getByTestId("levelup").waitFor({ state: "detached" });
+  await page.waitForTimeout(400);
+  const after = await snap(page);
+  assert.equal(after.store.shop.levelSeen, level);
+  assert.equal(await creditsOf(page), credits0 + bonus, "เครดิตรางวัลของเลเวลรวมในยอดเครดิต");
+  for (const id of given) assert.ok(after.store.shop.owned.includes(id), `${id} เข้ากล่องของผู้เล่นแล้ว`);
+  assert.equal(after.level.due, false, "ฉลองแล้วไม่เด้งซ้ำ");
+  await page.waitForTimeout(600);
+  assert.equal(await page.getByTestId("levelup").count(), 0);
+
+  // ใช้รางวัลเหมือนของอื่น: ทาสีหุ่นและสวมคอสตูมพี่บิตที่ได้จากเลเวล ซื้อในร้านไม่ได้
+  await page.evaluate(() => {
+    const store = window.__aitq.store.getState();
+    store.equip("paint", "camo");
+    store.equip("bit", "crown");
+  });
+  const worn = (await snap(page)).store.shop;
+  assert.deepEqual([worn.paint, worn.bit], ["camo", "crown"]);
+  assert.equal(await page.evaluate(() => window.__aitq.store.getState().buy("paint-neon")), "unknown", "ของรางวัลซื้อในร้านไม่ได้");
+  await page.evaluate(() => {
+    window.__keepLevelUp = false;
+    window.__aitq.pauseLevel(true);
+  });
+  log(`เลเวล: ป้าย Lv ที่ HUD เปิดโปรไฟล์ (ฉายา แถบ EXP สถิติ ชาเลนจ์ 20 ข้อ รางวัล) เลเวลอัปเด้งหน้าต่างฉลองครั้งเดียว แจกเครดิต +${bonus} และของพิเศษ ${given.length} ชิ้นเข้ากล่อง สวมและทาสีได้ ซื้อในร้านไม่ได้`);
+}
+
 const creditsOf = async (page) => Number(await page.getByTestId("credits").getAttribute("data-credits"));
 const doorCount = async (page) => (await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length;
 /** สถานะของทุกแมพบนกระดานแผนที่ เช่น { easy: ["here", "true"], normal: ["open", "false"], hard: ["locked", "false"] } */
-const travelStatus = (page) => page.locator('[data-testid="travel-world"] [data-status]').evaluateAll((rows) => Object.fromEntries(rows.map((row) => [row.dataset.testid.replace("travel-", ""), [row.dataset.status, row.dataset.cleared]])));
+const travelStatus = (page) => page.locator('[data-testid="travel-world"] button[data-status]').evaluateAll((rows) => Object.fromEntries(rows.map((row) => [row.dataset.testid.replace("travel-", ""), [row.dataset.status, row.dataset.cleared]])));
 
 /** จุดบนจอของช่องในผัง (กระดานตกแต่ง): กลางช่อง หรือเลื่อนไปทางซ้าย dx ช่อง (0 = ขอบซ้ายของช่อง) */
 async function cellPoint(page, col, row, dx = 0.5) {
@@ -2728,7 +2839,7 @@ async function playNormal(page) {
   assert.deepEqual([await page.getByTestId("shop-item-weapon-hammer").getAttribute("data-locked"), await page.getByTestId("shop-item-weapon-cannon").getAttribute("data-locked")], ["false", "true"], "ชนะไคจูของแมพ 1 ครบ: ของของแมพ 2 วางขาย ของแมพ 3 ยังล็อก");
   assert.match(await page.getByTestId("shop-locked-weapon-cannon").innerText(), /วางขายที่แมพ 3/);
   await openStall(page, "decor");
-  assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 29, "ร้านแสดงของตกแต่งห้อง 29 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 27 ชิ้น)");
+  assert.equal(await page.locator('[data-testid^="shop-item-decor-"]').count(), 33, "ร้านแสดงของตกแต่งห้อง 33 ชิ้น (ของเริ่มต้น 2 ชิ้น และของที่ซื้อได้ 31 ชิ้น)");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-decor-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-decor-", "")).sort()), ["fountain", "statue"]);
   assert.equal(await page.locator('[data-testid^="shop-item-theme-"]').count(), 10, "ร้านขายธีมสีของห้อง 10 แบบ");
   assert.deepEqual(await page.locator('[data-testid^="shop-item-theme-"][data-locked="true"]').evaluateAll((rows) => rows.map((row) => row.dataset.testid.replace("shop-item-theme-", ""))), ["midnight"]);
@@ -3116,6 +3227,7 @@ async function playNormal(page) {
   await page.getByTestId("missions-close").click();
   await page.waitForTimeout(300);
   await startBattle(page, "n1", KAIJU2.n1);
+  await openBattleMore(page);
   assert.match(await page.getByTestId("battle-hints-note").innerText(), /ขอข้อมูลจากพี่บิตได้ 1 ครั้ง/);
   const advice = page.getByTestId("weapon-advice");
   assert.deepEqual([await advice.getAttribute("data-weak"), await advice.getAttribute("data-advantaged"), await advice.getAttribute("data-better")], ["blade", "true", ""], "หอกสายฟ้าชนะทางโวลต์อีล");
@@ -3178,11 +3290,13 @@ async function playNormal(page) {
   assert.match(await hammerAdvice.innerText(), /ไอรอนเชลล์ แพ้ทางแรงกระแทก[\s\S]*ค้อนพลังงานชนะทางเหมือนกันและแรงกว่า/);
   await page.getByTestId("battle-start").click();
   await page.getByTestId("battle-armored").waitFor();
+  assert.equal(await page.getByTestId("aura-armor").count(), 1, "ไคจูหุ้มเกราะ: มีวงเกราะเรืองบนตัว");
   const armorHp = specOf("n2").forms[0].hp;
   let turn = await battleTurn(page, true);
   assert.match(turn.log, /เกราะแตกแล้ว ข้อถัดไปโจมตีเข้า/);
   assert.equal(turn.kaiju, armorHp, "ข้อที่ทุบเกราะไม่ลดพลังของไคจู");
   assert.equal(await page.getByTestId("battle-armored").count(), 0);
+  assert.deepEqual([await page.getByTestId("aura-armor").count(), await page.getByTestId("aura-shards").count()], [0, 1], "เกราะแตก: วงเกราะหาย มีเศษเกราะกระเด็น");
   turn = await battleTurn(page, false);
   assert.match(turn.log, /ไอรอนเชลล์ใช้กระดองพุ่งชน -1.*ไอรอนเชลล์สร้างเกราะกลับมา/);
   await page.getByTestId("battle-armored").waitFor();
@@ -3269,6 +3383,7 @@ async function playNormal(page) {
   await page.getByTestId("battle-start").click();
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "blaster");
   assert.deepEqual([await page.getByTestId("battle-retries").count(), await page.getByTestId("battle-guard").count()], [1, 1]);
+  assert.equal(await page.getByTestId("aura-guard").count(), 1, "เกราะสะท้อน: มีวงป้องกันบนการ์เดียน");
   const swarmHp = specOf("n3").forms[0].hp;
   {
     // ตอบผิดครั้งแรก: ชิปคิดทบทวนให้ตอบข้อเดิมใหม่ ตัดข้อที่เลือกออก ตายังไม่จบ
@@ -3305,6 +3420,7 @@ async function playNormal(page) {
   assert.match(turn.log, /ฝูงสติงเกอร์ติดสตัน/);
   assert.ok(shots[2].includes("stun:kaiju"));
   await page.getByTestId("battle-stunned").waitFor();
+  assert.equal(await page.getByTestId("aura-stun").count(), 1, "ติดสตัน: ดาวหมุนเหนือหัวไคจู");
   assert.equal(await page.getByTestId("battle-command").getAttribute("data-saved"), "stun");
   await shot(page, "31-normal-stun");
   turn = await battleTurn(page, false);
@@ -3620,9 +3736,12 @@ async function playHard(page) {
   const intro = await page.getByTestId("battle-intro").innerText();
   assert.equal(await page.getByTestId("battle-trait").count(), 3);
   assert.match(intro, /กลายร่างได้ 3 ร่าง/);
+  await openBattleMore(page);
   assert.match(await page.getByTestId("battle-hints-note").innerText(), /ขอข้อมูลจากพี่บิตได้ 2 ครั้ง/, "แมพ 3 ขอข้อมูลไม่ได้ ชุดนักวิจัยและโมดูลสแกนเนอร์ให้เพิ่มอย่างละ 1 ครั้ง");
   assert.deepEqual(await page.getByTestId("bag-picker").getByTestId("matchup").evaluateAll((rows) => rows.map((row) => row.dataset.matchup)), ["strong", "even", "weak"], "ปืนใหญ่ชนะทางร่างแรก พอใช้ได้กับร่างที่สอง แพ้ทางร่างสุดท้าย");
+  await openBattleMore(page);
   assert.match(await page.getByTestId("battle-modules").innerText(), /โมดูลสแกนเนอร์.*โมดูลพยาบาล|โมดูลพยาบาล.*โมดูลสแกนเนอร์/);
+  await openBattleMore(page);
   assert.match(await page.getByTestId("battle-perk").innerText(), /ชุดนักวิจัยภาคสนาม/);
   assert.equal(await page.getByTestId("bag-picker").getAttribute("data-bag"), "reboot,analyzer,overcharge");
   assert.equal(await page.getByTestId("weapon-advice").getAttribute("data-weak"), "beam,strike,blade", "บอสใหญ่แต่ละร่างแพ้ทางอาวุธคนละแบบ");
@@ -4040,7 +4159,7 @@ async function playTouch(browser) {
   await context.close();
 }
 
-// E2E_ONLY=struggle,touch รันเฉพาะบางชุด: main (เล่นจบ 6 ห้องของแมพ 1 + แดชบอร์ด + ระดับท้าทาย ซึ่งต้องรันต่อกัน), struggle, normal (แมพ 2), hard (แมพ 3), keyboard, touch
+// E2E_ONLY=struggle,touch รันเฉพาะบางชุด: level (เลเวล EXP โปรไฟล์), main (เล่นจบ 6 ห้องของแมพ 1 + แดชบอร์ด + ระดับท้าทาย ซึ่งต้องรันต่อกัน), struggle, normal (แมพ 2), hard (แมพ 3), keyboard, touch
 const only = process.env.E2E_ONLY?.split(",");
 const wanted = (name) => !only || only.includes(name);
 const browser = await chromium.launch({ channel: "chrome", headless: true });
@@ -4064,6 +4183,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("level")) {
+    console.log("เดสก์ท็อป: เลเวล EXP และโปรไฟล์");
+    await playLevel(page);
   }
   if (wanted("gear")) {
     console.log("เดสก์ท็อป: ลากวางอุปกรณ์บนการ์เดียนและพี่บิต");

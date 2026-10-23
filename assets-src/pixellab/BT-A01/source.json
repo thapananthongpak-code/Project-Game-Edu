@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, lunging forward with its jaws wide open and glitch static bursting from its mouth, body leaning toward the left, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-01/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "5abb91b4-7964-439d-a4ab-d3f52c0896d8",
+  "generatedAt": "2026-10-22T07:43:26.359Z"
+}

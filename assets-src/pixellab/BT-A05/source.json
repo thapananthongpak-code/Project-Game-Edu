@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, all the small blob monsters leaping forward together with mouths wide open showing sharp teeth, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-05/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "2092eac5-cd66-4071-8061-41d800147b7a",
+  "generatedAt": "2026-10-22T07:46:32.359Z"
+}

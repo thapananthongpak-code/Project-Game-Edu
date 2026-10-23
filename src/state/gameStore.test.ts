@@ -3,7 +3,8 @@ import { evaluateMinigame } from "./adaptive";
 import { BATTLE } from "./battle.config";
 import { CAMPAIGN, type Difficulty } from "./campaign";
 import { DASH } from "./dash";
-import { allBattlesWon, coreBoostOf, coreTotal, guardianPowerOf, planOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
+import { levelCredits } from "./level";
+import { allBattlesWon, levelDue, levelStatusOf, coreBoostOf, coreTotal, guardianPowerOf, planOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
 import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyRoom, emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
@@ -874,5 +875,54 @@ describe("ด่านทางเชื่อมก่อนเข้าห้�
     useGameStore.setState({ progress: { 1: { ...emptyRoom(), stationsSeen: 3 } } });
     store().enterRoom(1);
     expect([store().screen, store().overlay]).toEqual(["room", null]);
+  });
+});
+
+describe("เลเวลอัปและรางวัล (GDD 27)", () => {
+  const store = () => useGameStore.getState();
+
+  it("ชนะไคจูตัวแรก: EXP เพิ่มและมีเลเวลใหม่ที่ยังไม่แจกรางวัล", () => {
+    expect(levelDue(store())).toBe(false);
+    store().recordBattle("k1", { won: true, asked: 5, correct: 5, streak: 5 });
+    expect(levelStatusOf(store()).level).toBeGreaterThan(1);
+    expect(levelDue(store())).toBe(true);
+  });
+
+  it("เปิดหน้าต่างเลเวลอัป: แจกเครดิตและของพิเศษของเลเวลที่ผ่านมา ครั้งเดียว และเลเวลซ้ำไม่แจกอีก", () => {
+    // ทำให้ถึงเลเวล 5 ขึ้นไป: ชนะหลายด่านด้วยท่าดี
+    for (const id of ["k1", "k2", "k3", "k4", "k5", "omega"]) store().recordBattle(id, { won: true, asked: 20, correct: 20, streak: 9, untouched: true });
+    const level = levelStatusOf(store()).level;
+    expect(level).toBeGreaterThanOrEqual(5);
+    const before = creditsOf(store());
+    store().openLevelUp();
+    expect(store().overlay).toBe("levelup");
+    expect(store().levelUp).toMatchObject({ from: 1, to: level });
+    expect(store().shop.levelSeen).toBe(level);
+    expect(creditsOf(store())).toBe(before + levelCredits(level));
+    // ของพิเศษของเลเวล 3 และ 5 เข้ากล่องของผู้เล่น ใช้ได้ผ่านการสวม/ทาสีตามปกติ
+    expect(store().shop.owned).toEqual(expect.arrayContaining(["paint-camo", "bit-crown"]));
+    store().equip("paint", "camo");
+    store().equip("bit", "crown");
+    expect([store().shop.paint, store().shop.bit]).toEqual(["camo", "crown"]);
+    // ไม่มีเลเวลใหม่แล้ว: เรียกซ้ำไม่แจกอีก
+    store().closeOverlay();
+    const owned = store().shop.owned.length;
+    store().openLevelUp();
+    expect(store().overlay).toBeNull();
+    expect(store().shop.owned).toHaveLength(owned);
+    expect(levelDue(store())).toBe(false);
+  });
+
+  it("ของรางวัลซื้อในร้านไม่ได้ และไม่สวมได้จนกว่าจะถึงเลเวล", () => {
+    expect(store().buy("paint-camo")).toBe("unknown");
+    store().equip("paint", "camo");
+    expect(store().shop.paint).toBe("standard");
+    store().equip("paint", "neon");
+    expect(store().shop.paint).toBe("standard");
+  });
+
+  it("EXP และเลเวลไม่มีผลต่อการปลดล็อกห้อง: ปลดล็อกตามแกน AI และด่านต่อสู้เท่านั้น", () => {
+    store().recordBattle("k1", { won: true, asked: 5, correct: 5 });
+    expect(isRoomUnlocked(store(), 2)).toBe(false);
   });
 });

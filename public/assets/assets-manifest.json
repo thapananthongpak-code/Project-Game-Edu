@@ -1622,6 +1622,68 @@
       "status": "generated"
     },
     {
+      "id": "CH-46",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมราชา (ปลดล็อกจากเลเวล)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_crown_south": "characters/ch_mentor_crown_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a small golden crown and a short red royal cape with white fur trim, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "167dccdf-e0d7-4306-8606-34564ec211ea",
+        "generatedAt": "2026-10-22T07:44:08.622Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "CH-47",
+      "kind": "sprite",
+      "name": "พี่บิตคอสตูมรุ้ง (ปลดล็อกจากเลเวล)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "ch_mentor_rainbow_south": "characters/ch_mentor_rainbow_south.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small round hovering mentor robot, white and light gray body, cyan screen face with two simple dot eyes, short antenna with a yellow light, two tiny floating hands, no legs, wearing a colorful rainbow striped scarf and a tiny rainbow arc halo above its head, small sparkles around, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "direction": "south",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ed5b3f20-d7ce-4207-9764-2e93c8bc778c",
+        "generatedAt": "2026-10-22T07:44:39.020Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "NP-01",
       "kind": "npc",
       "name": "ช่างเมย์ ช่างซ่อมหุ่น (ห้อง 1 เควสเสริม)",
@@ -2850,6 +2912,64 @@
           "reason": "ผนังเป็นสีเขียวล้วนไม่มีลาย"
         }
       ]
+    },
+    {
+      "id": "TS-24",
+      "kind": "tileset",
+      "name": "ไทล์เซตห้องสวน (พื้นหญ้า)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_garden": "tiles/ts_garden.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of bright green grass with tiny white and yellow flowers, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of light wooden fence panels with a lattice pattern and small round warm lanterns, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "e40d61dc-ecf6-434c-a658-8bb64d968ece",
+        "generatedAt": "2026-10-22T07:46:17.259Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_garden_preview": "tiles/ts_garden_preview.png"
+      },
+      "status": "generated"
     },
     {
       "id": "TS-12",
@@ -6705,6 +6825,564 @@
           "reason": "ภาพผิดจากที่ต้องการ (ลังมีเครื่องหมาย / ธงมีผืนเดียว)"
         }
       ]
+    },
+    {
+      "id": "PR-N01",
+      "kind": "prop",
+      "name": "ของตกแต่งแนวสวน: ซุ้มไม้",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_arbor": "props/pr_decor_arbor.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wooden garden arbor arch covered with climbing green leaves and small pink flowers, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "04446c37-a1cc-46b1-918e-e289b8328e89",
+        "generatedAt": "2026-10-22T07:46:55.390Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-N02",
+      "kind": "prop",
+      "name": "ของตกแต่งแนวสวน: บัวรดน้ำ",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_watering": "props/pr_decor_watering.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "metal watering can with a long spout sitting on a small wooden stand, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ab7b0d04-4c33-4749-91eb-f399f9c1e071",
+        "generatedAt": "2026-10-22T07:47:24.895Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-N03",
+      "kind": "prop",
+      "name": "ของตกแต่งแนวสวน: ม้านั่งไม้",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_decor_woodbench": "props/pr_decor_woodbench.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "wooden garden bench with a curved back and a small flower pot beside it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "e8521416-96f9-4668-9ea9-4dafb29109a2",
+        "generatedAt": "2026-10-22T07:48:02.596Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-N04",
+      "kind": "prop",
+      "name": "ของตกแต่งแนวสวน: ตะเกียงสวน",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_decor_garden_lamp": "props/pr_decor_garden_lamp.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "tall garden lantern on a wooden post with a glowing warm lamp and a small vine around it, front view, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "dcb2edb8-e9f1-4da2-90aa-54ddf4d0b866",
+        "generatedAt": "2026-10-22T07:48:33.079Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-N05",
+      "kind": "prop",
+      "name": "ทางเดินหินในห้องสวน (วางราบกับพื้น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_garden_path": "props/pr_garden_path.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "top-down view of round grey stepping stones set in green grass forming a short path, flat ground decoration, cute sci-fi laboratory pixel art, chunky readable shapes, flat colors, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "c651fd91-02c0-4c0f-8e08-b927fbcc6752",
+        "generatedAt": "2026-10-22T07:49:11.465Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-N06",
+      "kind": "prop",
+      "name": "แปลงดอกไม้ในห้องสวน (วางราบกับพื้น)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "pr_garden_flowers": "props/pr_garden_flowers.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "top-down view of a flower bed with pink, yellow and white flowers and green leaves in dark soil, flat ground decoration, cute sci-fi laboratory pixel art, chunky readable shapes, flat colors, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "b24fc0e5-2bde-4204-b479-1ce15b49d257",
+        "generatedAt": "2026-10-22T07:49:30.851Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A01",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: กลิตช์ ท่าโจมตี (แก้จาก BT-01 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_1_atk": "battle/bt_kaiju_1_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, lunging forward with its jaws wide open and glitch static bursting from its mouth, body leaning toward the left, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-01/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "5abb91b4-7964-439d-a4ab-d3f52c0896d8",
+        "generatedAt": "2026-10-22T07:43:26.359Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A02",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: ไตรฮอร์น ท่าโจมตี (แก้จาก BT-02 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_2_atk": "battle/bt_kaiju_2_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, all three long necks striking forward at once with open fangs and glowing pink eyes, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-02/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "ac13a396-77c0-4eb6-94ff-1cbaea81de65",
+        "generatedAt": "2026-10-22T07:44:19.158Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A03",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: สแครป ท่าโจมตี (แก้จาก BT-03 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_3_atk": "battle/bt_kaiju_3_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, raising one huge scrap metal fist high above its head about to smash down, body leaning forward, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-03/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "e755cf3f-833c-49c2-8610-aa3f003826a2",
+        "generatedAt": "2026-10-22T07:45:15.807Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A04",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: เกียร์แครบ ท่าโจมตี (แก้จาก BT-04 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_4_atk": "battle/bt_kaiju_4_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, both huge steel claws thrust forward wide open, body lowered and leaning forward, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-04/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "0b055c89-2290-4cf3-b4e4-a265a5db972b",
+        "generatedAt": "2026-10-22T07:45:54.207Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A05",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: ฝูงมิมิก ท่าโจมตี (แก้จาก BT-05 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_5_atk": "battle/bt_kaiju_5_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, all the small blob monsters leaping forward together with mouths wide open showing sharp teeth, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-05/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "2092eac5-cd66-4071-8061-41d800147b7a",
+        "generatedAt": "2026-10-22T07:46:32.359Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A06",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: โอเมก้า ท่าโจมตี (แก้จาก BT-06 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_6_atk": "battle/bt_kaiju_6_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, rearing up with its jaws open, glowing azure energy charging in its mouth and the cracks glowing brighter, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-06/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "5a7fd6f5-1f2b-412f-9c45-1d8dfefa5b97",
+        "generatedAt": "2026-10-22T07:47:19.461Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A07",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: โวลต์อีล ท่าโจมตี (แก้จาก BT-09 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_7_atk": "battle/bt_kaiju_7_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, rearing back and lunging forward with its jaws wide open, lightning arcs blazing along its fins, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-09/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "c928d0a2-dc31-4dc5-b50f-572893058fa3",
+        "generatedAt": "2026-10-22T07:48:16.155Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A08",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: ไอรอนเชลล์ ท่าโจมตี (แก้จาก BT-10 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_8_atk": "battle/bt_kaiju_8_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, leaning forward with both cannon barrels on its shell firing glowing orange shots, head thrust forward, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-10/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "1bf4ae7f-c495-4ecb-a22e-44c24bf2951c",
+        "generatedAt": "2026-10-22T07:44:27.132Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A09",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: ฝูงสติงเกอร์ ท่าโจมตี (แก้จาก BT-11 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_9_atk": "battle/bt_kaiju_9_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, all the wasp drones diving forward at once with their long stingers pointed ahead, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-11/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "3ff01652-60ae-40be-a7b5-5babb437d3fb",
+        "generatedAt": "2026-10-22T07:45:06.466Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A10",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: แมกมาโกเลม ท่าโจมตี (แก้จาก BT-13 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_10_atk": "battle/bt_kaiju_10_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, raising both heavy fists overhead about to slam down, the lava seams glowing brighter, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-13/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "f9238028-caa6-43b2-8f77-ed94c4587395",
+        "generatedAt": "2026-10-22T07:45:44.059Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A11",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: ฟีนิกซ์เหล็ก ท่าโจมตี (แก้จาก BT-14 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_kaiju_11_atk": "battle/bt_kaiju_11_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, diving forward with its steel wings swept back and its beak pointing ahead, flames trailing behind, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-14/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "ef36c5cd-25b7-4c03-85a8-a3cfb8f652c8",
+        "generatedAt": "2026-10-22T07:46:31.368Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A12",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: โอเมก้า ร่างคลั่ง ท่าโจมตี (แก้จาก BT-07 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_boss_2_atk": "battle/bt_boss_2_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, rearing up with all four wings spread and both pairs of claws slashing forward, the crimson cracks glowing brighter, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-07/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "a5090b46-a383-4156-8b04-6ae4e4b371fc",
+        "generatedAt": "2026-10-22T07:47:19.627Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A13",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: โอเมก้า ร่างสมบูรณ์ ท่าโจมตี (แก้จาก BT-08 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_boss_3_atk": "battle/bt_boss_3_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, spreading all six wings wide and thrusting forward with white-hot energy blazing from its golden chest core, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-08/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "18439619-1005-4fe5-8cee-8b3d0b651e60",
+        "generatedAt": "2026-10-22T07:47:57.806Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "BT-A14",
+      "kind": "battle",
+      "name": "ท่าโจมตีของไคจู: โอเมก้า ร่างจักรพรรดิ ท่าโจมตี (แก้จาก BT-12 ด้วย edit_image_pro_flash)",
+      "requested": true,
+      "size": [
+        128,
+        128
+      ],
+      "files": {},
+      "web": {
+        "bt_boss_4_atk": "battle/bt_boss_4_atk.png"
+      },
+      "pixellab": {
+        "tool": "edit_image_pro_flash",
+        "arguments": {
+          "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, unleashing a beam of golden light from its open mouth, six wings flared and the halo blazing, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "method": "text",
+          "no_background": true,
+          "source": "BT-12/image.png"
+        },
+        "fetchTool": "get_image",
+        "id": "a583bbac-8e09-4d66-9137-fd4fdc882cf4",
+        "generatedAt": "2026-10-22T07:48:45.852Z"
+      },
+      "status": "generated"
     },
     {
       "id": "PR-H01",
@@ -10857,6 +11535,68 @@
         "fetchTool": "get_image",
         "id": "3b47421e-b08d-4e44-b14f-c8127e6f1968",
         "generatedAt": "2026-10-11T16:11:22.307Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "WM-05",
+      "kind": "backdrop",
+      "name": "พื้นแผนที่โลกรุ่นใหม่ (ตัวเลือก 1)",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "wm_world_2": "worldmap/wm_world_2.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "bird's-eye overhead detailed illustrated world map of a coastal region: bottom left a white research laboratory town with small buildings and round trees, middle a green farmland valley with a winding river, wooden bridges and white wind turbines, top right a dark volcanic fortress mountain with glowing lava rivers, all joined by one winding dirt road, deep blue sea with white foam waves around the coast, no text, no letters, no signs, retro pixel art, chunky readable shapes, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no letters, no signs, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "high top-down",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "93a99644-56e3-4b57-bf3a-170a3fec39ad",
+        "generatedAt": "2026-10-22T07:44:19.389Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "WM-06",
+      "kind": "backdrop",
+      "name": "พื้นแผนที่โลกรุ่นใหม่ (ตัวเลือก 2)",
+      "requested": true,
+      "size": [
+        320,
+        180
+      ],
+      "files": {},
+      "web": {
+        "wm_world_3": "worldmap/wm_world_3.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "bird's-eye overhead detailed illustrated fantasy island map: a large green island with a southern coastal lab town and harbor, a central forest and lake with a stone bridge, a northern black volcano with lava and a fortress, a dirt road winding between them, sparkling blue ocean with small waves and tiny boats, no text, no letters, no signs, retro pixel art, chunky readable shapes, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no letters, no signs, no text",
+          "width": 320,
+          "height": 180,
+          "no_background": false,
+          "view": "high top-down",
+          "outline": "lineless",
+          "shading": "medium shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "a290fd27-1efc-4fd5-857e-f45106a7c18e",
+        "generatedAt": "2026-10-22T07:44:51.495Z"
       },
       "status": "generated"
     },

@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, all three long necks striking forward at once with open fangs and glowing pink eyes, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-02/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "ac13a396-77c0-4eb6-94ff-1cbaea81de65",
+  "generatedAt": "2026-10-22T07:44:19.158Z"
+}

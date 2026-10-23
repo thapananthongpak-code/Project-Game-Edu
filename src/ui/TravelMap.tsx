@@ -7,12 +7,20 @@ import { difficultyOf, mapCleared, mapUnlocked, roomsOfMap, useGameStore } from 
 import { art } from "./art";
 import { useDialog } from "./useDialog";
 
-/** ตำแหน่งของแต่ละแมพบนภาพพื้นแผนที่ (เปอร์เซ็นต์ของกรอบภาพ) และภาพของสถานที่ */
-const SITES: Record<Difficulty, { x: number; y: number; art: "lab" | "outpost" | "fortress" }> = {
-  easy: { x: 50, y: 77, art: "lab" },
-  normal: { x: 77, y: 55, art: "outpost" },
-  hard: { x: 53, y: 25, art: "fortress" },
+/** ตำแหน่งของแต่ละแมพบนภาพพื้นแผนที่ (เปอร์เซ็นต์ของกรอบภาพ WM-05: ห้องแล็บทางซ้ายล่าง หุบเขากังหันลมตรงกลาง ภูเขาไฟป้อมปราการขวาบน) */
+const SITES: Record<Difficulty, { x: number; y: number }> = {
+  easy: { x: 19, y: 64 },
+  normal: { x: 58, y: 64 },
+  hard: { x: 66, y: 22 },
 };
+
+/** ไคจูของแต่ละแมพเรียงเป็นวงโค้งรอบสถานที่ (ครึ่งวงกลมด้านบนและข้าง) ระยะเป็นเปอร์เซ็นต์ของกรอบภาพ */
+function kaijuSpot(map: Difficulty, index: number, count: number): { x: number; y: number } {
+  const site = SITES[map];
+  // มุมจาก 190° ถึง 350° (ครึ่งวงกลมด้านบนของสถานที่)
+  const angle = Math.PI * (1.05 + (0.9 * index) / Math.max(1, count - 1));
+  return { x: site.x + Math.cos(angle) * 13, y: site.y + Math.sin(angle) * 18 };
+}
 
 /** เวลาที่หมุดตัวละครเดินไปยังแมพปลายทาง (มิลลิวินาที) */
 const WALK_MS = 900;
@@ -92,6 +100,29 @@ export function TravelMap() {
         {/* แผนที่โลก: ภาพพื้นหลังเป็นของตกแต่ง สถานที่เป็นปุ่มจริงวางทับ ใช้ Tab และ Enter ได้ */}
         <div className="relative aspect-video w-full overflow-hidden rounded-lg border-[3px] border-ink bg-teal-light" data-testid="travel-world">
           <img src={art.worldMap} alt="" className="pixelated absolute inset-0 h-full w-full object-cover" />
+          {/* ไคจูของทุกแมพวางบนแผนที่: ชนะแล้ว = สีเต็มมีเครื่องหมายถูก, ด่านถัดไป = กระพริบ, ยังไม่ถึง = เงาดำ (ข้อมูลเดียวกับรายการในการ์ดด้านล่าง) */}
+          {DIFFICULTIES.flatMap((map) => {
+            const list = CAMPAIGN[map].battles;
+            const next = mapUnlocked(state, map) ? list.find((battle) => !battles[battle.id]?.won)?.id : undefined;
+            return list.map((battle, i) => {
+              const spot = kaijuSpot(map, i, list.length);
+              const won = battles[battle.id]?.won === true;
+              const status = won ? "won" : battle.id === next ? "next" : "locked";
+              return (
+                <span
+                  key={battle.id}
+                  data-testid={`world-kaiju-${battle.id}`}
+                  data-status={status}
+                  aria-hidden="true"
+                  style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+                  className={`travel-kaiju travel-kaiju-${status} pointer-events-none absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-end justify-center overflow-hidden rounded-full border-2 border-ink sm:h-9 sm:w-9 ${battle.boss ? "bg-hint" : "bg-paper/90"}`}
+                >
+                  <img src={art.foe(battle.forms[battle.forms.length - 1].art)} alt="" className="pixelated h-full w-full object-contain" />
+                  {won && <span className="absolute -right-0.5 -top-0.5 rounded-full bg-correct-dark px-0.5 text-xs font-extrabold leading-none text-paper">✓</span>}
+                </span>
+              );
+            });
+          })}
           <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {DIFFICULTIES.slice(1).map((map) => {
               const from = SITES[DIFFICULTIES[mapIndex(map) - 1]];
@@ -130,7 +161,7 @@ export function TravelMap() {
                 style={{ left: `${site.x}%`, top: `${site.y}%` }}
                 className={`absolute flex min-h-11 min-w-11 -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded-lg border-[3px] px-1 pb-0.5 text-xs font-extrabold ${picked === map ? "border-ink bg-hint shadow-[0_3px_0_0_#1a1c2c]" : "border-ink bg-paper/90 hover:bg-hint"}`}
               >
-                <img src={art.worldSite(site.art)} alt="" className={`pixelated h-10 w-10 sm:h-14 sm:w-14 ${status === "locked" ? "opacity-50 grayscale" : ""}`} />
+                <img src={art.foe(CAMPAIGN[map].battles[CAMPAIGN[map].battles.length - 1].forms[0].art)} alt="" className={`pixelated h-8 w-8 object-contain sm:h-11 sm:w-11 ${status === "locked" ? "opacity-50 grayscale" : ""}`} />
                 <span className="whitespace-nowrap">
                   {status === "locked" && <span aria-hidden="true">🔒 </span>}
                   {cleared && <span aria-hidden="true">✓ </span>}
@@ -167,6 +198,19 @@ export function TravelMap() {
                 : fmt(ui.travel.locked, { map: lockedBy })}
             </p>
             {selected.open && !selected.cleared && <p className="text-xs text-slate">{fmt(ui.travel.boss, { name: foeName(selected.boss.forms[0].art) })}</p>}
+            <ul className="mt-1 flex flex-wrap gap-1" data-testid="kaiju-list" aria-label={ui.travel.kaijuList}>
+              {selected.level.battles.map((battle) => {
+                const won = battles[battle.id]?.won === true;
+                const next = selected.open && !won && selected.level.battles.find((b) => !battles[b.id]?.won)?.id === battle.id;
+                const status = won ? "won" : next ? "next" : "locked";
+                return (
+                  <li key={battle.id} data-kaiju={battle.id} data-status={status} className={`rounded border-2 border-ink px-1.5 text-xs font-bold ${won ? "bg-teal-light" : next ? "bg-hint" : "bg-cream text-slate"}`}>
+                    {battle.boss && <span aria-hidden="true">👑 </span>}
+                    {foeName(battle.forms[0].art)} · {ui.travel.kaijuStatus[status]}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
           {selected.status === "here" ? (
             <span className="shrink-0 rounded-md border-2 border-ink bg-cream px-2 py-1 text-sm font-bold">{ui.travel.here}</span>

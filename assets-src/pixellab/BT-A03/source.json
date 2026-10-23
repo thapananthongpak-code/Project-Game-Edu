@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, raising one huge scrap metal fist high above its head about to smash down, body leaning forward, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-03/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "e755cf3f-833c-49c2-8610-aa3f003826a2",
+  "generatedAt": "2026-10-22T07:45:15.807Z"
+}

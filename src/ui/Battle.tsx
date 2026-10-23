@@ -9,7 +9,7 @@ import { fmt, ui } from "../content/ui-strings";
 import { type ActiveSupply, applySupply, type BattleEvent, battleSetup, type BattleState, formOf, isCharging, isEnraged, isFurious, phaseCount, phaseOf, questionSource, resolveAnswer, retryCarry, startBattle, strikeOf, threatOf } from "../state/battle";
 import { BATTLE } from "../state/battle.config";
 import { type BattleSpec, battleOf, type FoeArt } from "../state/campaign";
-import { coreBoostOf, creditsOf, difficultyOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
+import { coreBoostOf, creditsOf, difficultyOf, levelStatusOf, type MusicCue, planOf, useGameStore } from "../state/gameStore";
 import { armorHp, bagSizeOf, GEAR, matchupOf, type Weapon } from "../state/gear";
 import { bagOf, gearOf, modulesOf, powerOf } from "../state/shop";
 import { REWARDS, type Supply } from "../state/shop.config";
@@ -67,11 +67,16 @@ interface Fx {
   banners: Banner[];
   /** เวลาที่ฉากสั่น (null = ไม่สั่น) */
   shakeAt: number | null;
+  /** เวลาที่เกราะของคู่ต่อสู้แตกเป็นเศษ (null = ไม่แตก) */
+  shards: number | null;
   /** ภาพเนื้อเรื่องของร่างใหม่ที่ตัดเข้ามาตอนบอสกลายร่าง */
   cutIn: { art: string; name: string; at: number } | null;
 }
 
-const NO_FX: Fx = { id: 0, robot: null, kaiju: null, assistAt: null, sparks: [], floaters: [], banners: [], shakeAt: null, cutIn: null };
+/** ท่าของไคจูที่ใช้ภาพท่าโจมตี (พุ่งเข้าใส่ ยิง หมุนตัว กระโดด รวมพลัง) */
+const ATTACKING: readonly string[] = ["dash", "fire", "spin", "hop", "charge"];
+
+const NO_FX: Fx = { id: 0, robot: null, kaiju: null, assistAt: null, sparks: [], floaters: [], banners: [], shakeAt: null, shards: null, cutIn: null };
 
 /** สิ่งที่ใช้แปลงเหตุการณ์เป็นภาพและข้อความ: ด่าน อาวุธของการ์เดียน และร่างของคู่ต่อสู้ตอนที่ตอบ */
 interface Scene {
@@ -82,7 +87,7 @@ interface Scene {
 
 /** เอฟเฟกต์ ตัวเลข ชื่อท่า และเสียงของเหตุการณ์ในตาหนึ่ง เรียงตามลำดับที่เกิด (ท่าหนึ่งจบก่อนท่าถัดไปเริ่ม) */
 function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<Fx, "id"> & { sounds: [SfxName, number][] } {
-  const fx: Omit<Fx, "id"> = { robot: null, kaiju: null, assistAt: null, sparks: [], floaters: [], banners: [], shakeAt: null, cutIn: null };
+  const fx: Omit<Fx, "id"> = { robot: null, kaiju: null, assistAt: null, sparks: [], floaters: [], banners: [], shakeAt: null, shards: null, cutIn: null };
   const sounds: [SfxName, number][] = [];
   let at = 0;
   /** เล่นท่าหนึ่งท่าใส่ target: blocked = การโจมตีถูกกันไว้ (เอฟเฟกต์ตอนโดนเป็นโล่ ไม่มีเสียงเจ็บ) */
@@ -118,6 +123,7 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         // ค้อนทุบทะลุเกราะ: เกราะแตกในจังหวะเดียวกับการโจมตีที่ตามมา ไม่มีท่าแยก
         if (events[index + 1]?.type === "robot-hit") {
           fx.sparks.push({ art: "shield", motion: "pop", side: "kaiju", at: at + 120, big: true });
+          fx.shards ??= at + 120;
           sounds.push(["crack", at + 160]);
           break;
         }
@@ -126,6 +132,7 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         const move = GUARDIAN_MOVES[id];
         fx.robot ??= { pose: move.pose, at };
         perform(move, "kaiju", true);
+        fx.shards ??= at + move.hitAt;
         sounds.push(["crack", at + move.hitAt]);
         fx.banners.push({ text: fmt(ui.battle.banner.robot, { move: ui.battle.moves[id] }), side: "robot", at });
         at += move.end;
@@ -378,6 +385,13 @@ export function Battle() {
   const [retried, setRetried] = useState(0);
   /** เครดิตที่ได้จากการชนะครั้งนี้ (รวมตัวคูณของระดับความยาก) */
   const [credits, setCredits] = useState(0);
+  /** EXP ที่ได้จากการออกปฏิบัติการครั้งนี้ (src/state/level.ts) */
+  const [expGain, setExpGain] = useState(0);
+  // สถิติของรอบนี้ที่ชาเลนจ์ใช้: ตอบถูกติดกันมากที่สุด และการ์เดียนเสียพลังหรือไม่
+  const run = useRef({ streak: 0, hit: false });
+  const track = (next: BattleState) => {
+    run.current = { streak: Math.max(run.current.streak, next.streak), hit: run.current.hit || next.robotHp < setup.robotMax };
+  };
   /** โจทย์ที่ยังไม่ได้ใช้ของแต่ละหัวข้อ หมดแล้วสลับใหม่ */
   const queues = useRef(new Map<number, ChoiceItem[]>());
 
@@ -417,6 +431,7 @@ export function Battle() {
     if (!locked) setLocked(live);
     const from = startBattle(setup, { carry, reboot: packed.includes("reboot") });
     setBag(packed);
+    run.current = { streak: 0, hit: false };
     setState(from);
     setFx(NO_FX);
     setHints(setup.hints);
@@ -435,8 +450,10 @@ export function Battle() {
   const finishSortie = (final: BattleState) => {
     const won = final.status === "won";
     const before = creditsOf(useGameStore.getState());
-    recordBattle(battleId, { won, asked: final.turn, correct: final.correct });
+    const expBefore = levelStatusOf(useGameStore.getState()).exp;
+    recordBattle(battleId, { won, asked: final.turn, correct: final.correct, streak: run.current.streak, untouched: !run.current.hit });
     setCredits(creditsOf(useGameStore.getState()) - before);
+    setExpGain(levelStatusOf(useGameStore.getState()).exp - expBefore);
     playSfx(won ? "win" : "lose");
     setStage(won ? "won" : "lost");
   };
@@ -445,6 +462,7 @@ export function Battle() {
     if (!item || answered !== undefined) return;
     const correct = option === item.answer;
     const result = resolveAnswer(setup, state, correct);
+    track(result.state);
     setState(result.state);
     setEvents(result.events);
     setActor(form.art);
@@ -470,6 +488,7 @@ export function Battle() {
     const result = applySupply(setup, state, supply);
     if (itemUsed || !result || !spend(supply)) return;
     setItemUsed(true);
+    track(result.state);
     setState(result.state);
     setEvents(result.events);
     setActor(form.art);
@@ -490,7 +509,7 @@ export function Battle() {
 
   // ออกจากด่านกลางคัน (ถอยกลับ): นับเป็นการออกปฏิบัติการหนึ่งครั้งถ้าตอบไปแล้ว
   const leave = () => {
-    if (stage === "fight" && state.turn > 0) recordBattle(battleId, { won: false, asked: state.turn, correct: state.correct });
+    if (stage === "fight" && state.turn > 0) recordBattle(battleId, { won: false, asked: state.turn, correct: state.correct, streak: run.current.streak });
     closeOverlay();
   };
 
@@ -596,19 +615,44 @@ export function Battle() {
               data-armor={gear.armor}
               data-pose={fx.robot?.pose ?? "idle"}
             >
+              {state.shield && <span className="battle-aura battle-aura-shield" data-testid="aura-shield" aria-hidden="true" />}
+              {fighting && state.guard > 0 && <span className="battle-aura battle-aura-guard" data-testid="aura-guard" aria-hidden="true" />}
+              {(state.boost || (fighting && state.opening)) && <span className="battle-aura battle-aura-boost" data-testid="aura-boost" aria-hidden="true" />}
+              {fighting && state.reboot && <span className="battle-aura battle-aura-reboot" data-testid="aura-reboot" aria-hidden="true" />}
               <GuardianModel gear={gear} paint={paint} className="absolute inset-0 h-full w-full" />
+              {fx.robot?.pose === "hurt" && <span key={`rflash-${fx.id}`} className="battle-flash" style={{ animationDelay: `${fx.robot.at}ms` }} aria-hidden="true" />}
             </div>
             <img key={`bit-${fx.id}`} src={bit} alt="" className={`pixelated absolute bottom-[52%] left-[2%] h-[26%] ${fx.assistAt !== null ? "battle-bit-assist" : "battle-idle"}`} style={fx.assistAt !== null ? { animationDelay: `${fx.assistAt}ms` } : undefined} />
-            <img
+            {/* ไคจู: ภาพปกติกับภาพท่าโจมตี (BT-A*) สลับกันช่วงพุ่งเข้าโจมตี ออร่าของสถานะวาดบนตัว */}
+            <div
               key={`kaiju-${fx.id}-${state.form}`}
-              src={art.foe(form.art)}
-              alt=""
               data-testid="battle-foe"
               data-art={form.art}
               data-pose={fx.kaiju?.pose ?? "idle"}
-              className={`pixelated absolute bottom-[3%] right-[8%] h-[76%] ${fx.kaiju ? `battle-kaiju-${fx.kaiju.pose}` : "battle-idle"} ${stage === "won" ? "battle-defeated" : ""} ${enraged || furious ? "battle-enraged" : ""}`}
-              style={fx.kaiju ? { animationDelay: `${fx.kaiju.at}ms` } : undefined}
-            />
+              className={`battle-kaiju-body absolute bottom-[3%] right-[8%] aspect-square h-[76%] ${fx.kaiju ? `battle-kaiju-${fx.kaiju.pose}` : "battle-idle battle-idle-late"} ${fx.kaiju && ATTACKING.includes(fx.kaiju.pose) ? "battle-kaiju-atking" : ""} ${stage === "won" ? "battle-defeated" : ""} ${enraged || furious ? "battle-enraged" : ""}`}
+              style={{ "--at": `${fx.kaiju?.at ?? 0}ms`, ...(fx.kaiju ? { animationDelay: `${fx.kaiju.at}ms` } : {}) } as React.CSSProperties}
+            >
+              {fighting && state.armored && <span className="battle-aura battle-aura-armor" data-testid="aura-armor" aria-hidden="true" />}
+              {fighting && charging && <span className="battle-aura battle-aura-charge" data-testid="aura-charge" aria-hidden="true" />}
+              {(enraged || furious) && <span className="battle-aura battle-aura-rage" data-testid="aura-rage" aria-hidden="true" />}
+              <img src={art.foe(form.art)} alt="" className="battle-kaiju-base-img pixelated" />
+              <img src={art.foeAttack(form.art)} alt="" className="battle-kaiju-atk-img pixelated" onError={(event) => (event.currentTarget.style.display = "none")} />
+              {fighting && state.stunned && (
+                <span className="battle-stars" data-testid="aura-stun" aria-hidden="true">
+                  <i>★</i>
+                  <i>★</i>
+                  <i>★</i>
+                </span>
+              )}
+              {fx.shards !== null && (
+                <span key={`shards-${fx.id}`} className="battle-shards" style={{ animationDelay: `${fx.shards}ms` }} data-testid="aura-shards" aria-hidden="true">
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <i key={i} style={{ "--a": `${i * 51}deg`, animationDelay: `${fx.shards}ms` } as React.CSSProperties} />
+                  ))}
+                </span>
+              )}
+              {fx.kaiju?.pose === "hurt" && <span key={`flash-${fx.id}`} className="battle-flash" style={{ animationDelay: `${fx.kaiju.at}ms` }} aria-hidden="true" />}
+            </div>
             <div className="absolute right-[4%] top-[26%] flex flex-col items-end gap-1">
               <span className={`rounded border-2 border-ink px-2 text-xs font-extrabold ${matchup === "strong" ? "bg-hint" : matchup === "weak" ? "bg-[#f8e1e5]" : "bg-cream"}`} data-testid="battle-weak" data-weak={form.weak} data-matchup={matchup} data-advantage={matchup === "strong"} title={ui.matchup.effects[matchup]}>
                 {matchup === "strong" ? "▲ " : matchup === "weak" ? "▼ " : ""}
@@ -726,17 +770,20 @@ export function Battle() {
                 {fmt(ui.battle.gear, gearNames)}
               </p>
             </div>
-            <ul className="flex flex-col gap-0.5 text-sm text-slate">
-              <li>{ui.battle.assistNote}</li>
-              <li data-testid="battle-hints-note">{setup.hints > 0 ? fmt(ui.battle.hintsNote, { n: setup.hints }) : ui.battle.noHintsNote}</li>
-              {fixed.coreBonus > 0 ? (
-                <li data-testid="battle-core-bonus" data-bonus={fixed.coreBonus}>{fmt(ui.battle.coreBonus, { n: fixed.coreBonus })}</li>
-              ) : (
-                fixed.coreBoost > 0 && !training && <li data-testid="battle-core-bonus" data-bonus={0}>{ui.battle.coreBonusHint}</li>
-              )}
-              {perk && <li data-testid="battle-perk">{fmt(ui.battle.perk, { outfit: ui.shop.items[`outfit-${boot.outfit}`].name, perk })}</li>}
-              {boot.modules.length > 0 && <li data-testid="battle-modules">{fmt(ui.battle.modules, { list: boot.modules.map((module) => ui.shop.items[`module-${module}`].name).join(" ") })}</li>}
-            </ul>
+            <details className="rounded-md border-2 border-ink bg-paper px-2 py-1 text-sm" data-testid="battle-more">
+              <summary className="min-h-6 cursor-pointer font-bold text-teal-dark">{ui.battle.more}</summary>
+              <ul className="flex flex-col gap-0.5 text-sm text-slate">
+                <li>{ui.battle.assistNote}</li>
+                <li data-testid="battle-hints-note">{setup.hints > 0 ? fmt(ui.battle.hintsNote, { n: setup.hints }) : ui.battle.noHintsNote}</li>
+                {fixed.coreBonus > 0 ? (
+                  <li data-testid="battle-core-bonus" data-bonus={fixed.coreBonus}>{fmt(ui.battle.coreBonus, { n: fixed.coreBonus })}</li>
+                ) : (
+                  fixed.coreBoost > 0 && !training && <li data-testid="battle-core-bonus" data-bonus={0}>{ui.battle.coreBonusHint}</li>
+                )}
+                {perk && <li data-testid="battle-perk">{fmt(ui.battle.perk, { outfit: ui.shop.items[`outfit-${boot.outfit}`].name, perk })}</li>}
+                {boot.modules.length > 0 && <li data-testid="battle-modules">{fmt(ui.battle.modules, { list: boot.modules.map((module) => ui.shop.items[`module-${module}`].name).join(" ") })}</li>}
+              </ul>
+            </details>
             <BagPicker spec={spec} />
             {training && (
               <p className="rounded-md border-2 border-ink bg-hint px-3 py-1.5 text-sm font-bold" data-testid="battle-training">
@@ -870,6 +917,11 @@ export function Battle() {
                 {fmt(ui.battle.wonCredits, { n: credits })}
               </p>
             )}
+            {expGain > 0 && (
+              <p className="font-bold text-teal-dark" data-testid="battle-exp" data-exp={expGain}>
+                {fmt(ui.battle.wonExp, { n: expGain })}
+              </p>
+            )}
             {!training && (spec.unlocks !== undefined || spec.boss) && <p className="text-sm font-semibold text-slate">{spec.unlocks !== undefined ? fmt(ui.battle.wonUnlock, { n: spec.unlocks }) : ui.battle.wonFinal}</p>}
             <button type="button" className="btn mt-2 self-center" data-testid="battle-finish" onClick={closeOverlay}>
               {ui.battle.finish}
@@ -880,6 +932,11 @@ export function Battle() {
         {stage === "lost" && (
           <div className="flex flex-col gap-2" data-testid="battle-lost">
             <p className="text-center text-xl font-extrabold text-wrong">{ui.battle.lost}</p>
+            {expGain > 0 && (
+              <p className="text-center text-sm font-bold text-teal-dark" data-testid="battle-exp" data-exp={expGain}>
+                {fmt(ui.battle.wonExp, { n: expGain })}
+              </p>
+            )}
             <p className="text-center font-semibold">{setup.formResetsOnRetry ? fmt(ui.battle.lostReset, { kaiju }) : fmt(ui.battle.lostDetail, { kaiju, n: state.kaijuHp })}</p>
             {power < spec.power && (
               <p className="text-center text-sm font-bold text-wrong" data-testid="battle-lost-power">

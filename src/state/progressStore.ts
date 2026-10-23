@@ -4,6 +4,7 @@
 //   - LocalProgressStore: localStorage ของเบราว์เซอร์ ใช้เมื่อยังไม่ได้ตั้งค่า Supabase และเป็นสำเนาในเครื่องเสมอ
 //   - SyncedProgressStore: สำเนาในเครื่อง + ฐานข้อมูลกลาง (Supabase) ผ่าน RemoteBackend
 // createProgressStore() เลือกตาม VITE_SUPABASE_URL และ VITE_SUPABASE_ANON_KEY (ดู docs/TEACHER_GUIDE.md และ supabase/schema.sql)
+import { MAX_LEVEL } from "./level";
 import { course } from "../content";
 import type { FormId } from "../content/schema";
 import { DIFFICULTIES, type Difficulty, topicsOf } from "./campaign";
@@ -39,6 +40,9 @@ export interface BattleRecord {
   /** โจทย์ที่ตอบทั้งหมด และที่ตอบถูก สะสมทุกครั้ง */
   asked: number;
   correct: number;
+  /** ตอบถูกติดกันมากที่สุดในด่านนี้ และเคยชนะโดยพลังของการ์เดียนไม่ลดเลย (ใช้กับชาเลนจ์ของเลเวล src/state/level.ts) */
+  streak?: number;
+  untouched?: boolean;
 }
 
 /** กระถางของห้องวิจัยที่มีพืชอยู่ (GDD ข้อ 21): ระยะของพืชคำนวณจากเวลาปัจจุบันลบ plantedAt เสมอ */
@@ -85,6 +89,8 @@ export interface ShopState {
   dash: string[];
   /** ไกด์นำทาง: จบหรือข้ามการสอนเล่นแล้ว คำแนะนำของที่ที่เห็นแล้ว หรือปิดคำแนะนำ (รหัสตาม src/state/guide.ts) */
   tips: string[];
+  /** เลเวลที่แจกรางวัลและฉลองไปแล้ว (เลเวลคำนวณจาก EXP เสมอ ช่องนี้บอกแค่ว่าแจกรางวัลถึงเลเวลไหนแล้ว) */
+  levelSeen: number;
 }
 
 /** ผลแบบทดสอบก่อนเรียนหรือหลังเรียนหนึ่งครั้ง */
@@ -201,6 +207,7 @@ export const emptyShop = (): ShopState => ({
   harvests: Object.fromEntries(SEEDS.map((seed) => [seed, 0])) as Record<Seed, number>,
   dash: [],
   tips: [],
+  levelSeen: 1,
 });
 
 export const emptySave = (): SaveData => ({ version: SAVE_VERSION, updatedAt: new Date(0).toISOString(), profile: null, pretest: null, posttest: null, rooms: {}, maps: { normal: {}, hard: {} }, battles: {}, npcs: {}, story: [], shop: emptyShop() });
@@ -261,7 +268,7 @@ function roomOf(raw: unknown): RoomProgress {
 function battleOf(raw: unknown): BattleRecord {
   const data = object(raw);
   const won = data.won === true;
-  return { won, wins: won ? Math.max(1, Math.floor(count(data.wins))) : 0, sorties: count(data.sorties), asked: count(data.asked), correct: count(data.correct) };
+  return { won, wins: won ? Math.max(1, Math.floor(count(data.wins))) : 0, sorties: count(data.sorties), asked: count(data.asked), correct: count(data.correct), ...(count(data.streak) > 0 ? { streak: Math.floor(count(data.streak)) } : {}), ...(won && data.untouched === true ? { untouched: true } : {}) };
 }
 
 const MAX_BATTLES = 20;
@@ -369,6 +376,7 @@ function shopOf(raw: unknown): ShopState {
     pots: potsOf(data.pots),
     harvests: seedCounts(data.harvests),
     dash: [...new Set(Array.isArray(data.dash) ? data.dash.filter((entry): entry is string => typeof entry === "string" && DASH_ENTRY.test(entry)) : [])].slice(0, 40),
+    levelSeen: Math.min(MAX_LEVEL, Math.max(1, Math.floor(count(data.levelSeen)))),
     tips: [...new Set(Array.isArray(data.tips) ? data.tips.filter((entry): entry is string => typeof entry === "string" && TIP_ENTRY.test(entry)) : [])].slice(0, 20),
   };
 }

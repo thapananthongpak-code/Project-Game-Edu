@@ -1,0 +1,16 @@
+{
+  "tool": "create_image_pixflux",
+  "arguments": {
+    "description": "bird's-eye overhead detailed illustrated world map of a coastal region: bottom left a white research laboratory town with small buildings and round trees, middle a green farmland valley with a winding river, wooden bridges and white wind turbines, top right a dark volcanic fortress mountain with glowing lava rivers, all joined by one winding dirt road, deep blue sea with white foam waves around the coast, no text, no letters, no signs, retro pixel art, chunky readable shapes, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no letters, no signs, no text",
+    "width": 320,
+    "height": 180,
+    "no_background": false,
+    "view": "high top-down",
+    "outline": "lineless",
+    "shading": "medium shading",
+    "detail": "medium detail"
+  },
+  "fetchTool": "get_image",
+  "id": "93a99644-56e3-4b57-bf3a-170a3fec39ad",
+  "generatedAt": "2026-10-22T07:44:19.389Z"
+}

@@ -32,6 +32,8 @@ export const art = {
   npc: (id: NpcId): string => `assets/characters/npc_${id}.png`,
   /** คู่ต่อสู้: ไคจูของด่าน 1–6 หรือร่างที่ 2 และ 3 ของบอส */
   foe: (foe: FoeArt): string => `assets/battle/bt_${foe}.png`,
+  /** ภาพท่าโจมตีของคู่ต่อสู้ (BT-A01..A14 แก้จากภาพเดิมของตัวนั้น) */
+  foeAttack: (foe: FoeArt): string => `assets/battle/bt_${foe}_atk.png`,
   fx: (name: FxArt): string => `assets/battle/fx_${name}.png`,
   /** ไอคอนอุปกรณ์ของการ์เดียน (GR-01..08) ช่องชิปที่ว่างไม่มีภาพ */
   gear: (value: Gear[keyof Gear]): string | null => (GEAR_ART[value] ? `assets/gear/gr_${GEAR_ART[value]}.png` : null),
@@ -51,7 +53,7 @@ export const art = {
   /** พืชต่างดาวของห้องวิจัยแต่ละพันธุ์และระยะ (1 = ต้นอ่อน 2 = กำลังโต 3 = พร้อมเก็บ) และกระถางที่ว่าง */
   plant: (seed: string, stage: 1 | 2 | 3): string => `assets/props/pr_plant_${seed}_${stage}.png`,
   /** พื้นแผนที่โลกของกระดานแผนที่ (WM-01) และสถานที่ของแต่ละแมพบนแผนที่ (WM-02..04) */
-  worldMap: "assets/worldmap/wm_world.png",
+  worldMap: "assets/worldmap/wm_world_2.png",
   worldSite: (site: "lab" | "outpost" | "fortress"): string => `assets/worldmap/wm_site_${site}.png`,
   /** ฉากหลังหน้าเมนู (MN-06) */
   menuBackdrop: "assets/menu/mn_title_bg.png",

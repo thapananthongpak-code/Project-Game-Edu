@@ -4,7 +4,7 @@ import { isFieldRoom, questTitle, stationsOf, topicOf } from "../content";
 import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
 import { DIFFICULTIES, mapIndex } from "../state/campaign";
-import { allBattlesWon, coreCount, coreTotal, creditsOf, difficultyOf, nextStepOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
+import { allBattlesWon, coreCount, coreTotal, creditsOf, difficultyOf, levelStatusOf, nextStepOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
 import { art } from "./art";
 
 /** เป้าหมายถัดไปของผู้เล่น ตามลำดับการเล่นของแมพที่อยู่ (GDD ข้อ 4.1 และ 15) และด่านต่อสู้ (GDD ข้อ 12) */
@@ -71,6 +71,7 @@ export function Hud() {
   const total = useGameStore(coreTotal);
   const map = useGameStore(difficultyOf);
   const credits = useGameStore(creditsOf);
+  const level = useGameStore((s) => levelStatusOf(s).level);
   // ห้องที่มีหลายหัวข้อ: บอกด้วยว่ากำลังทำเรื่องที่เท่าไร
   const multi = useGameStore((s) => s.zone !== null && (planOf(s).zones[s.zone - 1]?.topics.length ?? 1) > 1);
   const openOverlay = useGameStore((s) => s.openOverlay);
@@ -111,6 +112,9 @@ export function Hud() {
         <img src={art.credit} alt="" className="pixelated h-4 w-4" />
         {fmt(ui.hud.credits, { n: credits })}
       </span>
+      <button type="button" className="shrink-0 rounded-md border-2 border-ink bg-teal-light px-2 py-0.5 text-xs font-extrabold hover:bg-hint" data-testid="hud-level" data-level={level} aria-label={fmt(ui.level.badgeLabel, { n: level })} onClick={press(() => openOverlay("profile"))}>
+        {fmt(ui.level.badge, { n: level })}
+      </button>
       {/* แมพที่ไม่มีห้องเรียน (แมพ 3) ไม่มีแกนให้เก็บ */}
       {total > 0 && (
         <span className="hidden shrink-0 rounded-md border-2 border-ink bg-teal-light px-2 py-0.5 text-xs font-bold min-[420px]:inline" data-testid="cores">

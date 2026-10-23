@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, unleashing a beam of golden light from its open mouth, six wings flared and the halo blazing, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-12/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "a583bbac-8e09-4d66-9137-fd4fdc882cf4",
+  "generatedAt": "2026-10-22T07:48:45.852Z"
+}

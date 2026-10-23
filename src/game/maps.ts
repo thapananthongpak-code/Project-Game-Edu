@@ -191,9 +191,9 @@ export const hallMapOf = (difficulty: Difficulty): GameMap => HALLS[difficulty];
  * ประตูกลับโถงอยู่กลางผนังบน เคาน์เตอร์ของแต่ละร้านเรียงเป็นแถว
  */
 export const STALL_COLUMNS: Record<Stall, number> = { gear: 1, items: 5, plants: 9, costume: 13, decor: 17 };
-/** ชุดไทล์ประจำห้อง: ย่านร้านค้าและห้องวิจัยแต่ละห้องใช้ชุดเดียวทุกแมพ (ไม่ซ้ำกับโถง) */
+/** ชุดไทล์ประจำห้อง: ย่านร้านค้า (ts_market) และห้องสวน (ts_garden พื้นหญ้ากับรั้วไม้) ใช้ชุดเดียวทุกแมพ (ไม่ซ้ำกับโถง) */
 export const MARKET_TILESET = "ts_market";
-export const LAB_TILESET = "ts_lab";
+export const LAB_TILESET = "ts_garden";
 /** ของประกอบฉากตายตัวของย่านร้านค้า (ห้องนี้ผู้เล่นไม่จัดเอง) */
 const MARKET_PROPS: { prop: string; col: number }[] = [
   { prop: "pr_market_lamp", col: 3 },
@@ -225,6 +225,13 @@ export function labMapOf(_difficulty: Difficulty, pots: number = LAB_POT_SLOTS.l
     spawn: { col: 9, row: 3 },
     objects: [
       backDoor(9),
+      // ห้องสวน: ทางหินปูกลางห้องจากประตูไปถึงแปลงดอกไม้ (วางราบ เดินทับได้)
+      floor("pr_garden_path", 9, 5, 2),
+      floor("pr_garden_path", 9, 7, 2),
+      floor("pr_garden_path", 9, 9, 2),
+      floor("pr_garden_flowers", 1, 9, 2),
+      floor("pr_garden_flowers", 5, 9, 2),
+      floor("pr_garden_flowers", 13, 9, 2),
       ...LAB_POT_SLOTS.slice(0, pots).map(({ col, row }, index): MapObject => ({ kind: "pot", prop: "pr_pot_empty", col, row, index })),
       // กระดานตกแต่งห้องวิจัย (จุดใช้งานที่ย้ายได้เหมือนของโถงและโรงเก็บหุ่น)
       { kind: "decorboard", prop: "pr_decor_board", col: 18, row: 8 },

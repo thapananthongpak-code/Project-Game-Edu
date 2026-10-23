@@ -13,7 +13,7 @@ export const OUTFITS = ["lab", "hoodie", "engineer", "pilot", "researcher", "gua
 export type Outfit = (typeof OUTFITS)[number];
 
 /** สีของหุ่นการ์เดียนในฉากต่อสู้ สีแรกเป็นสีเริ่มต้น ค่าคือ CSS filter ที่ย้อมภาพหุ่นทั้งตัว (ตัวหุ่นเป็นสีขาว หมุนสีอย่างเดียวจึงแทบไม่เห็น) */
-export const PAINTS = ["standard", "crimson", "violet", "gold", "azure", "shadow", "emerald", "sakura"] as const;
+export const PAINTS = ["standard", "crimson", "violet", "gold", "azure", "shadow", "emerald", "sakura", "camo", "platinum", "neon", "aurora"] as const;
 export type Paint = (typeof PAINTS)[number];
 export const PAINT_FILTER: Record<Paint, string> = {
   standard: "none",
@@ -24,10 +24,15 @@ export const PAINT_FILTER: Record<Paint, string> = {
   shadow: "grayscale(1) brightness(0.55) contrast(1.25)",
   emerald: "sepia(1) saturate(3.6) hue-rotate(75deg)",
   sakura: "sepia(1) saturate(2.6) hue-rotate(-75deg) brightness(1.1)",
+  /** สีรางวัลของเลเวล (src/state/level.ts) ไม่วางขายในร้าน: aurora เปลี่ยนสีวนเองในฉากต่อสู้และโรงเก็บหุ่น (index.css) */
+  camo: "sepia(1) saturate(2.2) hue-rotate(35deg) brightness(0.7) contrast(1.3)",
+  platinum: "grayscale(1) brightness(1.3) contrast(0.85)",
+  neon: "sepia(1) saturate(9) hue-rotate(88deg) brightness(1.2)",
+  aurora: "sepia(1) saturate(4) hue-rotate(170deg) brightness(1.1)",
 };
 
 /** คอสตูมของพี่บิต (ภาพ CH-02 และ CH-21..26) เป็นของตกแต่ง ไม่มีผลในการต่อสู้ classic = รูปเดิมที่ทุกคนมี */
-export const BIT_SKINS = ["classic", "ninja", "pirate", "knight", "wizard", "chef", "dragon", "gold", "explorer", "star"] as const;
+export const BIT_SKINS = ["classic", "ninja", "pirate", "knight", "wizard", "chef", "dragon", "gold", "explorer", "star", "crown", "rainbow"] as const;
 export type BitSkin = (typeof BIT_SKINS)[number];
 
 /**
@@ -82,6 +87,11 @@ export const DECOR = {
   jukebox: { prop: "pr_decor_jukebox", size: "small" },
   beanbag: { prop: "pr_decor_beanbag", size: "small" },
   globe: { prop: "pr_decor_globe", size: "small" },
+  /** ของตกแต่งแนวสวน (ภาพ PR-N01..N04) ขายที่ร้านของตกแต่ง ใช้ตกแต่งห้องสวนหรือห้องไหนก็ได้ */
+  arbor: { prop: "pr_decor_arbor", size: "big" },
+  woodbench: { prop: "pr_decor_woodbench", size: "big" },
+  watering: { prop: "pr_decor_watering", size: "small" },
+  gardenlamp: { prop: "pr_decor_garden_lamp", size: "small" },
   /** รางวัลของห้องวิจัย: ได้เมื่อเก็บผลผลิตครบทุกพันธุ์ (src/state/lab.ts) ไม่ขายในร้าน */
   alienplant: { prop: "pr_plant_moonpod_2", size: "small" },
   /** ของแถมจากการเก็บผลผลิตครั้งแรกของแต่ละพันธุ์ (src/state/lab.ts) ไม่ขายในร้าน */
@@ -231,6 +241,10 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "decor-shelf", kind: "decor", value: "shelf", price: 50, tier: "normal" },
   { id: "decor-globe", kind: "decor", value: "globe", price: 60, tier: "normal" },
   { id: "decor-workbench", kind: "decor", value: "workbench", price: 70, tier: "normal" },
+  { id: "decor-watering", kind: "decor", value: "watering", price: 30 },
+  { id: "decor-gardenlamp", kind: "decor", value: "gardenlamp", price: 40 },
+  { id: "decor-woodbench", kind: "decor", value: "woodbench", price: 50 },
+  { id: "decor-arbor", kind: "decor", value: "arbor", price: 70, tier: "normal" },
   { id: "decor-fountain", kind: "decor", value: "fountain", price: 100, tier: "hard" },
   { id: "decor-statue", kind: "decor", value: "statue", price: 120, tier: "hard" },
   { id: "theme-sakura", kind: "theme", value: "sakura", price: 90 },
@@ -243,6 +257,13 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "theme-steel", kind: "theme", value: "steel", price: 110, tier: "normal" },
   { id: "theme-gold", kind: "theme", value: "gold", price: 150, tier: "normal" },
   { id: "theme-midnight", kind: "theme", value: "midnight", price: 160, tier: "hard" },
+  // รางวัลของเลเวล (src/state/level.ts LEVEL_REWARDS): ไม่วางขายในร้าน ได้เมื่อถึงเลเวลที่กำหนด
+  { id: "paint-camo", kind: "paint", value: "camo", price: 0, reward: true },
+  { id: "paint-platinum", kind: "paint", value: "platinum", price: 0, reward: true },
+  { id: "paint-neon", kind: "paint", value: "neon", price: 0, reward: true },
+  { id: "paint-aurora", kind: "paint", value: "aurora", price: 0, reward: true },
+  { id: "bit-crown", kind: "bit", value: "crown", price: 0, reward: true },
+  { id: "bit-rainbow", kind: "bit", value: "rainbow", price: 0, reward: true },
   { id: "decor-alienplant", kind: "decor", value: "alienplant", price: 0, reward: true },
   { id: "decor-fernpot", kind: "decor", value: "fernpot", price: 0, reward: true },
   { id: "decor-crystalpot", kind: "decor", value: "crystalpot", price: 0, reward: true },

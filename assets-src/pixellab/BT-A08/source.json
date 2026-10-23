@@ -1,0 +1,12 @@
+{
+  "tool": "edit_image_pro_flash",
+  "arguments": {
+    "description": "the same monster with exactly the same design, colors and size, now in an aggressive attack pose, leaning forward with both cannon barrels on its shell firing glowing orange shots, head thrust forward, still facing left, full body, side view, transparent background, retro pixel art for a side-view monster battle game, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+    "method": "text",
+    "no_background": true,
+    "source": "BT-10/image.png"
+  },
+  "fetchTool": "get_image",
+  "id": "1bf4ae7f-c495-4ecb-a22e-44c24bf2951c",
+  "generatedAt": "2026-10-22T07:44:27.132Z"
+}
