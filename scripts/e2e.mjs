@@ -3308,6 +3308,9 @@ async function playNormal(page) {
   await page.getByTestId("battle-start").click();
   await page.getByTestId("battle-armored").waitFor();
   assert.equal(await page.locator('[class*="battle-aura"]').count(), 0, "สถานะเป็นไอคอนเหนือหัว ไม่มีวงหรือกรอบรอบตัว");
+  // โดนตีแล้ววาบที่ตัวละครเอง ไม่มีกล่องขาวทับกรอบ และเศษเกราะโปร่งใสจนกว่าเกราะจะแตก (GDD ข้อ 28)
+  assert.equal(await page.locator(".battle-flash").count(), 0, "ไม่มีกล่องวาบขาวทับตัวละคร");
+  assert.deepEqual(await page.locator(".battle-shards i").evaluateAll((items) => items.map((item) => getComputedStyle(item).opacity)), [], "เกราะยังไม่แตก ไม่มีเศษเกราะ");
   const armorHp = specOf("n2").forms[0].hp;
   let turn = await battleTurn(page, true);
   assert.match(turn.log, /เกราะแตกแล้ว ข้อถัดไปโจมตีเข้า/);

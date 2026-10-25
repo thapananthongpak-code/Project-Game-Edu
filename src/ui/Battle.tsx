@@ -626,7 +626,6 @@ export function Battle() {
               data-pose={fx.robot?.pose ?? "idle"}
             >
               <GuardianModel gear={gear} paint={paint} className="absolute inset-0 h-full w-full" />
-              {fx.robot?.pose === "hurt" && <span key={`rflash-${fx.id}`} className="battle-flash" style={{ animationDelay: `${fx.robot.at}ms` }} aria-hidden="true" />}
             </div>
             <img key={`bit-${fx.id}`} src={bit} alt="" className={`pixelated absolute bottom-[52%] left-[2%] h-[26%] ${fx.assistAt !== null ? "battle-bit-assist" : "battle-idle"}`} style={fx.assistAt !== null ? { animationDelay: `${fx.assistAt}ms` } : undefined} />
             {/* ไคจู: ภาพปกติกับภาพท่าโจมตี (BT-A*) สลับกันช่วงพุ่งเข้าโจมตี ออร่าของสถานะวาดบนตัว */}
@@ -647,7 +646,6 @@ export function Battle() {
                   ))}
                 </span>
               )}
-              {fx.kaiju?.pose === "hurt" && <span key={`flash-${fx.id}`} className="battle-flash" style={{ animationDelay: `${fx.kaiju.at}ms` }} aria-hidden="true" />}
             </div>
             {/* สถานะของไคจู: ไอคอนเล็กเรียงเหนือหัว (ข้อความเต็มอยู่ใน aria-label และ title ผลของตาอ่านได้จากบันทึกเหตุการณ์ใต้ฉาก) */}
             <div className="battle-chips" style={{ left: "76.5%" }} data-testid="battle-chips-foe">
