@@ -1182,7 +1182,7 @@ async function playRoom1(page) {
   const advice1 = page.getByTestId("weapon-advice");
   assert.deepEqual([await advice1.getAttribute("data-weak"), await advice1.getAttribute("data-advantaged"), await advice1.getAttribute("data-better")], ["strike", "true", ""], "กลิตช์แพ้ทางแรงกระแทก หมัดที่ใส่อยู่ชนะทาง");
   assert.match(await advice1.innerText(), /กลิตช์ แพ้ทางแรงกระแทก/);
-  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["strike", "strong", "▲ อาวุธชนะทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"], "ป้ายบนฉากบอกว่าอาวุธที่ใส่อยู่ชนะทาง");
+  assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-weak"), await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").getAttribute("aria-label")], ["strike", "strong", "▲ อาวุธชนะทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"], "ป้ายบนฉากบอกว่าอาวุธที่ใส่อยู่ชนะทาง");
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-armor"), "plate", "การ์เดียนในฉากต่อสู้ใส่เกราะที่ใส่ไว้จริง");
   assert.match(await page.getByTestId("battle-gear-note").innerText(), /หมัดการ์เดียน · เกราะมาตรฐาน · ไม่ใส่ชิป/);
   assert.equal(await page.getByTestId("bag-picker").getAttribute("data-bag"), "", "ยังไม่มีของใช้: กระเป๋าว่าง");
@@ -1555,7 +1555,6 @@ async function playRoom(page, room) {
     await battleTurn(page, true);
     await battleTurn(page, false);
     await page.getByTestId("battle-charging").waitFor();
-    assert.equal(await page.getByTestId("aura-charge").count(), 1, "ไคจูชาร์จพลัง: มีแสงรวมพลังรอบตัว");
     const counter = await battleTurn(page, true);
     assert.match(counter.log, /การ์เดียนใช้หมัดจรวด -2 \(สวนกลับ\)/, "ตาที่ไคจูชาร์จพลัง ตอบถูกสวนกลับ 2 ด้วยท่าแรง");
     assert.equal(await page.getByTestId("battle-fx").getAttribute("data-sparks"), "fist:kaiju,impact:kaiju", "การโจมตีที่แรงตั้งแต่ 2 ขึ้นไปเป็นท่าแรงของอาวุธ: หมัดจรวด");
@@ -1583,7 +1582,7 @@ async function playRoom(page, room) {
     assert.match(intro, /ยิ่งโจมตีแรง/);
     const hits = [];
     assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "sword", "การ์เดียนถือดาบที่ซื้อมา");
-    assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").innerText()], ["weak", "▼ อาวุธแพ้ทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"]);
+    assert.deepEqual([await page.getByTestId("battle-weak").getAttribute("data-matchup"), await page.getByTestId("battle-weak").getAttribute("aria-label")], ["weak", "▼ อาวุธแพ้ทาง · จุดอ่อน: แรงกระแทก (หมัด สว่าน ค้อน)"]);
     assert.match(intro, /พลังยังต่ำกว่าที่แนะนำ/, "พลังไม่ถึงที่แนะนำก็ออกปฏิบัติการได้");
     const fx = page.getByTestId("battle-fx");
     const sparks = [];
@@ -3299,13 +3298,13 @@ async function playNormal(page) {
   assert.match(await hammerAdvice.innerText(), /ไอรอนเชลล์ แพ้ทางแรงกระแทก[\s\S]*ค้อนพลังงานชนะทางเหมือนกันและแรงกว่า/);
   await page.getByTestId("battle-start").click();
   await page.getByTestId("battle-armored").waitFor();
-  assert.equal(await page.getByTestId("aura-armor").count(), 1, "ไคจูหุ้มเกราะ: มีวงเกราะเรืองบนตัว");
+  assert.equal(await page.locator('[class*="battle-aura"]').count(), 0, "สถานะเป็นไอคอนเหนือหัว ไม่มีวงหรือกรอบรอบตัว");
   const armorHp = specOf("n2").forms[0].hp;
   let turn = await battleTurn(page, true);
   assert.match(turn.log, /เกราะแตกแล้ว ข้อถัดไปโจมตีเข้า/);
   assert.equal(turn.kaiju, armorHp, "ข้อที่ทุบเกราะไม่ลดพลังของไคจู");
   assert.equal(await page.getByTestId("battle-armored").count(), 0);
-  assert.deepEqual([await page.getByTestId("aura-armor").count(), await page.getByTestId("aura-shards").count()], [0, 1], "เกราะแตก: วงเกราะหาย มีเศษเกราะกระเด็น");
+  assert.deepEqual([await page.getByTestId("battle-armored").count(), await page.getByTestId("aura-shards").count()], [0, 1], "เกราะแตก: ไอคอนเกราะหาย มีเศษเกราะกระเด็น");
   turn = await battleTurn(page, false);
   assert.match(turn.log, /ไอรอนเชลล์ใช้กระดองพุ่งชน -1.*ไอรอนเชลล์สร้างเกราะกลับมา/);
   await page.getByTestId("battle-armored").waitFor();
@@ -3392,7 +3391,7 @@ async function playNormal(page) {
   await page.getByTestId("battle-start").click();
   assert.equal(await page.getByTestId("battle-robot").getAttribute("data-weapon"), "blaster");
   assert.deepEqual([await page.getByTestId("battle-retries").count(), await page.getByTestId("battle-guard").count()], [1, 1]);
-  assert.equal(await page.getByTestId("aura-guard").count(), 1, "เกราะสะท้อน: มีวงป้องกันบนการ์เดียน");
+  assert.equal(await page.getByTestId("battle-chips-robot").locator('[data-testid="battle-guard"]').count(), 1, "เกราะสะท้อน: ไอคอนเหนือหัวการ์เดียน");
   const swarmHp = specOf("n3").forms[0].hp;
   {
     // ตอบผิดครั้งแรก: ชิปคิดทบทวนให้ตอบข้อเดิมใหม่ ตัดข้อที่เลือกออก ตายังไม่จบ
@@ -3429,7 +3428,7 @@ async function playNormal(page) {
   assert.match(turn.log, /ฝูงสติงเกอร์ติดสตัน/);
   assert.ok(shots[2].includes("stun:kaiju"));
   await page.getByTestId("battle-stunned").waitFor();
-  assert.equal(await page.getByTestId("aura-stun").count(), 1, "ติดสตัน: ดาวหมุนเหนือหัวไคจู");
+  assert.match(await page.getByTestId("battle-stunned").getAttribute("aria-label"), /ติดสตัน/, "ติดสตัน: ไอคอนเหนือหัวไคจู");
   assert.equal(await page.getByTestId("battle-command").getAttribute("data-saved"), "stun");
   await shot(page, "31-normal-stun");
   turn = await battleTurn(page, false);

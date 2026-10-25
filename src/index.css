@@ -333,11 +333,6 @@ canvas {
     filter: none;
   }
 }
-.battle-shielded {
-  outline: 3px solid var(--color-teal-light);
-  outline-offset: -6px;
-  border-radius: 50%;
-}
 /* เอฟเฟกต์การโจมตี: ซ่อนอยู่ (opacity 0) แล้วแสดงด้วยแอนิเมชันครั้งเดียว เมื่อปิดแอนิเมชันจึงไม่ค้างบนจอ --fx-row = แนวสูงต่ำของเอฟเฟกต์ (-1, 0, 1) */
 .battle-fx {
   position: absolute;
@@ -721,95 +716,59 @@ canvas {
     animation-delay: var(--at, 0ms);
   }
 }
-/* ออร่าของสถานะที่ติดอยู่ (เกราะ รวมพลัง โกรธ โล่ ป้องกัน บูสต์ รีบูต) ตัวเลขและข้อความบอกสถานะยังอยู่ที่ป้ายสถานะ */
-.battle-aura {
+/* สถานะในด่านต่อสู้: ไอคอนเล็กเรียงเหนือหัวของการ์เดียนและไคจู (ไม่มีวงหรือกรอบรอบตัว) ข้อความเต็มอยู่ใน aria-label */
+.battle-chips {
   position: absolute;
-  inset: 6% 4%;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0.85;
-}
-.battle-aura-armor {
-  border: 4px solid #94b0c2;
-  background: radial-gradient(circle, transparent 55%, rgba(148, 176, 194, 0.55));
-}
-.battle-aura-charge {
-  background: radial-gradient(circle, rgba(255, 205, 117, 0.7), transparent 65%);
-}
-.battle-aura-rage {
-  background: radial-gradient(circle, rgba(228, 59, 68, 0.5), transparent 65%);
-}
-.battle-aura-shield {
-  border: 4px solid #73eff7;
-  background: radial-gradient(circle, transparent 50%, rgba(115, 239, 247, 0.45));
-}
-.battle-aura-guard {
-  border: 4px dashed #3b5dc9;
-}
-.battle-aura-boost {
-  background: radial-gradient(circle, rgba(255, 163, 0, 0.55), transparent 65%);
-}
-.battle-aura-reboot {
-  border: 4px dotted #38b764;
-  background: radial-gradient(circle, rgba(56, 183, 100, 0.4), transparent 65%);
-}
-@keyframes battle-aura-pulse {
-  50% {
-    transform: scale(1.06);
-    opacity: 0.55;
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .battle-aura {
-    animation: battle-aura-pulse 1.2s ease-in-out infinite;
-  }
-}
-/* ติดสตัน: ดาวหมุนเหนือหัว */
-.battle-stars {
-  position: absolute;
-  left: 50%;
-  top: -4%;
-  width: 60%;
-  height: 16%;
+  bottom: 71%;
+  display: flex;
+  max-width: 44%;
   transform: translateX(-50%);
-  pointer-events: none;
+  flex-wrap: wrap-reverse;
+  justify-content: center;
+  gap: 3px;
+  pointer-events: auto;
 }
-.battle-stars i {
-  position: absolute;
-  top: 0;
-  font-style: normal;
-  font-size: 1.1rem;
+.battle-chip {
+  display: inline-flex;
+  min-width: 28px;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 2px solid #1a1c2c;
+  border-radius: 8px;
+  padding: 0 3px;
+  font-size: 16px;
+  font-weight: 800;
   line-height: 1;
-  color: #ffcd75;
-  text-shadow: 0 0 0 #1a1c2c, 1px 1px 0 #1a1c2c, -1px -1px 0 #1a1c2c;
+  box-shadow: 0 2px 0 0 #1a1c2c;
 }
-.battle-stars i:nth-child(1) {
-  left: 10%;
+.battle-chip-good {
+  background: var(--color-teal-light);
 }
-.battle-stars i:nth-child(2) {
-  left: 45%;
+.battle-chip-info {
+  background: var(--color-mist);
 }
-.battle-stars i:nth-child(3) {
-  left: 80%;
+.battle-chip-warn {
+  background: var(--color-hint);
 }
-@keyframes battle-star-spin {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0);
-  }
+.battle-chip-bad {
+  background: #f8e1e5;
+}
+.battle-chip-arrow {
+  font-size: 12px;
+}
+.battle-chip-n {
+  font-size: 12px;
+}
+@keyframes battle-chip-spin {
   50% {
-    transform: translateY(-30%) rotate(180deg);
+    transform: rotate(14deg);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .battle-stars i {
-    animation: battle-star-spin 0.9s ease-in-out infinite;
-  }
-  .battle-stars i:nth-child(2) {
-    animation-delay: 0.3s;
-  }
-  .battle-stars i:nth-child(3) {
-    animation-delay: 0.6s;
+  .battle-chip-spin {
+    animation: battle-chip-spin 0.6s ease-in-out infinite;
   }
 }
 /* เกราะแตก: เศษกระเด็นออกรอบตัว (ซ่อนอยู่จนถึงเวลาที่เกราะแตก) */

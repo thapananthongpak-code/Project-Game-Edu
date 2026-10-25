@@ -321,6 +321,16 @@ const Tag = ({ children }: { children: string }) => <span className="rounded bor
  * บอสของระดับกลางและยากมีหลายร่าง ชนะร่างหนึ่งแล้วกลายร่างต่อ แพ้แล้วออกปฏิบัติการใหม่ได้ทันทีโดยไม่ต้องสู้ร่างที่ชนะแล้วซ้ำ
  * ด่านที่ชนะแล้วเปิดซ้ำได้เป็นการซ้อมรบเพื่อเก็บเครดิตวิจัย
  */
+/** ไอคอนสถานะเหนือหัว: ข้อความเต็มอยู่ใน aria-label กับ title ตัวเลข n ใช้กับสถานะที่นับจำนวนได้ (เกราะสะท้อน หลบ ตอบใหม่) */
+function StatusChip({ testId, tone, label, title, n, spin = false, extra, children }: { testId: string; tone: "good" | "bad" | "warn" | "info"; label: string; title?: string; n?: number; spin?: boolean; extra?: Record<string, string>; children: React.ReactNode }) {
+  return (
+    <span role="img" aria-label={label} title={title ?? label} data-testid={testId} className={`battle-chip battle-chip-${tone} ${spin ? "battle-chip-spin" : ""}`} {...extra}>
+      {children}
+      {n !== undefined && <span className="battle-chip-n">{n}</span>}
+    </span>
+  );
+}
+
 export function Battle() {
   const battleId = useGameStore((s) => s.battleId) as string;
   const shop = useGameStore((s) => s.shop);
@@ -608,17 +618,13 @@ export function Battle() {
             {/* การ์เดียนที่ใส่เกราะและถืออาวุธจริง (ภาพเดียวกับหุ่นบนแท่นในโรงเก็บหุ่น) */}
             <div
               key={`robot-${fx.id}`}
-              className={`absolute bottom-[3%] left-[8%] aspect-square h-[72%] ${fx.robot ? `battle-robot-${fx.robot.pose}` : "battle-idle"} ${state.shield ? "battle-shielded" : ""}`}
+              className={`absolute bottom-[3%] left-[8%] aspect-square h-[72%] ${fx.robot ? `battle-robot-${fx.robot.pose}` : "battle-idle"}`}
               style={fx.robot ? { animationDelay: `${fx.robot.at}ms` } : undefined}
               data-testid="battle-robot"
               data-weapon={gear.weapon}
               data-armor={gear.armor}
               data-pose={fx.robot?.pose ?? "idle"}
             >
-              {state.shield && <span className="battle-aura battle-aura-shield" data-testid="aura-shield" aria-hidden="true" />}
-              {fighting && state.guard > 0 && <span className="battle-aura battle-aura-guard" data-testid="aura-guard" aria-hidden="true" />}
-              {(state.boost || (fighting && state.opening)) && <span className="battle-aura battle-aura-boost" data-testid="aura-boost" aria-hidden="true" />}
-              {fighting && state.reboot && <span className="battle-aura battle-aura-reboot" data-testid="aura-reboot" aria-hidden="true" />}
               <GuardianModel gear={gear} paint={paint} className="absolute inset-0 h-full w-full" />
               {fx.robot?.pose === "hurt" && <span key={`rflash-${fx.id}`} className="battle-flash" style={{ animationDelay: `${fx.robot.at}ms` }} aria-hidden="true" />}
             </div>
@@ -632,18 +638,8 @@ export function Battle() {
               className={`battle-kaiju-body absolute bottom-[3%] right-[8%] aspect-square h-[76%] ${fx.kaiju ? `battle-kaiju-${fx.kaiju.pose}` : "battle-idle battle-idle-late"} ${fx.kaiju && ATTACKING.includes(fx.kaiju.pose) ? "battle-kaiju-atking" : ""} ${stage === "won" ? "battle-defeated" : ""} ${enraged || furious ? "battle-enraged" : ""}`}
               style={{ "--at": `${fx.kaiju?.at ?? 0}ms`, ...(fx.kaiju ? { animationDelay: `${fx.kaiju.at}ms` } : {}) } as React.CSSProperties}
             >
-              {fighting && state.armored && <span className="battle-aura battle-aura-armor" data-testid="aura-armor" aria-hidden="true" />}
-              {fighting && charging && <span className="battle-aura battle-aura-charge" data-testid="aura-charge" aria-hidden="true" />}
-              {(enraged || furious) && <span className="battle-aura battle-aura-rage" data-testid="aura-rage" aria-hidden="true" />}
               <img src={art.foe(form.art)} alt="" className="battle-kaiju-base-img pixelated" />
               <img src={art.foeAttack(form.art)} alt="" className="battle-kaiju-atk-img pixelated" onError={(event) => (event.currentTarget.style.display = "none")} />
-              {fighting && state.stunned && (
-                <span className="battle-stars" data-testid="aura-stun" aria-hidden="true">
-                  <i>★</i>
-                  <i>★</i>
-                  <i>★</i>
-                </span>
-              )}
               {fx.shards !== null && (
                 <span key={`shards-${fx.id}`} className="battle-shards" style={{ animationDelay: `${fx.shards}ms` }} data-testid="aura-shards" aria-hidden="true">
                   {Array.from({ length: 7 }, (_, i) => (
@@ -653,60 +649,80 @@ export function Battle() {
               )}
               {fx.kaiju?.pose === "hurt" && <span key={`flash-${fx.id}`} className="battle-flash" style={{ animationDelay: `${fx.kaiju.at}ms` }} aria-hidden="true" />}
             </div>
-            <div className="absolute right-[4%] top-[26%] flex flex-col items-end gap-1">
-              <span className={`rounded border-2 border-ink px-2 text-xs font-extrabold ${matchup === "strong" ? "bg-hint" : matchup === "weak" ? "bg-[#f8e1e5]" : "bg-cream"}`} data-testid="battle-weak" data-weak={form.weak} data-matchup={matchup} data-advantage={matchup === "strong"} title={ui.matchup.effects[matchup]}>
-                {matchup === "strong" ? "▲ " : matchup === "weak" ? "▼ " : ""}
-                {fmt(ui.battle.matchupBadge, { matchup: ui.matchup.names[matchup] })} · {fmt(ui.battle.weak, { class: ui.storage.weaponClasses[form.weak] })}
-              </span>
+            {/* สถานะของไคจู: ไอคอนเล็กเรียงเหนือหัว (ข้อความเต็มอยู่ใน aria-label และ title ผลของตาอ่านได้จากบันทึกเหตุการณ์ใต้ฉาก) */}
+            <div className="battle-chips" style={{ left: "76.5%" }} data-testid="battle-chips-foe">
+              <StatusChip
+                testId="battle-weak"
+                tone={matchup === "strong" ? "good" : matchup === "weak" ? "bad" : "info"}
+                label={`${matchup === "strong" ? "▲ " : matchup === "weak" ? "▼ " : ""}${fmt(ui.battle.matchupBadge, { matchup: ui.matchup.names[matchup] })} · ${fmt(ui.battle.weak, { class: ui.storage.weaponClasses[form.weak] })}`}
+                title={ui.matchup.effects[matchup]}
+                extra={{ "data-weak": form.weak, "data-matchup": matchup, "data-advantage": String(matchup === "strong") }}
+              >
+                <span className="battle-chip-arrow">{matchup === "strong" ? "▲" : matchup === "weak" ? "▼" : "＝"}</span>
+                <GearIcon value={gear.weapon} className="h-5 w-5" />
+              </StatusChip>
               {charging && (
-                <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-charging">
-                  ⚡ {ui.battle.charging}
-                </span>
+                <StatusChip testId="battle-charging" tone="bad" label={ui.battle.charging}>
+                  ⚡
+                </StatusChip>
               )}
               {enraged && (
-                <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-enraged">
-                  🔥 {ui.battle.enraged}
-                </span>
+                <StatusChip testId="battle-enraged" tone="bad" label={ui.battle.enraged}>
+                  🔥
+                </StatusChip>
               )}
               {furious && (
-                <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-furious">
-                  🔥 {ui.battle.furious}
-                </span>
+                <StatusChip testId="battle-furious" tone="bad" label={ui.battle.furious}>
+                  🔥🔥
+                </StatusChip>
               )}
               {fighting && state.armored && (
-                <span className="rounded border-2 border-ink bg-mist px-2 text-xs font-extrabold" data-testid="battle-armored">
-                  ⛨ {ui.battle.armored}
-                </span>
+                <StatusChip testId="battle-armored" tone="info" label={ui.battle.armored}>
+                  ⛨
+                </StatusChip>
               )}
               {fighting && state.stunned && (
-                <span className="rounded border-2 border-ink bg-hint px-2 text-xs font-extrabold" data-testid="battle-stunned">
-                  💫 {ui.battle.stunned}
-                </span>
+                <StatusChip testId="battle-stunned" tone="warn" label={ui.battle.stunned} spin>
+                  💫
+                </StatusChip>
               )}
             </div>
-            <div className="absolute left-[4%] top-[26%] flex flex-col items-start gap-1">
-              {state.shield && <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold">🛡 {ui.battle.shieldOn}</span>}
-              {fighting && state.guard > 0 && (
-                <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold" data-testid="battle-guard">
-                  🔰 {ui.battle.guardOn}
-                </span>
+            {/* สถานะของการ์เดียน: โล่ เกราะสะท้อน บูสต์ แกนสำรอง หลบ ตอบใหม่ และพลังเหลือน้อย */}
+            <div className="battle-chips" style={{ left: "22.7%" }} data-testid="battle-chips-robot">
+              {state.shield && (
+                <StatusChip testId="battle-shield" tone="good" label={ui.battle.shieldOn}>
+                  <ItemIcon value="shield" className="h-5 w-5" />
+                </StatusChip>
               )}
-              {(state.boost || (fighting && state.opening)) && <span className="rounded border-2 border-ink bg-hint px-2 text-xs font-extrabold">🔋 {state.boost ? ui.battle.boostOn : ui.battle.openingOn}</span>}
+              {fighting && state.guard > 0 && (
+                <StatusChip testId="battle-guard" tone="good" label={ui.battle.guardOn}>
+                  <GearIcon value="guard" className="h-5 w-5" />
+                </StatusChip>
+              )}
+              {(state.boost || (fighting && state.opening)) && (
+                <StatusChip testId="battle-boost" tone="warn" label={state.boost ? ui.battle.boostOn : ui.battle.openingOn}>
+                  <ItemIcon value="overcharge" className="h-5 w-5" />
+                </StatusChip>
+              )}
               {fighting && state.dodge > 0 && (
-                <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold" data-testid="battle-dodge">
-                  💨 {fmt(ui.battle.dodgeOn, { n: state.dodge })}
-                </span>
+                <StatusChip testId="battle-dodge" tone="good" label={fmt(ui.battle.dodgeOn, { n: state.dodge })} n={state.dodge}>
+                  💨
+                </StatusChip>
               )}
               {fighting && state.retries > 0 && (
-                <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold" data-testid="battle-retries">
-                  ↺ {fmt(ui.battle.retryOn, { n: state.retries })}
-                </span>
+                <StatusChip testId="battle-retries" tone="good" label={fmt(ui.battle.retryOn, { n: state.retries })} n={state.retries}>
+                  ↺
+                </StatusChip>
               )}
-              {fighting && state.reboot && <span className="rounded border-2 border-ink bg-teal-light px-2 text-xs font-extrabold">💠 {ui.battle.rebootReady}</span>}
+              {fighting && state.reboot && (
+                <StatusChip testId="battle-reboot" tone="good" label={ui.battle.rebootReady}>
+                  <ItemIcon value="reboot" className="h-5 w-5" />
+                </StatusChip>
+              )}
               {danger && (
-                <span className="rounded border-2 border-ink bg-wrong px-2 text-xs font-extrabold text-paper" data-testid="battle-danger">
-                  ⚠ {ui.battle.danger}
-                </span>
+                <StatusChip testId="battle-danger" tone="bad" label={ui.battle.danger}>
+                  ⚠
+                </StatusChip>
               )}
             </div>
           </div>
