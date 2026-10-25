@@ -17,7 +17,7 @@ export const PAINTS = ["standard", "crimson", "violet", "gold", "azure", "shadow
 export type Paint = (typeof PAINTS)[number];
 export const PAINT_FILTER: Record<Paint, string> = {
   standard: "none",
-  crimson: "sepia(1) saturate(4.5) hue-rotate(-48deg)",
+  crimson: "sepia(1) saturate(5.5) hue-rotate(-50deg) brightness(0.88)",
   violet: "sepia(1) saturate(3.2) hue-rotate(215deg)",
   gold: "sepia(1) saturate(3.4) hue-rotate(2deg) brightness(1.05)",
   azure: "sepia(1) saturate(3.4) hue-rotate(165deg)",

@@ -25,6 +25,9 @@ export const art = {
   /** หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธนั้นจริง (GD-01..24 ภาพเดียวกับหุ่นบนแท่นในโรงเก็บหุ่น) */
   guardian: (armor: Gear["armor"], weapon: Gear["weapon"]): string => `assets/guardian/gd_${armor}_${weapon}.png`,
   /** อุปกรณ์ของชิปที่ติดหลังหุ่น (ชั้นภาพบนผืนเดียวกับภาพหุ่น วาดหลังตัวหุ่น) */
+  /** ตัวหุ่น (ย้อมสีได้) และอุปกรณ์ที่ถืออยู่ (อาวุธกับเกราะ ไม่ย้อมสี) ภาพชั้นเดียวกันขนาด 128×128 วางซ้อนกันตรง ๆ */
+  guardianBody: (armor: Gear["armor"], weapon: Gear["weapon"]): string => `assets/guardian/gd_${armor}_${weapon}_body.png`,
+  guardianItems: (armor: Gear["armor"], weapon: Gear["weapon"]): string => `assets/guardian/gd_${armor}_${weapon}_items.png`,
   guardianChip: (chip: Exclude<Gear["chip"], "none">): string => `assets/guardian/gd_chip_${chip}.png`,
   player: (avatar: Avatar, outfit: Outfit): string => `assets/characters/ch_${avatar}_${outfit}_south.png`,
   /** พี่บิตตามคอสตูมที่ใช้อยู่ */

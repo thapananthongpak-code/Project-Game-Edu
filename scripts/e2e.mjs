@@ -1863,6 +1863,15 @@ async function playField(page) {
   await act(page);
   await page.getByTestId("guardian-bay").waitFor();
   await page.getByTestId("guardian-paint-sakura").click();
+  // สีย้อมเฉพาะตัวหุ่น: ชั้นอาวุธและเกราะวาดทับโดยไม่มีตัวกรองสี (GDD ข้อ 17)
+  const layers = await page.getByTestId("guardian-bay").getByTestId("guardian-model").evaluate((el) => ({
+    body: [el.querySelector('[data-testid="guardian-body"]').style.filter, el.querySelector('[data-testid="guardian-body"]').getAttribute("src")],
+    items: [el.querySelector('[data-testid="guardian-items"]').style.filter, el.querySelector('[data-testid="guardian-items"]').getAttribute("src")],
+  }));
+  assert.notEqual(layers.body[0], "", "ตัวหุ่นถูกย้อมสี");
+  assert.equal(layers.items[0], "", "อาวุธและเกราะไม่ถูกย้อมสี");
+  assert.match(layers.body[1], /gd_plate_sword_body\.png$/);
+  assert.match(layers.items[1], /gd_plate_sword_items\.png$/);
   await page.getByTestId("guardian-close").click();
   await page.waitForTimeout(400);
   const bay = (await snap(page)).bay;

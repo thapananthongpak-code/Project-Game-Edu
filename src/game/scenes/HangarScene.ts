@@ -8,7 +8,7 @@ import { objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
 
 /** สีย้อมของหุ่นบนแท่นในฉาก Phaser (ฉากต่อสู้ใช้ CSS filter ใน PAINT_FILTER หุ่นเป็นสีขาว การคูณสีจึงได้สีใกล้เคียงกัน) */
-const PAINT_TINT: Record<Paint, number | null> = { standard: null, crimson: 0xff8a8a, violet: 0xb79cff, gold: 0xffd56b, azure: 0x7cc4ff, shadow: 0x6f7686, emerald: 0x86e6a8, sakura: 0xffb6d5, camo: 0x8a9a5a, platinum: 0xe8eef2, neon: 0x7dff6a, aurora: 0x7de0ff };
+const PAINT_TINT: Record<Paint, number | null> = { standard: null, crimson: 0xff7070, violet: 0xb79cff, gold: 0xffd56b, azure: 0x7cc4ff, shadow: 0x6f7686, emerald: 0x86e6a8, sakura: 0xffb6d5, camo: 0x8a9a5a, platinum: 0xe8eef2, neon: 0x7dff6a, aurora: 0x7de0ff };
 
 /** ตำแหน่งของแกน AI ในตู้กระจก (ชั้นบน 3 ชิ้น ชั้นล่าง 3 ชิ้น) เทียบกับฐานของตู้ */
 const CASE_SLOTS = [-14, 0, 14].flatMap((dx) => [-40, -22].map((dy) => ({ dx, dy }))).sort((a, b) => a.dy - b.dy || a.dx - b.dx);
@@ -20,6 +20,8 @@ const CASE_SLOTS = [-14, 0, 14].flatMap((dx) => [-40, -22].map((dy) => ({ dx, dy
 export class HangarScene extends WorldScene {
   private cores: Phaser.GameObjects.Image[] = [];
   private guardian!: Phaser.GameObjects.Image;
+  /** อาวุธและเกราะที่ถืออยู่: ชั้นภาพทับตัวหุ่นโดยไม่ย้อมสี */
+  private guardianItems!: Phaser.GameObjects.Image;
   private chipDevice!: Phaser.GameObjects.Image;
   /** แมพ ณ ตอนสร้างฉาก */
   private world: Difficulty = "easy";
@@ -43,7 +45,8 @@ export class HangarScene extends WorldScene {
     // แท่นการ์เดียน: หุ่นยืนบนแท่น ภาพของหุ่นเปลี่ยนตามอาวุธและเกราะที่ใส่ ชิปเป็นอุปกรณ์ติดหลังหุ่น
     const [robot] = this.objectsOf("robot");
     const baseY = objectBaseY(robot);
-    this.guardian = this.add.image(objectX(robot), baseY - 10, "gd_plate_fist").setOrigin(0.5, 1).setScale(0.8).setDepth(baseY + 1);
+    this.guardian = this.add.image(objectX(robot), baseY - 10, "gd_plate_fist_body").setOrigin(0.5, 1).setScale(0.8).setDepth(baseY + 1);
+    this.guardianItems = this.add.image(objectX(robot), baseY - 10, "gd_plate_fist_items").setOrigin(0.5, 1).setScale(0.8).setDepth(baseY + 1.1);
     // อุปกรณ์ของชิป: ชั้นภาพบนผืนเดียวกับภาพหุ่น วาดหลังตัวหุ่น (ติดอยู่ที่หลัง ตัวหุ่นบังเอง)
     this.chipDevice = this.add.image(objectX(robot), baseY - 10, "gd_chip_charger").setOrigin(0.5, 1).setScale(0.8).setDepth(baseY + 0.5).setVisible(false);
     this.addInteractable(robot, "robot", () => ui.prompt.robotDock, () => store().openOverlay("guardian"));
@@ -84,7 +87,7 @@ export class HangarScene extends WorldScene {
   /** สำหรับการทดสอบอัตโนมัติ: ภาพหุ่นบนแท่น สีที่ย้อม ชิปที่เรืองแสง และจำนวนแกนในตู้กระจก */
   get bayState(): { texture: string; tint: number | null; chip: boolean; cores: number } {
     return {
-      texture: this.guardian.texture.key,
+      texture: this.guardian.texture.key.replace(/_body$/, ""),
       tint: this.guardian.isTinted ? this.guardian.tintTopLeft : null,
       chip: this.chipDevice.visible,
       cores: this.cores.filter((core) => core.visible).length,
@@ -109,7 +112,8 @@ export class HangarScene extends WorldScene {
     const looks = `${armor}_${weapon}|${chip}|${paint}`;
     if (looks !== this.looks) {
       this.looks = looks;
-      this.guardian.setTexture(`gd_${armor}_${weapon}`);
+      this.guardian.setTexture(`gd_${armor}_${weapon}_body`);
+      this.guardianItems.setTexture(`gd_${armor}_${weapon}_items`);
       const tint = PAINT_TINT[paint];
       if (tint === null) this.guardian.clearTint();
       else this.guardian.setTint(tint);

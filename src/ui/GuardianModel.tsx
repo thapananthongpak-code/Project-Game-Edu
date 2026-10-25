@@ -8,13 +8,14 @@ import { art } from "./art";
 /**
  * หุ่นการ์เดียนที่ใส่เกราะและถืออาวุธนั้นจริง (ภาพ GD-* แก้จากหุ่นตัวเดิมด้วย Pixel Lab ไม่ใช่ภาพอาวุธแปะทับ)
  * ชิปที่ติดตั้งเป็นอุปกรณ์ติดหลังหุ่น (ชุดบูสเตอร์ของชิปเร่งพลัง ชุดเซนเซอร์ของชิปคิดทบทวน ภาพ GC-*) วาดหลังตัวหุ่น ตัวหุ่นจึงบังอุปกรณ์เอง
- * สีหุ่นย้อมด้วย CSS filter ใช้ทั้งแท่นการ์เดียนและฉากต่อสู้
+ * สีหุ่นย้อมด้วย CSS filter เฉพาะชั้นตัวหุ่น (GL-00 แยกตัวหุ่นออกจากอาวุธและเกราะ) ชั้นอุปกรณ์วาดทับโดยไม่ย้อม ใช้ทั้งแท่นการ์เดียนและฉากต่อสู้
  */
 export function GuardianModel({ gear, paint, className = "" }: { gear: Gear; paint: Paint; className?: string }) {
   return (
     <div className={`relative ${className}`} data-testid="guardian-model" data-weapon={gear.weapon} data-armor={gear.armor} data-chip={gear.chip}>
       {gear.chip !== "none" && <img src={art.guardianChip(gear.chip)} alt="" className={`guardian-chip guardian-chip-${gear.chip} pixelated absolute inset-0 h-full w-full object-contain`} data-testid="guardian-chip" data-chip={gear.chip} />}
-      <img src={art.guardian(gear.armor, gear.weapon)} alt="" className={`pixelated relative h-full w-full object-contain ${paint === "aurora" ? "paint-aurora" : ""}`} style={{ filter: PAINT_FILTER[paint] }} />
+      <img src={art.guardianBody(gear.armor, gear.weapon)} alt="" className={`pixelated relative h-full w-full object-contain ${paint === "aurora" ? "paint-aurora" : ""}`} style={{ filter: PAINT_FILTER[paint] }} data-testid="guardian-body" />
+      <img src={art.guardianItems(gear.armor, gear.weapon)} alt="" className="pixelated absolute inset-0 h-full w-full object-contain" data-testid="guardian-items" />
     </div>
   );
 }

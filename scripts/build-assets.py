@@ -693,6 +693,75 @@ def art_guide_names():
     return names
 
 
+# ค้อนของหุ่นเกราะมาตรฐาน (gd_plate_hammer): กรอบ (ซ้าย บน ขวา ล่าง) ของกลุ่มพิกเซลสีฟ้าเรืองแสงที่เป็นหัวค้อนและด้ามค้อน (ไม่รวมกระจกหน้าและแกนที่อก)
+PLATE_HAMMER_PARTS = [(14, 4, 54, 49), (90, 55, 97, 64), (105, 72, 114, 82), (112, 80, 120, 88)]
+
+
+def split_by_color(image, boxes):
+    """แยกอาวุธสีฟ้าเรืองแสงออกจากตัวหุ่นด้วยกลุ่มพิกเซลสีฟ้าในกรอบที่ระบุ (ขยายออก 1 พิกเซลให้ได้เส้นขอบ) ที่เหลือเป็นตัวหุ่น"""
+    import colorsys
+    px = image.load()
+
+    def cyan(p):
+        if p[3] < 20:
+            return False
+        h, s, v = colorsys.rgb_to_hsv(p[0] / 255, p[1] / 255, p[2] / 255)
+        return 0.44 <= h <= 0.56 and s > 0.22 and v > 0.35
+
+    mark = set()
+    for left, top, right, bottom in boxes:
+        for y in range(top, bottom + 1):
+            for x in range(left, right + 1):
+                if cyan(px[x, y]):
+                    mark.update((x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+    body, items = Image.new("RGBA", image.size, (0, 0, 0, 0)), Image.new("RGBA", image.size, (0, 0, 0, 0))
+    for y in range(image.height):
+        for x in range(image.width):
+            if px[x, y][3] >= 20:
+                (items if (x, y) in mark else body).putpixel((x, y), px[x, y])
+    return body, items
+
+
+def build_guardian_layers(built, out):
+    """สร้าง gd_<เกราะ>_<อาวุธ>_body.png (ตัวหุ่น) และ _items.png (อาวุธและเกราะ) จากภาพหุ่นที่เจนมา คืนแอสเซตที่รวมไฟล์ทั้งหมด"""
+    def load(armor, weapon):
+        return Image.open(built[f"gd_{armor}_{weapon}"]).convert("RGBA")
+
+    base = load("plate", "fist")
+
+    def same(a, b):
+        return a[3] > 20 and b[3] > 20 and abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2]) <= 40
+
+    def split(image):
+        body, items = Image.new("RGBA", image.size, (0, 0, 0, 0)), Image.new("RGBA", image.size, (0, 0, 0, 0))
+        pi, pb, pt, pbase = image.load(), body.load(), items.load(), base.load()
+        for y in range(image.height):
+            for x in range(image.width):
+                pixel = pi[x, y]
+                if pixel[3] < 20:
+                    continue
+                (pb if same(pixel, pbase[x, y]) else pt)[x, y] = pixel
+        return body, items
+
+    files, names = {}, []
+    for armor in GUARDIAN_ARMORS:
+        for weapon in ["fist", *GUARDIAN_WEAPONS[1:], *GUARDIAN_WEAPONS_ADDED]:
+            name = f"gd_{armor}_{weapon}"
+            image = load(armor, weapon)
+            body, items = split(image)
+            # หุ่นเกราะมาตรฐานถือค้อนเจนมาท่าทางต่างจากภาพอื่น (ตัวหุ่นไม่ตรงกับหุ่นเปล่า) จึงแยกค้อนด้วยสีฟ้าเรืองแสงในกรอบที่ระบุแทน
+            if armor == "plate" and weapon == "hammer":
+                body, items = split_by_color(image, PLATE_HAMMER_PARTS)
+            for part, layer in (("body", body), ("items", items)):
+                path = f"guardian/{name}_{part}.png"
+                (ASSETS / path).parent.mkdir(parents=True, exist_ok=True)
+                layer.save(ASSETS / path)
+                files[f"{name}_{part}"] = path
+            names.append(name)
+    return {"id": "GL-00", "kind": "composite", "name": "ชั้นภาพของหุ่นการ์เดียน: ตัวหุ่น (ย้อมสีได้) กับอุปกรณ์ (ไม่ย้อมสี)", "requested": False, "size": [128, 128],
+            "files": files, "status": "composed", "composedFrom": names}
+
+
 def main():
     prompts = art_guide_prompts()
     names = art_guide_names()
@@ -1067,6 +1136,11 @@ def main():
         core = Image.open(built[f"core_{n}"]).convert("RGBA")
         scene.alpha_composite(core, (22 + (n - 1) * 30, int(10 + abs(n - 3.5) * 6)))
     composed("st_finale", scene, ["bg_battle_5", "bt_robot", "ch_mentor_south", *[f"core_{n}" for n in range(1, 7)]])
+
+    # ชั้นภาพของหุ่นการ์เดียน: แยกตัวหุ่น (พิกเซลที่ตรงกับหุ่นเกราะมาตรฐานถือหมัด ย้อมสีได้) ออกจากอุปกรณ์ (อาวุธและเกราะ ไม่ย้อมสี)
+    # ภาพเดียวกันทุกชิ้นมีผืนผ้าใบ 128×128 เท่ากัน จึงวางซ้อนกันตรง ๆ (GuardianModel / HangarScene)
+    guardian_layers_asset = build_guardian_layers(built, out)
+    out.append(guardian_layers_asset)
 
     # ลบไฟล์ภาพที่ไม่มีแอสเซตใดใช้แล้ว
     wanted = {ASSETS / path for a in out for path in [*a["files"].values(), *a.get("web", {}).values()]}
