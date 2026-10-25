@@ -5,6 +5,7 @@ import { useGameStore } from "../state/gameStore";
 import { levelCredits, titleOf } from "../state/level";
 import { art } from "./art";
 import { rewardName } from "./Profile";
+import { RewardArt } from "./RewardArt";
 import { useDialog } from "./useDialog";
 
 /** หน้าต่างฉลองเลเวลอัป (GDD ข้อ 27): แสดงครั้งเดียวต่อเลเวลที่ถึงใหม่ พร้อมรางวัลที่เพิ่งได้ (แจกตอนเปิดหน้าต่างนี้) */
@@ -29,17 +30,19 @@ export function LevelUp() {
         </p>
         {newTitle && <p className="font-bold text-teal-dark">{fmt(ui.level.up.title2, { title: newTitle })}</p>}
         {credits > 0 && (
-          <p className="rounded-md border-2 border-ink bg-hint px-2 py-0.5 font-bold" data-testid="levelup-credits" data-credits={credits}>
+          <p className="flex items-center gap-1 rounded-md border-2 border-ink bg-hint px-2 py-0.5 font-bold" data-testid="levelup-credits" data-credits={credits}>
+            <img src={art.credit} alt="" className="pixelated h-5 w-5" />
             {fmt(ui.level.up.credits, { n: credits })}
           </p>
         )}
         {levelUp.items.length > 0 && (
           <div className="w-full rounded-md border-2 border-ink bg-teal-light p-2" data-testid="levelup-items">
             <h3 className="text-sm font-extrabold">{ui.level.up.itemsTitle}</h3>
-            <ul className="font-bold">
+            <ul className="flex flex-wrap justify-center gap-2 font-bold">
               {levelUp.items.map((id) => (
-                <li key={id} data-reward={id}>
-                  {rewardName(id)}
+                <li key={id} data-reward={id} className="flex w-28 flex-col items-center rounded-md border-2 border-ink bg-paper p-1">
+                  <RewardArt id={id} className="h-20 w-20" />
+                  <span className="text-xs">{rewardName(id)}</span>
                 </li>
               ))}
             </ul>

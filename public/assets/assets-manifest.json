@@ -12442,6 +12442,36 @@
       "status": "generated"
     },
     {
+      "id": "IT-12",
+      "kind": "icon",
+      "name": "ไอคอน EXP (ดาวทองมีประกาย ไม่มีตัวอักษร)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_exp": "items/it_exp.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a shiny golden five-point star badge with a small glowing blue gem in the middle and three tiny sparkles around it, no letters, no text, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1e2ddeb3-d1bb-4c69-a911-de025226fafa",
+        "generatedAt": "2026-10-25T08:28:31.349Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "ST-01",
       "kind": "backdrop",
       "name": "บทนำ 1: ไคจูตัวแรก",

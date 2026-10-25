@@ -6,6 +6,7 @@ import { npcActivitiesDone, npcActivityTotal } from "../state/npcs";
 import { SEEDS } from "../state/shop.config";
 import { art } from "./art";
 import { GuardianModel } from "./GuardianModel";
+import { RewardArt } from "./RewardArt";
 import { useDialog } from "./useDialog";
 
 type ItemId = keyof typeof ui.shop.items;
@@ -93,10 +94,21 @@ export function Profile() {
           {nextAt === undefined ? (
             <p className="text-sm font-bold">{ui.level.noReward}</p>
           ) : (
-            <>
-              <h3 className="text-sm font-extrabold">{fmt(ui.level.nextReward, { level: nextAt })}</h3>
-              <p className="text-sm font-semibold">{(LEVEL_REWARDS[nextAt].items ?? []).map(rewardName).join(" · ")}</p>
-            </>
+            <div className="flex items-center gap-3">
+              {(LEVEL_REWARDS[nextAt].items ?? []).map((id) => (
+                <span key={id} className="flex shrink-0 items-center justify-center rounded-md border-2 border-ink bg-paper p-1">
+                  <RewardArt id={id} className="h-20 w-20" />
+                </span>
+              ))}
+              <div className="min-w-0">
+                <h3 className="text-sm font-extrabold">{fmt(ui.level.nextReward, { level: nextAt })}</h3>
+                <p className="text-sm font-semibold">{(LEVEL_REWARDS[nextAt].items ?? []).map(rewardName).join(" · ")}</p>
+                <p className="flex items-center gap-1 text-xs font-bold">
+                  <img src={art.credit} alt="" className="pixelated h-4 w-4" />
+                  {fmt(ui.level.rewardCredits, { n: LEVEL_REWARDS[nextAt].credits })}
+                </p>
+              </div>
+            </div>
           )}
         </section>
 
@@ -107,9 +119,14 @@ export function Profile() {
               (LEVEL_REWARDS[level].items ?? []).map((id) => {
                 const got = status.level >= level;
                 return (
-                  <li key={id} data-reward={id} data-got={got} className={`flex items-center justify-between gap-2 rounded-md border-2 border-ink px-2 py-1 text-sm ${got ? "bg-teal-light" : "bg-paper text-slate"}`}>
-                    <span className="font-bold">{rewardName(id)}</span>
-                    <span className="shrink-0 text-xs font-bold">{got ? `✓ ${ui.level.rewardGot}` : fmt(ui.level.rewardLocked, { n: level })}</span>
+                  <li key={id} data-reward={id} data-got={got} className={`flex items-center gap-2 rounded-md border-2 border-ink p-1 text-sm ${got ? "bg-teal-light" : "bg-paper text-slate"}`}>
+                    <span className={`flex shrink-0 items-center justify-center rounded border-2 border-ink bg-paper ${got ? "" : "opacity-60 saturate-50"}`}>
+                      <RewardArt id={id} className="h-14 w-14" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-bold">{rewardName(id)}</span>
+                      <span className="block text-xs font-bold">{got ? `✓ ${ui.level.rewardGot}` : fmt(ui.level.rewardLocked, { n: level })}</span>
+                    </span>
                   </li>
                 );
               }),
@@ -132,12 +149,20 @@ export function Profile() {
                       {done && <span aria-hidden="true">✓ </span>}
                       {strings.name}
                     </span>
-                    <span className="shrink-0 text-xs font-bold text-teal-dark">{done ? ui.level.challengeDone : fmt(ui.level.challengeExp, { n: challenge.exp })}</span>
+                    <span className="flex shrink-0 items-center gap-1 text-xs font-bold text-teal-dark">
+                      <img src={art.expIcon} alt="" className="pixelated h-5 w-5" />
+                      {done ? ui.level.challengeDone : fmt(ui.level.challengeExp, { n: challenge.exp })}
+                    </span>
                   </div>
                   <p className="text-xs text-slate">
                     {strings.detail}
                     {!done && challenge.goal > 1 && ` (${value}/${challenge.goal})`}
                   </p>
+                  {!done && challenge.goal > 1 && (
+                    <div role="progressbar" aria-label={strings.name} aria-valuemin={0} aria-valuemax={challenge.goal} aria-valuenow={value} className="mt-1 h-2 w-full overflow-hidden rounded-full border border-ink bg-cream">
+                      <div className="h-full bg-teal-dark" style={{ width: `${Math.round((value / challenge.goal) * 100)}%` }} />
+                    </div>
+                  )}
                 </li>
               );
             })}

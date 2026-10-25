@@ -2379,6 +2379,14 @@ async function playLevel(page) {
   assert.equal(await page.locator('[data-testid="profile-challenges"] [data-challenge="clear-hard"]').getAttribute("data-done"), "false", "ยังไม่ได้เล่นแมพ 3");
   assert.equal(await page.locator('[data-testid="profile-rewards"] [data-reward="paint-camo"]').getAttribute("data-got"), "true");
   assert.equal(await page.locator('[data-testid="profile-rewards"] [data-reward="paint-aurora"]').getAttribute("data-got"), "false", "สีแสงเหนือเป็นรางวัลเลเวล 18");
+  // รางวัลมีรูปให้เห็น: สีหุ่น = หุ่นที่ทาสีนั้น (ย้อมเฉพาะตัวหุ่น) คอสตูมพี่บิต = ภาพพี่บิตในชุดนั้น รวมถึงการ์ดรางวัลถัดไป
+  const camo = page.locator('[data-testid="profile-rewards"] [data-reward="paint-camo"]');
+  assert.equal(await camo.getByTestId("guardian-model").count(), 1, "สีลายพรางแสดงเป็นหุ่นที่ทาสีนั้น");
+  assert.notEqual(await camo.getByTestId("guardian-body").evaluate((el) => el.style.filter), "");
+  assert.equal(await camo.getByTestId("guardian-items").evaluate((el) => el.style.filter), "", "อาวุธบนหุ่นตัวอย่างไม่ถูกย้อมสี");
+  assert.match(await page.locator('[data-testid="profile-rewards"] [data-reward="bit-crown"] img').first().getAttribute("src"), /ch_mentor_crown/);
+  assert.equal(await page.getByTestId("profile-next-reward").locator('[data-testid="guardian-model"], [data-testid="reward-art-bit"]').count(), 1, "รางวัลถัดไปมีรูป");
+  assert.equal(await page.locator('[data-testid="profile-challenges"] [data-challenge="first-win"] img').count(), 1, "ชาเลนจ์มีไอคอน EXP");
   await shot(page, "40-profile");
   await page.keyboard.press("Escape");
   await page.getByTestId("profile").waitFor({ state: "detached" });
@@ -2398,6 +2406,7 @@ async function playLevel(page) {
   assert.equal(await page.getByTestId("levelup-credits").getAttribute("data-credits"), String(bonus));
   const given = await page.locator('[data-testid="levelup-items"] [data-reward]').evaluateAll((rows) => rows.map((row) => row.dataset.reward));
   assert.deepEqual(given, ["paint-camo", "bit-crown", "paint-platinum"].concat(level >= 10 ? ["paint-neon"] : []).concat(level >= 15 ? ["bit-rainbow"] : []).concat(level >= 18 ? ["paint-aurora"] : []), "ของพิเศษของทุกเลเวลที่ผ่านมา");
+  assert.equal(await page.locator('[data-testid="levelup-items"] [data-reward]').evaluateAll((rows) => rows.filter((row) => row.querySelector('[data-testid="guardian-model"], [data-testid="reward-art-bit"]')).length), given.length, "ทุกชิ้นที่ได้มีรูป");
   await shot(page, "41-levelup");
   await page.getByTestId("levelup-close").click();
   await page.getByTestId("levelup").waitFor({ state: "detached" });

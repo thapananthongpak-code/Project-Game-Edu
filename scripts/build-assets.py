@@ -600,7 +600,7 @@ EXTRA_BACKDROPS = [("BG-07", 7), ("BG-08", 8), ("BG-09", 9), ("BG-10", 10)]
 # ไอคอนของใช้และโมดูลของพี่บิต (แสดงใน HTML แทนอีโมจิ): (รหัส, ไฟล์)
 ITEM_ICONS = [("IT-01", "it_repair_kit"), ("IT-02", "it_shield"), ("IT-03", "it_overcharge"), ("IT-04", "it_analyzer"), ("IT-05", "it_reboot"),
               ("IT-06", "it_module_scanner"), ("IT-07", "it_module_laser"), ("IT-08", "it_module_medic"), ("IT-09", "it_credit"),
-              ("IT-10", "it_module_toolkit"), ("IT-11", "it_module_decoy")]
+              ("IT-10", "it_module_toolkit"), ("IT-11", "it_module_decoy"), ("IT-12", "it_exp")]
 KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
 # วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
 ROOM_PROPS = [

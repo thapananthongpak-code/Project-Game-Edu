@@ -41,6 +41,8 @@ export const art = {
   /** ไอคอนอุปกรณ์ของการ์เดียน (GR-01..08) ช่องชิปที่ว่างไม่มีภาพ */
   gear: (value: Gear[keyof Gear]): string | null => (GEAR_ART[value] ? `assets/gear/gr_${GEAR_ART[value]}.png` : null),
   /** ไอคอนของใช้และโมดูลของพี่บิต (IT-01..08) และเหรียญเครดิตวิจัย (IT-09) */
+  /** ไอคอน EXP (IT-12) */
+  expIcon: "assets/items/it_exp.png",
   item: (value: Supply | `module-${BitModule}`): string => `assets/items/it_${ITEM_ART[value]}.png`,
   credit: "assets/items/it_credit.png",
   /** ไอคอนพิกเซลของกล่อง "เกมนี้เล่นอย่างไร" ที่หน้าเมนู (MN-01..05) */
