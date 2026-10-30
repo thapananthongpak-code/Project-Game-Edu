@@ -76,6 +76,44 @@ interface Fx {
 /** ท่าของไคจูที่ใช้ภาพท่าโจมตี (พุ่งเข้าใส่ ยิง หมุนตัว กระโดด รวมพลัง) */
 const ATTACKING: readonly string[] = ["dash", "fire", "spin", "hop", "charge"];
 
+/** เวลาที่เอฟเฟกต์ทั้งหมดของตาเล่นจบ (มิลลิวินาที) ใช้รอก่อนไปข้อถัดไปเอง ความยาวของแต่ละชิ้นตรงกับ index.css */
+function fxEnd(fx: Fx): number {
+  const ends = [
+    fx.robot ? fx.robot.at + 650 : 0,
+    fx.kaiju ? fx.kaiju.at + 800 : 0,
+    fx.assistAt !== null ? fx.assistAt + 500 : 0,
+    fx.shakeAt !== null ? fx.shakeAt + 450 : 0,
+    fx.shards !== null ? fx.shards + 600 : 0,
+    fx.cutIn ? fx.cutIn.at + 1700 : 0,
+    ...fx.sparks.map((spark) => spark.at + 800),
+    ...fx.floaters.map((floater) => floater.at + 950),
+    ...fx.banners.map((banner) => banner.at + 900),
+  ];
+  return Math.max(0, ...ends);
+}
+
+/** เวลาที่เว้นให้อ่านหลังเอฟเฟกต์จบ ก่อนไปข้อถัดไปเอง: ตอบผิดนานกว่า ให้เห็นว่าข้อไหนถูก (GDD ข้อ 12) */
+export const AUTO_NEXT_MS = { correct: 1500, wrong: 3000 } as const;
+const AUTO_KEY = "ai-trainer-quest-battle-auto";
+
+/** การตั้งค่า "ไปข้อถัดไปเอง" ของเครื่องนี้ (ค่าเริ่มต้นเปิด) สคริปต์ทดสอบปิดไว้ด้วย window.__aitqBattleAuto = false */
+function readAutoNext(): boolean {
+  const forced = (window as unknown as { __aitqBattleAuto?: boolean }).__aitqBattleAuto;
+  if (typeof forced === "boolean") return forced;
+  try {
+    return window.localStorage.getItem(AUTO_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+function saveAutoNext(on: boolean): void {
+  try {
+    window.localStorage.setItem(AUTO_KEY, on ? "on" : "off");
+  } catch {
+    // เก็บไม่ได้ (โหมดส่วนตัว): ใช้ได้เฉพาะรอบนี้
+  }
+}
+
 const NO_FX: Fx = { id: 0, robot: null, kaiju: null, assistAt: null, sparks: [], floaters: [], banners: [], shakeAt: null, shards: null, cutIn: null };
 
 /** สิ่งที่ใช้แปลงเหตุการณ์เป็นภาพและข้อความ: ด่าน อาวุธของการ์เดียน และร่างของคู่ต่อสู้ตอนที่ตอบ */
@@ -393,6 +431,10 @@ export function Battle() {
   const [hintOpen, setHintOpen] = useState(false);
   /** นับครั้งที่ชิปคิดทบทวนทำงาน ใช้ย้ายโฟกัสกลับไปที่ตัวเลือก */
   const [retried, setRetried] = useState(0);
+  /** ไปข้อถัดไปเองหลังเอฟเฟกต์จบ (ปิดได้ จำไว้ในเครื่อง) */
+  const [autoNext, setAutoNext] = useState(readAutoNext);
+  const tutorOpen = useGameStore((s) => s.tutorOpen);
+  const [tabHidden, setTabHidden] = useState(() => typeof document !== "undefined" && document.visibilityState === "hidden");
   /** เครดิตที่ได้จากการชนะครั้งนี้ (รวมตัวคูณของระดับความยาก) */
   const [credits, setCredits] = useState(0);
   /** EXP ที่ได้จากการออกปฏิบัติการครั้งนี้ (src/state/level.ts) */
@@ -528,6 +570,26 @@ export function Battle() {
   useEffect(() => {
     if (answered !== undefined) nextButton.current?.focus({ preventScroll: true });
   }, [answered]);
+  // ไปข้อถัดไปเอง: รอเอฟเฟกต์ของตาจบแล้วเว้นเวลาอ่าน หยุดนับเมื่อเปิดหน้าต่างขอข้อมูล/ถามพี่บิต หรือสลับไปแท็บอื่น (นับใหม่เมื่อกลับมา)
+  const nextRef = useRef<() => void>(() => {});
+  nextRef.current = () => next();
+  useEffect(() => {
+    const onVisibility = () => setTabHidden(document.visibilityState === "hidden");
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+  const autoDelay = stage === "fight" && answered !== undefined && item !== null ? fxEnd(fx) + (answered === item.answer ? AUTO_NEXT_MS.correct : AUTO_NEXT_MS.wrong) : null;
+  const autoPaused = !autoNext || hintOpen || tutorOpen || tabHidden;
+  useEffect(() => {
+    if (autoDelay === null || autoPaused) return;
+    const timer = window.setTimeout(() => nextRef.current(), autoDelay);
+    return () => window.clearTimeout(timer);
+  }, [autoDelay, autoPaused, fx.id, answered]);
+  const toggleAutoNext = () => {
+    saveAutoNext(!autoNext);
+    setAutoNext(!autoNext);
+  };
+
   // ได้ตอบใหม่: ปุ่มที่เพิ่งกดถูกตัดออก จึงย้ายโฟกัสไปที่ตัวเลือกแรกที่ยังกดได้
   useEffect(() => {
     if (retried > 0) dialog.current?.querySelector<HTMLButtonElement>('[data-testid="choice-option"]:not(:disabled)')?.focus({ preventScroll: true });
@@ -893,11 +955,18 @@ export function Battle() {
                   <span key={i}>{eventText(event, foeName(actor), { ...scene, foe: actor })}</span>
                 ))}
               </div>
-              {answered !== undefined && (
-                <button ref={nextButton} type="button" className="btn" data-testid="battle-next" onClick={next}>
-                  {ui.battle.next}
+              <div className="flex items-center gap-2">
+                <button type="button" className="btn btn-ghost !min-h-9 !px-2 text-xs" data-testid="battle-auto" aria-pressed={autoNext} onClick={toggleAutoNext}>
+                  {autoNext ? ui.battle.autoOn : ui.battle.autoOff}
                 </button>
-              )}
+                {answered !== undefined && (
+                  <button ref={nextButton} type="button" className="btn relative overflow-hidden" data-testid="battle-next" data-auto={autoDelay !== null && !autoPaused ? autoDelay : undefined} onClick={next}>
+                    {ui.battle.next}
+                    {/* แถบนับถอยหลังก่อนไปข้อถัดไปเอง (ภาพประกอบ เวลาจริงอยู่ที่ตัวจับเวลา) */}
+                    {autoDelay !== null && !autoPaused && <span key={`count-${fx.id}`} className="battle-countdown" style={{ animationDuration: `${autoDelay}ms` }} aria-hidden="true" />}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

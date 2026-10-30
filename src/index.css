@@ -962,3 +962,25 @@ canvas {
 .travel-kaiju-next {
   box-shadow: 0 0 0 3px #ffcd75;
 }
+
+/* ด่านต่อสู้: แถบนับถอยหลังก่อนไปข้อถัดไปเอง (ขอบล่างของปุ่ม "ถัดไป") */
+.battle-countdown {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  background: var(--color-teal-dark);
+  transform-origin: left;
+  animation-name: battle-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes battle-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

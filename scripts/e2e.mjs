@@ -72,6 +72,8 @@ function watch(page) {
   page.addInitScript(() => {
     // ปิดการแจกรางวัลเลเวลทั้งรอบ ชุดทดสอบเดิมไม่ถูกหน้าต่างเลเวลอัปและเครดิตรางวัลแทรก ชุด level เปิดคืนเองด้วย __aitq.pauseLevel(false)
     window.__aitqPauseLevel = true;
+    // ด่านต่อสู้ไปข้อถัดไปเองหลังเอฟเฟกต์จบ ชุดทดสอบเดิมกด "ถัดไป" เอง จึงปิดไว้ (ชุด auto ทดสอบการไปต่อเอง)
+    window.__aitqBattleAuto = false;
     window.__levelUps = [];
     setInterval(() => {
       const open = document.querySelector('[data-testid="levelup"]');
@@ -704,7 +706,7 @@ async function backToHall(page) {
 }
 
 /** ตอบโจทย์ของด่านต่อสู้หนึ่งข้อ (ถูกหรือผิดตามที่สั่ง) คืนข้อความบันทึกเหตุการณ์และพลังของทั้งสองฝ่ายหลังตอบ */
-async function battleTurn(page, correctly, press = click) {
+async function battleTurn(page, correctly, press = click, advance = true) {
   const source = Number(await page.getByTestId("battle").getAttribute("data-source"));
   const cardText = (await page.getByTestId("choice-card").count()) ? await page.getByTestId("choice-card").innerText() : "";
   const options = await page.getByTestId("choice-option").allInnerTexts();
@@ -729,6 +731,7 @@ async function battleTurn(page, correctly, press = click) {
     robot: Number(await page.getByTestId("hp-left").getAttribute("data-hp")),
     kaiju: Number(await page.getByTestId("hp-right").getAttribute("data-hp")),
   };
+  if (!advance) return turn;
   await press(page.getByTestId("battle-next"));
   await page.waitForTimeout(60);
   return turn;
@@ -2435,6 +2438,56 @@ async function playLevel(page) {
     window.__aitq.pauseLevel(true);
   });
   log(`เลเวล: ป้าย Lv ที่ HUD เปิดโปรไฟล์ (ฉายา แถบ EXP สถิติ ชาเลนจ์ 20 ข้อ รางวัล) เลเวลอัปเด้งหน้าต่างฉลองครั้งเดียว แจกเครดิต +${bonus} และของพิเศษ ${given.length} ชิ้นเข้ากล่อง สวมและทาสีได้ ซื้อในร้านไม่ได้`);
+}
+
+/** ด่านต่อสู้ไปข้อถัดไปเอง (GDD ข้อ 12): รอเอฟเฟกต์จบแล้วเว้นเวลาอ่าน ตอบผิดรอนานกว่า กด "ถัดไป" ไปทันทีได้ ปิดได้และจำไว้ในเครื่อง */
+async function playAutoNext(page) {
+  await resumeWith(page, travelerSave());
+  await page.evaluate(() => {
+    window.__aitqBattleAuto = undefined;
+    localStorage.removeItem("ai-trainer-quest-battle-auto");
+  });
+  await goToHangar(page);
+  await startBattle(page, "k1", KAIJU[0], { training: true });
+  await page.getByTestId("battle-start").click();
+  assert.equal(await page.getByTestId("battle-auto").getAttribute("aria-pressed"), "true", "ค่าเริ่มต้น: ไปข้อถัดไปเอง");
+  const turnOf = async () => Number(await page.getByTestId("battle").getAttribute("data-turn"));
+  const timeNext = async (correctly) => {
+    const before = await turnOf();
+    await battleTurn(page, correctly, click, false);
+    const started = Date.now();
+    const delay = Number(await page.getByTestId("battle-next").getAttribute("data-auto"));
+    await page.getByTestId("battle-next").waitFor({ state: "detached", timeout: 15_000 });
+    const elapsed = Date.now() - started;
+    assert.equal(await page.getByTestId("choice-option").first().isEnabled(), true, "ข้อถัดไปขึ้นเองและตอบได้");
+    assert.equal(await turnOf(), before + 1);
+    return { delay, elapsed };
+  };
+  const right = await timeNext(true);
+  assert.ok(right.delay >= 1500 && right.elapsed >= 1400, `ตอบถูก: รอเอฟเฟกต์แล้วเว้นอีก 1.5 วินาที (${right.delay} ms, จริง ${right.elapsed} ms)`);
+  const wrong = await timeNext(false);
+  assert.ok(wrong.delay >= 3000 && wrong.elapsed >= 2900 && wrong.delay > right.delay, `ตอบผิด: เว้นนานกว่า 3 วินาที ให้เห็นข้อที่ถูก (${wrong.delay} ms)`);
+  // กด "ถัดไป" ระหว่างนับถอยหลัง: ไปทันที
+  await battleTurn(page, true, click, false);
+  const pressed = Date.now();
+  await page.getByTestId("battle-next").click();
+  await page.getByTestId("battle-next").waitFor({ state: "detached" });
+  assert.ok(Date.now() - pressed < 1000, "กดถัดไประหว่างนับถอยหลังแล้วไปทันที");
+  await shot(page, "43-battle-auto");
+  // ปิดสวิตช์: รอให้กดเอง และจำค่าไว้ในเครื่อง
+  await page.getByTestId("battle-auto").click();
+  assert.equal(await page.getByTestId("battle-auto").getAttribute("aria-pressed"), "false");
+  assert.equal(await page.evaluate(() => localStorage.getItem("ai-trainer-quest-battle-auto")), "off");
+  await battleTurn(page, true, click, false);
+  await page.waitForTimeout(4500);
+  assert.equal(await page.getByTestId("battle-next").count(), 1, "ปิดแล้วไม่ไปต่อเอง");
+  await page.getByTestId("battle-next").click();
+  await page.getByTestId("battle-auto").click();
+  await page.getByTestId("battle-retreat").click();
+  await page.evaluate(() => {
+    window.__aitqBattleAuto = false;
+  });
+  log(`ด่านต่อสู้ไปข้อถัดไปเอง: ตอบถูกรอ ${right.delay} ms ตอบผิดรอ ${wrong.delay} ms (หลังเอฟเฟกต์จบ) กดถัดไปเพื่อไปทันทีได้ ปิดสวิตช์แล้วรอให้กดเองและจำไว้ในเครื่อง`);
 }
 
 const creditsOf = async (page) => Number(await page.getByTestId("credits").getAttribute("data-credits"));
@@ -4205,6 +4258,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("auto")) {
+    console.log("เดสก์ท็อป: ด่านต่อสู้ไปข้อถัดไปเอง");
+    await playAutoNext(page);
   }
   if (wanted("level")) {
     console.log("เดสก์ท็อป: เลเวล EXP และโปรไฟล์");
