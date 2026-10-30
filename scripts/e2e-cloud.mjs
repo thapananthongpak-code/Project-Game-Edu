@@ -19,7 +19,9 @@ const log = (message) => console.log(`  ✓ ${message}`);
 const errors = [];
 
 // ---------------------------------------------------------------- Supabase จำลอง (ทำตามกติกาใน supabase/schema.sql)
-const db = { players: [], devices: new Map(), signups: 0, saves: 0, down: false, users: new Map(), googleEmail: "kaew@example.com" };
+const db = { players: [], devices: new Map(), signups: 0, saves: 0, down: false, users: new Map(), googleEmail: "kaew@example.com", adminEmail: "owner@example.com" };
+/** บัญชีผู้ดูแลเกม (ตาราง admins ใน supabase/schema.sql): ฐานข้อมูลตัดสินจากบัญชี ไม่ใช่จากเกม */
+const isAdmin = (userId) => db.users.get(userId)?.email === db.adminEmail;
 const now = () => new Date().toISOString();
 const userJson = (id) => {
   const user = db.users.get(id);
@@ -82,9 +84,11 @@ async function supabase(route) {
       db.players.push(row);
       db.devices.set(user, row.id);
     }
-    Object.assign(row, { class_code: body.p_class_code, display_name: body.p_display_name, data: body.p_data, updated_at: new Date().toISOString() });
+    // ข้อมูลของผู้ดูแลไม่ไปอยู่ในห้องเรียนใด (เหมือน save_progress ใน supabase/schema.sql)
+    Object.assign(row, { class_code: isAdmin(user) ? "SOLO" : body.p_class_code, display_name: body.p_display_name, data: body.p_data, updated_at: new Date().toISOString() });
     return route.fulfill({ json: row.resume_code });
   }
+  if (path === "/rest/v1/rpc/is_admin") return route.fulfill({ json: isAdmin(user) });
   if (path === "/rest/v1/rpc/reset_progress") {
     const row = mine();
     db.devices.delete(user);
@@ -346,6 +350,56 @@ try {
   const fonRow = db.players.find((player) => player.display_name === "ฝน");
   assert.deepEqual([fonRow.archived_at, fonRow.data.profile.name, soloRow.data.profile.name], [null, "ฝน", "เล่นคนเดียว"], "ความคืบหน้าของทั้งสองคนไม่ถูกทับ");
   log("บัญชี Google ที่มีความคืบหน้าอยู่แล้ว: ผูกกับเครื่องของผู้เล่นอีกคนไม่ได้ แจ้งเตือน และสลับบัญชีได้โดยไม่ทับข้อมูลของใคร");
+
+  // ================================================================ บัญชีผู้ดูแล (GDD ข้อ 30)
+  console.log("บัญชีผู้ดูแล (จำลอง)");
+  // --- บัญชีอื่นไม่ได้โหมดผู้ดูแล: บัญชี Google ของนักเรียน (นิด) บัญชีไม่ระบุตัวตน และผู้เล่นที่เก็บในเครื่องอย่างเดียว
+  await linked.locator('[data-testid="menu-continue"]:not([disabled])').click();
+  await linked.waitForFunction(() => window.__aitq.snapshot().store.screen === "hall");
+  assert.equal((await store(linked)).adminAvailable, false, "บัญชี Google ของนักเรียนไม่ใช่ผู้ดูแล");
+  assert.deepEqual([(await store(first)).adminAvailable, (await store(second)).adminAvailable, (await store(solo)).adminAvailable], [false, false, false], "บัญชีไม่ระบุตัวตนและผู้เล่นในเครื่องไม่ใช่ผู้ดูแล");
+  assert.equal(await linked.getByTestId("credits").getAttribute("data-credits"), "0", "นักเรียนไม่มีเครดิตแถม");
+  assert.equal((await store(linked)).battles && Object.keys((await store(linked)).battles).length, 0, "นักเรียนไม่ได้สถานะจบเกม");
+  log("บัญชีของนักเรียน (Google ธรรมดา ไม่ระบุตัวตน เก็บในเครื่อง) ไม่ใช่ผู้ดูแล เครดิตและความคืบหน้าตามจริง");
+
+  // --- ผู้ดูแล: ลงทะเบียนด้วยรหัสห้องก่อน (บัญชีไม่ระบุตัวตน) แล้วเข้าสู่ระบบด้วย Google ของผู้ดูแล
+  const boss = await device(browser);
+  await (await register(boss, "ผู้ดูแล", "PVC1-67")).click();
+  await pretest(boss);
+  await synced(boss);
+  const bossRow = db.players.find((player) => player.display_name === "ผู้ดูแล");
+  assert.equal(bossRow.class_code, "PVC1-67", "ก่อนเป็นผู้ดูแลยังเป็นผู้เล่นทั่วไป");
+  assert.equal(Object.keys(bossRow.data.battles).length, 0);
+  await boss.getByRole("button", { name: "เมนู" }).click();
+  await googleSignIn(boss, db.adminEmail);
+  await boss.locator('[data-testid="menu-continue"]:not([disabled])').click();
+  await boss.waitForFunction(() => Object.keys(window.__aitq.snapshot().store.battles).length === 13, null, { timeout: 15000 });
+  const bossState = await store(boss);
+  assert.deepEqual([bossState.adminAvailable, Object.values(bossState.battles).every((battle) => battle.won)], [true, true], "ผู้ดูแล: ชนะครบทั้ง 13 ด่านของ 3 แมพ");
+  // เกมเหมือนบัญชีอื่นทุกอย่าง: ไม่มีปุ่มหรือโหมดพิเศษ เครดิตเป็นตัวเลขปกติ (เยอะ) และใช้จ่ายได้
+  assert.equal(await boss.getByTestId("hud-admin").count(), 0, "ไม่มีปุ่มโหมดพิเศษ");
+  const bossCredits = Number(await boss.getByTestId("credits").getAttribute("data-credits"));
+  assert.ok(bossCredits > 900_000, `ผู้ดูแลมีเครดิตจำนวนมาก (${bossCredits})`);
+  assert.doesNotMatch(await boss.getByTestId("credits").innerText(), /∞/);
+  assert.equal(await boss.getByTestId("hud-level").isVisible(), true);
+  await boss.screenshot({ path: "test-results/42-admin.png" });
+  // บันทึกตามปกติ แต่ใต้ห้อง SOLO ไม่ใช่ห้องเรียนที่ใส่ไว้ตอนลงทะเบียน (ไม่ขึ้นแดชบอร์ดของห้อง)
+  await synced(boss);
+  assert.deepEqual([bossRow.class_code, Object.keys(bossRow.data.battles).length, bossRow.data.shop.spent <= -1_000_000], ["SOLO", 13, true], "ข้อมูลจบเกมของผู้ดูแลอยู่ใต้ห้อง SOLO");
+  assert.equal(db.players.filter((player) => player.class_code === "PVC1-67" && player.display_name === "ผู้ดูแล").length, 0);
+  // ซื้อของแล้วเครดิตลดลงจริง และเปิดหน้าใหม่แล้วยังอยู่ในสถานะจบเกม
+  await boss.reload();
+  await boss.waitForFunction(() => window.__aitq?.snapshot().store.ready);
+  await boss.locator('[data-testid="menu-continue"]:not([disabled])').click();
+  await boss.waitForFunction(() => window.__aitq.snapshot().store.screen === "hall");
+  assert.equal(Object.keys((await store(boss)).battles).length, 13);
+  log("ผู้ดูแล (Google ของผู้ดูแล): ข้อมูลอยู่ในสถานะจบเกม ชนะครบ 13 ด่าน เครดิตจำนวนมาก เกมไม่มีโหมดพิเศษ บันทึกใต้ห้อง SOLO ไม่ขึ้นห้องเรียน");
+
+  // --- บัญชีนักเรียนไม่ได้รับผลกระทบ: บัญชี Google ของนิดยังไม่ใช่ผู้ดูแล ไม่ได้สถานะจบเกม
+  const niceState = await store(linked);
+  assert.deepEqual([niceState.adminAvailable, Object.keys(niceState.battles).length], [false, 0]);
+  assert.equal(db.players.filter((player) => player.class_code !== "SOLO" && Object.keys(player.data.battles ?? {}).length >= 13).length, 0, "ไม่มีผู้เล่นในห้องเรียนใดที่ข้อมูลอยู่ในสถานะจบเกม");
+  log("บัญชีของนักเรียนไม่ได้สถานะจบเกม และไม่มีใครในห้องเรียนที่ข้อมูลเป็นสถานะจบเกม");
 } finally {
   await browser.close();
 }

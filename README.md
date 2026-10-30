@@ -36,7 +36,7 @@ npm run dev        # http://localhost:5173  (แดชบอร์ดผู้�
 ### 1. ฐานข้อมูล Supabase
 
 1. สร้างโปรเจกต์ที่ [supabase.com](https://supabase.com) (แผนฟรีพอสำหรับหนึ่งรายวิชา)
-2. เมนู **SQL Editor** → วางเนื้อหาทั้งไฟล์ [supabase/schema.sql](supabase/schema.sql) → **Run** (รันซ้ำได้ ไม่ลบข้อมูลเดิม)
+2. เมนู **SQL Editor** → วางเนื้อหาทั้งไฟล์ [supabase/schema.sql](supabase/schema.sql) → **Run** (รันซ้ำได้ ไม่ลบข้อมูลเดิม) ไฟล์นี้มีตารางผู้ดูแลเกมด้วย (`admins` ว่างตอนแรก เพิ่มผู้ดูแลตาม docs/TEACHER_GUIDE.md)
 3. เมนู **Authentication → Sign In / Providers** → เปิด **Allow anonymous sign-ins**
 4. เมนู **Authentication → Rate Limits** → เพิ่มค่า **anonymous sign-ins** (ค่าเริ่มต้นจำกัดต่อ IP ต่อชั่วโมง ทั้งห้องเรียนมักออกอินเทอร์เน็ตด้วย IP เดียวกัน) ให้มากกว่าจำนวนผู้เรียนที่จะลงทะเบียนพร้อมกัน เช่น 200
 5. เมนู **Project Settings → API** (หรือ **API Keys**) จดค่า 3 ค่า:

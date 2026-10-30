@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAudioDirector } from "./audio/useAudio";
 import { PhaserGame } from "./game/PhaserGame";
+import { isEndgame } from "./state/admin";
 import { levelDue, pendingStory, useGameStore } from "./state/gameStore";
 import { Battle } from "./ui/Battle";
 import { Certificate } from "./ui/Certificate";
@@ -66,6 +67,15 @@ function useLevelTrigger(): void {
   }, [due, openLevelUp]);
 }
 
+/** บัญชีผู้ดูแล: ตั้งสถานะจบเกมและเครดิตจำนวนมากให้ เมื่อมีโปรไฟล์และผ่านแบบทดสอบก่อนเรียนแล้ว เกมหน้าตาเหมือนบัญชีอื่นทุกอย่าง (GDD ข้อ 30) */
+function useAdminEndgame(): void {
+  const due = useGameStore((s) => s.hydrated && s.adminAvailable && s.profile !== null && s.pretest !== null && !isEndgame(s));
+  const apply = useGameStore((s) => s.applyAdminEndgame);
+  useEffect(() => {
+    if (due) apply();
+  }, [due, apply]);
+}
+
 export function App() {
   const screen = useGameStore((s) => s.screen);
   const overlay = useGameStore((s) => s.overlay);
@@ -76,6 +86,7 @@ export function App() {
   useAudioDirector();
   useStoryTrigger();
   useLevelTrigger();
+  useAdminEndgame();
   const playing = screen === "hall" || screen === "hangar" || screen === "room" || screen === "market" || screen === "lab";
 
   return (

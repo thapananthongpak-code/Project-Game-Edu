@@ -893,6 +893,8 @@ async function playRoom1(page) {
   });
   await page.reload();
   const form = await onboard(page, { name: "นักทดสอบ", topic1Correct: 1, shots: true, avatar: "b" });
+  // ไม่ต่อฐานข้อมูลกลาง (หรือเป็นนักเรียน): ไม่ใช่ผู้ดูแล ไม่ได้สถานะจบเกมหรือเครดิตแถม (GDD ข้อ 30)
+  assert.deepEqual([(await snap(page)).store.adminAvailable, Object.keys((await snap(page)).store.battles).length], [false, 0], "ผู้เล่นทั่วไปไม่ได้สถานะผู้ดูแลหรือสถานะจบเกม");
   log(`ขั้นเริ่มเกม: ตั้งชื่อ เลือกตัวละคร (ทุกคนเริ่มที่แมพ 1 ไม่มีตัวเลือกระดับความยาก) แบบทดสอบก่อนเรียนชุด ${form} 12 ข้อ (สมรรถนะละ 2 ข้อ ไม่มีตัวเลือกยังไม่รู้) ไม่เฉลย เก็บผลรายข้อและรายสมรรถนะ (หัวข้อ 1 ถูก 1/2) แล้วเห็นบทนำของเนื้อเรื่องเป็นช่องการ์ตูน 5 ช่อง`);
 
   assert.equal((await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length, 6);

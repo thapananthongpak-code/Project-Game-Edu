@@ -36,11 +36,20 @@ create table if not exists public.player_devices (
 
 create index if not exists player_devices_player_id_idx on public.player_devices (player_id);
 
+-- บัญชีผู้ดูแลเกม (เล่นในโหมดจบเกมและเครดิตไม่จำกัด GDD ข้อ 30) เก็บเฉพาะรหัสบัญชี ไม่เก็บอีเมล
+-- ไม่มีสิทธิ์อ่านหรือเขียนตารางนี้จากเกมเลย (RLS เปิดและไม่มีนโยบาย) เกมถามได้ผ่าน is_admin() เท่านั้น
+-- เพิ่มผู้ดูแล: ดู docs/TEACHER_GUIDE.md (insert into public.admins ... ด้วย SQL Editor)
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  added_at timestamptz not null default now()
+);
+
 alter table public.players enable row level security;
 alter table public.player_devices enable row level security;
+alter table public.admins enable row level security;
 
 -- ผู้เรียน: อ่านได้เฉพาะของตัวเอง ไม่มีสิทธิ์เขียนตารางโดยตรง
-revoke all on public.players, public.player_devices from anon, authenticated;
+revoke all on public.players, public.player_devices, public.admins from anon, authenticated;
 grant select on public.players, public.player_devices to authenticated;
 
 drop policy if exists "players: read own" on public.players;
@@ -56,6 +65,11 @@ create or replace function public.new_resume_code() returns text
 language sql volatile set search_path = ''
 as $$ select upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10)) $$;
 
+-- บัญชีที่ล็อกอินอยู่เป็นผู้ดูแลหรือไม่ (บัญชีไม่ระบุตัวตนและบัญชีที่ไม่อยู่ในตาราง admins ได้ false เสมอ)
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = ''
+as $$ select exists (select 1 from public.admins where user_id = auth.uid()) $$;
+
 -- บันทึกความคืบหน้าของผู้เรียนที่ล็อกอินอยู่ คืนรหัสเล่นต่อ
 create or replace function public.save_progress(p_class_code text, p_display_name text, p_data jsonb) returns text
 language plpgsql security definer set search_path = ''
@@ -69,6 +83,10 @@ begin
     raise exception 'not signed in' using errcode = '28000';
   end if;
   p_class_code := upper(btrim(coalesce(p_class_code, '')));
+  -- ข้อมูลของผู้ดูแลไม่ไปอยู่ในห้องเรียนใด (ไม่ขึ้นแดชบอร์ดของครู แม้ใส่รหัสห้องมาทดลองเล่น)
+  if exists (select 1 from public.admins where user_id = v_user) then
+    p_class_code := 'SOLO';
+  end if;
   p_display_name := btrim(coalesce(p_display_name, ''));
   if p_class_code !~ '^[A-Z0-9_-]{1,20}$' then
     raise exception 'invalid class code' using errcode = '22023';
@@ -160,5 +178,5 @@ begin
 end;
 $$;
 
-revoke execute on function public.save_progress(text, text, jsonb), public.reset_progress(), public.detach_device(), public.claim_progress(text), public.new_resume_code() from public, anon;
-grant execute on function public.save_progress(text, text, jsonb), public.reset_progress(), public.detach_device(), public.claim_progress(text) to authenticated;
+revoke execute on function public.save_progress(text, text, jsonb), public.reset_progress(), public.detach_device(), public.claim_progress(text), public.new_resume_code(), public.is_admin() from public, anon;
+grant execute on function public.save_progress(text, text, jsonb), public.reset_progress(), public.detach_device(), public.claim_progress(text), public.is_admin() to authenticated;

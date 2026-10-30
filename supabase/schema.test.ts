@@ -158,4 +158,36 @@ describe("supabase/schema.sql", () => {
     const [{ resume_code }] = await rows<{ resume_code: string }>("select resume_code from public.players where archived_at is not null limit 1");
     expect(await student(CAROL, () => rows("select * from public.claim_progress($1)", [resume_code]))).toEqual([]);
   });
+
+  describe("บัญชีผู้ดูแล (GDD ข้อ 30)", () => {
+    const ADMIN = "99999999-9999-4999-8999-999999999999";
+    const isAdmin = (user: string) => student(user, async () => (await db.query<{ ok: boolean }>("select public.is_admin() as ok")).rows[0].ok);
+
+    it("ทุกบัญชีที่ไม่อยู่ในตาราง admins ไม่ใช่ผู้ดูแล (นักเรียน บัญชีไม่ระบุตัวตน บัญชี Google อื่น)", async () => {
+      expect(await rows("select * from public.admins")).toEqual([]);
+      for (const user of [ALICE, BOB, CAROL]) expect(await isAdmin(user), user).toBe(false);
+    });
+
+    it("นักเรียนอ่าน เพิ่ม แก้ หรือลบตาราง admins เองไม่ได้ และผู้ที่ยังไม่ล็อกอินเรียก is_admin ไม่ได้", async () => {
+      await db.exec(`insert into auth.users values ('${ADMIN}')`);
+      await db.exec(`insert into public.admins (user_id) values ('${ADMIN}')`);
+      for (const sql of ["select * from public.admins", `insert into public.admins (user_id) values ('${ALICE}')`, `update public.admins set user_id = '${ALICE}'`, "delete from public.admins"]) {
+        await expect(student(ALICE, () => db.query(sql)), sql).rejects.toThrow();
+      }
+      await expect(as(null, "anon", () => db.query("select public.is_admin()"))).rejects.toThrow();
+      // ความพยายามเพิ่มตัวเองไม่สำเร็จ: ยังเป็นผู้ดูแลแค่คนเดียว
+      expect(await rows("select user_id from public.admins")).toEqual([{ user_id: ADMIN }]);
+      expect(await isAdmin(ALICE)).toBe(false);
+    });
+
+    it("บัญชีที่อยู่ในตาราง admins เป็นผู้ดูแล และข้อมูลที่บันทึกถูกเก็บใต้ห้อง SOLO เสมอ ไม่ขึ้นห้องเรียน", async () => {
+      expect(await isAdmin(ADMIN)).toBe(true);
+      await saveProgress(ADMIN, "ผู้ดูแล", save, "pvc1");
+      const [row] = await rows<{ class_code: string }>("select class_code from public.players where display_name = 'ผู้ดูแล'");
+      expect(row.class_code).toBe("SOLO");
+      // ผู้เล่นทั่วไปยังบันทึกใต้ห้องที่ใส่เหมือนเดิม
+      await saveProgress(CAROL, "ซีสอง", save, "pvc2");
+      expect((await rows<{ class_code: string }>("select class_code from public.players where display_name = 'ซีสอง'"))[0].class_code).toBe("PVC2");
+    });
+  });
 });

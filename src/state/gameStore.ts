@@ -30,6 +30,7 @@ import { creditBalance, type Earning, equip, type EquipKind, moveStation, packBa
 import { DASH_SKIP_ALL, dashDue, dashKey } from "./dash";
 import { GUIDE_STEPS, TIPS_OFF, TUTORIAL_DONE } from "./guide";
 import { harvest, plant } from "./lab";
+import { endgameSave, isEndgame } from "./admin";
 import { rewardItemsUpTo, statusOf } from "./level";
 import type { Avatar, BitModule, Decor, Seed, Stall, Supply, Theme } from "./shop.config";
 
@@ -67,6 +68,8 @@ interface GameState {
   resumeCode: string | null;
   /** บัญชีที่เครื่องนี้ใช้กับฐานข้อมูลกลาง (null = ยังไม่เคยส่งข้อมูล) */
   account: AccountInfo | null;
+  /** บัญชีที่ล็อกอินอยู่เป็นผู้ดูแลเกม (ฐานข้อมูลตัดสิน ไม่เก็บในบันทึก GDD ข้อ 30) */
+  adminAvailable: boolean;
   screen: Screen;
   /** ห้องที่ผู้เล่นอยู่ (ลำดับห้องของระดับความยาก นับจาก 1) ห้องหนึ่งสอนได้หลายหัวข้อ */
   zone: number | null;
@@ -119,6 +122,9 @@ interface GameState {
   hydrate: (data: SaveData | null) => void;
   setSync: (sync: SyncStatus, resumeCode: string | null) => void;
   setAccount: (account: AccountInfo | null) => void;
+  setAdminAvailable: (available: boolean) => void;
+  /** ตั้งสถานะจบเกมและเครดิตจำนวนมากให้บัญชีผู้ดูแล (ทำเฉพาะเมื่อฐานข้อมูลบอกว่าเป็นผู้ดูแล และยังไม่อยู่ในสถานะนั้น) */
+  applyAdminEndgame: () => void;
   newGame: () => void;
   continueGame: () => void;
   toMenu: () => void;
@@ -241,6 +247,7 @@ export const useGameStore = create<GameState>()((set, get) => {
     sync: "local",
     resumeCode: null,
     account: null,
+    adminAvailable: false,
     screen: "menu",
     zone: null,
     room: null,
@@ -273,25 +280,15 @@ export const useGameStore = create<GameState>()((set, get) => {
     shop: emptyShop(),
 
     setReady: () => set({ ready: true }),
-    hydrate: (data) => {
-      const worlds: Record<Difficulty, Record<number, RoomProgress>> = { easy: data?.rooms ?? {}, normal: data?.maps.normal ?? {}, hard: data?.maps.hard ?? {} };
-      const current = data?.profile?.difficulty ?? "easy";
-      const { [current]: progress, ...others } = worlds;
-      set({
-        hydrated: true,
-        profile: data?.profile ?? null,
-        pretest: data?.pretest ?? null,
-        posttest: data?.posttest ?? null,
-        progress,
-        others,
-        battles: data?.battles ?? {},
-        npcs: data?.npcs ?? {},
-        story: data?.story ?? [],
-        shop: data?.shop ?? emptyShop(),
-      });
-    },
+    hydrate: (data) => set({ hydrated: true, ...fieldsOf(data) }),
     setSync: (sync, resumeCode) => set({ sync, resumeCode }),
     setAccount: (account) => set({ account }),
+    setAdminAvailable: (available) => set({ adminAvailable: available }),
+    applyAdminEndgame: () => {
+      const state = get();
+      if (!state.adminAvailable || !state.profile || !state.pretest || isEndgame(state)) return;
+      set(fieldsOf(endgameSave(toSaveData(state))));
+    },
 
     // เริ่มใหม่: ล้างทุกอย่างแล้วเข้าขั้นตั้งชื่อและแบบทดสอบก่อนเรียน เริ่มที่แมพ 1 เสมอ (GDD ข้อ 3)
     newGame: () => set({ ...closed, guideStep: 0, guideReplay: false, profile: null, pretest: null, posttest: null, progress: {}, others: {}, battles: {}, npcs: {}, story: [], shop: emptyShop(), screen: "onboarding" }),
@@ -707,6 +704,24 @@ export const creditsOf = (state: Pick<GameState, "profile" | "progress" | "other
 
 export const hasSave = (state: Saved): boolean => state.profile !== null || Object.keys(learningRooms(state)).length > 0;
 
+/** ช่องของ store ที่ได้จากบันทึกหนึ่งชุด (แมพที่อยู่ปัจจุบันอยู่ใน progress แมพอื่นอยู่ใน others) */
+function fieldsOf(data: SaveData | null) {
+  const worlds: Record<Difficulty, Record<number, RoomProgress>> = { easy: data?.rooms ?? {}, normal: data?.maps.normal ?? {}, hard: data?.maps.hard ?? {} };
+  const current = data?.profile?.difficulty ?? "easy";
+  const { [current]: progress, ...others } = worlds;
+  return {
+    profile: data?.profile ?? null,
+    pretest: data?.pretest ?? null,
+    posttest: data?.posttest ?? null,
+    progress,
+    others,
+    battles: data?.battles ?? {},
+    npcs: data?.npcs ?? {},
+    story: data?.story ?? [],
+    shop: data?.shop ?? emptyShop(),
+  };
+}
+
 const toSaveData = (state: Saved): SaveData => ({
   version: SAVE_VERSION,
   updatedAt: new Date().toISOString(),
@@ -750,6 +765,7 @@ export async function createProgressStore(): Promise<ProgressStore> {
   return new SyncedProgressStore(local, createSupabaseBackend(url, anonKey), {
     onStatus: (sync, code) => useGameStore.getState().setSync(sync, code),
     onAccount: (account) => useGameStore.getState().setAccount(account),
+    onAdmin: (admin) => useGameStore.getState().setAdminAvailable(admin),
   });
 }
 

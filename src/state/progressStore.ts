@@ -632,6 +632,8 @@ export interface RemoteBackend {
   /** พาไปหน้าล็อกอินของ Google link = ผูกกับบัญชีไม่ระบุตัวตนที่มีอยู่ (ความคืบหน้าตามมาด้วย) */
   signInWithGoogle?(link: boolean): Promise<void>;
   signOut?(): Promise<void>;
+  /** บัญชีที่ล็อกอินอยู่เป็นผู้ดูแลเกมหรือไม่ (ฐานข้อมูลตัดสินเอง GDD ข้อ 30) */
+  isAdmin?(): Promise<boolean>;
   load(): Promise<RemoteRecord | null>;
   /** บันทึกความคืบหน้าของผู้เล่นคนนี้ คืนรหัสเล่นต่อ */
   save(data: SaveData): Promise<string>;
@@ -654,6 +656,8 @@ interface SyncOptions {
   loadTimeoutMs?: number;
   onStatus?: (status: SyncStatus, resumeCode: string | null) => void;
   onAccount?: (account: AccountInfo | null) => void;
+  /** ผลตรวจว่าบัญชีที่ล็อกอินอยู่เป็นผู้ดูแลหรือไม่ (ตรวจเฉพาะบัญชี Google ตอนโหลด) */
+  onAdmin?: (admin: boolean) => void;
   /** ที่เก็บธงข้ามการพาไปล็อกอิน (ค่าเริ่มต้น = localStorage ของเบราว์เซอร์) */
   flags?: Pick<Storage, "getItem" | "setItem" | "removeItem">;
 }
@@ -681,6 +685,7 @@ export class SyncedProgressStore implements ProgressStore {
   private chain: Promise<void> = Promise.resolve();
   private readonly onStatus: NonNullable<SyncOptions["onStatus"]>;
   private readonly onAccount: NonNullable<SyncOptions["onAccount"]>;
+  private readonly onAdmin: NonNullable<SyncOptions["onAdmin"]>;
   private readonly flags: NonNullable<SyncOptions["flags"]> | null;
   private account: AccountInfo | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -695,6 +700,7 @@ export class SyncedProgressStore implements ProgressStore {
     this.loadTimeoutMs = options.loadTimeoutMs ?? 6000;
     this.onStatus = options.onStatus ?? (() => {});
     this.onAccount = options.onAccount ?? (() => {});
+    this.onAdmin = options.onAdmin ?? (() => {});
     this.flags = options.flags ?? (typeof window === "undefined" ? null : window.localStorage);
   }
 
@@ -744,6 +750,7 @@ export class SyncedProgressStore implements ProgressStore {
     await this.remote.signOut?.();
     this.account = null;
     this.onAccount(null);
+    this.onAdmin(false);
     this.onStatus("local", null);
   }
 
@@ -757,6 +764,8 @@ export class SyncedProgressStore implements ProgressStore {
     try {
       this.account = (await withTimeout(this.remote.account?.() ?? Promise.resolve(null), this.loadTimeoutMs)) ?? null;
       this.onAccount(this.account);
+      // ผู้ดูแลตรวจเฉพาะบัญชี Google (บัญชีไม่ระบุตัวตนของนักเรียนไม่ถูกถาม) ตรวจไม่ได้ถือว่าไม่ใช่ผู้ดูแล
+      this.onAdmin(this.account?.provider === "google" ? await withTimeout(this.remote.isAdmin?.() ?? Promise.resolve(false), this.loadTimeoutMs).catch(() => false) : false);
       record = await withTimeout(this.remote.load(), this.loadTimeoutMs);
     } catch {
       // เครือข่ายช้าหรือล่ม: เล่นจากสำเนาในเครื่อง แล้วส่งขึ้นเมื่อบันทึกครั้งถัดไป

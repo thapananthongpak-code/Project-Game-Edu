@@ -1,7 +1,7 @@
 import { fmt, ui } from "../content/ui-strings";
 import { CAMPAIGN, DIFFICULTIES } from "../state/campaign";
-import { earningOf, useGameStore } from "../state/gameStore";
-import { CHALLENGES, challengeDone, LEVEL_REWARDS, type LevelInput, statusOf, titleOf } from "../state/level";
+import { earningOf, levelStatusOf, useGameStore } from "../state/gameStore";
+import { CHALLENGES, challengeDone, LEVEL_REWARDS, type LevelInput, titleOf } from "../state/level";
 import { npcActivitiesDone, npcActivityTotal } from "../state/npcs";
 import { SEEDS } from "../state/shop.config";
 import { art } from "./art";
@@ -22,7 +22,7 @@ export function Profile() {
   const dialog = useDialog<HTMLDivElement>(closeOverlay);
   const { profile, shop } = state;
   const input: LevelInput = { earning: earningOf(state), shop };
-  const status = statusOf(input);
+  const status = levelStatusOf(state);
   const title = ui.level.titles[titleOf(status.level)];
   const wonBattles = Object.values(state.battles).filter((record) => record.won).length;
   const totalBattles = DIFFICULTIES.reduce((sum, map) => sum + CAMPAIGN[map].battles.length, 0);

@@ -53,6 +53,13 @@ export function createSupabaseBackend(url: string, anonKey: string): RemoteBacke
       if (!user) return null;
       return user.is_anonymous ? { provider: "anonymous", email: null } : { provider: "google", email: user.email ?? null };
     },
+    async isAdmin() {
+      const user = (await session())?.user;
+      if (!user || user.is_anonymous) return false;
+      // ฐานข้อมูลตัดสินสิทธิ์เอง (supabase/schema.sql is_admin) เกมไม่รู้อีเมลของผู้ดูแล
+      const { data, error } = await client.rpc("is_admin");
+      return !error && data === true;
+    },
     async signInWithGoogle(link) {
       const options = { redirectTo: `${window.location.origin}/` };
       const user = (await session())?.user;
