@@ -265,7 +265,7 @@ export function QuestLog() {
                 const started = done || Boolean(record?.accepted);
                 const text =
                   spec.role === "quest"
-                    ? fmt(ui.questLog.sideQuest, { name: ui.npc[id].name, item: ui.npc[id as "mechanic" | "foreman" | "ranger"].item, n: record?.found.length ?? 0, total: spec.pickups })
+                    ? fmt(ui.questLog.sideQuest, { name: ui.npc[id].name, item: ui.npc[id as "mechanic" | "foreman" | "ranger" | "engineer" | "technician"].item, n: record?.found.length ?? 0, total: spec.pickups })
                     : spec.role === "gift"
                       ? fmt(ui.questLog.sideGift, { name: ui.npc[id].name })
                       : fmt(ui.questLog.sideQuiz, { name: ui.npc[id].name, n: record?.best ?? 0, total: spec.questions });

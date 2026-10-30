@@ -27,6 +27,10 @@ export interface BattleSetup {
   retries: number;
   /** ชุดไซเบอร์นินจา: จำนวนการโจมตีที่หลบได้เองต่อการออกปฏิบัติการ */
   dodges: number;
+  /** โมดูลแบตสำรอง: พลังงานที่เพิ่มตอนเริ่มด่านที่จำกัดพลังงาน */
+  energyBonus: number;
+  /** โมดูลรีไซเคิลพลังงาน: ตอบถูกติดกันครบ BATTLE.modules.recycleEvery ข้อได้พลังงานคืน 1 */
+  recycle: boolean;
 }
 
 /** พลังสูงสุดของการ์เดียน: ค่าเริ่มต้นของแมพ บวกเกราะ (หนัก ไททัน) และเครื่องแบบ (ชุดเกราะผู้พิทักษ์ ชุดซามูไรไซเบอร์ ชุดฮีโร่การ์เดียน) */
@@ -50,9 +54,11 @@ export function battleSetup(difficulty: Difficulty | undefined, spec: BattleSpec
     startShield: outfit === "pilot" || outfit === "samurai",
     formResetsOnRetry: level.formResetsOnRetry,
     gear,
-    guards: gear.armor === "guard" ? GEAR.guard.blocksPerForm : 0,
+    guards: (gear.armor === "guard" ? GEAR.guard.blocksPerForm : 0) + (has("barrier") ? BATTLE.modules.barrierGuards : 0),
     retries: gear.chip === "retry" ? GEAR.retry.chances : 0,
     dodges: (outfit === "ninja" ? BATTLE.perks.ninjaDodges : 0) + (has("decoy") ? BATTLE.modules.decoyDodges : 0),
+    energyBonus: has("reserve") ? BATTLE.modules.reserveEnergy : 0,
+    recycle: has("recycler"),
   };
 }
 
@@ -119,6 +125,8 @@ export type BattleEvent =
   | { type: "battery"; amount: number }
   /** พลังงานฉุกเฉินทำงานเองเมื่อพลังงานหมด */
   | { type: "emergency"; amount: number }
+  /** โมดูลรีไซเคิลพลังงาน: ได้พลังงานคืน */
+  | { type: "recycle"; amount: number }
   /** พลังงานหมดแล้วยังไม่ชนะ: แพ้ */
   | { type: "out-of-energy" };
 
@@ -148,7 +156,7 @@ export function startBattle(setup: BattleSetup, options: { carry?: { form: numbe
     retries: setup.retries,
     dodge: setup.dodges,
     opening: setup.gear.chip === "charger",
-    energy: setup.spec.energy ?? null,
+    energy: setup.spec.energy === undefined ? null : setup.spec.energy + setup.energyBonus,
     emergency: setup.spec.energy !== undefined && (options.emergency ?? false),
     status: "fighting",
   };
@@ -388,6 +396,10 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
   let { energy, emergency } = state;
   if (energy !== null && status === "fighting") {
     energy -= 1;
+    if (correct && setup.recycle && streak > 0 && streak % BATTLE.modules.recycleEvery === 0) {
+      energy += 1;
+      events.push({ type: "recycle", amount: 1 });
+    }
     if (energy <= 0) {
       if (emergency) {
         emergency = false;

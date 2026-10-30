@@ -105,7 +105,7 @@ const PLANT = "pr_hall_plant";
 const LAMP = "pr_decor_lamp";
 
 const person = (npc: NpcId, col: number, row: number): MapObject => ({ kind: "npc", prop: `npc_${npc}`, col, row, npc });
-const PICKUP_PROP: Partial<Record<NpcId, string>> = { mechanic: "pr_pickup_bolt", foreman: "pr_pickup_gear", ranger: "pr_pickup_beacon" };
+const PICKUP_PROP: Partial<Record<NpcId, string>> = { mechanic: "pr_pickup_bolt", foreman: "pr_pickup_gear", ranger: "pr_pickup_beacon", engineer: "pr_pickup_cell", technician: "pr_pickup_plate" };
 /** จอตัวอย่างและวิดีโอเสริมของหัวข้อ ติดผนัง (เป็นของตกแต่งเฉย ๆ ถ้าครูยังไม่ได้กำหนดรายการ) */
 const extras = (topic: number, col: number, row = 1): MapObject => ({ kind: "extras", prop: SCREENS, col, row, w: 2, mount: true, topic });
 /** ของของเควสเสริม วางตามช่องที่ให้ (ลำดับในรายการคือ index ของชิ้น) */
@@ -566,50 +566,42 @@ export const roomMaps: Record<number, GameMap> = {
   },
 };
 
-const archive = (topic: number, col: number, row: number): MapObject => ({ kind: "archive", prop: TERMINAL, col, row, topic });
-const desk = (topic: number, col: number, row: number): MapObject => ({ kind: "review", prop: "pr_notebook_desk", col, row, w: 2, topic });
-const pedestal = (topic: number, col: number, row: number): MapObject => ({ kind: "core", prop: "pr_core_pedestal", col, row, topic });
-const machine = (topic: number, prop: string, col: number, row: number, w = 2): MapObject => ({ kind: "minigame", prop, col, row, w, topic });
 
-/** แมพ 2: 3 ห้อง (หัวข้อ 1–2, 3–4 และ 5) แต่ละหัวข้อมีคลังความรู้ เครื่องฝึก โต๊ะทบทวน และแท่นแกน AI ของตัวเอง NPC ของแมพนี้ยืนประจำห้อง */
+/**
+ * แมพ 2: 3 สถานที่ ไม่มีบทเรียน (กลับไปเรียนที่แมพ 1) ผู้เล่นเข้ามาคุยกับ NPC และทำเควสหาของที่ได้โมดูลเสริมให้พี่บิต (GDD ข้อ 32)
+ * 1 เมืองริมทะเลที่พังทลาย (หน่วยลาดตระเวนและหมอสนาม) 2 ฐานปฏิบัติการการ์เดียน (ช่างตีเหล็ก ปราชญ์ ช่างวิศวกร) 3 หุบเขากังหันลม (ช่างเทคนิค)
+ */
 export const normalMaps: Record<number, GameMap> = {
-  // ห้อง 1 (หัวข้อ 1–2): สองปีกคั่นด้วยผนังกลาง ปีกซ้ายหัวข้อ 1 ปีกขวาหัวข้อ 2
+  // สถานที่ 1: เมืองริมทะเล เสาซากอาคารสองต้นกลางลาน
   1: {
     tileset: "ts_r2",
     shape: [
       "####################",
       "####################",
-      "#........##........#",
-      "#........##........#",
-      "#........##........#",
-      "#........##........#",
+      "#..................#",
+      "#..................#",
+      "#...##........##...#",
+      "#..................#",
       "#..................#",
       "#..................#",
       "#..................#",
       "#..................#",
       "####################",
     ],
-    spawn: { col: 1, row: 3 },
+    spawn: { col: 9, row: 3 },
     objects: [
-      backDoor(1),
-      archive(1, 3, 2),
-      machine(1, "pr_r1_learning_machine", 5, 2),
-      desk(1, 2, 5),
-      pedestal(1, 6, 5),
-      archive(2, 12, 2),
-      machine(2, "pr_r2_flashcard_desk", 14, 2),
-      desk(2, 12, 5),
-      pedestal(2, 16, 5),
-      decor("pr_r2_maze_arena", 9, 8),
-      wall(WINDOW, 7),
-      wall(SCREENS, 17),
-      decor(PLANT, 1, 9, 1),
+      backDoor(9),
+      wall(WINDOW, 4),
+      wall(WINDOW, 13),
+      decor("pr_decor_crates", 1, 9, 1),
       decor(LAMP, 18, 9, 1),
-      person("smith", 4, 8),
-      person("sage", 15, 8),
+      floor("pr_decor_rug", 9, 6),
+      person("ranger", 6, 7),
+      person("medic", 13, 7),
+      ...pickups("ranger", [[2, 3], [17, 3], [9, 9], [11, 4]]),
     ],
   },
-  // ห้อง 2 (หัวข้อ 3–4): ชั้นบนหัวข้อ 3 ชั้นล่างหัวข้อ 4 เชื่อมกันด้วยช่องกลาง
+  // สถานที่ 2: ฐานปฏิบัติการ ชั้นบนกับชั้นล่างเชื่อมกันด้วยช่องกลาง
   2: {
     tileset: "ts_r4",
     shape: [
@@ -628,23 +620,17 @@ export const normalMaps: Record<number, GameMap> = {
     spawn: { col: 1, row: 3 },
     objects: [
       backDoor(1),
-      archive(3, 3, 2),
-      machine(3, "pr_r3_quality_scanner", 5, 2),
-      desk(3, 9, 2),
-      pedestal(3, 13, 2),
-      decor("pr_r3_server_rack", 16, 2, 1),
-      archive(4, 2, 6),
-      machine(4, "pr_r4_calculator", 14, 6),
-      desk(4, 17, 6),
-      pedestal(4, 9.5, 8),
       wall(WINDOW, 7),
       wall("pr_decor_tool_rack", 14),
+      decor("pr_r3_server_rack", 12, 2, 1),
       decor("pr_decor_crates", 1, 9, 1),
-      person("ranger", 5, 8),
-      ...pickups("ranger", [[7, 4], [11, 6], [2, 9], [18, 3]]),
+      person("smith", 4, 3),
+      person("sage", 16, 3),
+      person("engineer", 5, 8),
+      ...pickups("engineer", [[8, 4], [15, 7], [11, 9]]),
     ],
   },
-  // ห้อง 3 (หัวข้อ 5): ลานเดียว เครื่องฝึกกลางห้อง หมอสนามตั้งโต๊ะอยู่ด้านขวา
+  // สถานที่ 3: หุบเขากังหันลม ลานกว้างมีบล็อกฐานกังหันกลางลาน
   3: {
     tileset: "ts_r5",
     shape: [
@@ -663,17 +649,12 @@ export const normalMaps: Record<number, GameMap> = {
     spawn: { col: 2, row: 3 },
     objects: [
       backDoor(2),
-      archive(5, 5, 2),
-      machine(5, "pr_r5_notice_board", 9.5, 4, 1),
-      desk(5, 12, 2),
-      pedestal(5, 16, 3),
-      decor("pr_r5_speaker", 2, 8),
-      decor("pr_r5_mailbox", 16, 8),
       wall(WINDOW, 8),
       wall(SCREENS, 16),
       floor("pr_decor_rug", 9, 8),
       decor(LAMP, 1, 5, 1),
-      person("medic", 14, 5),
+      person("technician", 14, 5),
+      ...pickups("technician", [[3, 3], [16, 3], [4, 8], [15, 9]]),
     ],
   },
 };

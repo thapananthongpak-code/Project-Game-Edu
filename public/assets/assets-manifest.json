@@ -2068,6 +2068,70 @@
       "status": "generated"
     },
     {
+      "id": "NP-13",
+      "kind": "npc",
+      "name": "ช่างโนอาห์ วิศวกรฐานปฏิบัติการ (แมพ 2 เควสเสริม)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_engineer": "characters/npc_engineer.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "friendly young male engineer with messy brown hair and round goggles pushed up on the forehead, orange work overalls with a tool belt, holding a glowing energy cell in one hand, warm smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "ช่างโนอาห์ วิศวกรฐานปฏิบัติการ (แมพ 2 เควสเสริม)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "47fac571-5b1d-45ce-b588-d299f9c48b2d",
+        "generatedAt": "2026-10-30T17:28:30.299Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "NP-14",
+      "kind": "npc",
+      "name": "ช่างคาร์ลอส ช่างเทคนิคกังหันลม (แมพ 2 เควสเสริม)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {
+        "npc_technician": "characters/npc_technician.png"
+      },
+      "pixellab": {
+        "tool": "create_character",
+        "arguments": {
+          "description": "calm middle-aged male wind turbine technician with a short gray beard and a white safety helmet, blue coveralls with a reflective yellow vest, a coil of cable over one shoulder, a wrench in hand, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "name": "ช่างคาร์ลอส ช่างเทคนิคกังหันลม (แมพ 2 เควสเสริม)",
+          "n_directions": 4,
+          "size": 48,
+          "mode": "standard",
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail",
+          "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+        },
+        "fetchTool": "get_character",
+        "id": "aa142052-e001-439f-939c-fcfb644e6976",
+        "generatedAt": "2026-10-30T17:29:12.870Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "TS-01",
       "kind": "tileset",
       "name": "ไทล์เซตห้อง 1 ห้องปฐมนิเทศ",
@@ -4748,6 +4812,66 @@
         "fetchTool": "get_image",
         "id": "83604c7c-3b93-4c42-ba39-a0616a28d8e2",
         "generatedAt": "2026-10-02T14:24:59.445Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-Q04",
+      "kind": "prop",
+      "name": "เซลล์พลังงานที่หล่นหาย (เควสของช่างโนอาห์)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_pickup_cell": "props/pr_pickup_cell.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small glowing cyan energy cell with metal caps lying on the floor with a small white sparkle, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ca634494-1e0b-4ead-9817-ef1d124923c8",
+        "generatedAt": "2026-10-30T17:26:58.679Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-Q05",
+      "kind": "prop",
+      "name": "แผ่นฉนวนที่หล่นหาย (เควสของช่างคาร์ลอส)",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "pr_pickup_plate": "props/pr_pickup_plate.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "small square gray insulation plate with yellow warning stripes on the edge lying on the floor with a small white sparkle, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 32,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "d9936d30-ea5c-4680-b498-8b15535db764",
+        "generatedAt": "2026-10-30T17:27:47.634Z"
       },
       "status": "generated"
     },
@@ -12532,6 +12656,96 @@
       "status": "generated"
     },
     {
+      "id": "IT-15",
+      "kind": "icon",
+      "name": "โมดูลแบตสำรอง (พี่บิตเติมพลังงานให้การ์เดียนตอนเริ่มด่าน)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_reserve": "items/it_module_reserve.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a small square module chip for a robot helper with a green battery symbol with two bars on its face and gold connector pins, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ea565dca-458b-42d9-8627-67c18ee415bb",
+        "generatedAt": "2026-10-30T17:25:47.985Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-16",
+      "kind": "icon",
+      "name": "โมดูลรีไซเคิลพลังงาน (คืนพลังงานเป็นช่วง ๆ)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_recycler": "items/it_module_recycler.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a small square module chip with two curved green arrows forming a circle around a tiny lightning bolt and gold connector pins, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "7574edce-319a-481b-952d-52f6e67350c6",
+        "generatedAt": "2026-10-30T17:26:11.066Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "IT-17",
+      "kind": "icon",
+      "name": "โมดูลเกราะพลังงาน (กันความเสียหายหนึ่งครั้ง)",
+      "requested": true,
+      "size": [
+        64,
+        64
+      ],
+      "files": {},
+      "web": {
+        "it_module_barrier": "items/it_module_barrier.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a small square module chip with a blue hexagon shield symbol on its face and gold connector pins, single item icon, centered, transparent background, cute sci-fi laboratory pixel art, chunky readable shapes, bold dark outline, flat colors with one shadow tone and one highlight tone, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 64,
+          "height": 64,
+          "no_background": true,
+          "outline": "single color black outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "6c1394e0-cfdd-4693-80e8-578f11a6e5ef",
+        "generatedAt": "2026-10-30T17:26:34.667Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "ST-01",
       "kind": "backdrop",
       "name": "บทนำ 1: ไคจูตัวแรก",
@@ -14033,6 +14247,126 @@
       "composedFrom": [
         "bg_scene_fortress",
         "npc_captain",
+        "gd_plate_fist"
+      ]
+    },
+    {
+      "id": "ST-NPC-ENGINEER-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_factory + npc_engineer)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_engineer_1": "story/st_npc_engineer_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_factory",
+        "npc_engineer"
+      ]
+    },
+    {
+      "id": "ST-NPC-ENGINEER-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_factory + npc_engineer + npc_smith + pr_pickup_cell)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_engineer_2": "story/st_npc_engineer_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_factory",
+        "npc_engineer",
+        "npc_smith",
+        "pr_pickup_cell"
+      ]
+    },
+    {
+      "id": "ST-NPC-ENGINEER-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_hangar + npc_engineer + ch_mentor_south)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_engineer_3": "story/st_npc_engineer_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_hangar",
+        "npc_engineer",
+        "ch_mentor_south"
+      ]
+    },
+    {
+      "id": "ST-NPC-TECHNICIAN-1",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_technician)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_technician_1": "story/st_npc_technician_1.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_technician"
+      ]
+    },
+    {
+      "id": "ST-NPC-TECHNICIAN-2",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_outpost + npc_technician + npc_ranger + pr_pickup_plate)",
+      "requested": false,
+      "size": [
+        320,
+        157
+      ],
+      "files": {},
+      "web": {
+        "st_npc_technician_2": "story/st_npc_technician_2.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_outpost",
+        "npc_technician",
+        "npc_ranger",
+        "pr_pickup_plate"
+      ]
+    },
+    {
+      "id": "ST-NPC-TECHNICIAN-3",
+      "kind": "composite",
+      "name": "ภาพประกอบเนื้อเรื่อง (bg_scene_hangar + npc_technician + gd_plate_fist)",
+      "requested": false,
+      "size": [
+        320,
+        161
+      ],
+      "files": {},
+      "web": {
+        "st_npc_technician_3": "story/st_npc_technician_3.png"
+      },
+      "status": "composed",
+      "composedFrom": [
+        "bg_scene_hangar",
+        "npc_technician",
         "gd_plate_fist"
       ]
     },

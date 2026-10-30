@@ -16,7 +16,7 @@ const GEAR_ART: Record<string, string> = {
 };
 const ITEM_ART: Record<Supply | `module-${BitModule}`, string> = {
   "repair-kit": "repair_kit", shield: "shield", overcharge: "overcharge", analyzer: "analyzer", reboot: "reboot", battery: "battery", emergency: "emergency",
-  "module-scanner": "module_scanner", "module-laser": "module_laser", "module-medic": "module_medic", "module-toolkit": "module_toolkit", "module-decoy": "module_decoy",
+  "module-scanner": "module_scanner", "module-laser": "module_laser", "module-medic": "module_medic", "module-toolkit": "module_toolkit", "module-decoy": "module_decoy", "module-reserve": "module_reserve", "module-recycler": "module_recycler", "module-barrier": "module_barrier",
 };
 
 export const art = {

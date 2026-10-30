@@ -4,6 +4,7 @@ import { isFieldRoom, questTitle, stationsOf, topicOf } from "../content";
 import { foeName } from "../content/story";
 import { fmt, ui } from "../content/ui-strings";
 import { DIFFICULTIES, mapIndex } from "../state/campaign";
+import { npcsOfZone } from "../state/npcs";
 import { allBattlesWon, coreCount, coreTotal, creditsOf, difficultyOf, levelStatusOf, nextStepOf, pendingBattle, planOf, roomProgress, useGameStore } from "../state/gameStore";
 import { art } from "./art";
 
@@ -15,6 +16,7 @@ function useObjective(): string {
   const progress = useGameStore((s) => s.progress);
   const battles = useGameStore((s) => s.battles);
   const posttest = useGameStore((s) => s.posttest);
+  const npcs = useGameStore((s) => s.npcs);
   const state = { profile, progress, battles, posttest };
   const plan = planOf(state);
   const battle = pendingBattle(state);
@@ -29,7 +31,7 @@ function useObjective(): string {
     }
     if (battle) return fmt(ui.objective.hallBattle, { kaiju });
     // ห้องถัดไปบนเส้นทาง คือห้องแรกที่ยังมีหัวข้อไม่ได้แกน AI
-    const next = plan.zones.findIndex((z) => z.topics.some((topic) => !roomProgress(state, topic).core)) + 1;
+    const next = plan.zones.findIndex((z) => !z.place && z.topics.some((topic) => !roomProgress(state, topic).core)) + 1;
     if (next > 0) return fmt(ui.objective.hall, { n: next });
     // ชนะครบทุกด่านของแมพนี้แล้ว: เดินทางไปแมพถัดไป (แมพสุดท้าย: จบทุกแมพแล้ว)
     const onward = DIFFICULTIES[mapIndex(profile?.difficulty) + 1];
@@ -37,6 +39,8 @@ function useObjective(): string {
     return onward ? fmt(ui.objective.hallTravel, { map: ui.difficulty[onward].name }) : ui.objective.hallAllDone;
   }
 
+  // สถานที่ของแมพ 2: ไม่มีบทเรียน มีแต่ NPC และเควสหาของ
+  if (plan.zones[zone - 1]?.place) return npcsOfZone(difficultyOf(state), zone).some((spec) => spec.role === "quest" && !npcs[spec.id]?.done) ? ui.objective.place : ui.objective.placeDone;
   const topics = plan.zones[zone - 1]?.topics ?? [];
   const single = topics.length === 1;
   const topic = topics.find((t) => !roomProgress(state, t).core);

@@ -249,7 +249,7 @@ export abstract class WorldScene extends Phaser.Scene {
       this.addInteractable(object, `npc-${id}`, () => fmt(ui.prompt.npc, { name: ui.npc[id].name, role: ui.npc.roles[NPCS[id].role] }), () => (NPCS[id].role === "shop" && store().npcs[id]?.met ? store().openShop(id) : store().openNpc(id)));
     }
     for (const object of this.objectsOf("pickup")) {
-      const id = object.npc as "mechanic" | "foreman" | "ranger";
+      const id = object.npc as "mechanic" | "foreman" | "ranger" | "engineer" | "technician";
       const index = object.index as number;
       const image = this.placed.get(object) as Phaser.GameObjects.Image;
       const visible = () => {

@@ -1,8 +1,8 @@
 import { topicOf } from "../../content";
 import { foeName } from "../../content/story";
 import { fmt, ui } from "../../content/ui-strings";
-import { DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex } from "../../state/campaign";
-import { allBattlesWon, difficultyOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore } from "../../state/gameStore";
+import { DIFFICULTIES, type Difficulty, gateOf, mapIndex } from "../../state/campaign";
+import { allBattlesWon, difficultyOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore, zoneCleared } from "../../state/gameStore";
 import { SCENE } from "../constants";
 import { type MapObject, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
@@ -16,7 +16,6 @@ export class HallScene extends WorldScene {
   private doors: MapObject[] = [];
   /** แมพและห้อง ณ ตอนสร้างฉาก (ฉากนี้เป็นฉากหลังของเมนูและหน้าลงทะเบียนด้วย แมพอาจเปลี่ยนก่อนฉากถูกสร้างใหม่) */
   private world: Difficulty = "easy";
-  private zones: DifficultySpec["zones"] = [];
 
   constructor() {
     super(SCENE.hall);
@@ -29,15 +28,14 @@ export class HallScene extends WorldScene {
   create(): void {
     const store = () => useGameStore.getState();
     const zones = planOf(store()).zones;
-    this.zones = zones;
     this.world = difficultyOf(store());
     this.buildRoom(this.world, "hall");
     this.doors = this.objectsOf("door");
 
     for (const door of this.doors) {
       const zone = door.index as number;
-      const topics = zones[zone - 1].topics;
-      const title = topics.length === 1 ? fmt(ui.prompt.enterRoom, { n: zone, title: topicOf(topics[0]).title }) : fmt(ui.prompt.enterZone, { n: zone, from: topics[0], to: topics[topics.length - 1] });
+      const { topics, place } = zones[zone - 1];
+      const title = place ? fmt(ui.prompt.enterPlace, { n: zone, place: ui.place[place].name }) : topics.length === 1 ? fmt(ui.prompt.enterRoom, { n: zone, title: topicOf(topics[0]).title }) : fmt(ui.prompt.enterZone, { n: zone, from: topics[0], to: topics[topics.length - 1] });
       this.addInteractable(
         door,
         `door-${zone}`,
@@ -47,7 +45,7 @@ export class HallScene extends WorldScene {
           if (isRoomUnlocked(state, zone)) return state.enterRoom(zone);
           // ได้แกน AI ของห้องก่อนหน้าครบแล้วแต่ยังไม่ชนะไคจูที่เฝ้าห้องนี้: บอกให้ไปโรงเก็บหุ่น
           // แมพที่ข้ามการทบทวนได้ (แมพ 2) ไม่ต้องใช้แกน AI ของห้องก่อนหน้า ขาดแค่การชนะไคจู
-          const missing = planOf(state).roomsNeedCores ? zones[zone - 2].topics.find((topic) => !roomProgress(state, topic).core) : undefined;
+          const missing = planOf(state).roomsNeedCores && !place ? zones[zone - 2].topics.find((topic) => !roomProgress(state, topic).core) : undefined;
           const gate = gateOf(difficultyOf(state), zone);
           state.showToast(missing === undefined && gate ? fmt(ui.toast.roomLockedBattle, { n: zone, kaiju: foeName(gate.forms[0].art) }) : fmt(ui.toast.roomLocked, { n: zone, prev: missing ?? topics[0] - 1 }));
         },
@@ -81,7 +79,7 @@ export class HallScene extends WorldScene {
     // ย้ายจุดใช้งานหรือเปลี่ยนธีมที่กระดานตกแต่ง: ฉากถูกสร้างใหม่
     if (this.syncRoom(this.world, "hall")) return;
     const state = useGameStore.getState();
-    const cleared = (zone: number) => this.zones[zone - 1].topics.every((topic) => roomProgress(state, topic).core);
+    const cleared = (zone: number) => zoneCleared(state, zone);
     for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");
 
     // ของตกแต่งที่ผู้เล่นวางเองในโถงของแมพนี้

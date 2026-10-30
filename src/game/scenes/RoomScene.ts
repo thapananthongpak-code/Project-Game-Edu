@@ -55,7 +55,7 @@ export class RoomScene extends WorldScene {
 
     // สถานีบทสนทนา (ระดับง่าย): ฟังได้ตามลำดับ สถานีที่ฟังแล้วฟังซ้ำได้
     const lesson = this.topics[0];
-    const content = stationsOf(lesson);
+    const content = this.topics.length > 0 ? stationsOf(lesson) : [];
     this.objectsOf("station")
       .sort((a, b) => (a.index as number) - (b.index as number))
       .forEach((object, index) => {
@@ -201,14 +201,14 @@ export class RoomScene extends WorldScene {
               : step === "review"
                 ? (this.ids.review.get(current) ?? null)
                 : (this.ids.core.get(current) ?? null);
-    this.pointAt(target);
+    this.pointAt(this.topics.length === 0 ? null : target);
 
     for (const [topic, icon] of this.coreIcons) {
       const p = roomProgress(state, topic);
       icon.setVisible(!p.core && (isFieldRoom(topic) ? fieldComplete(p) : nextStepOf(state, topic) === "core"));
     }
 
-    const seen = roomProgress(state, this.topics[0]).stationsSeen;
+    const seen = this.topics.length > 0 ? roomProgress(state, this.topics[0]).stationsSeen : 0;
     const cores = this.topics.map((topic) => (roomProgress(state, topic).core ? "1" : "0")).join("");
     const labelKey = `${seen}|${cores}|${this.npcKey()}`;
     if (labelKey === this.labelKey) return;

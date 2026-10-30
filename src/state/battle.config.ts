@@ -43,7 +43,7 @@ export const BATTLE = {
   /** สิทธิพิเศษของเครื่องแบบ (ชุดจากร้าน) */
   perks: { engineerHeal: 1, guardianHp: 1, researcherHints: 1, commanderAssist: 2, heroHp: 2, ninjaDodges: 1, paramedicHeal: 1, samuraiHp: 1 },
   /** โมดูลของพี่บิต (ติดตั้งได้ BIT_SLOTS ชิ้น): ยิงเสริมแรงขึ้น พลังที่หุ่นฟื้นเมื่อพี่บิตยิงเสริม จำนวนครั้งขอข้อมูลที่เพิ่ม การโจมตีที่ตัวล่อรับแทน และพลังที่ชุดซ่อมฟื้นเพิ่ม */
-  modules: { laserAssist: 1, medicHeal: 1, scannerHints: 1, decoyDodges: 1, toolkitHeal: 1 },
+  modules: { laserAssist: 1, medicHeal: 1, scannerHints: 1, decoyDodges: 1, toolkitHeal: 1, reserveEnergy: 3, recycleEvery: 4, barrierGuards: 1 },
   /** พลังของการ์เดียนเหลือไม่เกินจำนวนนี้: หน้าจอเตือนและเพลงเร่งขึ้น (ไม่มีผลต่อกติกา) */
   dangerHp: 2,
   /** พลังงานของการ์เดียน (ด่านที่จำกัดรอบ): แบตเตอรี่สำรองเพิ่มให้กี่ข้อ และพลังงานฉุกเฉินให้กี่ข้อเมื่อพลังงานหมด (ครั้งเดียวต่อการออกปฏิบัติการ) */

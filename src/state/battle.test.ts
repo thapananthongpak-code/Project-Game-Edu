@@ -57,12 +57,12 @@ describe("โครงของระดับความยาก (GDD 15)", (
     expect(shape("hard")).toEqual([0, 2, [3]]);
   });
 
-  it("แมพ 1 สอนครบ 6 หัวข้อ แมพ 2 ทบทวนหัวข้อ 1–5 ตามลำดับ แมพ 3 ลุยด่านอย่างเดียว บอสอยู่ท้ายสุด และรหัสด่านไม่ซ้ำกันข้ามแมพ", () => {
+  it("แมพ 1 สอนครบ 6 หัวข้อ แมพ 2 เป็นสถานที่ที่ไม่มีบทเรียน แมพ 3 ลุยด่านอย่างเดียว บอสอยู่ท้ายสุด และรหัสด่านไม่ซ้ำกันข้ามแมพ", () => {
     const ids = DIFFICULTIES.flatMap((difficulty) => CAMPAIGN[difficulty].battles.map((battle) => battle.id));
     expect(new Set(ids).size).toBe(ids.length);
     for (const difficulty of DIFFICULTIES) {
       const level = CAMPAIGN[difficulty];
-      expect(level.zones.flatMap((zone) => zone.topics)).toEqual({ easy: [1, 2, 3, 4, 5, 6], normal: [1, 2, 3, 4, 5], hard: [] }[difficulty]);
+      expect(level.zones.flatMap((zone) => zone.topics)).toEqual({ easy: [1, 2, 3, 4, 5, 6], normal: [], hard: [] }[difficulty]);
       // แมพ 1 ต้องมีแกน AI ก่อนออกรบ แมพ 2 และ 3 ออกรบได้เลย (ข้ามการเรียนได้)
       expect(level.roomsNeedCores, difficulty).toBe(difficulty === "easy");
       if (!level.roomsNeedCores) for (const battle of level.battles) expect(battle.requires, battle.id).toEqual([]);
@@ -83,10 +83,10 @@ describe("โครงของระดับความยาก (GDD 15)", (
     const levels = DIFFICULTIES.map((difficulty) => CAMPAIGN[difficulty]);
     expect(levels.map((l) => l.battleHints)).toEqual([2, 1, 0]);
     expect(levels.map((l) => l.tutorQuestions)).toEqual([8, 4, 2]);
-    expect(levels.map((l) => l.creditMultiplier)).toEqual([1, 1.5, 2]);
+    expect(levels.map((l) => l.creditMultiplier)).toEqual([1, 2, 2.5]);
     expect(levels.map((l) => l.minTier)).toEqual(["assist", "standard", "challenge"]);
-    expect(levels.map((l) => l.stations)).toEqual(["required", "optional", "none"]);
-    expect(levels.map((l) => l.review)).toEqual([true, true, false]);
+    expect(levels.map((l) => l.stations)).toEqual(["required", "none", "none"]);
+    expect(levels.map((l) => l.review)).toEqual([true, false, false]);
   });
 });
 

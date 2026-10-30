@@ -377,7 +377,8 @@ describe("migrateSave", () => {
     const save = migrateSave(v7) as SaveData;
     expect(save.profile?.difficulty).toBe("normal");
     expect(Object.keys(save.rooms)).toEqual(["1", "2", "3", "4", "5", "6"]);
-    expect(Object.keys(save.maps.normal)).toEqual(["1", "2", "3", "4", "5"]);
+    // แมพ 2 เป็นสถานที่ที่ไม่มีหัวข้อ (รอบ 19): ความคืบหน้าของหัวข้อไม่ถูกคัดลอกไปแมพ 2
+    expect(Object.keys(save.maps.normal)).toEqual([]);
     expect(save.maps.hard).toEqual({});
     expect(save.story).toEqual(["prologue", "zone-n1", "ending-normal"]);
     const hard = migrateSave({ ...v7, profile: { ...v7.profile, difficulty: "hard" }, battles: { end: won } }) as SaveData;

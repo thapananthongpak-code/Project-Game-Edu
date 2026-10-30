@@ -594,13 +594,16 @@ NPC_PANELS = {
     "ranger": [("bg_scene_outpost", [("npc", "ranger")]), ("bg_scene_gym", [("npc", "ranger"), ("npc", "coach")]), ("bg_scene_outpost", [("npc", "ranger"), ("item", "pr_pickup_beacon")])],
     "medic": [("bg_scene_clinic", [("npc", "medic"), ("prof",)]), ("bg_scene_clinic", [("npc", "medic"), ("npc", "captain")]), ("bg_scene_clinic", [("npc", "medic"), ("bit",)])],
     "captain": [("bg_scene_fortress", [("npc", "captain")]), ("bg_scene_fortress", [("npc", "captain"), ("npc", "medic")]), ("bg_scene_fortress", [("npc", "captain"), ("guardian",)])],
+    "engineer": [("bg_scene_factory", [("npc", "engineer")]), ("bg_scene_factory", [("npc", "engineer"), ("npc", "smith"), ("item", "pr_pickup_cell")]), ("bg_scene_hangar", [("npc", "engineer"), ("bit",)])],
+    "technician": [("bg_scene_outpost", [("npc", "technician")]), ("bg_scene_outpost", [("npc", "technician"), ("npc", "ranger"), ("item", "pr_pickup_plate")]), ("bg_scene_hangar", [("npc", "technician"), ("guardian",)])],
     "keeper": [("bg_scene_fortress", [("npc", "keeper")]), ("bg_scene_forge", [("npc", "keeper"), ("npc", "smith")]), ("bg_scene_fortress", [("npc", "keeper"), ("npc", "captain")])],
 }
 EXTRA_BACKDROPS = [("BG-07", 7), ("BG-08", 8), ("BG-09", 9), ("BG-10", 10)]
 # ไอคอนของใช้และโมดูลของพี่บิต (แสดงใน HTML แทนอีโมจิ): (รหัส, ไฟล์)
 ITEM_ICONS = [("IT-01", "it_repair_kit"), ("IT-02", "it_shield"), ("IT-03", "it_overcharge"), ("IT-04", "it_analyzer"), ("IT-05", "it_reboot"),
               ("IT-06", "it_module_scanner"), ("IT-07", "it_module_laser"), ("IT-08", "it_module_medic"), ("IT-09", "it_credit"),
-              ("IT-10", "it_module_toolkit"), ("IT-11", "it_module_decoy"), ("IT-12", "it_exp"), ("IT-13", "it_battery"), ("IT-14", "it_emergency")]
+              ("IT-10", "it_module_toolkit"), ("IT-11", "it_module_decoy"), ("IT-12", "it_exp"), ("IT-13", "it_battery"), ("IT-14", "it_emergency"),
+              ("IT-15", "it_module_reserve"), ("IT-16", "it_module_recycler"), ("IT-17", "it_module_barrier")]
 KAIJU_COLORS = {1: "#2FB8AC", 2: "#7B5CE0", 3: "#38B764", 4: "#F08C2E", 5: "#EF6A82", 6: "#2A4FA3"}
 # วัตถุประจำห้องจาก docs/ART_GUIDE.md ข้อ 5.3 ที่เกมใช้: (รหัส, ไฟล์, ขนาด)
 ROOM_PROPS = [
@@ -624,7 +627,8 @@ BIT_SKINS = [("CH-21", "ninja"), ("CH-22", "knight"), ("CH-23", "wizard"), ("CH-
              ("CH-27", "pirate"), ("CH-28", "chef"), ("CH-29", "dragon"), ("CH-46", "crown"), ("CH-47", "rainbow")]
 # NPC ประจำห้อง: (รหัส, ไฟล์)
 NPCS = [("NP-01", "npc_mechanic"), ("NP-02", "npc_coach"), ("NP-03", "npc_archivist"), ("NP-04", "npc_foreman"), ("NP-05", "npc_vendor"), ("NP-06", "npc_director"),
-        ("NP-07", "npc_smith"), ("NP-08", "npc_ranger"), ("NP-09", "npc_medic"), ("NP-10", "npc_sage"), ("NP-11", "npc_captain"), ("NP-12", "npc_keeper")]
+        ("NP-07", "npc_smith"), ("NP-08", "npc_ranger"), ("NP-09", "npc_medic"), ("NP-10", "npc_sage"), ("NP-11", "npc_captain"), ("NP-12", "npc_keeper"),
+        ("NP-13", "npc_engineer"), ("NP-14", "npc_technician")]
 # เอฟเฟกต์ของฉากต่อสู้: (รหัส, ไฟล์, ทิศที่ภาพหัน)
 BATTLE_FX = [("FX-01", "fx_impact", "east"), ("FX-02", "fx_slash", "east"), ("FX-03", "fx_bolt", "east"), ("FX-04", "fx_fireball", "west"), ("FX-05", "fx_shield", "east"), ("FX-06", "fx_spark", "east"),
              ("FX-07", "fx_fist", "east"), ("FX-08", "fx_sword", "east"), ("FX-09", "fx_beam", "east"), ("FX-10", "fx_bite", "west"), ("FX-11", "fx_scrap", "west"),
@@ -641,6 +645,7 @@ GEAR_SETTINGS = {"no_background": True, "outline": "single color black outline",
 # ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
 DECOR_PROPS = [
     ("PR-Q01", "pr_pickup_bolt", (32, 32)), ("PR-Q02", "pr_pickup_gear", (32, 32)), ("PR-Q03", "pr_pickup_beacon", (32, 32)),
+    ("PR-Q04", "pr_pickup_cell", (32, 32)), ("PR-Q05", "pr_pickup_plate", (32, 32)),
     ("PR-D13", "pr_decor_neon", (64, 32)), ("PR-D14", "pr_decor_clock", (64, 32)), ("PR-D15", "pr_decor_banner", (64, 32)),
     ("PR-D16", "pr_decor_aquarium", (64, 64)), ("PR-D17", "pr_decor_arcade", (64, 64)), ("PR-D18", "pr_decor_statue", (64, 64)), ("PR-D19", "pr_decor_sofa", (64, 64)), ("PR-D20", "pr_decor_fountain", (64, 64)),
     ("PR-D21", "pr_decor_robot_pet", (32, 64)), ("PR-D22", "pr_decor_telescope", (32, 64)), ("PR-D23", "pr_decor_flag", (32, 64)),

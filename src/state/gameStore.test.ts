@@ -4,12 +4,12 @@ import { BATTLE } from "./battle.config";
 import { CAMPAIGN, type Difficulty } from "./campaign";
 import { DASH } from "./dash";
 import { levelCredits } from "./level";
-import { allBattlesWon, levelDue, levelStatusOf, coreBoostOf, coreTotal, guardianPowerOf, planOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, isTopicOpen, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore } from "./gameStore";
+import { allBattlesWon, levelDue, levelStatusOf, coreBoostOf, coreTotal, guardianPowerOf, planOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore, zoneCleared } from "./gameStore";
 import { NPC_REWARDS, NPCS } from "./npcs";
 import { emptyRoom, emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
 import { ADVICE, adviseBag, adviseWeapon, idealBag, missingAdvice, wishList } from "./loadout";
-import { bagOf, decorIn, earnedCredits, gearOf, layoutIn, modulesOf, ownedDecor, ownedThemes, roomMap, stockLeft, themeIn } from "./shop";
+import { bagOf, battleCredits, decorIn, earnedCredits, gearOf, layoutIn, modulesOf, ownedDecor, ownedThemes, roomMap, stockLeft, themeIn } from "./shop";
 import { BIT_SLOTS, CATALOG, STALL_KINDS, STALLS } from "./shop.config";
 import { REWARDS } from "./shop.config";
 
@@ -34,12 +34,6 @@ function finishRoom(room: number, result = perfect) {
 }
 
 const setDifficulty = (difficulty: Difficulty) => useGameStore.setState({ profile: { name: "ทดสอบ", difficulty, classCode: "", avatar: "a" } });
-
-/** ได้แกน AI ของหัวข้อโดยตรง (ข้ามขั้นตอนในห้อง) */
-function grantCore(topic: number) {
-  useGameStore.getState().focusTopic(topic);
-  useGameStore.getState().collectCore();
-}
 
 beforeEach(() => {
   useGameStore.setState({ progress: {}, others: {}, battles: {}, npcs: {}, pretest: null, posttest: null, story: [], shop: { ...emptyShop(), dash: ["skip"] }, zone: null, room: null, screen: "hall", overlay: null, musicCue: null, npcId: null, shopVendor: null });
@@ -123,37 +117,21 @@ describe("ระดับความยาก (GDD 15)", () => {
     expect(nextStepOf(useGameStore.getState(), 1)).toBe("core");
   });
 
-  it("แมพ 2: 3 ห้อง ห้องละ 2 หัวข้อ ไม่บังคับฟังสถานี หัวข้อในห้องต้องทำตามลำดับ ข้ามการเรียนไปออกรบได้ แกนที่ชาร์จแล้วเพิ่มพลังสูงสุด", () => {
+  it("แมพ 2: 3 สถานที่ ไม่มีหัวข้อและแกน AI เข้าสถานที่ได้โดยไม่มีความคืบหน้าของหัวข้อ สถานที่ผ่านเมื่อชนะด่านของสถานที่นั้น", () => {
     setDifficulty("normal");
+    expect(planOf(useGameStore.getState()).zones.map((zone) => [zone.place, zone.topics.length])).toEqual([["ruins", 0], ["base", 0], ["valley", 0]]);
+    expect(coreTotal(useGameStore.getState())).toBe(0);
     useGameStore.getState().enterRoom(1);
-    expect(useGameStore.getState()).toMatchObject({ zone: 1, room: 1 });
-    expect(nextStepOf(useGameStore.getState(), 1)).toBe("minigame");
-    expect([isTopicOpen(useGameStore.getState(), 1), isTopicOpen(useGameStore.getState(), 2)]).toEqual([true, false]);
-    useGameStore.getState().completeMinigame(perfect);
-    expect(nextStepOf(useGameStore.getState(), 1)).toBe("review");
-    useGameStore.getState().saveReview({ correct: 4, total: 6 });
-    useGameStore.getState().collectCore();
-    expect(isTopicOpen(useGameStore.getState(), 2)).toBe(true);
-    // ไม่ต้องมีแกนก็ออกรบได้ (ข้ามการเรียนได้) แกนของหัวข้อที่ด่านใช้ชาร์จแล้วเพิ่มพลังสูงสุดให้ชิ้นละ 1
+    expect(useGameStore.getState()).toMatchObject({ screen: "room", zone: 1, room: null });
+    expect(Object.keys(useGameStore.getState().progress)).toEqual([]);
+    // ไม่ต้องมีแกนก็ออกรบได้ และไม่มีแกนชาร์จเพิ่มพลัง (พลังของการ์เดียนมาจากอุปกรณ์และของใช้)
     expect(pendingBattle(useGameStore.getState())?.id).toBe("n1");
-    expect(coreBoostOf(useGameStore.getState(), pendingBattle(useGameStore.getState())!)).toBe(1);
-    // ปิดหน้าต่างแล้ว หัวข้อที่กำลังทำเลื่อนไปหัวข้อถัดไปของห้อง
-    useGameStore.getState().closeOverlay();
-    expect(useGameStore.getState().room).toBe(2);
-    grantCore(2);
-    expect(coreBoostOf(useGameStore.getState(), pendingBattle(useGameStore.getState())!)).toBe(2);
+    expect(coreBoostOf(useGameStore.getState(), pendingBattle(useGameStore.getState())!)).toBe(0);
+    expect([1, 2, 3].map((zone) => zoneCleared(useGameStore.getState(), zone))).toEqual([false, false, false]);
     expect(isRoomUnlocked(useGameStore.getState(), 2)).toBe(false);
     useGameStore.getState().recordBattle("n1", win);
-    expect([2, 3].map((zone) => isRoomUnlocked(useGameStore.getState(), zone))).toEqual([true, false]);
-  });
-
-  it("กลาง: อ่านคลังความรู้จบนับว่าฟังครบทุกสถานีของหัวข้อ", () => {
-    setDifficulty("normal");
-    useGameStore.getState().enterRoom(1);
-    useGameStore.getState().openStation(-1);
-    useGameStore.getState().closeDialogue(true);
-    expect(useGameStore.getState().progress[1].stationsSeen).toBeGreaterThan(0);
-    expect(nextStepOf(useGameStore.getState(), 1)).toBe("minigame");
+    expect([1, 2, 3].map((zone) => isRoomUnlocked(useGameStore.getState(), zone))).toEqual([true, true, false]);
+    expect([1, 2, 3].map((zone) => zoneCleared(useGameStore.getState(), zone))).toEqual([true, false, false]);
   });
 
   it("แมพ 2 ข้ามการเรียนได้: ห้องถัดไปเปิดเมื่อชนะไคจูที่เฝ้าห้อง ไม่ต้องมีแกน AI", () => {
@@ -614,7 +592,7 @@ describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
     expect(store().travel("normal")).toBe(true);
     expect(store()).toMatchObject({ screen: "hall", zone: null, room: null, overlay: null, progress: {} });
     expect(store().profile?.difficulty).toBe("normal");
-    expect(coreTotal(store())).toBe(5);
+    expect(coreTotal(store())).toBe(0);
     // บันทึกการเรียนของแมพ 1 ยังครบ (ใช้กับใบประกาศ) และห้องของแมพ 2 เริ่มจากห้องแรก
     expect(Object.values(learningRooms(store())).filter((room) => room.core)).toHaveLength(6);
     expect([1, 2, 3].map((zone) => isRoomUnlocked(store(), zone))).toEqual([true, false, false]);
@@ -629,19 +607,17 @@ describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
     clearMap1();
     store().travel("normal");
     store().enterRoom(1);
-    store().completeMinigame(perfect);
-    store().saveReview({ correct: 6, total: 6 });
-    store().collectCore();
-    expect(roomsOfMap(store(), "normal")[1].core).toBe(true);
+    store().recordBattle("n1", win);
+    expect(store().battles.n1.won).toBe(true);
     expect(roomsOfMap(store(), "easy")[1].stars).toBe(3);
     store().travel("easy");
     expect(store().profile?.difficulty).toBe("easy");
     expect(Object.keys(store().progress)).toHaveLength(6);
-    expect(roomsOfMap(store(), "normal")[1].core).toBe(true);
+    expect(store().battles.n1.won).toBe(true);
     expect(allBattlesWon(store())).toBe(true);
     store().travel("normal");
-    expect(store().progress[1].core).toBe(true);
-    expect(store().progress[2]).toBeUndefined();
+    expect(store().progress).toEqual({});
+    expect(store().battles.n1.won).toBe(true);
   });
 
   it("แมพ 3 เปิดเมื่อชนะครบทุกด่านของแมพ 2 และบทส่งท้ายของแต่ละแมพแสดงแยกกัน", () => {
@@ -665,10 +641,8 @@ describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
     const first = creditsOf(store());
     store().travel("normal");
     expect(creditsOf(store())).toBe(first);
-    store().enterRoom(1);
-    store().completeMinigame(perfect);
-    store().collectCore();
-    expect(creditsOf(store())).toBe(first + Math.round((REWARDS.star * 3 + REWARDS.core) * CAMPAIGN.normal.creditMultiplier));
+    store().recordBattle("n1", win);
+    expect(creditsOf(store())).toBe(first + Math.round(battleCredits(store().battles.n1, false) * CAMPAIGN.normal.creditMultiplier));
     // เครดิตของแมพ 2 ไม่หายเมื่อกลับไปแมพ 1
     const both = creditsOf(store());
     store().travel("easy");

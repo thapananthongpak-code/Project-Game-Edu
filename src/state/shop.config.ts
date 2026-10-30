@@ -39,8 +39,9 @@ export type BitSkin = (typeof BIT_SKINS)[number];
  * โมดูลของพี่บิต ซื้อแล้วติดตั้งที่แท่นชาร์จพี่บิตได้ BIT_SLOTS ชิ้น โมดูลที่ติดตั้งมีผลในด่านต่อสู้ (ตัวเลขใน battle.config.ts)
  * scanner = ขอข้อมูลจากพี่บิตได้เพิ่ม, toolkit = ชุดซ่อมฉุกเฉินฟื้นพลังเพิ่ม, laser = พี่บิตยิงเสริมแรงขึ้น,
  * decoy = ตัวล่อรับการโจมตีครั้งแรกแทน, medic = ทุกครั้งที่ยิงเสริม การ์เดียนฟื้นพลัง
+ * สามชิ้นหลังเป็นรางวัลเควสของ NPC ในแมพ 2 ไม่วางขาย (GDD ข้อ 31): reserve = เริ่มด่านที่จำกัดพลังงานด้วยพลังงานเพิ่ม, recycler = ตอบถูกติดกันครบจำนวนแล้วได้พลังงานคืน, barrier = กันการโจมตีครั้งแรกของแต่ละร่างเพิ่ม
  */
-export const BIT_MODULES = ["scanner", "toolkit", "laser", "decoy", "medic"] as const;
+export const BIT_MODULES = ["scanner", "toolkit", "laser", "decoy", "medic", "reserve", "recycler", "barrier"] as const;
 export type BitModule = (typeof BIT_MODULES)[number];
 /** จำนวนโมดูลที่ติดตั้งให้พี่บิตได้พร้อมกัน (ติดตั้งที่แท่นชาร์จพี่บิตในโรงเก็บหุ่น ShopState.modules) */
 export const BIT_SLOTS = 2;
@@ -266,6 +267,10 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "paint-aurora", kind: "paint", value: "aurora", price: 0, reward: true },
   { id: "bit-crown", kind: "bit", value: "crown", price: 0, reward: true },
   { id: "bit-rainbow", kind: "bit", value: "rainbow", price: 0, reward: true },
+  // รางวัลเควสของ NPC ในแมพ 2 (src/state/npcs.ts reward): ไม่วางขาย
+  { id: "module-reserve", kind: "module", value: "reserve", price: 0, reward: true },
+  { id: "module-recycler", kind: "module", value: "recycler", price: 0, reward: true },
+  { id: "module-barrier", kind: "module", value: "barrier", price: 0, reward: true },
   { id: "decor-alienplant", kind: "decor", value: "alienplant", price: 0, reward: true },
   { id: "decor-fernpot", kind: "decor", value: "fernpot", price: 0, reward: true },
   { id: "decor-crystalpot", kind: "decor", value: "crystalpot", price: 0, reward: true },
@@ -296,7 +301,7 @@ export const LAB = {
   seeds: {
     glowfern: { growMs: 10 * 60_000, yield: 14 },
     crystalbloom: { growMs: 15 * 60_000, yield: 30 },
-    sunvine: { growMs: 20 * 60_000, yield: 44 },
+    sunvine: { growMs: 20 * 60_000, yield: 42 },
     moonpod: { growMs: 30 * 60_000, yield: 74 },
   } as Record<Seed, { growMs: number; yield: number }>,
   /** ของตกแต่งที่ได้เมื่อเก็บผลผลิตครบทุกพันธุ์อย่างน้อยพันธุ์ละหนึ่งครั้ง */

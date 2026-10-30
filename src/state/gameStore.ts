@@ -5,7 +5,7 @@ import { storyBeats, zoneBeat } from "../content/story";
 import type { TrackName } from "../audio/tracks";
 import { type MinigameState, roomStartTier } from "./adaptive";
 import type { Tier } from "./adaptive.config";
-import { type BattleSpec, CAMPAIGN, campaignOf, DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex, topicsOf } from "./campaign";
+import { battleOfPlace, type BattleSpec, CAMPAIGN, campaignOf, DIFFICULTIES, type Difficulty, type DifficultySpec, gateOf, mapIndex, topicsOf } from "./campaign";
 import { emptyField, type FieldProgress, fieldStatus } from "./field";
 import {
   type AccountInfo,
@@ -315,16 +315,18 @@ export const useGameStore = create<GameState>()((set, get) => {
     },
     enterRoom: (zone) => {
       const state = get();
-      const topics = planOf(state).zones[zone - 1]?.topics ?? [];
-      // หัวข้อที่กำลังทำ = หัวข้อแรกของห้องที่ยังไม่ได้แกน AI (ครบแล้วใช้หัวข้อสุดท้าย)
+      const spec = planOf(state).zones[zone - 1];
+      if (!spec) return;
+      const topics = spec.topics;
+      // หัวข้อที่กำลังทำ = หัวข้อแรกของห้องที่ยังไม่ได้แกน AI (ครบแล้วใช้หัวข้อสุดท้าย) สถานที่ของแมพ 2 ไม่มีหัวข้อ (room = null)
       const room = topics.find((topic) => !roomProgress(state, topic).core) ?? topics[topics.length - 1] ?? null;
-      if (room === null) return;
+      if (room === null && !spec.place) return;
       // เข้าห้องครั้งแรก: เล่นด่านทางเชื่อมก่อน (ข้ามได้เสมอ) จบแล้วจึงเข้าห้อง (finishDash)
       if (dashDue({ map: difficultyOf(state), zone, topics, progress: state.progress, done: state.shop.dash })) {
         set({ ...closed, overlay: "dash", dashZone: zone, prompt: null });
         return;
       }
-      set({ ...closed, screen: "room", zone, room, progress: { ...state.progress, [room]: state.progress[room] ?? emptyRoom() } });
+      set({ ...closed, screen: "room", zone, room, progress: room === null ? state.progress : { ...state.progress, [room]: state.progress[room] ?? emptyRoom() } });
     },
     finishDash: (passed) => {
       const state = get();
@@ -414,7 +416,15 @@ export const useGameStore = create<GameState>()((set, get) => {
       updateNpc(id, (record) => (record.accepted && !record.done && !record.found.includes(index) && index >= 0 && index < NPCS[id].pickups ? { found: [...record.found, index] } : {}));
       return get().npcs[id]?.found.length ?? 0;
     },
-    completeQuest: (id) => updateNpc(id, (record) => (record.found.length >= NPCS[id].pickups ? { done: true } : {})),
+    completeQuest: (id) => {
+      const record = get().npcs[id] ?? emptyNpc();
+      if (record.done || record.found.length < NPCS[id].pickups) return;
+      updateNpc(id, () => ({ done: true }));
+      // ของรางวัลของเควส (โมดูลของพี่บิตที่ไม่วางขาย) เข้ากล่องของผู้เล่น ติดตั้งที่แท่นชาร์จพี่บิต
+      const reward = NPCS[id].reward;
+      const { shop } = get();
+      if (reward && !shop.owned.includes(reward)) set({ shop: { ...shop, owned: [...shop.owned, reward] } });
+    },
     recordQuiz: (id, correct) => updateNpc(id, (record) => ({ best: Math.max(record.best, Math.min(NPCS[id].questions, Math.max(0, correct))), tries: record.tries + 1 })),
     meetNpc: (id) => updateNpc(id, (record) => (record.met ? {} : { met: true })),
     claimGift: (id) => {
@@ -605,6 +615,14 @@ export function isRoomUnlocked(state: Run, zone: number): boolean {
   if (!previous || (level.roomsNeedCores && !previous.topics.every((topic) => roomProgress(state, topic).core))) return false;
   const gate = gateOf(difficultyOf(state), zone);
   return !gate || (state.battles[gate.id]?.won ?? false);
+}
+
+/** ห้องลำดับที่ zone ผ่านแล้วหรือยัง: ห้องเรียน = ได้แกน AI ครบทุกหัวข้อ สถานที่ของแมพ 2 = ชนะด่านของสถานที่นั้น */
+export function zoneCleared(state: Run, zone: number): boolean {
+  const spec = planOf(state).zones[zone - 1];
+  if (!spec) return false;
+  if (spec.place) return Boolean(state.battles[battleOfPlace(difficultyOf(state), zone)?.id ?? ""]?.won);
+  return spec.topics.every((topic) => roomProgress(state, topic).core);
 }
 
 /** ด่านต่อสู้ที่ออกปฏิบัติการได้ตอนนี้: ด่านแรกตามลำดับที่ยังไม่ชนะ และมีแกน AI ที่ด่านต้องใช้ครบแล้ว ไม่มีคืน null */

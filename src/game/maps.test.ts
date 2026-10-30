@@ -177,12 +177,12 @@ describe("แผนที่ของทุกฉาก", () => {
     }
   });
 
-  it("แมพ 2: แต่ละหัวข้อของห้องมีคลังความรู้ เครื่องฝึก โต๊ะทบทวน และแท่นแกน AI ของตัวเอง ไม่มีภารกิจภาคสนาม (อยู่ที่แมพ 1)", () => {
-    CAMPAIGN.normal.zones.forEach((zone, i) => {
+  it("แมพ 2: เป็นสถานที่ 3 แห่ง ไม่มีบทเรียน (ไม่มีสถานี คลังความรู้ เครื่องฝึก โต๊ะทบทวน แท่นแกน AI หรือภารกิจภาคสนาม) มีแค่ประตูกลับโถง NPC และของในเควส", () => {
+    expect(CAMPAIGN.normal.zones.map((zone) => [zone.place, zone.topics])).toEqual([["ruins", []], ["base", []], ["valley", []]]);
+    CAMPAIGN.normal.zones.forEach((_, i) => {
       const map = normalMaps[i + 1];
-      const of = (kind: MapObject["kind"]) => map.objects.filter((o) => o.kind === kind).map((o) => o.topic).sort();
-      for (const kind of ["archive", "minigame", "review", "core"] as const) expect(of(kind), `ห้อง ${i + 1} ${kind}`).toEqual([...zone.topics]);
-      expect([count(map, "station"), count(map, "field"), count(map, "door")]).toEqual([0, 0, 1]);
+      for (const kind of ["station", "archive", "minigame", "review", "core", "field", "extras"] as const) expect(count(map, kind), `สถานที่ ${i + 1} ${kind}`).toBe(0);
+      expect(count(map, "door"), `สถานที่ ${i + 1}`).toBe(1);
     });
   });
 
@@ -194,12 +194,17 @@ describe("แผนที่ของทุกฉาก", () => {
 
   it("NPC ของแต่ละแมพ: อยู่ครบทุกคน คนละหนึ่งที่ ในห้องของหัวข้อตัวเอง และของในเควสเสริมมีครบตามจำนวน", () => {
     for (const difficulty of DIFFICULTIES) {
-      const placed = CAMPAIGN[difficulty].zones.flatMap((zone, i) => zoneMap(difficulty, i + 1).objects.filter((o) => o.kind === "npc").map((o) => ({ npc: o.npc, zone })));
+      const placed = CAMPAIGN[difficulty].zones.flatMap((zone, i) => zoneMap(difficulty, i + 1).objects.filter((o) => o.kind === "npc").map((o) => ({ npc: o.npc, zone, index: i })));
       // แมพที่ไม่มีห้องเรียน (แมพ 3): NPC อยู่ในโรงเก็บหุ่นของแมพนั้น
       const inHangar = hangarMapOf(difficulty).objects.filter((o) => o.kind === "npc").map((o) => o.npc);
       expect([...placed.map((p) => p.npc), ...inHangar].sort(), difficulty).toEqual(npcsOfMap(difficulty).map((spec) => spec.id).sort());
       expect(inHangar.length > 0, difficulty).toBe(CAMPAIGN[difficulty].zones.length === 0);
-      for (const { npc, zone } of placed) expect(zone.topics, `${difficulty} ${npc}`).toContain(NPCS[npc as keyof typeof NPCS].topic);
+      for (const { npc, zone, index } of placed) {
+        const spec = NPCS[npc as keyof typeof NPCS];
+        // แมพ 2 วางตามสถานที่ของ NPC (spec.zone) แมพอื่นวางตามหัวข้อ
+        if (zone.place) expect(index + 1, `${difficulty} ${npc}`).toBe(spec.zone);
+        else expect(zone.topics, `${difficulty} ${npc}`).toContain(spec.topic);
+      }
       CAMPAIGN[difficulty].zones.forEach((_, i) => {
         const map = zoneMap(difficulty, i + 1);
         const here = map.objects.filter((o) => o.kind === "npc").map((o) => o.npc);

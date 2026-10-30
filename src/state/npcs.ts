@@ -5,7 +5,7 @@
 import type { Difficulty } from "./campaign";
 import type { Supply } from "./shop.config";
 
-export const NPC_IDS = ["mechanic", "coach", "archivist", "foreman", "vendor", "director", "smith", "sage", "ranger", "medic", "captain", "keeper"] as const;
+export const NPC_IDS = ["mechanic", "coach", "archivist", "foreman", "vendor", "director", "smith", "sage", "ranger", "medic", "engineer", "technician", "captain", "keeper"] as const;
 export type NpcId = (typeof NPC_IDS)[number];
 export type NpcRole = "quest" | "quiz" | "shop" | "gift";
 
@@ -23,9 +23,13 @@ export interface NpcSpec {
   quizTopics: readonly number[];
   /** gift: ของใช้ที่ให้ครั้งเดียว */
   gift: readonly Supply[];
+  /** สถานที่ (ลำดับห้องของแมพ นับจาก 1) ที่ NPC คนนี้ประจำอยู่ในแมพที่ห้องไม่ผูกกับหัวข้อ (แมพ 2) แมพอื่นเป็น 0 ใช้หัวข้อ topic แทน */
+  zone: number;
+  /** quest: ของที่ได้เมื่อส่งของครบ (รหัสสินค้ารางวัลใน CATALOG ที่ไม่วางขาย) */
+  reward: string | null;
 }
 
-type Extra = Partial<Pick<NpcSpec, "pickups" | "questions" | "quizTopics" | "gift">>;
+type Extra = Partial<Pick<NpcSpec, "pickups" | "questions" | "quizTopics" | "gift" | "zone" | "reward">>;
 const npc = (id: NpcId, map: Difficulty, topic: number, role: NpcRole, extra: Extra = {}): NpcSpec => ({
   id,
   map,
@@ -34,6 +38,8 @@ const npc = (id: NpcId, map: Difficulty, topic: number, role: NpcRole, extra: Ex
   pickups: 0,
   questions: 0,
   gift: [],
+  zone: 0,
+  reward: null,
   ...extra,
   quizTopics: role === "quiz" ? (extra.quizTopics ?? [topic]) : [],
 });
@@ -46,17 +52,24 @@ export const NPCS: Record<NpcId, NpcSpec> = {
   foreman: npc("foreman", "easy", 4, "quest", { pickups: 4 }),
   vendor: npc("vendor", "easy", 5, "shop"),
   director: npc("director", "easy", 6, "quiz", { questions: 4 }),
-  // แมพ 2: ช่างตีอาวุธ (อาวุธพิเศษ) นักวิเคราะห์ (ถามตอบสองหัวข้อ) หน่วยลาดตระเวน (เควส) และหมอสนาม (ช่วยเหลือ)
-  smith: npc("smith", "normal", 1, "shop"),
-  sage: npc("sage", "normal", 2, "quiz", { questions: 5, quizTopics: [1, 2] }),
-  ranger: npc("ranger", "normal", 4, "quest", { pickups: 4 }),
-  medic: npc("medic", "normal", 5, "gift", { gift: ["repair-kit", "shield"] }),
+  // แมพ 2: สามสถานที่ (zone) เมืองริมทะเลที่ถูกทำลาย: หน่วยลาดตระเวน (เควส ได้โมดูลแบตสำรอง) และหมอสนาม (ช่วยเหลือ)
+  //        ฐานทัพหน่วยพิทักษ์: ช่างตีอาวุธ (อาวุธพิเศษ) นักวิเคราะห์ (ถามตอบสองหัวข้อ) และช่างกลฐานทัพ (เควส ได้โมดูลรีไซเคิลพลังงาน)
+  //        โรงไฟฟ้ากังหันลม: ช่างไฟฟ้า (เควส ได้โมดูลเกราะพลังงาน)
+  smith: npc("smith", "normal", 1, "shop", { zone: 2 }),
+  sage: npc("sage", "normal", 2, "quiz", { questions: 5, quizTopics: [1, 2], zone: 2 }),
+  ranger: npc("ranger", "normal", 4, "quest", { pickups: 4, zone: 1, reward: "module-reserve" }),
+  medic: npc("medic", "normal", 5, "gift", { gift: ["repair-kit", "shield"], zone: 1 }),
+  engineer: npc("engineer", "normal", 3, "quest", { pickups: 3, zone: 2, reward: "module-recycler" }),
+  technician: npc("technician", "normal", 5, "quest", { pickups: 4, zone: 3, reward: "module-barrier" }),
   // แมพ 3: กัปตันป้อม (ถามตอบรวมทุกหัวข้อ) และนายคลังแสง (เกราะพิเศษ)
   captain: npc("captain", "hard", 5, "quiz", { questions: 6, quizTopics: [1, 2, 3, 4, 5] }),
   keeper: npc("keeper", "hard", 1, "shop"),
 };
 
 /** NPC ของแมพหนึ่ง ตามลำดับในรายการ */
+/** NPC ที่อยู่ในสถานที่ลำดับที่ zone ของแมพ 2 (แมพอื่นไม่มีสถานที่) */
+export const npcsOfZone = (map: Difficulty, zone: number): NpcSpec[] => npcsOfMap(map).filter((spec) => spec.zone === zone);
+
 export const npcsOfMap = (map: Difficulty): NpcSpec[] => NPC_IDS.map((id) => NPCS[id]).filter((spec) => spec.map === map);
 
 /** เครดิตวิจัยจากกิจกรรมเสริม (ก่อนคูณตัวคูณของแมพ) */

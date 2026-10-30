@@ -4,11 +4,13 @@ import { buildBattleItems, type ChoiceItem, shuffled } from "../content/choices"
 import { fmt, ui } from "../content/ui-strings";
 import { creditsOf, quizUnlocked, useGameStore } from "../state/gameStore";
 import { emptyNpc, type NpcId, NPCS, questReady } from "../state/npcs";
+import type { BitModule } from "../state/shop.config";
 import { art } from "./art";
+import { ItemIcon } from "./BagPicker";
 import { ChoiceCard } from "./ChoiceCard";
 import { useDialog } from "./useDialog";
 
-type QuestNpc = "mechanic" | "foreman" | "ranger";
+type QuestNpc = "mechanic" | "foreman" | "ranger" | "engineer" | "technician";
 type QuizNpc = "coach" | "director" | "sage" | "captain";
 type ShopNpc = "archivist" | "vendor" | "smith" | "keeper";
 
@@ -41,6 +43,12 @@ function Quest({ id, onClose }: { id: QuestNpc; onClose: () => void }) {
       {reward !== null && (
         <p className="font-bold text-teal-dark" data-testid="npc-reward" data-credits={reward}>
           {fmt(ui.npc.reward, { n: reward })}
+        </p>
+      )}
+      {reward !== null && spec.reward && (
+        <p className="flex items-center gap-2 rounded-md border-2 border-ink bg-hint px-2 py-1 font-bold" data-testid="npc-reward-item" data-item={spec.reward}>
+          <ItemIcon value={spec.reward as `module-${BitModule}`} className="h-8 w-8" />
+          {fmt(ui.npc.rewardItem, { item: ui.shop.items[spec.reward as keyof typeof ui.shop.items].name })}
         </p>
       )}
       <div className="flex justify-end gap-2">

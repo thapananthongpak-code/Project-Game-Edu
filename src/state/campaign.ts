@@ -56,9 +56,19 @@ export interface BattleSpec {
   energy?: number;
 }
 
+/** สถานที่ของแมพ 2 (ไม่มีบทเรียน มีแต่ NPC และเควสเสริม GDD ข้อ 15 และ 32) */
+export type PlaceId = "ruins" | "base" | "valley";
+
+export interface ZoneSpec {
+  /** หัวข้อที่ห้องนี้สอน (สถานที่ของแมพ 2 ไม่มี) */
+  topics: readonly number[];
+  /** สถานที่ (แมพ 2): ห้องที่ไม่มีบทเรียน เข้ามาเพื่อคุยกับ NPC และทำเควสหาของ */
+  place?: PlaceId;
+}
+
 export interface DifficultySpec {
-  /** ห้องของระดับนี้ แต่ละห้องสอนหัวข้อตามลำดับที่ระบุ */
-  zones: readonly { topics: readonly number[] }[];
+  /** ห้องของระดับนี้ แต่ละห้องสอนหัวข้อตามลำดับที่ระบุ หรือเป็นสถานที่ (place) */
+  zones: readonly ZoneSpec[];
   /** ด่านต่อสู้ตามลำดับที่ต้องชนะ */
   battles: readonly BattleSpec[];
   /** บทสอนที่สถานี: required = ต้องฟังครบก่อนทำเควส, optional = เปิดอ่านจากคลังความรู้ได้แต่ไม่บังคับ, none = ไม่มี */
@@ -112,9 +122,13 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
     pools: "base",
     formResetsOnRetry: false,
   },
-  // แมพ 2: 3 ห้อง ทบทวนหัวข้อ 1–5 (บทสอนอ่านได้จากคลังความรู้แต่ไม่บังคับ) ไคจูชุดใหม่ 3 ตัว และโอเมก้าที่กลับมา 2 ร่าง
+  // แมพ 2: 3 สถานที่ (ไม่มีบทเรียน กลับไปเรียนที่แมพ 1) ไคจูชุดใหม่ 3 ตัว และโอเมก้าที่กลับมา 2 ร่าง พลังของการ์เดียนจำกัดด้วยพลังงาน
   normal: {
-    zones: [{ topics: [1, 2] }, { topics: [3, 4] }, { topics: [5] }],
+    zones: [
+      { topics: [], place: "ruins" },
+      { topics: [], place: "base" },
+      { topics: [], place: "valley" },
+    ],
     battles: [
       { id: "n1", forms: [{ art: "kaiju_7", hp: 14, trait: "charge", weak: "blade" }], backdrop: 7, sources: [1, 2], requires: [], unlocks: 2, boss: false, power: 160, energy: 13 },
       { id: "n2", forms: [{ art: "kaiju_8", hp: 14, trait: "armor", weak: "strike" }], backdrop: 8, sources: [3, 4], requires: [], unlocks: 3, boss: false, power: 170, energy: 14 },
@@ -132,12 +146,12 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
         power: 190, energy: 24,
       },
     ],
-    stations: "optional",
-    review: true,
+    stations: "none",
+    review: false,
     roomsNeedCores: false,
-    coreBoost: 2,
+    coreBoost: 0,
     minTier: "standard",
-    creditMultiplier: 1.5,
+    creditMultiplier: 2,
     battleHints: 1,
     tutorQuestions: 4,
     robotHp: 6,
@@ -169,7 +183,7 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
     roomsNeedCores: false,
     coreBoost: 0,
     minTier: "challenge",
-    creditMultiplier: 2,
+    creditMultiplier: 2.5,
     battleHints: 0,
     tutorQuestions: 2,
     robotHp: 5,
@@ -188,7 +202,13 @@ export const zoneOfTopic = (difficulty: Difficulty | undefined, topic: number): 
 /** ด่านที่ต้องชนะก่อนเข้าห้องนี้ (ไม่มี = เข้าได้เลย) */
 export const gateOf = (difficulty: Difficulty | undefined, zone: number): BattleSpec | undefined => campaignOf(difficulty).battles.find((battle) => battle.unlocks === zone);
 
-/** หัวข้อทั้งหมดที่แมพนี้มีห้องให้ทำ (แมพ 2 และ 3 ไม่มีหัวข้อ 6: ภารกิจภาคสนามและแบบทดสอบหลังเรียนอยู่ที่แมพ 1 เท่านั้น) */
+/** สถานที่ของห้องลำดับที่ zone (ไม่ใช่ห้องเรียน = undefined) */
+export const placeOf = (difficulty: Difficulty | undefined, zone: number): PlaceId | undefined => campaignOf(difficulty).zones[zone - 1]?.place;
+
+/** ด่านของสถานที่ลำดับที่ zone: ชนะแล้วถือว่าผ่านสถานที่นั้น (ด่านที่ไม่ใช่บอสตามลำดับ) */
+export const battleOfPlace = (difficulty: Difficulty | undefined, zone: number): BattleSpec | undefined => campaignOf(difficulty).battles.filter((battle) => !battle.boss)[zone - 1];
+
+/** หัวข้อทั้งหมดที่แมพนี้มีห้องให้ทำ (เฉพาะแมพ 1 ที่มีห้องเรียน แมพ 2 เป็นสถานที่ และแมพ 3 ไม่มีห้อง) */
 export const topicsOf = (difficulty: Difficulty | undefined): number[] => campaignOf(difficulty).zones.flatMap((zone) => zone.topics);
 
 /** แมพที่ด่านต่อสู้นี้อยู่ */

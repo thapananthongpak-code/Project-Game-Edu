@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stationsOf } from "../content";
 import { CAMPAIGN, topicsOf } from "./campaign";
+import { emptyNpc, NPCS } from "./npcs";
 import { codexCount, gardenCredits, growthOf, harvest, plant, potCount } from "./lab";
 import { emptyRoom, emptyShop } from "./progressStore";
 import { creditBalance, mapCredits, purchase, stockLeft } from "./shop";
@@ -109,15 +110,17 @@ describe("ห้องวิจัยพืชต่างดาว (GDD 21)", (
     // กรณีแย่ที่สุด: ชนะไคจูครบทุกตัวแล้ว กลับไปซื้อเมล็ดทุกพันธุ์ในทุกแมพจนหมดโควตาของแต่ละแมพ
     const perMap = seeds.reduce((sum, s) => sum + s.stock * (LAB.seeds[s.value].yield - s.price), 0);
     const total = order.length * perMap;
-    // เครดิตสูงสุดที่ได้จากความคืบหน้าของทั้งสามแมพ (ทุกสถานี 3 ดาว ทบทวน แกน ชนะทุกด่านครั้งแรก ไม่นับภารกิจภาคสนาม แบบทดสอบ และ NPC จึงเป็นค่าต่ำสุดที่ระมัดระวัง)
+    // เครดิตสูงสุดที่ได้จากความคืบหน้าของทั้งสามแมพ (ทุกสถานี 3 ดาว ทบทวน แกน ชนะทุกด่านครั้งแรก ไม่นับภารกิจภาคสนาม แบบทดสอบ และเครดิตจากเลเวลจึงเป็นค่าต่ำสุดที่ระมัดระวัง)
     const credits = order.reduce((sum, map) => {
       const rooms: Record<number, ReturnType<typeof emptyRoom>> = {};
       for (const topic of topicsOf(map)) rooms[topic] = { ...emptyRoom(), stationsSeen: stationsOf(topic).length, stars: 3, reviewDone: true, core: true };
       const maps = { easy: {}, normal: {}, hard: {}, [map]: rooms } as Parameters<typeof mapCredits>[1]["maps"];
       const battles = Object.fromEntries(CAMPAIGN[map].battles.map((b) => [b.id, { won: true, wins: 1, sorties: 1, asked: 0, correct: 0 }]));
-      return sum + mapCredits(map, { maps, battles, npcs: {}, posttest: null });
+      // แมพ 2 เป็นสถานที่ที่ไม่มีบทเรียน (รอบ 19) เครดิตของแมพนี้จึงมาจากด่านต่อสู้และกิจกรรมของ NPC เป็นหลัก: นับกิจกรรมของ NPC ที่ทำครบด้วย
+      const npcs = Object.fromEntries(Object.values(NPCS).filter((spec) => spec.role !== "shop").map((spec) => [spec.id, { ...emptyNpc(), done: true, best: spec.questions, tries: 1, gifted: true }]));
+      return sum + mapCredits(map, { maps, battles, npcs, posttest: null });
     }, 0);
-    expect(credits).toBeGreaterThan(1500);
+    expect(credits).toBeGreaterThan(1200);
     expect(total / credits).toBeLessThanOrEqual(0.15);
     // ผลผลิตเข้ายอดเครดิตคงเหลือ
     const shop = { ...emptyShop(), harvests: { ...emptyShop().harvests, moonpod: 2 } };

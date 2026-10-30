@@ -1,0 +1,18 @@
+{
+  "tool": "create_character",
+  "arguments": {
+    "description": "friendly young male engineer with messy brown hair and round goggles pushed up on the forehead, orange work overalls with a tool belt, holding a glowing energy cell in one hand, warm smile, chibi proportions, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "name": "ช่างโนอาห์ วิศวกรฐานปฏิบัติการ (แมพ 2 เควสเสริม)",
+    "n_directions": 4,
+    "size": 48,
+    "mode": "standard",
+    "view": "low top-down",
+    "outline": "single color outline",
+    "shading": "basic shading",
+    "detail": "medium detail",
+    "proportions": "{\"type\": \"preset\", \"name\": \"chibi\"}"
+  },
+  "fetchTool": "get_character",
+  "id": "47fac571-5b1d-45ce-b588-d299f9c48b2d",
+  "generatedAt": "2026-10-30T17:28:30.299Z"
+}

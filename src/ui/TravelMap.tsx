@@ -194,7 +194,9 @@ export function TravelMap() {
             <p className="text-sm text-slate">{ui.difficulty[picked].detail}</p>
             <p className="text-xs font-bold" data-testid={`travel-info-${picked}`}>
               {selected.open
-                ? fmt(ui.travel.progress, { n: selected.won, total: selected.level.battles.length, cores: selected.cores, coreTotal: selected.topics.length })
+                ? selected.topics.length === 0
+                  ? fmt(ui.travel.progressBattles, { n: selected.won, total: selected.level.battles.length })
+                  : fmt(ui.travel.progress, { n: selected.won, total: selected.level.battles.length, cores: selected.cores, coreTotal: selected.topics.length })
                 : fmt(ui.travel.locked, { map: lockedBy })}
             </p>
             {selected.open && !selected.cleared && <p className="text-xs text-slate">{fmt(ui.travel.boss, { name: foeName(selected.boss.forms[0].art) })}</p>}

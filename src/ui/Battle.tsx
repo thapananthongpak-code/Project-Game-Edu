@@ -266,6 +266,9 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         fx.sparks.push({ art: "bolt", motion: "rise", side: "robot", at });
         sounds.push(["charge", at]);
         break;
+      case "recycle":
+        fx.floaters.push({ text: `⚡+${event.amount}`, side: "robot", at, tone: "heal" });
+        break;
       case "battery":
       case "emergency":
         fx.robot ??= { pose: "guard", at };
@@ -360,6 +363,8 @@ function eventText(event: BattleEvent, kaiju: string, { spec, weapon, foe }: Sce
       return fmt(ui.battle.log.reboot, { n: event.amount });
     case "battery":
       return fmt(ui.battle.log.battery, { n: event.amount });
+    case "recycle":
+      return fmt(ui.battle.log.recycle, { n: event.amount });
     case "emergency":
       return fmt(ui.battle.log.emergency, { n: event.amount });
     case "out-of-energy":
