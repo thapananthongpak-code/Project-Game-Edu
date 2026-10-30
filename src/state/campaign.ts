@@ -49,6 +49,11 @@ export interface BattleSpec {
    * ตั้งจากชุดอุปกรณ์ที่ผู้เล่นทั่วไปซื้อได้ก่อนถึงด่าน (PAR ใน balance.ts) และตรวจด้วยแบบจำลองใน balance.test.ts
    */
   power: number;
+  /**
+   * พลังงานของการ์เดียนในด่านนี้ = จำนวนข้อที่ตอบได้ในการออกปฏิบัติการหนึ่งครั้ง (ตอบครบแล้วยังไม่ชนะ = แพ้ GDD ข้อ 12 และ 31)
+   * ไม่ระบุ = ไม่จำกัด (แมพ 1 เป็นแมพเรียน) พลังงานเสริมมาจากแบตเตอรี่สำรองและพลังงานฉุกเฉิน
+   */
+  energy?: number;
 }
 
 export interface DifficultySpec {
@@ -111,9 +116,9 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
   normal: {
     zones: [{ topics: [1, 2] }, { topics: [3, 4] }, { topics: [5] }],
     battles: [
-      { id: "n1", forms: [{ art: "kaiju_7", hp: 16, trait: "charge", weak: "blade" }], backdrop: 7, sources: [1, 2], requires: [], unlocks: 2, boss: false, power: 160 },
-      { id: "n2", forms: [{ art: "kaiju_8", hp: 16, trait: "armor", weak: "strike" }], backdrop: 8, sources: [3, 4], requires: [], unlocks: 3, boss: false, power: 170 },
-      { id: "n3", forms: [{ art: "kaiju_9", hp: 11, trait: "swarm", weak: "beam" }], backdrop: 9, sources: [5], requires: [], boss: false, power: 170 },
+      { id: "n1", forms: [{ art: "kaiju_7", hp: 14, trait: "charge", weak: "blade" }], backdrop: 7, sources: [1, 2], requires: [], unlocks: 2, boss: false, power: 160, energy: 13 },
+      { id: "n2", forms: [{ art: "kaiju_8", hp: 14, trait: "armor", weak: "strike" }], backdrop: 8, sources: [3, 4], requires: [], unlocks: 3, boss: false, power: 170, energy: 14 },
+      { id: "n3", forms: [{ art: "kaiju_9", hp: 11, trait: "swarm", weak: "beam" }], backdrop: 9, sources: [5], requires: [], boss: false, power: 170, energy: 13 },
       {
         id: "omega-n",
         forms: [
@@ -124,7 +129,7 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
         sources: [1, 2, 3, 4, 5, 6],
         requires: [],
         boss: true,
-        power: 190,
+        power: 190, energy: 24,
       },
     ],
     stations: "optional",
@@ -143,8 +148,8 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
   hard: {
     zones: [],
     battles: [
-      { id: "h1", forms: [{ art: "kaiju_10", hp: 16, trait: "armor", weak: "beam" }], backdrop: 10, sources: [1, 2, 3], requires: [], boss: false, power: 170 },
-      { id: "h2", forms: [{ art: "kaiju_11", hp: 15, trait: "regen", weak: "strike" }], backdrop: 10, sources: [3, 4, 5], requires: [], boss: false, power: 175 },
+      { id: "h1", forms: [{ art: "kaiju_10", hp: 14, trait: "armor", weak: "beam" }], backdrop: 10, sources: [1, 2, 3], requires: [], boss: false, power: 170, energy: 17 },
+      { id: "h2", forms: [{ art: "kaiju_11", hp: 13, trait: "regen", weak: "strike" }], backdrop: 10, sources: [3, 4, 5], requires: [], boss: false, power: 175, energy: 14 },
       {
         id: "end",
         forms: [
@@ -156,7 +161,7 @@ export const CAMPAIGN: Record<Difficulty, DifficultySpec> = {
         sources: [1, 2, 3, 4, 5, 6],
         requires: [],
         boss: true,
-        power: 180,
+        power: 180, energy: 44,
       },
     ],
     stations: "none",

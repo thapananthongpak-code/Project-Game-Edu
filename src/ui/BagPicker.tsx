@@ -142,7 +142,7 @@ export function BagPicker({ spec }: { spec: BattleSpec | null }) {
                     type="button"
                     className="btn btn-ghost !min-h-9 shrink-0 !px-2 text-xs"
                     data-testid={`bag-add-${supply}`}
-                    disabled={bag.length >= size || inBag >= shop.supplies[supply] || (supply === "reboot" && inBag >= 1)}
+                    disabled={bag.length >= size || inBag >= shop.supplies[supply] || ((supply === "reboot" || supply === "emergency") && inBag >= 1)}
                     onClick={() => pack([...bag, supply])}
                   >
                     {ui.storage.add}

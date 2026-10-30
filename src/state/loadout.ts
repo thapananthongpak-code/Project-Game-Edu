@@ -25,7 +25,13 @@ export const ADVICE: Record<Trait, readonly Supply[]> = {
 export function wishList(spec: BattleSpec): Supply[] {
   const wish: Supply[] = [];
   for (let rank = 0; rank < 3; rank++) for (const form of spec.forms) if (!wish.includes(ADVICE[form.trait][rank])) wish.push(ADVICE[form.trait][rank]);
-  for (const supply of SUPPLIES) if (!wish.includes(supply)) wish.push(supply);
+  // ด่านที่จำกัดพลังงาน (แมพ 2 และ 3): ของที่สำคัญที่สุดสองอย่างของด่านมาก่อน ตามด้วยพลังงานฉุกเฉิน (ช่องที่สามของกระเป๋า) ส่วนบอสหลายร่างต้องการของจำเป็นสามอย่างก่อน พลังงานฉุกเฉินเป็นช่องที่สี่ แบตเตอรี่สำรองตามหลัง
+  if (spec.energy !== undefined) {
+    const at = spec.forms.length > 1 ? 3 : 2;
+    wish.splice(Math.min(at, wish.length), 0, "emergency");
+    wish.splice(Math.min(at + 2, wish.length), 0, "battery");
+  }
+  for (const supply of SUPPLIES) if (!wish.includes(supply) && (spec.energy !== undefined || (supply !== "battery" && supply !== "emergency"))) wish.push(supply);
   return wish;
 }
 
@@ -40,7 +46,7 @@ export function adviseBag(spec: BattleSpec, stock: Readonly<Record<Supply, numbe
   const wish = wishList(spec);
   const bag: Supply[] = wish.filter((supply) => stock[supply] > 0).slice(0, size);
   for (const supply of wish) {
-    if (supply === "reboot") continue;
+    if (supply === "reboot" || supply === "emergency") continue;
     while (bag.length < size && bag.filter((s) => s === supply).length < stock[supply]) bag.push(supply);
   }
   return bag;

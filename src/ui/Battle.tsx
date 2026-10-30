@@ -266,13 +266,23 @@ function stageEvents(events: BattleEvent[], { spec, weapon, foe }: Scene): Omit<
         fx.sparks.push({ art: "bolt", motion: "rise", side: "robot", at });
         sounds.push(["charge", at]);
         break;
+      case "battery":
+      case "emergency":
+        fx.robot ??= { pose: "guard", at };
+        fx.sparks.push({ art: "bolt", motion: "rise", side: "robot", at, big: event.type === "emergency" });
+        fx.floaters.push({ text: `⚡+${event.amount}`, side: "robot", at, tone: "heal" });
+        sounds.push(["charge", at]);
+        break;
+      case "out-of-energy":
+        sounds.push(["lose", at]);
+        break;
     }
   }
   return { ...fx, sounds };
 }
 
 /** ของที่ผู้เล่นกดใช้เองระหว่างสู้ (แกนสำรองทำงานเอง) */
-const ACTIVE: readonly ActiveSupply[] = ["repair-kit", "shield", "overcharge"];
+const ACTIVE: readonly ActiveSupply[] = ["repair-kit", "shield", "overcharge", "battery"];
 
 /**
  * แถบพลังทีละช่อง armor = จำนวนช่องท้ายแถบที่มาจากเกราะ (เกราะหนัก เกราะไททัน) เป็นสีเหล็กและหมดก่อนพลังของตัวหุ่น
@@ -348,6 +358,12 @@ function eventText(event: BattleEvent, kaiju: string, { spec, weapon, foe }: Sce
       return ui.battle.log.boost;
     case "reboot":
       return fmt(ui.battle.log.reboot, { n: event.amount });
+    case "battery":
+      return fmt(ui.battle.log.battery, { n: event.amount });
+    case "emergency":
+      return fmt(ui.battle.log.emergency, { n: event.amount });
+    case "out-of-energy":
+      return ui.battle.log.outOfEnergy;
   }
 }
 
@@ -481,7 +497,7 @@ export function Battle() {
     // กระเป๋าของรอบนี้: ของที่เลือกไว้และยังมีในกล่อง แกนสำรองในกระเป๋าทำงานเอง
     const packed = bagOf(useGameStore.getState().shop);
     if (!locked) setLocked(live);
-    const from = startBattle(setup, { carry, reboot: packed.includes("reboot") });
+    const from = startBattle(setup, { carry, reboot: packed.includes("reboot"), emergency: packed.includes("emergency") });
     setBag(packed);
     run.current = { streak: 0, hit: false };
     setState(from);
@@ -529,6 +545,7 @@ export function Battle() {
     setAnswered(option);
     // แกนสำรองทำงานแล้ว: หักออกจากกระเป๋า
     if (result.events.some((e) => e.type === "reboot")) spend("reboot");
+    if (result.events.some((e) => e.type === "emergency")) spend("emergency");
   };
 
   const next = () => {
@@ -677,6 +694,15 @@ export function Battle() {
               </span>
             </HpBar>
             <HpBar label={kaiju} hp={state.kaijuHp} max={form.hp} shielded={state.armored} align="right" />
+            {/* พลังงานของการ์เดียน: จำนวนข้อที่ตอบได้อีก (เฉพาะด่านที่จำกัด) หมดแล้วยังไม่ชนะ = แพ้ */}
+            {state.energy !== null && (
+              <div className="absolute left-1/2 top-[4%] -translate-x-1/2" data-testid="battle-energy" data-energy={state.energy} data-low={state.energy <= 3} role="img" aria-label={fmt(ui.battle.energy, { n: state.energy })}>
+                <span className={`rounded border-2 border-ink px-1.5 text-xs font-extrabold leading-5 ${state.energy <= 3 ? "bg-wrong text-paper" : "bg-hint"}`}>
+                  <span aria-hidden="true">⚡ </span>
+                  {state.energy}
+                </span>
+              </div>
+            )}
             {/* การ์เดียนที่ใส่เกราะและถืออาวุธจริง (ภาพเดียวกับหุ่นบนแท่นในโรงเก็บหุ่น) */}
             <div
               key={`robot-${fx.id}`}
@@ -834,6 +860,11 @@ export function Battle() {
                 </li>
               ))}
             </ul>
+ {spec.energy !== undefined && (
+              <p className="rounded-md border-2 border-ink bg-hint px-2 py-1 text-sm font-bold" data-testid="battle-energy-note" data-energy={spec.energy}>
+                ⚡ {fmt(ui.battle.energyIntro, { n: spec.energy })}
+              </p>
+            )}
             <div className="rounded-md border-2 border-ink bg-paper px-2 py-1.5" data-testid="battle-power" data-power={power} data-recommended={spec.power} data-ok={power >= spec.power}>
               <p className="font-extrabold">
                 ⚡ {fmt(ui.battle.power, { n: power })} · {fmt(ui.battle.powerRec, { n: spec.power })}
@@ -1020,6 +1051,7 @@ export function Battle() {
                 {fmt(ui.battle.wonExp, { n: expGain })}
               </p>
             )}
+            {state.energy !== null && state.energy <= 0 && <p className="text-center font-extrabold text-wrong" data-testid="battle-lost-energy">{ui.battle.lostEnergy}</p>}
             <p className="text-center font-semibold">{setup.formResetsOnRetry ? fmt(ui.battle.lostReset, { kaiju }) : fmt(ui.battle.lostDetail, { kaiju, n: state.kaijuHp })}</p>
             {power < spec.power && (
               <p className="text-center text-sm font-bold text-wrong" data-testid="battle-lost-power">

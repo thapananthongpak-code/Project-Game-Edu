@@ -652,3 +652,61 @@ describe("อุปกรณ์ของการ์เดียน: อาว�
     expect(saved).toEqual(["retry", "stun", "dodge", "guard", "shield", null]);
   });
 });
+
+describe("พลังงานของการ์เดียน: จำกัดรอบในด่านแมพ 2 และ 3 (GDD 31)", () => {
+  /** ด่านพื้นฐานที่จำกัดพลังงาน: คู่ต่อสู้พลัง 20 (ตอบถูกไม่ถึงพลังงานแน่นอน) */
+  const LONG: BattleSpec = { ...PLAIN, forms: [{ art: "kaiju_1", hp: 20, trait: "basic", weak: "blade" }], energy: 5 };
+  const limited = (): BattleSetup => battleSetup("normal", LONG, "lab", [], DEFAULT_GEAR);
+
+  it("เฉพาะแมพ 2 และ 3 จำกัดพลังงาน แมพ 1 ไม่จำกัด และทุกด่านที่จำกัดมีพลังงานพอสำหรับไคจูทั้งตัว", () => {
+    for (const spec of CAMPAIGN.easy.battles) expect(spec.energy, spec.id).toBeUndefined();
+    for (const difficulty of ["normal", "hard"] as const) for (const spec of CAMPAIGN[difficulty].battles) expect(spec.energy, spec.id).toBeGreaterThanOrEqual(spec.forms.reduce((sum, form) => sum + form.hp, 0) / 3);
+    expect(startBattle(setupOf("easy", "k1")).energy).toBeNull();
+    expect(startBattle(setupOf("normal", "n1")).energy).toBe(battleOf("normal", "n1")?.energy);
+  });
+
+  it("ตอบหนึ่งข้อใช้พลังงานหนึ่งหน่วย (ตอบถูกหรือผิดเท่ากัน) ตอบใหม่จากชิปคิดทบทวนไม่นับ", () => {
+    const setup = limited();
+    expect(play(setup, [true, false, true]).state.energy).toBe(2);
+    const retry = battleSetup("normal", LONG, "lab", [], { ...DEFAULT_GEAR, chip: "retry" });
+    const first = resolveAnswer(retry, startBattle(retry), false);
+    expect(first.events).toEqual([{ type: "second-chance", left: 0 }]);
+    expect(first.state.energy).toBe(5);
+  });
+
+  it("พลังงานหมดแล้วยังไม่ชนะ = แพ้ (บอกเหตุการณ์) และแพ้แล้วออกปฏิบัติการใหม่ได้ พลังงานเต็มอีกครั้ง ความเสียหายของไคจูที่ทำไว้ยังอยู่", () => {
+    const setup = limited();
+    const end = play(setup, [true, true, true, true, true]);
+    expect(end.state).toMatchObject({ status: "lost", energy: 0 });
+    expect(end.events.at(-1)).toEqual({ type: "out-of-energy" });
+    const again = startBattle(setup, { carry: retryCarry(setup, end.state) });
+    expect(again.energy).toBe(5);
+    expect(again.kaijuHp).toBe(end.state.kaijuHp);
+    expect(again.status).toBe("fighting");
+  });
+
+  it("ปิดฉากไคจูด้วยข้อสุดท้ายของพลังงานพอดี = ชนะ ไม่ใช่แพ้", () => {
+    const setup = battleSetup("normal", { ...LONG, forms: [{ art: "kaiju_1", hp: 2, trait: "basic", weak: "blade" }], energy: 2 }, "lab", [], DEFAULT_GEAR);
+    expect(play(setup, [true, true]).state).toMatchObject({ status: "won", energy: 1 });
+  });
+
+  it("พลังงานฉุกเฉิน: เติมให้เองครั้งเดียวเมื่อพลังงานหมด แล้วหมดอีกก็แพ้ ด่านที่ไม่จำกัดไม่มีผล", () => {
+    const setup = limited();
+    const start = startBattle(setup, { emergency: true });
+    expect(start.emergency).toBe(true);
+    const run = play(setup, [true, true, true, true, true], start);
+    expect(run.events.at(-1)).toEqual({ type: "emergency", amount: BATTLE.energy.emergency });
+    expect(run.state).toMatchObject({ status: "fighting", energy: BATTLE.energy.emergency, emergency: false });
+    expect(play(setup, [true, true, true, true], run.state).state.status).toBe("lost");
+    expect(startBattle(setupOf("easy", "k1"), { emergency: true }).emergency).toBe(false);
+  });
+
+  it("แบตเตอรี่สำรอง: เพิ่มพลังงานให้ตอบได้อีก ใช้ได้เฉพาะด่านที่จำกัดพลังงาน", () => {
+    const setup = limited();
+    const used = applySupply(setup, startBattle(setup), "battery");
+    expect(used?.state.energy).toBe(5 + BATTLE.energy.battery);
+    expect(used?.events).toEqual([{ type: "battery", amount: BATTLE.energy.battery }]);
+    expect(applySupply(setupOf("easy", "k1"), startBattle(setupOf("easy", "k1")), "battery")).toBeNull();
+  });
+});
+

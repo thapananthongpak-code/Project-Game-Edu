@@ -481,7 +481,7 @@ describe("เครดิตวิจัยและย่านร้านค�
     // มีแค่ชุดซ่อม 3 ชิ้น: พกชุดซ่อมทั้งหมด
     expect(adviseBag(spec("k2"), { ...none, "repair-kit": 3 })).toEqual(["repair-kit", "repair-kit", "repair-kit"]);
     // มีครบ: ได้กระเป๋าตามลำดับที่ควรพก ไม่เกิน 3 ชิ้น
-    const all = { "repair-kit": 3, shield: 3, overcharge: 3, analyzer: 3, reboot: 1 };
+    const all = { "repair-kit": 3, shield: 3, overcharge: 3, analyzer: 3, reboot: 1, battery: 3, emergency: 1 };
     expect(adviseBag(spec("k2"), all)).toEqual(idealBag(spec("k2")));
     expect(missingAdvice(spec("k2"), all)).toEqual([]);
     // แกนสำรองใช้ได้ครั้งเดียวต่อรอบ: ไม่ถูกแนะนำซ้ำ
@@ -489,7 +489,7 @@ describe("เครดิตวิจัยและย่านร้านค�
     // บอสหลายร่าง: สลับของสำคัญของแต่ละร่าง
     const end = CAMPAIGN.hard.battles.at(-1)!;
     expect(idealBag(end)).toEqual([ADVICE.charge[0], ADVICE.armor[0], ADVICE.enrage[0]]);
-    for (const difficulty of ["easy", "normal", "hard"] as const) for (const battle of CAMPAIGN[difficulty].battles) expect(new Set(wishList(battle)).size, battle.id).toBe(5);
+    for (const difficulty of ["easy", "normal", "hard"] as const) for (const battle of CAMPAIGN[difficulty].battles) expect(new Set(wishList(battle)).size, battle.id).toBe(battle.energy === undefined ? 5 : 7);
   });
 
   it("พี่บิตแนะนำอาวุธ: อาวุธที่ได้เปรียบคู่ต่อสู้ของด่าน ถ้าได้เปรียบเท่ากันแนะนำชิ้นที่แรงกว่า ไม่ได้เปรียบเลยไม่ชวนเปลี่ยน", () => {

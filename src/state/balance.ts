@@ -98,7 +98,7 @@ export function simulateSortie(setup: BattleSetup, accuracy: number, bag: readon
     take(supply);
     return result.state;
   };
-  let state = startBattle(setup, { carry, reboot: take("reboot") });
+  let state = startBattle(setup, { carry, reboot: take("reboot"), emergency: take("emergency") });
   let hints = setup.hints;
   for (let guard = 0; guard < 400 && state.status === "fighting"; guard++) {
     const threat = threatOf(setup, state);
@@ -111,6 +111,8 @@ export function simulateSortie(setup: BattleSetup, accuracy: number, bag: readon
     if (state.robotHp <= 3 && setup.robotMax - state.robotHp >= Math.min(setup.repairHeal, 3)) state = use(state, "repair-kit");
     if (state === before && threat.saved === null && (threat.heavy || state.robotHp <= threat.damage)) state = use(state, "shield");
     if (state === before && !strike.armorBreak && !strike.crit && !strike.opening && (strike.counter || state.kaijuHp >= 2)) state = use(state, "overcharge");
+    // ด่านที่จำกัดพลังงาน: เติมแบตเตอรี่สำรองเมื่อพลังงานเหลือน้อยและยังชนะไม่ได้ในจำนวนข้อที่เหลือ
+    if (state === before && state.energy !== null && state.energy <= 2) state = use(state, "battery");
     if (tense && hints > 0) {
       hints -= 1;
       p = lift(p, SIM.hintLift);

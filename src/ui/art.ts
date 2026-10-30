@@ -15,7 +15,7 @@ const GEAR_ART: Record<string, string> = {
   retry: "chip_retry", charger: "chip_charger", focus: "chip_focus", regen: "chip_regen",
 };
 const ITEM_ART: Record<Supply | `module-${BitModule}`, string> = {
-  "repair-kit": "repair_kit", shield: "shield", overcharge: "overcharge", analyzer: "analyzer", reboot: "reboot",
+  "repair-kit": "repair_kit", shield: "shield", overcharge: "overcharge", analyzer: "analyzer", reboot: "reboot", battery: "battery", emergency: "emergency",
   "module-scanner": "module_scanner", "module-laser": "module_laser", "module-medic": "module_medic", "module-toolkit": "module_toolkit", "module-decoy": "module_decoy",
 };
 

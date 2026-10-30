@@ -84,6 +84,10 @@ export interface BattleState {
   dodge: number;
   /** ชิปเร่งพลังพร้อมใช้: การโจมตีครั้งแรกใส่ร่างปัจจุบันแรง 2 เท่า */
   opening: boolean;
+  /** พลังงานของการ์เดียนที่เหลือ = จำนวนข้อที่ตอบได้อีก (null = ด่านนี้ไม่จำกัด) หมดแล้วยังไม่ชนะ = แพ้ */
+  energy: number | null;
+  /** พลังงานฉุกเฉินพร้อมใช้: พลังงานหมดแล้วเติมให้เองหนึ่งครั้ง */
+  emergency: boolean;
   status: "fighting" | "won" | "lost";
 }
 
@@ -110,15 +114,21 @@ export type BattleEvent =
   | { type: "repair"; amount: number }
   | { type: "shield" }
   | { type: "boost" }
-  | { type: "reboot"; amount: number };
+  | { type: "reboot"; amount: number }
+  /** แบตเตอรี่สำรอง: เพิ่มพลังงานให้ตอบได้อีก amount ข้อ */
+  | { type: "battery"; amount: number }
+  /** พลังงานฉุกเฉินทำงานเองเมื่อพลังงานหมด */
+  | { type: "emergency"; amount: number }
+  /** พลังงานหมดแล้วยังไม่ชนะ: แพ้ */
+  | { type: "out-of-energy" };
 
 export const formOf = (setup: BattleSetup, state: Pick<BattleState, "form">): FormSpec => setup.spec.forms[Math.min(state.form, setup.spec.forms.length - 1)];
 
 /**
  * เริ่มออกปฏิบัติการ carry = ร่างและพลังของคู่ต่อสู้ที่เหลือจากครั้งก่อน (ถอยกลับมาซ่อมแล้วออกใหม่)
- * reboot = ผู้เล่นพกแกนสำรองมาในกระเป๋า
+ * reboot = ผู้เล่นพกแกนสำรองมาในกระเป๋า emergency = พกพลังงานฉุกเฉิน (ใช้เฉพาะด่านที่จำกัดพลังงาน)
  */
-export function startBattle(setup: BattleSetup, options: { carry?: { form: number; kaijuHp: number }; reboot?: boolean } = {}): BattleState {
+export function startBattle(setup: BattleSetup, options: { carry?: { form: number; kaijuHp: number }; reboot?: boolean; emergency?: boolean } = {}): BattleState {
   const form = Math.min(setup.spec.forms.length - 1, Math.max(0, options.carry?.form ?? 0));
   const full = setup.spec.forms[form].hp;
   const kaijuHp = options.carry ? Math.min(full, Math.max(1, options.carry.kaijuHp)) : full;
@@ -138,6 +148,8 @@ export function startBattle(setup: BattleSetup, options: { carry?: { form: numbe
     retries: setup.retries,
     dodge: setup.dodges,
     opening: setup.gear.chip === "charger",
+    energy: setup.spec.energy ?? null,
+    emergency: setup.spec.energy !== undefined && (options.emergency ?? false),
     status: "fighting",
   };
 }
@@ -371,15 +383,30 @@ export function resolveAnswer(setup: BattleSetup, state: BattleState, correct: b
     }
   }
 
-  const status = kaijuHp <= 0 ? "won" : robotHp <= 0 ? "lost" : "fighting";
+  let status: BattleState["status"] = kaijuHp <= 0 ? "won" : robotHp <= 0 ? "lost" : "fighting";
+  // พลังงานของการ์เดียน: ตอบหนึ่งข้อใช้หนึ่งหน่วย (ตอบใหม่จากชิปคิดทบทวนไม่นับ) หมดแล้วยังไม่ชนะ พลังงานฉุกเฉินเติมให้เองหนึ่งครั้ง ไม่มีก็แพ้
+  let { energy, emergency } = state;
+  if (energy !== null && status === "fighting") {
+    energy -= 1;
+    if (energy <= 0) {
+      if (emergency) {
+        emergency = false;
+        energy = BATTLE.energy.emergency;
+        events.push({ type: "emergency", amount: energy });
+      } else {
+        status = "lost";
+        events.push({ type: "out-of-energy" });
+      }
+    }
+  }
   return {
-    state: { robotHp, form: formIndex, kaijuHp, streak, turn: state.turn + 1, correct: state.correct + (correct ? 1 : 0), shield, armored, boost, reboot, stunned, guard, retries: state.retries, dodge, opening, status },
+    state: { robotHp, form: formIndex, kaijuHp, streak, turn: state.turn + 1, correct: state.correct + (correct ? 1 : 0), shield, armored, boost, reboot, stunned, guard, retries: state.retries, dodge, opening, energy, emergency, status },
     events,
   };
 }
 
 /** ของที่ผู้เล่นกดใช้เองระหว่างสู้ (แกนสำรองทำงานเอง และชิปวิเคราะห์ทำงานกับโจทย์ จึงไม่ผ่านฟังก์ชันนี้) */
-export type ActiveSupply = Extract<Supply, "repair-kit" | "shield" | "overcharge">;
+export type ActiveSupply = Extract<Supply, "repair-kit" | "shield" | "overcharge" | "battery">;
 
 /** ใช้ของจากร้านระหว่างสู้ คืน null ถ้าใช้ตอนนี้ไม่ได้ (พลังเต็มอยู่แล้ว หรือเปิดใช้อยู่แล้ว) */
 export function applySupply(setup: BattleSetup, state: BattleState, supply: ActiveSupply): { state: BattleState; events: BattleEvent[] } | null {
@@ -389,5 +416,7 @@ export function applySupply(setup: BattleSetup, state: BattleState, supply: Acti
     return amount > 0 ? { state: { ...state, robotHp: state.robotHp + amount }, events: [{ type: "repair", amount }] } : null;
   }
   if (supply === "shield") return state.shield ? null : { state: { ...state, shield: true }, events: [{ type: "shield" }] };
+  // แบตเตอรี่สำรอง: ใช้ได้เฉพาะด่านที่จำกัดพลังงาน
+  if (supply === "battery") return state.energy === null ? null : { state: { ...state, energy: state.energy + BATTLE.energy.battery }, events: [{ type: "battery", amount: BATTLE.energy.battery }] };
   return state.boost ? null : { state: { ...state, boost: true }, events: [{ type: "boost" }] };
 }

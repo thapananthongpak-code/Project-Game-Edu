@@ -49,8 +49,10 @@ export const BIT_SLOTS = 2;
  * ของใช้ในด่านต่อสู้ ใช้แล้วหมดไป
  * repair-kit ฟื้นพลัง, shield กันการโจมตี 1 ครั้ง, overcharge การโจมตีครั้งถัดไปแรง 2 เท่า,
  * analyzer ตัดตัวเลือกที่ผิดออก 1 ข้อ, reboot ฟื้นพลังเองเมื่อพลังหมด (ทำงานอัตโนมัติ)
+ * battery แบตเตอรี่สำรอง เพิ่มพลังงานให้ตอบได้อีกหลายข้อ, emergency พลังงานฉุกเฉิน เติมพลังงานให้เองเมื่อหมด (ทำงานอัตโนมัติ)
+ * สองชิ้นหลังใช้กับด่านที่จำกัดพลังงานเท่านั้น (แมพ 2 และ 3 GDD ข้อ 31)
  */
-export const SUPPLIES = ["repair-kit", "shield", "overcharge", "analyzer", "reboot"] as const;
+export const SUPPLIES = ["repair-kit", "shield", "overcharge", "analyzer", "reboot", "battery", "emergency"] as const;
 export type Supply = (typeof SUPPLIES)[number];
 
 /**
@@ -279,6 +281,8 @@ export const CATALOG: readonly ShopItem[] = [
   { id: "supply-overcharge", kind: "supply", value: "overcharge", price: 30, max: 3, stock: 2 },
   { id: "supply-analyzer", kind: "supply", value: "analyzer", price: 30, max: 3, stock: 2 },
   { id: "supply-reboot", kind: "supply", value: "reboot", price: 60, max: 1, stock: 1 },
+  { id: "supply-battery", kind: "supply", value: "battery", price: 30, max: 3, stock: 3, tier: "normal" },
+  { id: "supply-emergency", kind: "supply", value: "emergency", price: 60, max: 1, stock: 1, tier: "normal" },
 ];
 
 /**

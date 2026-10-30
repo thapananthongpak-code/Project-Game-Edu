@@ -30,7 +30,7 @@ const MAP_NAME = { easy: "แมพ 1: Pixel AI Lab", normal: "แมพ 2: ศ�
 const STARTER_DECOR = { "easy:hall": [{ decor: "window", col: 3, row: 1 }, { decor: "plant", col: 1, row: 5 }] };
 /** รหัสด่านต่อสู้ของห้องในแมพ 1 (src/state/campaign.ts) */
 const easyBattle = (room) => (room === 6 ? "omega" : `k${room}`);
-const NO_SUPPLIES = { "repair-kit": 0, shield: 0, overcharge: 0, analyzer: 0, reboot: 0 };
+const NO_SUPPLIES = { "repair-kit": 0, shield: 0, overcharge: 0, analyzer: 0, reboot: 0, battery: 0, emergency: 0 };
 const NO_SEEDS = { glowfern: 0, crystalbloom: 0, sunvine: 0, moonpod: 0 };
 /** NPC ประจำห้อง (src/state/npcs.ts และ src/content/ui-strings.ts) */
 const NPC = {
@@ -1288,8 +1288,8 @@ async function playRoom1(page) {
   assert.equal(await page.getByTestId("shop-power").getAttribute("data-power"), "60");
   assert.equal((await snap(page)).audio.playing, "shop:0", "ร้านค้ามีเพลงของตัวเอง");
   await openStall(page, "items");
-  assert.equal(await page.locator('[data-testid^="shop-item-supply-"]').count(), 5, "ร้านมีของใช้ในการต่อสู้ 5 อย่าง");
-  assert.deepEqual(await page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock))), [3, 3, 2, 2, 1], "ของใช้มีจำนวนจำกัดต่อแมพ");
+  assert.equal(await page.locator('[data-testid^="shop-item-supply-"]').count(), 7, "ร้านมีของใช้ในการต่อสู้ 7 อย่าง (แบตเตอรี่สำรองและพลังงานฉุกเฉินเปิดขายที่แมพ 2)");
+  assert.deepEqual(await page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock))), [3, 3, 2, 2, 1, 3, 1], "ของใช้มีจำนวนจำกัดต่อแมพ");
   await openStall(page, "costume");
   await page.getByTestId("shop-buy-outfit-engineer").click();
   assert.equal(await page.getByTestId("shop-balance").getAttribute("data-balance"), String(15 + (await levelBonus(page))));
@@ -2490,6 +2490,36 @@ async function playAutoNext(page) {
   log(`ด่านต่อสู้ไปข้อถัดไปเอง: ตอบถูกรอ ${right.delay} ms ตอบผิดรอ ${wrong.delay} ms (หลังเอฟเฟกต์จบ) กดถัดไปเพื่อไปทันทีได้ ปิดสวิตช์แล้วรอให้กดเองและจำไว้ในเครื่อง`);
 }
 
+/** พลังงานของการ์เดียนในด่านแมพ 2–3 (GDD ข้อ 31): ตอบหนึ่งข้อใช้หนึ่งหน่วย แบตเตอรี่สำรองเพิ่ม แมพ 1 ไม่จำกัด (หมดพลังงาน/พลังงานฉุกเฉินทดสอบในหน่วยของเครื่องยนต์) */
+async function playEnergy(page) {
+  await resumeWith(page, travelerSave({
+    profile: { name: "นักเดินทาง", difficulty: "normal", classCode: "", avatar: "a" },
+    maps: { normal: {}, hard: {} },
+    story: [...MAP1_STORY, "map-normal"],
+    shop: shopOf({ supplies: { ...NO_SUPPLIES, battery: 2, emergency: 1 }, loadout: ["battery", "emergency"] }),
+  }));
+  await goToHangar(page);
+  await startBattle(page, "n1", "โวลต์อีล");
+  const energy = specOf("n1").energy;
+  assert.equal(await page.getByTestId("battle-energy-note").getAttribute("data-energy"), String(energy), "หน้าเตรียมสู้บอกพลังงานของการ์เดียน");
+  assert.match(await page.getByTestId("battle-energy-note").innerText(), new RegExp(`ตอบได้ ${energy} ข้อ`));
+  await page.getByTestId("battle-start").click();
+  const left = async () => Number(await page.getByTestId("battle-energy").getAttribute("data-energy"));
+  assert.equal(await left(), energy);
+  await battleTurn(page, true);
+  assert.equal(await left(), energy - 1, "ตอบหนึ่งข้อใช้พลังงานหนึ่งหน่วย");
+  await battleTurn(page, false);
+  assert.equal(await left(), energy - 2, "ตอบผิดก็ใช้พลังงานเท่ากัน");
+  // แบตเตอรี่สำรอง: เพิ่ม 3 ข้อ ใช้แล้วหมดจากกล่อง พลังงานฉุกเฉินยังอยู่ในกระเป๋า (ทำงานเองเมื่อพลังงานหมด)
+  await page.getByTestId("battle-supply-battery").click();
+  assert.equal(await left(), energy - 2 + 3);
+  assert.equal(await page.getByTestId("battle-bag").getAttribute("data-bag"), "emergency");
+  await shot(page, "44-battle-energy");
+  await page.getByTestId("battle-retreat").click();
+  await page.waitForTimeout(300);
+  log(`พลังงานของการ์เดียน: ด่านแมพ 2 ตอบได้ ${energy} ข้อ ใช้ข้อละหนึ่งหน่วย แบตเตอรี่สำรองเพิ่ม 3 ข้อ พลังงานฉุกเฉินรอทำงานเองในกระเป๋า`);
+}
+
 const creditsOf = async (page) => Number(await page.getByTestId("credits").getAttribute("data-credits"));
 const doorCount = async (page) => (await snap(page)).interactables.filter((i) => i.id.startsWith("door-")).length;
 /** สถานะของทุกแมพบนกระดานแผนที่ เช่น { easy: ["here", "true"], normal: ["open", "false"], hard: ["locked", "false"] } */
@@ -3114,10 +3144,10 @@ async function playNormal(page) {
   // --- ของใช้มีจำนวนจำกัดต่อแมพ: ร้านของแมพ 2 มีของชุดใหม่ ซื้อหมดแล้วซื้อเพิ่มไม่ได้
   await openStall(page, "items");
   const stockOf = () => page.locator('[data-testid^="shop-item-supply-"]').evaluateAll((rows) => rows.map((row) => Number(row.dataset.stock)));
-  assert.deepEqual(await stockOf(), [3, 3, 2, 2, 1]);
+  assert.deepEqual(await stockOf(), [3, 3, 2, 2, 1, 3, 1]);
   await page.getByTestId("shop-buy-supply-overcharge").click();
   await page.getByTestId("shop-buy-supply-overcharge").click();
-  assert.deepEqual(await stockOf(), [3, 3, 0, 2, 1]);
+  assert.deepEqual(await stockOf(), [3, 3, 0, 2, 1, 3, 1]);
   assert.equal(await page.getByTestId("shop-buy-supply-overcharge").isDisabled(), true, "ของใช้ของแมพนี้หมดแล้ว: ซื้อเพิ่มไม่ได้");
   assert.match(await page.getByTestId("shop-item-supply-overcharge").innerText(), /ร้านของแมพนี้ขายหมดแล้ว/);
   assert.deepEqual((await snap(page)).store.shop.bought, { "normal:overcharge": 2 });
@@ -4258,6 +4288,10 @@ try {
   if (wanted("normal")) {
     console.log("เดสก์ท็อป: แมพ 2 ศูนย์วิจัยภาคสนาม (เดินทางข้ามแมพ ตกแต่งโถง 3 ห้อง บอส 2 ร่าง)");
     await playNormal(page);
+  }
+  if (wanted("energy")) {
+    console.log("เดสก์ท็อป: พลังงานของการ์เดียน");
+    await playEnergy(page);
   }
   if (wanted("auto")) {
     console.log("เดสก์ท็อป: ด่านต่อสู้ไปข้อถัดไปเอง");
