@@ -1,26 +1,11 @@
 {
   "note": "ตัวอย่างและวิดีโอเสริมของแต่ละหัวข้อ (แมพ 1) ครูเป็นผู้กำหนด: เพิ่มรายการ { \"title\": \"ชื่อที่แสดง\", \"url\": \"https://...\" } ในหัวข้อที่ต้องการ หัวข้อที่ไม่มีรายการ จอในห้องจะเป็นของตกแต่งเฉย ๆ ดู docs/TEACHER_GUIDE.md",
   "topics": {
-    "1": [
-      {
-        "title": "Google: การเรียนรู้ของเครื่องคืออะไร (ภาษาไทย)",
-        "url": "https://developers.google.com/machine-learning/intro-to-ml/what-is-ml?hl=th"
-      }
-    ],
-    "2": [
-      {
-        "title": "Google: การเรียนรู้แบบมีผู้สอน (ภาษาไทย)",
-        "url": "https://developers.google.com/machine-learning/intro-to-ml/supervised?hl=th"
-      }
-    ],
+    "1": [],
+    "2": [],
     "3": [],
     "4": [],
     "5": [],
-    "6": [
-      {
-        "title": "เว็บ Teachable Machine ของ Google",
-        "url": "https://teachablemachine.withgoogle.com/"
-      }
-    ]
+    "6": []
   }
 }
