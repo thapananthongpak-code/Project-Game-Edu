@@ -3036,6 +3036,180 @@
       "status": "generated"
     },
     {
+      "id": "TS-25",
+      "kind": "tileset",
+      "name": "ไทล์เซตสถานที่ 1 เมืองริมทะเลที่พังทลาย",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_place_ruins": "tiles/ts_place_ruins.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of cracked sandy beige paving stones with small gray rubble and tiny blue seashells, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of broken pale plaster wall with exposed bricks and blue sea-stained stripes, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "10297a5c-2030-4487-8673-81fc22a3e045",
+        "generatedAt": "2026-10-31T02:40:47.068Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_place_ruins_preview": "tiles/ts_place_ruins_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-26",
+      "kind": "tileset",
+      "name": "ไทล์เซตสถานที่ 2 ฐานปฏิบัติการการ์เดียน",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_place_base": "tiles/ts_place_base.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of dark steel deck plates with yellow and black hazard stripe edges and small rivets, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of gray armored bulkhead panels with orange pipes and small glowing cyan control lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "5aa17afe-f8dd-48d1-8f29-6aca33c9824e",
+        "generatedAt": "2026-10-31T02:42:36.831Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_place_base_preview": "tiles/ts_place_base_preview.png"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "TS-27",
+      "kind": "tileset",
+      "name": "ไทล์เซตสถานที่ 3 หุบเขากังหันลม",
+      "requested": true,
+      "size": [
+        32,
+        32
+      ],
+      "files": {
+        "ts_place_valley": "tiles/ts_place_valley.png"
+      },
+      "pixellab": {
+        "tool": "create_topdown_tileset",
+        "arguments": {
+          "lower_description": "seamless floor tile of windswept green grass with pale dirt patches and tiny white pebbles, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "upper_description": "seamless wall tile of layered gray rocky cliff face with small tufts of grass and a few white wind turbine base plates, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "tile_size": {
+            "width": 32,
+            "height": 32
+          },
+          "mode": "standard",
+          "transition_size": 0,
+          "view": "low top-down",
+          "outline": "lineless",
+          "shading": "basic shading",
+          "detail": "low detail"
+        },
+        "fetchTool": "get_topdown_tileset",
+        "id": "963c9f75-1128-4d49-85d5-94939e344894",
+        "generatedAt": "2026-10-31T02:43:41.230Z"
+      },
+      "wang": {
+        "tileSize": 32,
+        "frames": {
+          "0000": 6,
+          "0001": 7,
+          "0010": 10,
+          "0011": 9,
+          "0100": 2,
+          "0101": 11,
+          "0110": 4,
+          "0111": 15,
+          "1000": 5,
+          "1001": 14,
+          "1010": 1,
+          "1011": 8,
+          "1100": 3,
+          "1101": 0,
+          "1110": 13,
+          "1111": 12
+        }
+      },
+      "web": {
+        "ts_place_valley_preview": "tiles/ts_place_valley_preview.png"
+      },
+      "status": "generated"
+    },
+    {
       "id": "TS-12",
       "kind": "tileset",
       "name": "ธีมห้อง ซากุระ",

@@ -1,0 +1,20 @@
+{
+  "tool": "create_topdown_tileset",
+  "arguments": {
+    "lower_description": "seamless floor tile of dark steel deck plates with yellow and black hazard stripe edges and small rivets, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "upper_description": "seamless wall tile of gray armored bulkhead panels with orange pipes and small glowing cyan control lights, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "tile_size": {
+      "width": 32,
+      "height": 32
+    },
+    "mode": "standard",
+    "transition_size": 0,
+    "view": "low top-down",
+    "outline": "lineless",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_topdown_tileset",
+  "id": "5aa17afe-f8dd-48d1-8f29-6aca33c9824e",
+  "generatedAt": "2026-10-31T02:42:36.831Z"
+}

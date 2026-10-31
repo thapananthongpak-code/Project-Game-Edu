@@ -455,6 +455,7 @@ export function Battle() {
   /** ไปข้อถัดไปเองหลังเอฟเฟกต์จบ (ปิดได้ จำไว้ในเครื่อง) */
   const [autoNext, setAutoNext] = useState(readAutoNext);
   const tutorOpen = useGameStore((s) => s.tutorOpen);
+  const map = useGameStore(difficultyOf);
   const [tabHidden, setTabHidden] = useState(() => typeof document !== "undefined" && document.visibilityState === "hidden");
   /** เครดิตที่ได้จากการชนะครั้งนี้ (รวมตัวคูณของระดับความยาก) */
   const [credits, setCredits] = useState(0);
@@ -1057,6 +1058,11 @@ export function Battle() {
               </p>
             )}
             {state.energy !== null && state.energy <= 0 && <p className="text-center font-extrabold text-wrong" data-testid="battle-lost-energy">{ui.battle.lostEnergy}</p>}
+            {state.energy !== null && state.energy <= 0 && (
+              <p className="text-center text-sm font-bold text-slate" data-testid="battle-lost-advice">
+                {map === "hard" ? ui.battle.lostAdvice.hard : ui.battle.lostAdvice.normal}
+              </p>
+            )}
             <p className="text-center font-semibold">{setup.formResetsOnRetry ? fmt(ui.battle.lostReset, { kaiju }) : fmt(ui.battle.lostDetail, { kaiju, n: state.kaijuHp })}</p>
             {power < spec.power && (
               <p className="text-center text-sm font-bold text-wrong" data-testid="battle-lost-power">

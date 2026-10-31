@@ -574,7 +574,7 @@ export const roomMaps: Record<number, GameMap> = {
 export const normalMaps: Record<number, GameMap> = {
   // สถานที่ 1: เมืองริมทะเล เสาซากอาคารสองต้นกลางลาน
   1: {
-    tileset: "ts_r2",
+    tileset: "ts_place_ruins",
     shape: [
       "####################",
       "####################",
@@ -603,7 +603,7 @@ export const normalMaps: Record<number, GameMap> = {
   },
   // สถานที่ 2: ฐานปฏิบัติการ ชั้นบนกับชั้นล่างเชื่อมกันด้วยช่องกลาง
   2: {
-    tileset: "ts_r4",
+    tileset: "ts_place_base",
     shape: [
       "####################",
       "####################",
@@ -632,7 +632,7 @@ export const normalMaps: Record<number, GameMap> = {
   },
   // สถานที่ 3: หุบเขากังหันลม ลานกว้างมีบล็อกฐานกังหันกลางลาน
   3: {
-    tileset: "ts_r5",
+    tileset: "ts_place_valley",
     shape: [
       "####################",
       "####################",

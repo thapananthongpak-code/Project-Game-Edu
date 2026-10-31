@@ -1,0 +1,20 @@
+{
+  "tool": "create_topdown_tileset",
+  "arguments": {
+    "lower_description": "seamless floor tile of cracked sandy beige paving stones with small gray rubble and tiny blue seashells, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "upper_description": "seamless wall tile of broken pale plaster wall with exposed bricks and blue sea-stained stripes, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+    "tile_size": {
+      "width": 32,
+      "height": 32
+    },
+    "mode": "standard",
+    "transition_size": 0,
+    "view": "low top-down",
+    "outline": "lineless",
+    "shading": "basic shading",
+    "detail": "low detail"
+  },
+  "fetchTool": "get_topdown_tileset",
+  "id": "10297a5c-2030-4487-8673-81fc22a3e045",
+  "generatedAt": "2026-10-31T02:40:47.068Z"
+}

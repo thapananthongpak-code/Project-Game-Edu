@@ -37,6 +37,12 @@ export function Missions() {
           <p className="font-extrabold">⚡ {fmt(ui.missions.power, { n: power })}</p>
           <p className="text-sm">{planOf(run).roomsNeedCores ? ui.missions.powerNote : ui.missions.powerNoteFree}</p>
         </div>
+        {/* แมพ 2–3: พลังไม่ถึงหรือยังไม่มีของ บอกทางย้อนกลับไปหาของและเรียนทวน (ไม่บังคับ) */}
+        {pending && pending.energy !== undefined && power < pending.power && (
+          <p className="rounded-md border-2 border-ink bg-hint px-2 py-1 text-sm font-bold" data-testid="missions-backup">
+            {profile?.difficulty === "hard" ? ui.missions.backup.hard : ui.missions.backup.normal}
+          </p>
+        )}
         <ul className="flex flex-col gap-2">
           {planOf(run).battles.map((battle) => {
             const record = battles[battle.id];

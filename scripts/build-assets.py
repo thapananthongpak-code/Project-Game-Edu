@@ -915,6 +915,13 @@ def main():
                 lambda: draw_floor("#C9D1D6", "#6E7B70"), lambda: draw_wall("#F4F4F4", "#9CB2B7", stripe="#2FB8AC")),
         tileset("TS-24", "ts_garden", "ไทล์เซตห้องสวน (พื้นหญ้า)", True,
                 lambda: draw_floor("#5FA85B", "#3E7A3D"), lambda: draw_wall("#C9A66B", "#8A6A3C", stripe="#FFCD75")),
+        # สถานที่ของแมพ 2 (รอบที่ 19): ห้องละชุด
+        tileset("TS-25", "ts_place_ruins", "ไทล์เซตสถานที่ 1 เมืองริมทะเลที่พังทลาย", True,
+                lambda: draw_floor("#D8C9A3", "#A89A78"), lambda: draw_wall("#E8E0CE", "#8A7B62", stripe="#5FC9C9")),
+        tileset("TS-26", "ts_place_base", "ไทล์เซตสถานที่ 2 ฐานปฏิบัติการการ์เดียน", True,
+                lambda: draw_floor("#4A5368", "#2E3447"), lambda: draw_wall("#8A94A6", "#4A5368", stripe="#FFA300")),
+        tileset("TS-27", "ts_place_valley", "ไทล์เซตสถานที่ 3 หุบเขากังหันลม", True,
+                lambda: draw_floor("#7CB86A", "#4E8A44"), lambda: draw_wall("#9A9F9C", "#5E6360", stripe="#F4F4F4")),
         tileset("TS-12", "ts_theme_sakura", "ธีมห้อง ซากุระ", True,
                 lambda: draw_floor("#F4C2D0", "#E08AA8"), lambda: draw_wall("#F4F4F4", "#C06C8A", stripe="#FF77A8")),
         tileset("TS-13", "ts_theme_ocean", "ธีมห้อง มหาสมุทร", True,
