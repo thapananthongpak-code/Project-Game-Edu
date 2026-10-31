@@ -109,9 +109,17 @@ export class HangarScene extends WorldScene {
     this.cores.forEach((core, i) => core.setVisible(own ? roomProgress(state, i + 1).core : (learned[i + 1]?.core ?? false)));
 
     const { weapon, armor, chip, paint } = state.shop;
-    const looks = `${armor}_${weapon}|${chip}|${paint}`;
+    // ภาพหุ่นการ์เดียนโหลดตามหลังหลังเกมเปิด (BootScene): ยังไม่มาก็ซ่อนหุ่นไว้ก่อน แล้ววาดเมื่อภาพมาถึง
+    const ready = this.textures.exists(`gd_${armor}_${weapon}_body`) && this.textures.exists(`gd_${armor}_${weapon}_items`) && (chip === "none" || this.textures.exists(`gd_chip_${chip}`));
+    const looks = `${armor}_${weapon}|${chip}|${paint}|${ready}`;
     if (looks !== this.looks) {
       this.looks = looks;
+      this.guardian.setVisible(ready);
+      this.guardianItems.setVisible(ready);
+      if (!ready) {
+        this.chipDevice.setVisible(false);
+        return;
+      }
       this.guardian.setTexture(`gd_${armor}_${weapon}_body`);
       this.guardianItems.setTexture(`gd_${armor}_${weapon}_items`);
       const tint = PAINT_TINT[paint];

@@ -61,6 +61,8 @@ npm run dev        # http://localhost:5173  (แดชบอร์ดผู้�
 5. Supabase → **Authentication → URL Configuration** → **Site URL** = ที่อยู่ของเกม และเพิ่มใน **Redirect URLs**: `https://ai-trainer-quest.vercel.app/` (และ `http://localhost:5173/` ถ้าทดสอบในเครื่อง)
 6. ตั้ง `VITE_GOOGLE_LOGIN=1` (ใน `.env` และบน Vercel) แล้ว build ใหม่ ปุ่ม **เข้าสู่ระบบด้วย Google** จะขึ้นบนหน้าเมนู
 
+**ก่อนใช้กับทั้งห้อง:** Supabase จำกัดการล็อกอินแบบไม่ระบุตัวตนต่อ IP ต่อชั่วโมง (ค่าเริ่มต้นราว 30) ห้องเรียนที่ออกเน็ตด้วย IP เดียวกันจะเกินได้ง่าย ให้ไปที่ Supabase Dashboard → **Authentication → Rate Limits** แล้วเพิ่ม "anonymous sign-ins" เป็นประมาณ 300 ต่อชั่วโมง (ถ้าเกิน เกมยังเล่นได้และเก็บในเครื่อง แล้วลองส่งใหม่เอง)
+
 ผู้เล่นที่เข้าสู่ระบบด้วย Google ขึ้นแดชบอร์ดเหมือนผู้เรียนคนอื่น (ข้อมูลของบัญชีผู้ดูแลถูกเก็บใต้กลุ่ม `SOLO` ไม่ขึ้นแดชบอร์ด)
 
 ### 2. Vercel

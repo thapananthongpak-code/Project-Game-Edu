@@ -26,6 +26,9 @@ export const wangKey = (tileset: string): string => `wang:${tileset}`;
 /** คีย์ใน registry ของโครงแผ่นสไปรต์ของตัวละครนั้น */
 export const sheetKey = (texture: string): string => `sheet:${texture}`;
 
+/** โฟลเดอร์ของภาพที่โหลดตามหลัง (หลังเปิดฉากแรกแล้ว) */
+const DEFERRED_DIR = "guardian/";
+
 /** โหลดภาพทั้งหมดตาม public/assets/assets-manifest.json แล้วเปิดโถงทางเดินเป็นฉากหลังของเมนู */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -38,8 +41,24 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     const manifest = this.cache.json.get("manifest") as AssetManifest;
+    // ภาพหุ่นการ์เดียนทุกแบบ (ใช้ที่แท่นในโรงเก็บหุ่นเท่านั้น ราว 140 ไฟล์) โหลดตามหลังหลังเกมเปิดแล้ว ให้เครื่องและเน็ตช้าเข้าเกมได้เร็วขึ้น
+    const later = (path: string) => path.startsWith(DEFERRED_DIR);
+    this.queue(manifest, (path) => !later(path));
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      useGameStore.getState().setReady();
+      // ฉากนี้ยังทำงานต่อเพื่อโหลดภาพที่เหลือ (ฉากอื่นถูกสลับด้วย PhaserGame.tsx ซึ่งไม่หยุดฉากนี้)
+      this.scene.launch(SCENE.hall);
+      this.queue(manifest, later);
+      this.load.start();
+    });
+    this.load.start();
+  }
+
+  /** ใส่ภาพตาม manifest ที่ผ่านตัวกรองลงคิวโหลด */
+  private queue(manifest: AssetManifest, wanted: (path: string) => boolean): void {
     for (const asset of manifest.assets) {
       for (const [key, path] of Object.entries(asset.files)) {
+        if (!wanted(path)) continue;
         if (asset.wang) {
           this.load.spritesheet(key, `assets/${path}`, { frameWidth: asset.wang.tileSize, frameHeight: asset.wang.tileSize });
           this.registry.set(wangKey(key), asset.wang.frames);
@@ -51,10 +70,5 @@ export class BootScene extends Phaser.Scene {
         }
       }
     }
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-      useGameStore.getState().setReady();
-      this.scene.start(SCENE.hall);
-    });
-    this.load.start();
   }
 }
