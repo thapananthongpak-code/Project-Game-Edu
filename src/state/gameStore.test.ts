@@ -4,9 +4,9 @@ import { BATTLE } from "./battle.config";
 import { CAMPAIGN, type Difficulty } from "./campaign";
 import { DASH } from "./dash";
 import { levelCredits } from "./level";
-import { allBattlesWon, levelDue, levelStatusOf, coreBoostOf, coreTotal, guardianPowerOf, planOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore, zoneCleared } from "./gameStore";
+import { allBattlesWon, levelDue, levelStatusOf, coreBoostOf, coreTotal, guardianPowerOf, planOf, learningRooms, mapUnlocked, reachedMap, roomsOfMap, creditsOf, earningOf, isRoomUnlocked, nextStepOf, pendingBattle, pendingStory, startTierOf, useGameStore, zoneCleared, guideDoorOf } from "./gameStore";
 import { NPC_REWARDS, NPCS } from "./npcs";
-import { emptyRoom, emptyShop } from "./progressStore";
+import { emptyShop } from "./progressStore";
 import { BAG_SIZE, DEFAULT_GEAR, itemPower, POWER } from "./gear";
 import { ADVICE, adviseBag, adviseWeapon, idealBag, missingAdvice, wishList } from "./loadout";
 import { bagOf, battleCredits, decorIn, earnedCredits, gearOf, layoutIn, modulesOf, ownedDecor, ownedThemes, roomMap, stockLeft, themeIn } from "./shop";
@@ -803,52 +803,22 @@ describe("แมพต่อเนื่อง 3 แมพ (GDD 15)", () => {
   });
 });
 
-describe("ด่านทางเชื่อมก่อนเข้าห้องครั้งแรก (GDD 22)", () => {
+describe("ด่านทางเชื่อม: เลิกใช้ในรอบ 20 (GDD 22)", () => {
   beforeEach(() => {
     useGameStore.setState({ shop: emptyShop() });
   });
   const store = () => useGameStore.getState();
 
-  it("เข้าห้องครั้งแรก: เปิดด่านทางเชื่อมก่อน ยังอยู่ที่โถง ผ่านแล้วเข้าห้องและได้เครดิตครั้งเดียว", () => {
-    const before = creditsOf(store());
+  it("เข้าห้องครั้งแรกได้ทันที ไม่มีด่านทางเชื่อม", () => {
     store().enterRoom(1);
-    expect([store().screen, store().overlay, store().dashZone]).toEqual(["hall", "dash", 1]);
-    store().finishDash(true);
-    expect([store().screen, store().zone, store().overlay, store().dashZone]).toEqual(["room", 1, null, null]);
-    expect(store().shop.dash).toEqual(["easy:1"]);
-    expect(creditsOf(store())).toBe(before + DASH.reward);
-    // ออกแล้วเข้าห้องเดิมอีกครั้ง: ไม่มีด่านทางเชื่อมซ้ำ
-    store().exitToHall();
-    store().enterRoom(1);
-    expect([store().screen, store().overlay]).toEqual(["room", null]);
-  });
-
-  it("ข้ามด่าน: เข้าห้องได้ทันที ไม่ได้เครดิต และไม่ถามอีก ปิดหน้าต่างเฉย ๆ ยังอยู่ที่โถง", () => {
-    const before = creditsOf(store());
-    store().enterRoom(1);
-    store().closeOverlay();
-    expect([store().screen, store().overlay, store().dashZone]).toEqual(["hall", null, null]);
-    store().enterRoom(1);
-    store().finishDash(false);
-    expect(store().screen).toBe("room");
-    expect(store().shop.dash).toEqual(["easy:1:s"]);
-    expect(creditsOf(store())).toBe(before);
-  });
-
-  it("ตั้งค่าข้ามทุกด่าน: เข้าห้องตรง ๆ และปิดค่าตั้งแล้วห้องใหม่กลับมามีด่าน", () => {
-    store().setDashSkip(true);
-    store().enterRoom(1);
-    expect(store().screen).toBe("room");
-    store().exitToHall();
-    store().setDashSkip(false);
-    store().enterRoom(2 as never);
+    expect([store().screen, store().zone, store().overlay]).toEqual(["room", 1, null]);
     expect(store().shop.dash).toEqual([]);
   });
 
-  it("ห้องที่เคยมีความคืบหน้าแล้ว (ผู้เล่นเดิมก่อนมีด่านนี้): ไม่ต้องเล่น", () => {
-    useGameStore.setState({ progress: { 1: { ...emptyRoom(), stationsSeen: 3 } } });
-    store().enterRoom(1);
-    expect([store().screen, store().overlay]).toEqual(["room", null]);
+  it("เครดิตที่เคยได้จากด่านทางเชื่อมในบันทึกเดิมยังนับ", () => {
+    const before = creditsOf(store());
+    useGameStore.setState({ shop: { ...emptyShop(), dash: ["easy:1", "easy:2:s", "skip"] } });
+    expect(creditsOf(store())).toBe(before + DASH.reward);
   });
 });
 
@@ -898,5 +868,11 @@ describe("เลเวลอัปและรางวัล (GDD 27)", () => {
   it("EXP และเลเวลไม่มีผลต่อการปลดล็อกห้อง: ปลดล็อกตามแกน AI และด่านต่อสู้เท่านั้น", () => {
     store().recordBattle("k1", { won: true, asked: 5, correct: 5 });
     expect(isRoomUnlocked(store(), 2)).toBe(false);
+  });
+});
+
+describe("การสอนเล่น: ลูกศรกับข้อความชี้ที่เดียวกัน (GDD 23 รอบ 20)", () => {
+  it("แมพที่มีห้องพาไปประตูห้อง 1 แมพที่ไม่มีห้องเรียนพาไปโรงเก็บหุ่น", () => {
+    expect((["easy", "normal", "hard"] as const).map((difficulty) => guideDoorOf({ profile: { name: "ทดสอบ", difficulty, classCode: "", avatar: "a" } }))).toEqual(["room", "room", "hangar"]);
   });
 });

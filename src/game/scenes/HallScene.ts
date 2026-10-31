@@ -2,7 +2,8 @@ import { topicOf } from "../../content";
 import { foeName } from "../../content/story";
 import { fmt, ui } from "../../content/ui-strings";
 import { DIFFICULTIES, type Difficulty, gateOf, mapIndex } from "../../state/campaign";
-import { allBattlesWon, difficultyOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore, zoneCleared } from "../../state/gameStore";
+import { GUIDE_STEPS } from "../../state/guide";
+import { allBattlesWon, difficultyOf, guideActive, guideDoorOf, isRoomUnlocked, mapUnlocked, pendingBattle, planOf, roomProgress, useGameStore, zoneCleared } from "../../state/gameStore";
 import { SCENE } from "../constants";
 import { type MapObject, objectBaseY, objectX } from "../maps";
 import { WorldScene } from "./WorldScene";
@@ -80,13 +81,7 @@ export class HallScene extends WorldScene {
     if (this.syncRoom(this.world, "hall")) return;
     const state = useGameStore.getState();
     const cleared = (zone: number) => zoneCleared(state, zone);
-    // ประตูของสถานที่ในแมพ 2 มีภาพของตัวเองตามสถานที่ (รอบ 19) ห้องเรียนใช้ภาพประตูกลาง
-    const zones = planOf(state).zones;
-    for (const door of this.doors) {
-      const open = isRoomUnlocked(state, door.index as number);
-      const place = zones[(door.index as number) - 1]?.place;
-      this.placed.get(door)?.setTexture(place ? `pr_door_${place}_${open ? "open" : "locked"}` : open ? "pr_door_open" : "pr_door_locked");
-    }
+    for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");
 
     // ของตกแต่งที่ผู้เล่นวางเองในโถงของแมพนี้
     this.syncDecor(this.world, "hall");
@@ -96,7 +91,10 @@ export class HallScene extends WorldScene {
     // ชนะครบทุกด่านของแมพนี้และแมพถัดไปเปิดแล้ว: ชี้ไปที่กระดานแผนที่
     const onward = DIFFICULTIES[mapIndex(this.world) + 1];
     const travel = battle === null && nextZone === undefined && allBattlesWon(state) && onward !== undefined && mapUnlocked(state, onward) && difficultyOf(state) === this.world;
-    this.pointAt(battle !== null ? "gate" : nextZone ? `door-${nextZone}` : travel ? "travel" : null);
+    // ขั้นสุดท้ายของการสอนเล่นบอกให้เดินไปที่ประตูที่ลูกศรชี้: ลูกศรชี้ประตูห้อง 1 (หรือโรงเก็บหุ่นในแมพที่ไม่มีห้อง) แม้ผู้เล่นผ่านทุกห้องแล้ว
+    const guidingDoor = guideActive(state) && GUIDE_STEPS[state.guideStep] === "door";
+    if (guidingDoor) this.pointAt(guideDoorOf(state) === "room" ? "door-1" : "gate");
+    else this.pointAt(battle !== null ? "gate" : nextZone ? `door-${nextZone}` : travel ? "travel" : null);
 
     const labels = this.doors.map((door) => {
       const zone = door.index as number;

@@ -22,7 +22,6 @@ import { Wardrobe } from "./ui/Wardrobe";
 import { BitPad } from "./ui/BitPad";
 import { TravelMap } from "./ui/TravelMap";
 import { DecorBoard } from "./ui/DecorBoard";
-import { DashRun } from "./ui/DashRun";
 import { OverlayBoundary } from "./ui/ErrorBoundary";
 import { GuideBar } from "./ui/GuideBar";
 import { LabPanel } from "./ui/LabPanel";
@@ -119,7 +118,6 @@ export function App() {
       {overlay === "travel" && <TravelMap />}
       {overlay === "decor" && <DecorBoard />}
       {overlay === "lab" && <LabPanel />}
-      {overlay === "dash" && <DashRun />}
       {overlay === "extras" && <Extras />}
       {overlay === "profile" && <Profile />}
       {overlay === "levelup" && <LevelUp />}

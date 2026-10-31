@@ -14,14 +14,6 @@ const SITES: Record<Difficulty, { x: number; y: number }> = {
   hard: { x: 66, y: 22 },
 };
 
-/** ไคจูของแต่ละแมพเรียงเป็นวงโค้งรอบสถานที่ (ครึ่งวงกลมด้านบนและข้าง) ระยะเป็นเปอร์เซ็นต์ของกรอบภาพ */
-function kaijuSpot(map: Difficulty, index: number, count: number): { x: number; y: number } {
-  const site = SITES[map];
-  // มุมจาก 190° ถึง 350° (ครึ่งวงกลมด้านบนของสถานที่)
-  const angle = Math.PI * (1.05 + (0.9 * index) / Math.max(1, count - 1));
-  return { x: site.x + Math.cos(angle) * 13, y: site.y + Math.sin(angle) * 18 };
-}
-
 /** เวลาที่หมุดตัวละครเดินไปยังแมพปลายทาง (มิลลิวินาที) */
 const WALK_MS = 900;
 
@@ -83,6 +75,10 @@ export function TravelMap() {
   };
 
   const pin = SITES[walkingTo ?? here];
+  /** ไคจูตัวถัดไป: ด่านแรกที่ยังไม่ชนะของแมพแรกที่เปิดแล้ว (ตามลำดับแมพ) */
+  const nextFoe = DIFFICULTIES.filter((map) => mapUnlocked(state, map))
+    .flatMap((map) => CAMPAIGN[map].battles.filter((battle) => !battles[battle.id]?.won).map((battle) => ({ map, battle })))
+    .at(0);
   const selected = info(picked);
   const lockedBy = ui.difficulty[DIFFICULTIES[Math.max(0, mapIndex(picked) - 1)]].name;
 
@@ -100,29 +96,19 @@ export function TravelMap() {
         {/* แผนที่โลก: ภาพพื้นหลังเป็นของตกแต่ง สถานที่เป็นปุ่มจริงวางทับ ใช้ Tab และ Enter ได้ */}
         <div className="relative aspect-video w-full overflow-hidden rounded-lg border-[3px] border-ink bg-teal-light" data-testid="travel-world">
           <img src={art.worldMap} alt="" className="pixelated absolute inset-0 h-full w-full object-cover" />
-          {/* ไคจูของทุกแมพวางบนแผนที่: ชนะแล้ว = สีเต็มมีเครื่องหมายถูก, ด่านถัดไป = กระพริบ, ยังไม่ถึง = เงาดำ (ข้อมูลเดียวกับรายการในการ์ดด้านล่าง) */}
-          {DIFFICULTIES.flatMap((map) => {
-            const list = CAMPAIGN[map].battles;
-            const next = mapUnlocked(state, map) ? list.find((battle) => !battles[battle.id]?.won)?.id : undefined;
-            return list.map((battle, i) => {
-              const spot = kaijuSpot(map, i, list.length);
-              const won = battles[battle.id]?.won === true;
-              const status = won ? "won" : battle.id === next ? "next" : "locked";
-              return (
-                <span
-                  key={battle.id}
-                  data-testid={`world-kaiju-${battle.id}`}
-                  data-status={status}
-                  aria-hidden="true"
-                  style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
-                  className={`travel-kaiju travel-kaiju-${status} pointer-events-none absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-end justify-center overflow-hidden rounded-full border-2 border-ink sm:h-9 sm:w-9 ${battle.boss ? "bg-hint" : "bg-paper/90"}`}
-                >
-                  <img src={art.foe(battle.forms[battle.forms.length - 1].art)} alt="" className="pixelated h-full w-full object-contain" />
-                  {won && <span className="absolute -right-0.5 -top-0.5 rounded-full bg-correct-dark px-0.5 text-xs font-extrabold leading-none text-paper">✓</span>}
-                </span>
-              );
-            });
-          })}
+          {/* แผนที่ไม่แสดงไคจูทุกตัว (รอบ 20 รกเกินไป): มีป้ายไคจูตัวถัดไปป้ายเดียวเหนือแมพที่มีด่านถัดไป รายชื่อครบอยู่ในการ์ดด้านล่าง */}
+          {nextFoe && (
+            <div
+              data-testid="world-next-kaiju"
+              data-map={nextFoe.map}
+              data-kaiju={nextFoe.battle.id}
+              style={{ left: `${SITES[nextFoe.map].x}%`, top: `${Math.max(9, SITES[nextFoe.map].y - 17)}%` }}
+              className="travel-next pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border-2 border-ink bg-hint py-0.5 pl-0.5 pr-2 text-xs font-extrabold"
+            >
+              <img src={art.foe(nextFoe.battle.forms[0].art)} alt="" className="pixelated h-6 w-6 rounded-full bg-paper object-contain sm:h-8 sm:w-8" />
+              <span className="whitespace-nowrap">{fmt(ui.travel.nextKaiju, { name: foeName(nextFoe.battle.forms[0].art) })}</span>
+            </div>
+          )}
           <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {DIFFICULTIES.slice(1).map((map) => {
               const from = SITES[DIFFICULTIES[mapIndex(map) - 1]];

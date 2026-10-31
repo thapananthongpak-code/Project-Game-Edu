@@ -30,6 +30,7 @@ export function installDebugHook(game: Phaser.Game): void {
         player: scene?.player ? { x: scene.player.x, y: scene.player.y } : null,
         interactables: scene?.interactables.map(({ id, x, y, enabled }) => ({ id, x, y, enabled: enabled ? enabled() : true })) ?? [],
         companion: scene?.companionPosition ?? null,
+        pointer: scene?.pointerTarget ?? null,
         avatar: scene?.player ? scene.avatarState : null,
         decor: scene?.decorInfo ?? [],
         bay: key === SCENE.hangar ? (scene as HangarScene).bayState : null,

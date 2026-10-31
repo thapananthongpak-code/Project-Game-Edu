@@ -148,7 +148,7 @@ const HALLS: Record<Difficulty, GameMap> = {
     ],
     spawn: { col: 2, row: 3 },
     objects: [
-      ...[4, 7, 13].map((col, i): MapObject => ({ kind: "door", prop: `pr_door_${["ruins", "base", "valley"][i]}_locked`, col, row: 1, mount: true, index: i + 1 })),
+      ...[4, 7, 13].map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
       { kind: "travel", prop: "pr_travel_board", col: 2, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 5, row: 8 },
@@ -568,13 +568,13 @@ export const roomMaps: Record<number, GameMap> = {
 
 
 /**
- * แมพ 2: 3 สถานที่ ไม่มีบทเรียน (กลับไปเรียนที่แมพ 1) ผู้เล่นเข้ามาคุยกับ NPC และทำเควสหาของที่ได้โมดูลเสริมให้พี่บิต (GDD ข้อ 32)
- * 1 เมืองริมทะเลที่พังทลาย (หน่วยลาดตระเวนและหมอสนาม) 2 ฐานปฏิบัติการการ์เดียน (ช่างตีเหล็ก ปราชญ์ ช่างวิศวกร) 3 หุบเขากังหันลม (ช่างเทคนิค)
+ * แมพ 2: ห้องวิจัย 3 ห้องของศูนย์วิจัยภาคสนาม ไม่มีบทเรียน (กลับไปเรียนที่แมพ 1) ผู้เล่นเข้ามาคุยกับ NPC และทำเควสหาของที่ได้โมดูลเสริมให้พี่บิต (GDD ข้อ 32)
+ * 1 ห้องวิจัยชายฝั่ง (หน่วยลาดตระเวนและหมอสนาม) 2 ห้องวิจัยการ์เดียน (ช่างตีเหล็ก ปราชญ์ ช่างวิศวกร) 3 ห้องวิจัยพลังงานลม (ช่างเทคนิค)
  */
 export const normalMaps: Record<number, GameMap> = {
-  // สถานที่ 1: เมืองริมทะเล เสาซากอาคารสองต้นกลางลาน
+  // ห้องวิจัย 1: ห้องวิจัยชายฝั่ง เสาสองต้นกลางห้อง
   1: {
-    tileset: "ts_place_ruins",
+    tileset: "ts_r2",
     shape: [
       "####################",
       "####################",
@@ -601,9 +601,9 @@ export const normalMaps: Record<number, GameMap> = {
       ...pickups("ranger", [[2, 3], [17, 3], [9, 9], [11, 4]]),
     ],
   },
-  // สถานที่ 2: ฐานปฏิบัติการ ชั้นบนกับชั้นล่างเชื่อมกันด้วยช่องกลาง
+  // ห้องวิจัย 2: ห้องวิจัยการ์เดียน ชั้นบนกับชั้นล่างเชื่อมกันด้วยช่องกลาง
   2: {
-    tileset: "ts_place_base",
+    tileset: "ts_r4",
     shape: [
       "####################",
       "####################",
@@ -630,9 +630,9 @@ export const normalMaps: Record<number, GameMap> = {
       ...pickups("engineer", [[8, 4], [15, 7], [11, 9]]),
     ],
   },
-  // สถานที่ 3: หุบเขากังหันลม ลานกว้างมีบล็อกฐานกังหันกลางลาน
+  // ห้องวิจัย 3: ห้องวิจัยพลังงานลม ลานกว้างมีแท่นกลางห้อง
   3: {
-    tileset: "ts_place_valley",
+    tileset: "ts_r5",
     shape: [
       "####################",
       "####################",

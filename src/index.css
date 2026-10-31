@@ -945,22 +945,16 @@ canvas {
   }
 }
 
-/* ไคจูบนแผนที่โลก: ยังไม่ถึง = เงาดำ ด่านถัดไป = เด้งเบา ๆ */
-.travel-kaiju-locked img {
-  filter: brightness(0) opacity(0.55);
-}
-@keyframes travel-kaiju-next {
+/* ป้ายไคจูตัวถัดไปบนแผนที่โลก (ป้ายเดียว): เด้งเบา ๆ */
+@keyframes travel-next {
   50% {
     transform: translate(-50%, -62%);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .travel-kaiju-next {
-    animation: travel-kaiju-next 1s ease-in-out infinite;
+  .travel-next {
+    animation: travel-next 1.2s ease-in-out infinite;
   }
-}
-.travel-kaiju-next {
-  box-shadow: 0 0 0 3px #ffcd75;
 }
 
 /* ด่านต่อสู้: แถบนับถอยหลังก่อนไปข้อถัดไปเอง (ขอบล่างของปุ่ม "ถัดไป") */

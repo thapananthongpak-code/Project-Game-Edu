@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { fmt, ui } from "../content/ui-strings";
-import { GUIDE_STEPS, guideDue, tipDue } from "../state/guide";
-import { useGameStore } from "../state/gameStore";
+import { GUIDE_STEPS, tipDue } from "../state/guide";
+import { guideActive, guideDoorOf, useGameStore } from "../state/gameStore";
 
 /**
  * ไกด์นำทาง (GDD ข้อ 23): แถบใต้ HUD ไม่บังฉาก ไม่ล็อกการเล่น และข้ามได้ทุกเมื่อ
@@ -14,7 +14,8 @@ export function GuideBar() {
   const zone = useGameStore((s) => s.zone);
   const step = useGameStore((s) => s.guideStep);
   const tips = useGameStore((s) => s.shop.tips);
-  const due = useGameStore((s) => screen === "hall" && guideDue({ tips: s.shop.tips, hasPretest: s.pretest !== null, storySeen: s.story, progress: s.progress, battles: s.battles, replay: s.guideReplay }));
+  const due = useGameStore(guideActive);
+  const door = useGameStore(guideDoorOf);
   const advance = useGameStore((s) => s.advanceGuide);
   const skip = useGameStore((s) => s.skipGuide);
   const dismiss = useGameStore((s) => s.dismissTip);
@@ -36,14 +37,13 @@ export function GuideBar() {
     };
   }, [due, step, advance]);
 
-  // ขั้น 2: เปิดสมุดเควส  ขั้น 4: เข้าห้อง (หรือด่านทางเชื่อมของห้อง)
+  // ขั้น 2: เปิดสมุดเควส  ขั้น 4: เข้าห้อง (แมพที่ไม่มีห้องเรียน: เข้าโรงเก็บหุ่น) ฉากออกจากโถงแล้ว due เป็น false จึงจบขั้นนี้ตอนกดเข้าประตู
   useEffect(() => {
-    if (!due) return;
-    if (step === 1 && overlay === "questlog") advance(1);
-    if (step === 3 && (zone !== null || overlay === "dash")) advance(3);
-  }, [due, step, overlay, zone, advance]);
+    if (step === 1 && due && overlay === "questlog") advance(1);
+    if (step === 3 && (zone !== null || screen === "hangar")) advance(3);
+  }, [due, step, overlay, zone, screen, advance]);
 
-  if (due && overlay !== "dash") {
+  if (due) {
     const key = GUIDE_STEPS[Math.min(step, GUIDE_STEPS.length - 1)];
     return (
       <section className="flex shrink-0 flex-wrap items-center gap-2 border-b-[3px] border-ink bg-hint px-2 py-1 text-sm" aria-label={ui.guide.stepLabel.replace("{n}", String(step + 1)).replace("{total}", String(GUIDE_STEPS.length))} data-testid="guide" data-step={key}>
@@ -51,7 +51,7 @@ export function GuideBar() {
           {fmt(ui.guide.stepLabel, { n: step + 1, total: GUIDE_STEPS.length })}
         </span>
         <span className="min-w-0 flex-1 font-semibold" data-testid="guide-text">
-          {ui.guide.steps[key]}
+          {key === "door" && door === "hangar" ? ui.guide.steps.doorHangar : ui.guide.steps[key]}
         </span>
         {key === "goal" && (
           <button type="button" className="btn !min-h-9 text-sm" data-testid="guide-next" onClick={() => advance(2)}>

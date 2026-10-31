@@ -19,7 +19,6 @@ const questOf = (room) => quests.rooms.find((r) => r.room === room);
 const KAIJU = ["กลิตช์", "ไตรฮอร์น", "สแครป", "เกียร์แครบ", "ฝูงมิมิก", "โอเมก้า"];
 /** โครงของแมพ (ข้อมูลล้วนจาก src/state/campaign.ts): พลังของไคจูและพลังที่แนะนำของแต่ละด่าน กติกาตรวจใน unit test สคริปต์นี้ตรวจว่าหน้าจอแสดงตรงกับโครง */
 const { CAMPAIGN } = await import("../src/state/campaign.ts");
-const { DASH, dashKindOf, wavesOf } = await import("../src/state/dash.ts");
 const TITLE_LEVELS = [1, 3, 5, 7, 9, 11, 13, 15, 18, 20];
 const titleIndex = (level) => TITLE_LEVELS.filter((from) => from <= level).length - 1;
 const ui_titles = ["นักฝึกมือใหม่", "นักฝึกฝีมือดี", "ผู้ช่วยการ์เดียน", "นักปฏิบัติการ", "ผู้คุมหุ่นเหล็ก", "หัวหน้าทีมฝึก", "ผู้พิชิตไคจู", "ผู้บัญชาการสนาม", "ยอดนักฝึก", "ผู้พิทักษ์ตำนาน"];
@@ -159,14 +158,9 @@ async function readStory(page, press = (locator) => locator.click()) {
 const inRoom = async (page, room, press) => {
   const arrived = (n) => {
     const s = window.__aitq.snapshot();
-    return (s.scene === "Room" && s.store.zone === n && s.interactables.length > 0) || s.store.overlay === "dash";
+    return s.scene === "Room" && s.store.zone === n && s.interactables.length > 0;
   };
   await page.waitForFunction(arrived, room);
-  // เข้าห้องครั้งแรก: มีด่านทางเชื่อมก่อน (ข้ามได้เสมอ การเล่นจริงตรวจในชุด dash)
-  if ((await snap(page)).store.overlay === "dash") {
-    await page.getByTestId("dash-skip").click();
-    await page.waitForFunction((n) => window.__aitq.snapshot().scene === "Room" && window.__aitq.snapshot().store.zone === n && window.__aitq.snapshot().interactables.length > 0, room);
-  }
   return readStory(page, press);
 };
 const attr = (label) => JSON.stringify(label);
@@ -1320,7 +1314,7 @@ async function playRoom1(page) {
   await shot(page, "07-wardrobe");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(350);
-  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, levelSeen: 1, dash: ["easy:1:s"], tips: ["tutorial", "tips-off"], decor: STARTER_DECOR, layout: {}, theme: {} });
+  assert.deepEqual((await snap(page)).store.shop, { spent: 100, owned: ["outfit-engineer"], supplies: NO_SUPPLIES, outfit: "engineer", paint: "standard", bit: "classic", modules: [], weapon: "fist", armor: "plate", chip: "none", loadout: [], bought: {}, seeds: NO_SEEDS, pots: {}, harvests: NO_SEEDS, levelSeen: 1, dash: [], tips: ["tutorial", "tips-off"], decor: STARTER_DECOR, layout: {}, theme: {} });
   log("ร้านขายอย่างเดียว ใส่ที่โรงเก็บหุ่น: เครดิต 75 + 40 ซื้อชุดช่าง 100 ไปสวมที่ตู้เสื้อผ้า เครื่องแบบบอกสิทธิพิเศษ สลับชุดและตัวละครได้ เครดิตไม่พอซื้อไม่ได้");
 
   // --- ซ้อมรบ: ด่านที่ชนะแล้วสู้ซ้ำได้เพื่อฟาร์มเครดิต ชนะไคจูแล้วการ์เดียนไม่ได้เก่งขึ้นเอง (ต้องซื้ออุปกรณ์)
@@ -2802,16 +2796,16 @@ async function playGuide(page) {
   assert.match(await page.getByTestId("guide-text").innerText(), /เป้าหมายถัดไป/);
   await page.getByTestId("guide-next").click();
   assert.equal(await stepOf(), "door");
+  assert.equal((await snap(page)).pointer, "door-1", "ขั้นเข้าห้อง: ลูกศรชี้ประตูห้อง 1 ตรงกับข้อความ");
+  assert.match(await page.getByTestId("guide-text").innerText(), /ลูกศรไปที่ประตูห้อง 1/);
   await shot(page, "38-guide-door");
 
-  // ขั้น 4: เดินไปประตูห้อง 1 แล้วเข้าห้อง (ด่านทางเชื่อมเปิดก่อน) การสอนจบและไม่ขึ้นอีก
+  // ขั้น 4: เดินไปประตูห้อง 1 แล้วเข้าห้องได้ทันที (ไม่มีด่านทางเชื่อมแล้ว รอบ 20) การสอนจบและไม่ขึ้นอีก
   await walkTo(page, "door-1");
   await act(page);
-  await page.getByTestId("dash").waitFor();
+  await inRoom(page, 1);
   assert.equal(await page.getByTestId("guide").count(), 0, "จบการสอนแล้ว แถบไกด์หายไป");
   assert.ok((await snap(page)).store.shop.tips.includes("tutorial"));
-  await page.getByTestId("dash-skip").click();
-  await inRoom(page, 1);
 
   // คำแนะนำครั้งแรกของห้องเรียน: แสดงครั้งเดียว
   const tip = page.getByTestId("guide-tip");
@@ -2857,6 +2851,27 @@ async function playGuide(page) {
   await page.getByTestId("guide").waitFor();
   assert.equal(await stepOf(), "move");
   await page.getByTestId("guide-skip").click();
+
+  // ผู้เล่นที่ผ่านทุกด่านของแมพ 1 แล้ว (ลูกศรปกติชี้กระดานแผนที่) ขอดูการสอนอีกครั้ง: ขั้นเข้าห้องลูกศรย้ายไปที่ประตูห้อง 1 ตามข้อความ
+  await resumeWith(page, travelerSave({ shop: shopOf({ tips: ["tutorial"] }) }));
+  assert.equal((await snap(page)).pointer, "travel", "จบแมพ 1 แล้ว: ลูกศรชี้กระดานแผนที่");
+  await page.getByRole("button", { name: "สมุดเควส" }).click();
+  await page.getByTestId("replay-guide").click();
+  await page.getByTestId("guide").waitFor();
+  await page.keyboard.press("ArrowLeft");
+  await page.getByRole("button", { name: "สมุดเควส" }).click();
+  await page.getByRole("button", { name: "ปิด", exact: true }).click();
+  await page.getByTestId("guide-next").click();
+  assert.equal(await stepOf(), "door");
+  await page.waitForFunction(() => window.__aitq.snapshot().pointer === "door-1");
+  await walkTo(page, "door-1");
+  await act(page);
+  await inRoom(page, 1);
+  assert.equal(await page.getByTestId("guide").count(), 0, "เข้าห้องแล้ว การสอนจบ");
+  await walkTo(page, "door-entry");
+  await act(page);
+  await inHall(page);
+  await page.waitForFunction(() => window.__aitq.snapshot().pointer === "travel");
   assert.equal(await page.getByTestId("guide").count(), 0);
   assert.ok((await snap(page)).store.shop.tips.includes("tutorial"));
 
@@ -2864,73 +2879,6 @@ async function playGuide(page) {
   await resumeWith(page, travelerSave({ shop: shopOf({ tips: [] }) }));
   assert.equal(await page.getByTestId("guide").count(), 0, "ผู้เล่นเดิมไม่เห็นการสอนเล่น");
   log("ไกด์นำทาง: สอนเล่น 4 ขั้นผ่านเมื่อทำจริง ข้ามได้ทุกเมื่อ คำแนะนำครั้งแรกของห้อง ย่านร้านค้า ห้องวิจัยแสดงครั้งเดียวและปิดได้ ดูการสอนอีกครั้งได้ ผู้เล่นเดิมไม่ถูกสอน");
-}
-
-// ---------------------------------------------------------------- ด่านทางเชื่อมก่อนเข้าห้อง (GDD ข้อ 22)
-
-/** วิ่งผ่านด่านทางเชื่อมด้วยบอท: ก่อนแต่ละคลื่นถึง เลื่อนไปช่องที่ปลอดภัยที่ใกล้ที่สุดด้วยปุ่มลูกศร */
-async function dodgeAll(page, zone) {
-  const waves = wavesOf(dashKindOf(zone), zone);
-  let lane = 1;
-  const started = Date.now();
-  for (const wave of waves) {
-    const wait = wave.at * 1000 - 700 - (Date.now() - started);
-    if (wait > 0) await page.waitForTimeout(wait);
-    const safe = [0, 1, 2].filter((l) => !wave.blocked.includes(l));
-    const target = safe.reduce((best, l) => (Math.abs(l - lane) < Math.abs(best - lane) ? l : best), safe[0]);
-    for (; lane < target; lane++) await page.keyboard.press("ArrowRight");
-    for (; lane > target; lane--) await page.keyboard.press("ArrowLeft");
-  }
-}
-
-async function playDash(page) {
-  // แมพ 2 ห้อง 1 ยังไม่เคยเข้า: เข้าครั้งแรกมีด่านทางเชื่อม (ห้องเลขคี่ = หลบสิ่งกีดขวาง)
-  await resumeWith(page, travelerSave());
-  await travelTo(page, "normal", 3);
-  const start = await creditsOf(page);
-  await walkTo(page, "door-1");
-  await act(page);
-  const dash = page.getByTestId("dash");
-  await dash.waitFor();
-  assert.deepEqual([await dash.getAttribute("data-kind"), await dash.getAttribute("data-zone"), await dash.getAttribute("data-phase")], ["obstacles", "1", "ready"]);
-  assert.equal((await snap(page)).store.screen, "hall", "ด่านทางเชื่อมเปิดทับโถง ยังไม่เข้าห้อง");
-  assert.equal(await page.getByTestId("dash-skip").isVisible(), true, "ข้ามได้เสมอ");
-  await shot(page, "37-dash-ready");
-  // ยืนเฉย ๆ: โดนครบ 3 ครั้งแล้วต้องเริ่มใหม่ (ไม่ติดถาวร มีปุ่มลองใหม่และข้ามด่าน)
-  await page.getByTestId("dash-start").click();
-  assert.equal(await dash.getAttribute("data-phase"), "run");
-  await page.waitForFunction(() => document.querySelector('[data-testid="dash"]')?.getAttribute("data-phase") === "lost", undefined, { timeout: 25000 });
-  assert.equal(await page.getByTestId("dash-shield").getAttribute("data-shield"), "0");
-  await shot(page, "37-dash-lost");
-  // ลองใหม่แล้วหลบครบทั้งด่านด้วยปุ่มลูกศร: ผ่าน ได้เครดิต 5 และเข้าห้อง
-  await page.getByTestId("dash-retry").click();
-  assert.equal(await dash.getAttribute("data-phase"), "run");
-  await dodgeAll(page, 1);
-  await page.waitForFunction(() => document.querySelector('[data-testid="dash"]')?.getAttribute("data-phase") === "won", undefined, { timeout: 15000 });
-  assert.equal(await page.getByTestId("dash-shield").getAttribute("data-shield"), String(DASH.shield));
-  await page.getByTestId("dash-go").click();
-  await inRoom(page, 1);
-  assert.deepEqual((await snap(page)).store.shop.dash, ["normal:1"]);
-  assert.equal(await creditsOf(page), start + DASH.reward, "ผ่านด่านทางเชื่อมครั้งแรกได้เครดิตเล็กน้อย");
-  // ออกแล้วเข้าห้องเดิมอีกครั้ง: ไม่มีด่านทางเชื่อมซ้ำ
-  await walkTo(page, "door-entry");
-  await act(page);
-  await inHall(page);
-  await walkTo(page, "door-1");
-  await act(page);
-  await page.waitForFunction(() => window.__aitq.snapshot().scene === "Room");
-  assert.equal(await page.getByTestId("dash").count(), 0);
-
-  // ตั้งค่า "ข้ามด่านทางเชื่อมเสมอ" ที่สมุดเควส: ห้องใหม่เข้าได้ตรง ๆ
-  await walkTo(page, "door-entry");
-  await act(page);
-  await inHall(page);
-  await page.getByRole("button", { name: "สมุดเควส" }).click();
-  await page.getByTestId("dash-skip-setting").click();
-  assert.equal(await page.getByTestId("dash-skip-setting").getAttribute("aria-checked"), "true");
-  await page.getByRole("button", { name: "ปิด", exact: true }).click();
-  assert.ok((await snap(page)).store.shop.dash.includes("skip"));
-  log("ด่านทางเชื่อมก่อนเข้าห้อง: เล่นครั้งแรกของห้อง ยืนเฉยโล่หมดแล้วลองใหม่ได้ หลบครบผ่านได้เครดิต ไม่ถามซ้ำ ข้ามทั้งหมดได้ที่สมุดเควส");
 }
 
 // ---------------------------------------------------------------- แมพ 2: ศูนย์วิจัยภาคสนาม (GDD ข้อ 15, 16, 17, 19)
@@ -3133,6 +3081,11 @@ async function playNormal(page) {
   await page.getByTestId("travel-hard").click();
   assert.match(await page.getByTestId("travel-card").innerText(), /ต้องชนะไคจูของแมพ 2: ศูนย์วิจัยภาคสนามให้ครบก่อน/);
   assert.equal(await page.getByTestId("travel-go-hard").count(), 0, "แมพที่ยังล็อกเดินทางไปไม่ได้");
+  // แผนที่ไม่แสดงไคจูทุกตัว (รอบ 20): มีป้ายไคจูตัวถัดไปป้ายเดียว อยู่เหนือแมพ 2
+  assert.equal(await page.locator('[data-testid^="world-kaiju-"]').count(), 0, "แผนที่ไม่มีวงกลมไคจูทุกตัว");
+  const nextKaiju = page.getByTestId("world-next-kaiju");
+  assert.deepEqual([await nextKaiju.count(), await nextKaiju.getAttribute("data-map"), await nextKaiju.getAttribute("data-kaiju")], [1, "normal", "n1"]);
+  assert.match(await nextKaiju.innerText(), new RegExp(`ถัดไป: ${KAIJU2.n1}`));
   await shot(page, "35-travel");
   await page.getByTestId("travel-close").click();
   await page.waitForTimeout(350);
@@ -3171,22 +3124,22 @@ async function playNormal(page) {
   assert.equal(await travelTo(page, "normal", 3), null, "ฉากมาถึงแมพแสดงครั้งเดียว");
   log("เดินทางข้ามแมพ: ชนะไคจูของแมพ 1 ครบแล้วแมพ 2 เปิด (แมพ 3 ยังล็อก) มาถึงครั้งแรกมีฉากเนื้อเรื่อง ความคืบหน้าแยกรายแมพ เครดิตและของใช้ร่วมกัน ของใช้ในร้านมีจำกัดต่อแมพ กลับแมพ 1 ได้เสมอ");
 
-  // --- สถานที่ 1 ของแมพ 2 (เมืองริมทะเลที่พังทลาย): ไม่มีบทเรียน มีแต่ NPC และเควสหาของ
+  // --- ห้องวิจัย 1 ของแมพ 2 (ห้องวิจัยชายฝั่ง): ไม่มีบทเรียน มีแต่ NPC และเควสหาของ
   await walkTo(page, "door-2");
   await act(page);
-  assert.match((await snap(page)).store.toast, /ห้อง 2 ยังล็อก ต้องพาการ์เดียนไปชนะโวลต์อีลก่อน/, "แมพ 2: สถานที่เปิดด้วยการชนะไคจูอย่างเดียว");
+  assert.match((await snap(page)).store.toast, /ห้อง 2 ยังล็อก ต้องพาการ์เดียนไปชนะโวลต์อีลก่อน/, "แมพ 2: ห้องเปิดด้วยการชนะไคจูอย่างเดียว");
   await walkTo(page, "door-1");
-  assert.match((await snap(page)).store.prompt, /เข้าเมืองริมทะเลที่พังทลาย \(สถานที่ 1\)/);
+  assert.match((await snap(page)).store.prompt, /เข้าห้อง 1: ห้องวิจัยชายฝั่ง/);
   await act(page);
   const briefing = await inRoom(page, 1);
   assert.deepEqual([briefing?.beat, briefing.art], ["zone-n1", ["st_kaiju_7"]]);
-  assert.deepEqual(await npcIds(page), ["medic", "ranger"], "แมพ 2 สถานที่ 1: NPC ของสถานที่นี้");
+  assert.deepEqual(await npcIds(page), ["medic", "ranger"], "แมพ 2 ห้องวิจัย 1: NPC ของห้องนี้");
   assert.deepEqual(await roomIds(page), ["door-entry"], "แมพ 2: ไม่มีสถานี คลังความรู้ เครื่องฝึก โต๊ะทบทวน หรือแท่นแกน AI");
   state = (await snap(page)).store;
   assert.deepEqual([state.screen, state.zone, state.room], ["room", 1, null]);
-  assert.match(await page.getByTestId("objective").innerText(), /คุยกับ NPC ของสถานที่นี้/);
+  assert.match(await page.getByTestId("objective").innerText(), /คุยกับ NPC ของห้องนี้/);
   assert.equal(await page.getByTestId("cores").count(), 0, "แมพ 2 ไม่มีแกน AI ให้เก็บ");
-  await assertCanvasFits(page, "แมพ 2 สถานที่ 1");
+  await assertCanvasFits(page, "แมพ 2 ห้องวิจัย 1");
   await shot(page, "30-normal-room");
 
   assert.equal(await page.getByTestId("hud-tutor").count(), 0, "ติวเตอร์ถามเรื่องบทเรียน: ใช้ที่ห้องเรียนของแมพ 1 เท่านั้น");
@@ -3220,9 +3173,9 @@ async function playNormal(page) {
   assert.match(await page.getByTestId("questlog-side").innerText(), /2\/5/, "กิจกรรมเสริมของแมพ 2: เควสของพี่ไรลีย์และของช่วยเหลือของหมอโซเฟีย");
   await page.getByRole("button", { name: "ปิด", exact: true }).click();
   await page.waitForTimeout(350);
-  log("แมพ 2 สถานที่ 1: ไม่มีบทเรียน มีหมอโซเฟีย (ของช่วยเหลือ) และพี่ไรลีย์ (เควสหาของ ได้เครดิต 50 กับโมดูลแบตสำรอง) ไม่มีปุ่มถามติวเตอร์ (ใช้ที่ห้องเรียนแมพ 1)");
+  log("แมพ 2 ห้องวิจัย 1: ไม่มีบทเรียน มีหมอโซเฟีย (ของช่วยเหลือ) และพี่ไรลีย์ (เควสหาของ ได้เครดิต 50 กับโมดูลแบตสำรอง) ไม่มีปุ่มถามติวเตอร์ (ใช้ที่ห้องเรียนแมพ 1)");
 
-  // --- ไคจูประจำสถานที่ 1: ออกรบด้วยโมดูลแบตสำรองที่ได้มา พลังงานจำกัดจำนวนข้อที่ตอบได้
+  // --- ไคจูประจำห้องวิจัย 1: ออกรบด้วยโมดูลแบตสำรองที่ได้มา พลังงานจำกัดจำนวนข้อที่ตอบได้
   await walkTo(page, "door-entry");
   await act(page);
   await inHall(page);
@@ -3237,7 +3190,7 @@ async function playNormal(page) {
   await page.getByTestId("bitpad-close").click();
   await page.waitForTimeout(350);
   await openMissions(page);
-  assert.deepEqual(await missionStatus(page), { n1: "ready", n2: "locked", n3: "locked", "omega-n": "locked" }, "แมพ 2: ไคจูประจำสถานที่ 3 ตัว และบอส 1 ตัว");
+  assert.deepEqual(await missionStatus(page), { n1: "ready", n2: "locked", n3: "locked", "omega-n": "locked" }, "แมพ 2: ไคจูประจำห้องวิจัย 3 ตัว และบอส 1 ตัว");
   assert.match(await page.getByTestId("mission-omega-n").innerText(), /กลายร่างได้ 2 ร่าง/);
   assert.match(await page.getByTestId("missions-power").innerText(), /ไม่ต้องมีแกน AI/);
   await shot(page, "31-normal-missions");
@@ -3257,13 +3210,13 @@ async function playNormal(page) {
   assert.match(await page.getByTestId("battle-hint").innerText(), /เหลือ 1/);
   assert.equal(Number(await page.getByTestId("battle-energy").getAttribute("data-energy")), energy + 3, "โมดูลแบตสำรองเติมพลังงานให้ตอนเริ่มด่าน");
   const first = await winBattle(page, "n1");
-  assert.deepEqual([...new Set(first.turns.map((turn) => turn.source))].sort(), [1, 2], "โจทย์ของไคจูประจำสถานที่มาจากเรื่องที่ 1 และ 2");
+  assert.deepEqual([...new Set(first.turns.map((turn) => turn.source))].sort(), [1, 2], "โจทย์ของไคจูประจำห้องวิจัยมาจากเรื่องที่ 1 และ 2");
   assert.deepEqual([first.story?.beat, first.story.art[0]], ["win-n1", "st_win_kaiju_7"]);
   assert.equal(first.credits, "เครดิตวิจัย +80", "(30 + 10) × 2");
   assert.match(first.won, /ประตูห้อง 2 เปิดแล้ว/);
-  log(`แมพ 2 ไคจูประจำสถานที่ 1 โวลต์อีล: พลังงาน ${energy} ข้อ + แบตสำรอง 3 ข้อ โจทย์จากเรื่องที่ 1 และ 2 ชนะใน ${first.turns.length} ตา ได้ 80 เครดิต สถานที่ 2 เปิด`);
+  log(`แมพ 2 ไคจูประจำห้องวิจัย 1 โวลต์อีล: พลังงาน ${energy} ข้อ + แบตสำรอง 3 ข้อ โจทย์จากเรื่องที่ 1 และ 2 ชนะใน ${first.turns.length} ตา ได้ 80 เครดิต ห้องวิจัย 2 เปิด`);
 
-  // --- สถานที่ 2 (ฐานปฏิบัติการ): ลุงบียอร์น (ร้านอาวุธพิเศษ) ดร.ไอรีน (ถามตอบ) ช่างโนอาห์ (เควสหาของ)
+  // --- ห้องวิจัย 2 (ฐานปฏิบัติการ): ลุงบียอร์น (ร้านอาวุธพิเศษ) ดร.ไอรีน (ถามตอบ) ช่างโนอาห์ (เควสหาของ)
   await backToHall(page);
   await walkTo(page, "door-2");
   await act(page);
@@ -3295,9 +3248,9 @@ async function playNormal(page) {
   const engineerReward = await doSideQuest(page, "engineer");
   assert.equal(engineerReward, 50);
   assert.equal((await snap(page)).store.shop.owned.includes("module-recycler"), true, "ทำเควสสำเร็จ: ได้โมดูลรีไซเคิลพลังงาน");
-  log(`แมพ 2 สถานที่ 2: ดร.ไอรีน (ถามตอบเปิดทันทีเพราะได้แกนครบจากแมพ 1 ได้ ${quizReward} เครดิต) ลุงบียอร์น (ร้านอาวุธพิเศษ: หอกสายฟ้า) ช่างโนอาห์ (เควสหาของ ได้โมดูลรีไซเคิล)`);
+  log(`แมพ 2 ห้องวิจัย 2: ดร.ไอรีน (ถามตอบเปิดทันทีเพราะได้แกนครบจากแมพ 1 ได้ ${quizReward} เครดิต) ลุงบียอร์น (ร้านอาวุธพิเศษ: หอกสายฟ้า) ช่างโนอาห์ (เควสหาของ ได้โมดูลรีไซเคิล)`);
 
-  // --- ผู้เล่นที่ชนะไคจูประจำสถานที่ 1 แล้ว: เกราะ อุปกรณ์สามช่อง และบอส 2 ร่าง
+  // --- ผู้เล่นที่ชนะไคจูประจำห้องวิจัย 1 แล้ว: เกราะ อุปกรณ์สามช่อง และบอส 2 ร่าง
   await resumeWith(page, travelerSave({
     profile: { name: "นักเดินทาง", difficulty: "normal", classCode: "", avatar: "a" },
     maps: { normal: {}, hard: {} },
@@ -4212,10 +4165,6 @@ try {
   if (wanted("guide")) {
     console.log("เดสก์ท็อป: ไกด์นำทางและสอนเล่น");
     await playGuide(page);
-  }
-  if (wanted("dash")) {
-    console.log("เดสก์ท็อป: ด่านทางเชื่อมก่อนเข้าห้องครั้งแรก");
-    await playDash(page);
   }
   if (wanted("lab")) {
     console.log("เดสก์ท็อป: ห้องวิจัยพืชต่างดาว (ร้านพืช ปลูก โตตามเวลาจริง เก็บผลผลิต)");

@@ -324,6 +324,11 @@ export abstract class WorldScene extends Phaser.Scene {
     return this.map.objects.filter((object) => object.kind === kind);
   }
 
+  /** จุดโต้ตอบที่ลูกศรชี้อยู่ (ไม่แสดง = null) สำหรับสคริปต์ทดสอบ */
+  get pointerTarget(): string | null {
+    return this.marker?.visible ? this.markerTarget : null;
+  }
+
   /** ย้ายลูกศรชี้เป้าหมายไปเหนือจุดโต้ตอบนั้น (null = ซ่อน) */
   protected pointAt(id: string | null): void {
     if (id === this.markerTarget) return;

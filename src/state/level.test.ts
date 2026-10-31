@@ -15,8 +15,8 @@ function finished(): LevelInput {
   );
   const shop = emptyShop();
   return {
-    earning: { maps: { easy: Object.fromEntries([1, 2, 3, 4, 5, 6].map((t) => [t, { ...emptyRoom(), core: true }])) }, battles, npcs: Object.fromEntries(Object.values(NPCS).filter((spec) => spec.role === "quest").slice(0, 3).map((spec) => [spec.id, { ...emptyNpc(), done: true }])), posttest: null },
-    shop: { ...shop, harvests: { glowfern: 8, crystalbloom: 4, sunvine: 3, moonpod: 2 }, dash: ["easy:1", "easy:2", "easy:3"], owned: ["weapon-sword"], weapon: "sword", armor: "heavy", chip: "focus", decor: { "easy:hall": ["a", "b", "c", "d", "e", "f"].map((_, i) => ({ decor: "window" as const, col: i, row: 1 })) } },
+    earning: { maps: { easy: Object.fromEntries([1, 2, 3, 4, 5, 6].map((t) => [t, { ...emptyRoom(), core: true }])) }, battles, npcs: Object.fromEntries(Object.values(NPCS).filter((spec) => spec.role !== "shop").map((spec) => [spec.id, { ...emptyNpc(), done: spec.role === "quest", tries: spec.role === "quest" ? 0 : 1, gifted: spec.role === "gift" }])), posttest: null },
+    shop: { ...shop, harvests: { glowfern: 8, crystalbloom: 4, sunvine: 3, moonpod: 2 }, owned: ["weapon-sword"], weapon: "sword", armor: "heavy", chip: "focus", decor: { "easy:hall": ["a", "b", "c", "d", "e", "f"].map((_, i) => ({ decor: "window" as const, col: i, row: 1 })) } },
   };
 }
 

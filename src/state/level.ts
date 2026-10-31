@@ -69,7 +69,6 @@ const mapWon = (input: LevelInput, map: Difficulty): number => CAMPAIGN[map].bat
 const rooms = (input: LevelInput): RoomProgress[] => DIFFICULTIES.flatMap((map) => Object.values(input.earning.maps[map] ?? {}));
 const bestStreak = (input: LevelInput): number => Math.max(0, ...battlesOf(input).map((record) => record.streak ?? 0));
 const harvested = ({ shop }: LevelInput): number => SEEDS.reduce((sum, seed) => sum + shop.harvests[seed], 0);
-const dashPassed = ({ shop }: LevelInput): number => shop.dash.filter((entry) => /^(?:easy|normal|hard):\d{1,2}$/.test(entry)).length;
 const mostPlaced = ({ shop }: LevelInput): number => Math.max(0, ...Object.values(shop.decor).map((placed) => placed.length));
 const gearWorn = ({ shop }: LevelInput): number => (shop.weapon !== "fist" ? 1 : 0) + (shop.armor !== "plate" ? 1 : 0) + (shop.chip !== "none" ? 1 : 0);
 
@@ -88,10 +87,11 @@ export const CHALLENGES: readonly Challenge[] = [
   { id: "untouched", exp: 50, goal: 1, progress: (i) => battlesOf(i).filter((record) => record.untouched).length },
   { id: "first-core", exp: 30, goal: 1, progress: (i) => rooms(i).filter((room) => room.core).length },
   { id: "all-cores", exp: 80, goal: 6, progress: (i) => (Object.values(i.earning.maps.easy ?? {}) as RoomProgress[]).filter((room) => room.core).length },
-  { id: "dash-3", exp: 40, goal: 3, progress: (i) => dashPassed(i) },
   { id: "harvest-5", exp: 40, goal: 5, progress: (i) => harvested(i) },
   { id: "harvest-15", exp: 70, goal: 15, progress: (i) => harvested(i) },
   { id: "npc-3", exp: 50, goal: 3, progress: (i) => npcActivitiesDone(i.earning.npcs ?? {}) },
+  // แทนชาเลนจ์ด่านทางเชื่อมที่เลิกใช้ในรอบ 20
+  { id: "npc-6", exp: 40, goal: 6, progress: (i) => npcActivitiesDone(i.earning.npcs ?? {}) },
   { id: "decor-6", exp: 30, goal: 6, progress: (i) => mostPlaced(i) },
   { id: "shopper", exp: 20, goal: 1, progress: ({ shop }) => shop.owned.filter((id) => !CATALOG.find((item) => item.id === id)?.reward).length },
   { id: "gear-3", exp: 40, goal: 3, progress: (i) => gearWorn(i) },

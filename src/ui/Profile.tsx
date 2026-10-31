@@ -28,7 +28,6 @@ export function Profile() {
   const totalBattles = DIFFICULTIES.reduce((sum, map) => sum + CAMPAIGN[map].battles.length, 0);
   const best = Math.max(0, ...Object.values(state.battles).map((record) => record.streak ?? 0));
   const harvests = SEEDS.reduce((sum, seed) => sum + shop.harvests[seed], 0);
-  const dash = shop.dash.filter((entry) => /^(?:easy|normal|hard):\d{1,2}$/.test(entry)).length;
   const doneCount = CHALLENGES.filter((challenge) => challengeDone(challenge, input)).length;
   const rewardLevels = Object.keys(LEVEL_REWARDS).map(Number);
   const nextAt = rewardLevels.find((level) => level > status.level && (LEVEL_REWARDS[level].items?.length ?? 0) > 0);
@@ -85,7 +84,6 @@ export function Profile() {
             <li>{fmt(ui.level.stats.wins, { n: wonBattles, total: totalBattles })}</li>
             <li>{fmt(ui.level.stats.streak, { n: best })}</li>
             <li>{fmt(ui.level.stats.harvest, { n: harvests })}</li>
-            <li>{fmt(ui.level.stats.dash, { n: dash })}</li>
             <li>{fmt(ui.level.stats.npc, { n: npcActivitiesDone(state.npcs), total: npcActivityTotal() })}</li>
           </ul>
         </section>

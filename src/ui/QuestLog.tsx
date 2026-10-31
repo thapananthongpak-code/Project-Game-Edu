@@ -38,8 +38,6 @@ export function QuestLog() {
   const bitSkin = useGameStore((s) => s.shop.bit);
   const credits = useGameStore(creditsOf);
   const audio = useAudioSettings();
-  const dashSkip = useGameStore((s) => s.shop.dash.includes("skip"));
-  const setDashSkip = useGameStore((s) => s.setDashSkip);
   const replayGuide = useGameStore((s) => s.replayGuide);
   const run = { profile, progress, battles };
   const power = useGameStore((s) => guardianPowerOf(s));
@@ -151,17 +149,6 @@ export function QuestLog() {
               {ui.guide.replay}
             </button>
             <p className="text-xs text-slate">{ui.guide.replayHint}</p>
-            <h3 className="text-xs font-bold text-slate">{ui.dash.settingTitle}</h3>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={dashSkip}
-              data-testid="dash-skip-setting"
-              onClick={() => setDashSkip(!dashSkip)}
-              className={`min-h-10 self-start rounded-lg border-[3px] border-ink px-3 font-bold ${dashSkip ? "bg-hint" : "bg-paper"}`}
-            >
-              {ui.dash.settingLabel}: {dashSkip ? ui.sound.on : ui.sound.off}
-            </button>
           </section>
         )}
 
