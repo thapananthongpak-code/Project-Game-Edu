@@ -645,6 +645,9 @@ GEAR_SETTINGS = {"no_background": True, "outline": "single color black outline",
 # ของเก็บในเควสเสริมและของตกแต่ง: (รหัส, ไฟล์, ขนาด)
 DECOR_PROPS = [
     ("PR-Q01", "pr_pickup_bolt", (32, 32)), ("PR-Q02", "pr_pickup_gear", (32, 32)), ("PR-Q03", "pr_pickup_beacon", (32, 32)),
+    # ประตูของสถานที่ในแมพ 2 (รอบที่ 19)
+    ("PR-P01", "pr_door_ruins_locked", (32, 64)), ("PR-P02", "pr_door_ruins_open", (32, 64)), ("PR-P03", "pr_door_base_locked", (32, 64)),
+    ("PR-P04", "pr_door_base_open", (32, 64)), ("PR-P05", "pr_door_valley_locked", (32, 64)), ("PR-P06", "pr_door_valley_open", (32, 64)),
     ("PR-Q04", "pr_pickup_cell", (32, 32)), ("PR-Q05", "pr_pickup_plate", (32, 32)),
     ("PR-D13", "pr_decor_neon", (64, 32)), ("PR-D14", "pr_decor_clock", (64, 32)), ("PR-D15", "pr_decor_banner", (64, 32)),
     ("PR-D16", "pr_decor_aquarium", (64, 64)), ("PR-D17", "pr_decor_arcade", (64, 64)), ("PR-D18", "pr_decor_statue", (64, 64)), ("PR-D19", "pr_decor_sofa", (64, 64)), ("PR-D20", "pr_decor_fountain", (64, 64)),

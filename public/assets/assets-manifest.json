@@ -4990,6 +4990,186 @@
       "status": "generated"
     },
     {
+      "id": "PR-P01",
+      "kind": "prop",
+      "name": "ประตูสถานที่ 1 เมืองริมทะเลที่พังทลาย (ล็อก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_ruins_locked": "props/pr_door_ruins_locked.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a collapsed seaside stone archway door blocked by fallen wooden planks and rubble with a small red lock light, sandy beige stone with blue sea stains, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "1738a267-7af9-4358-9de6-91e37bb992ea",
+        "generatedAt": "2026-10-31T03:10:37.507Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-P02",
+      "kind": "prop",
+      "name": "ประตูสถานที่ 1 (เปิด)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_ruins_open": "props/pr_door_ruins_open.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a seaside stone archway door cleared and open showing a bright blue sea view beyond, sandy beige stone with blue sea stains and a small green light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "4ef69451-4ff1-472e-a311-a0de8a1974ad",
+        "generatedAt": "2026-10-31T03:11:08.315Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-P03",
+      "kind": "prop",
+      "name": "ประตูสถานที่ 2 ฐานปฏิบัติการการ์เดียน (ล็อก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_base_locked": "props/pr_door_base_locked.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a heavy steel blast door closed tight with yellow and black hazard stripes, orange pipes and a red lock light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "63cc32fd-02f9-4ca1-ae0b-e4a7d47ebabd",
+        "generatedAt": "2026-10-31T03:11:39.750Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-P04",
+      "kind": "prop",
+      "name": "ประตูสถานที่ 2 (เปิด)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_base_open": "props/pr_door_base_open.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a heavy steel blast door raised open showing a lit orange corridor inside, yellow and black hazard stripes and a green light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "ebcc205d-022f-486d-af80-bae8c825e6df",
+        "generatedAt": "2026-10-31T03:12:12.174Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-P05",
+      "kind": "prop",
+      "name": "ประตูสถานที่ 3 หุบเขากังหันลม (ล็อก)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_valley_locked": "props/pr_door_valley_locked.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a weathered wooden valley gate with a carved wind turbine blade symbol, closed and chained with a red lock light, grassy base, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "fae3598e-de5d-468e-9f8c-12d7e1213301",
+        "generatedAt": "2026-10-31T03:13:02.807Z"
+      },
+      "status": "generated"
+    },
+    {
+      "id": "PR-P06",
+      "kind": "prop",
+      "name": "ประตูสถานที่ 3 (เปิด)",
+      "requested": true,
+      "size": [
+        32,
+        64
+      ],
+      "files": {
+        "pr_door_valley_open": "props/pr_door_valley_open.png"
+      },
+      "pixellab": {
+        "tool": "create_image_pixflux",
+        "arguments": {
+          "description": "a weathered wooden valley gate with a carved wind turbine blade symbol swung open showing a green grassy hill path beyond and a small green light, transparent background, cute sci-fi laboratory pixel art for a top-down RPG, chunky readable shapes, flat colors with one shadow tone and one highlight tone, soft light from the top-left, muted palette with one bright accent color, crisp pixels, no anti-aliasing, no gradients, no text",
+          "width": 32,
+          "height": 64,
+          "no_background": true,
+          "view": "low top-down",
+          "outline": "single color outline",
+          "shading": "basic shading",
+          "detail": "medium detail"
+        },
+        "fetchTool": "get_image",
+        "id": "5c39a262-25d6-464c-84da-c1e576b52972",
+        "generatedAt": "2026-10-31T03:13:33.055Z"
+      },
+      "status": "generated"
+    },
+    {
       "id": "PR-Q04",
       "kind": "prop",
       "name": "เซลล์พลังงานที่หล่นหาย (เควสของช่างโนอาห์)",

@@ -80,7 +80,13 @@ export class HallScene extends WorldScene {
     if (this.syncRoom(this.world, "hall")) return;
     const state = useGameStore.getState();
     const cleared = (zone: number) => zoneCleared(state, zone);
-    for (const door of this.doors) this.placed.get(door)?.setTexture(isRoomUnlocked(state, door.index as number) ? "pr_door_open" : "pr_door_locked");
+    // ประตูของสถานที่ในแมพ 2 มีภาพของตัวเองตามสถานที่ (รอบ 19) ห้องเรียนใช้ภาพประตูกลาง
+    const zones = planOf(state).zones;
+    for (const door of this.doors) {
+      const open = isRoomUnlocked(state, door.index as number);
+      const place = zones[(door.index as number) - 1]?.place;
+      this.placed.get(door)?.setTexture(place ? `pr_door_${place}_${open ? "open" : "locked"}` : open ? "pr_door_open" : "pr_door_locked");
+    }
 
     // ของตกแต่งที่ผู้เล่นวางเองในโถงของแมพนี้
     this.syncDecor(this.world, "hall");

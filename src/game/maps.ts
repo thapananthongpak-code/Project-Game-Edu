@@ -148,7 +148,7 @@ const HALLS: Record<Difficulty, GameMap> = {
     ],
     spawn: { col: 2, row: 3 },
     objects: [
-      ...[4, 7, 13].map((col, i): MapObject => ({ kind: "door", prop: "pr_door_locked", col, row: 1, mount: true, index: i + 1 })),
+      ...[4, 7, 13].map((col, i): MapObject => ({ kind: "door", prop: `pr_door_${["ruins", "base", "valley"][i]}_locked`, col, row: 1, mount: true, index: i + 1 })),
       { kind: "gate", prop: "pr_hangar_gate", col: 9, row: 1, w: 2, mount: true },
       { kind: "travel", prop: "pr_travel_board", col: 2, row: 8, w: 2 },
       { kind: "decorboard", prop: "pr_decor_board", col: 5, row: 8 },
