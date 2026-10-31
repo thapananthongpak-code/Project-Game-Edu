@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { course } from "../content";
 import { buildAssessment, seededRng } from "../content/choices";
 import { fmt } from "../content/ui-strings";
-import { CLASS_CODE_PATTERN, LocalProgressStore, normalizeClassCode } from "../state/progressStore";
+import { LocalProgressStore } from "../state/progressStore";
 import { itemsCsv, type Player, type PlayerRecord, reviewScores, studentsCsv, summarizeGain, summarizeRooms, summarizeStudent, type StudentSummary, toPlayers } from "./analytics";
 import { t } from "./strings";
 
@@ -64,7 +64,7 @@ function Login({ onLogin }: { onLogin: (session: Session) => void }) {
   const demo = async () => {
     const save = await new LocalProgressStore(window.localStorage).load();
     if (!save?.profile) return setError(t.login.demoEmpty);
-    onLogin({ password: "", demo: true, players: [{ id: "local", classCode: save.profile.classCode, name: save.profile.name, save, resumeCode: null, updatedAt: save.updatedAt, archived: false }], loadedAt: new Date() });
+    onLogin({ password: "", demo: true, players: [{ id: "local", classCode: "", name: save.profile.name, save, resumeCode: null, updatedAt: save.updatedAt, archived: false }], loadedAt: new Date() });
   };
 
   return (
@@ -112,7 +112,7 @@ function Card({ label, value, note }: { label: string; value: string; note?: str
 
 type SortKey = "name" | "difficulty" | "roomReached" | "cores" | "stars" | "reviewsDone" | "battlesWon" | "fieldAccuracy" | "pre" | "post" | "gain" | "tutorAi" | "timeMs" | "updatedAt";
 
-function StudentsTable({ players }: { players: Player[] }) {
+function StudentsTable({ players, onDelete }: { players: Player[]; onDelete?: (player: Player) => void }) {
   const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: "name", descending: false });
   const [open, setOpen] = useState<string | null>(null);
   const rows = useMemo(() => {
@@ -144,7 +144,6 @@ function StudentsTable({ players }: { players: Player[] }) {
         <thead>
           <tr>
             {head("name", t.students.name)}
-            <th className={th}>{t.students.classCode}</th>
             {head("difficulty", t.students.difficulty)}
             {head("roomReached", t.students.room)}
             {head("cores", t.students.cores)}
@@ -163,7 +162,7 @@ function StudentsTable({ players }: { players: Player[] }) {
         </thead>
         <tbody>
           {rows.map(({ player, summary: s }) => (
-            <StudentRow key={s.id} player={player} summary={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} />
+            <StudentRow key={s.id} player={player} summary={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onDelete={onDelete} />
           ))}
         </tbody>
       </table>
@@ -171,7 +170,7 @@ function StudentsTable({ players }: { players: Player[] }) {
   );
 }
 
-function StudentRow({ player, summary: s, open, onToggle }: { player: Player; summary: StudentSummary; open: boolean; onToggle: () => void }) {
+function StudentRow({ player, summary: s, open, onToggle, onDelete }: { player: Player; summary: StudentSummary; open: boolean; onToggle: () => void; onDelete?: (player: Player) => void }) {
   const reviews = open ? reviewScores(player.save) : [];
   return (
     <>
@@ -180,7 +179,6 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
           {s.name}
           {s.archived && <span className="ml-1 rounded bg-slate px-1 text-xs font-semibold text-paper">{t.students.archived}</span>}
         </th>
-        <td className={td}>{s.classCode}</td>
         <td className={td} data-testid="teacher-difficulty">
           {t.students.difficultyNames[s.difficulty]}
         </td>
@@ -215,11 +213,16 @@ function StudentRow({ player, summary: s, open, onToggle }: { player: Player; su
           <button type="button" className="min-h-7 min-w-7 font-bold text-teal-dark underline" aria-expanded={open} data-testid="teacher-details" onClick={onToggle}>
             {open ? t.students.hide : t.students.details}
           </button>
+          {onDelete && (
+            <button type="button" className="ml-2 min-h-7 min-w-7 font-bold text-wrong underline" data-testid="teacher-delete" aria-label={`${t.toolbar.deleteStudent} ${s.name}`} onClick={() => onDelete(player)}>
+              {t.toolbar.deleteStudent}
+            </button>
+          )}
         </td>
       </tr>
       {open && (
         <tr className="bg-cream">
-          <td className={td} colSpan={16}>
+          <td className={td} colSpan={15}>
             {s.resumeCode && (
               <p className="mb-2 text-sm">
                 {t.students.resumeCode}: <span className="font-mono font-bold tracking-widest">{s.resumeCode}</span>
@@ -402,21 +405,20 @@ function GainTables({ players }: { players: Player[] }) {
 
 function Dashboard({ session, onSession }: { session: Session; onSession: (session: Session | null) => void }) {
   const [tab, setTab] = useState<Tab>("students");
-  const [classCode, setClassCode] = useState("");
+  const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(session.demo ? t.login.demoNote : null);
 
-  const classes = useMemo(() => [...new Set(session.players.map((player) => player.classCode).filter(Boolean))].sort(), [session.players]);
-  const players = useMemo(
-    () => session.players.filter((player) => (classCode === "" || player.classCode === classCode) && (showArchived || !player.archived)),
-    [session.players, classCode, showArchived],
-  );
+  // ไม่มีรหัสห้องเรียนแล้ว (รอบ 21): ครูแยกกลุ่มด้วยการค้นหาชื่อที่แสดง (ให้นักเรียนตั้งชื่อนำหน้าด้วยห้อง เช่น ปวช1-12)
+  const query = search.trim().toLocaleLowerCase("th");
+  const visible = useMemo(() => session.players.filter((player) => showArchived || !player.archived), [session.players, showArchived]);
+  const players = useMemo(() => (query === "" ? visible : visible.filter((player) => player.name.toLocaleLowerCase("th").includes(query))), [visible, query]);
   const summaries = useMemo(() => players.map(summarizeStudent), [players]);
   const gain = useMemo(() => summarizeGain(players), [players]);
   const accuracies = summaries.map((s) => s.fieldAccuracy).filter((value) => value !== null);
   const stamp = new Date().toISOString().slice(0, 10);
-  const suffix = `${classCode || "all"}-${stamp}`;
+  const suffix = `${query ? "search" : "all"}-${stamp}`;
 
   const refresh = async () => {
     if (session.demo) return;
@@ -427,15 +429,13 @@ function Dashboard({ session, onSession }: { session: Session; onSession: (sessi
     else setNotice(fmt(t.login.failed, { reason: result.reason }));
   };
 
-  const deleteClass = async () => {
-    const code = classCode;
-    const count = session.players.filter((player) => player.classCode === code).length;
-    if (!CLASS_CODE_PATTERN.test(code) || normalizeClassCode(window.prompt(fmt(t.toolbar.deletePrompt, { code, n: count })) ?? "") !== code) return;
+  /** ลบข้อมูลของผู้เรียนรายคน (ยืนยันก่อนลบ กู้คืนไม่ได้) */
+  const deleteStudent = async (player: Player) => {
+    if (busy || !window.confirm(fmt(t.toolbar.deleteConfirm, { name: player.name }))) return;
     setBusy(true);
-    const result = await callTeacherApi({ password: session.password, classCode: code, action: "delete-class" });
+    const result = await callTeacherApi({ password: session.password, id: player.id, action: "delete-player" });
     setBusy(false);
     if (!result.ok) return setNotice(fmt(t.login.failed, { reason: result.reason }));
-    setClassCode("");
     setNotice(fmt(t.toolbar.deleted, { n: Number(result.data.deleted ?? 0) }));
     await refresh();
   };
@@ -465,25 +465,21 @@ function Dashboard({ session, onSession }: { session: Session; onSession: (sessi
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <label className="flex items-center gap-2 font-semibold">
-          {t.toolbar.classFilter}
-          <select value={classCode} data-testid="teacher-class" onChange={(event) => setClassCode(event.target.value)} className="rounded-md border-2 border-ink bg-paper p-2 text-base">
-            <option value="">{t.toolbar.allClasses}</option>
-            {classes.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+          {t.toolbar.search}
+          <input
+            type="search"
+            value={search}
+            placeholder={t.toolbar.searchPlaceholder}
+            data-testid="teacher-search"
+            onChange={(event) => setSearch(event.target.value)}
+            className="min-h-10 rounded-md border-2 border-ink bg-paper p-2 text-base font-normal"
+          />
         </label>
+        {query && <span className="text-slate" data-testid="teacher-search-count">{fmt(t.toolbar.searchCount, { n: players.length, total: visible.length })}</span>}
         <label className="flex items-center gap-2 font-semibold">
           <input type="checkbox" className="h-6 w-6" checked={showArchived} onChange={(event) => setShowArchived(event.target.checked)} />
           {t.toolbar.showArchived}
         </label>
-        {!session.demo && classCode && (
-          <button type="button" className="ml-auto rounded-md border-2 border-wrong px-3 py-2 font-bold text-wrong hover:bg-wrong hover:text-paper" disabled={busy} data-testid="teacher-delete" onClick={() => void deleteClass()}>
-            {t.toolbar.deleteClass}
-          </button>
-        )}
       </div>
 
       <section className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7" data-testid="teacher-cards">
@@ -513,7 +509,7 @@ function Dashboard({ session, onSession }: { session: Session; onSession: (sessi
       </div>
 
       <div role="tabpanel">
-        {tab === "students" && <StudentsTable players={players} />}
+        {tab === "students" && <StudentsTable players={players} onDelete={session.demo ? undefined : (player) => void deleteStudent(player)} />}
         {tab === "rooms" && <RoomsTable players={players} />}
         {tab === "gain" && <GainTables players={players} />}
       </div>

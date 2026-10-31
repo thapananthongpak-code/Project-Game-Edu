@@ -3,15 +3,13 @@
 // ทางเลือก (เปิดด้วย VITE_GOOGLE_LOGIN=1): เข้าสู่ระบบด้วย Google เพื่อเล่นต่อได้จากทุกเครื่อง อีเมลอยู่ในระบบบัญชีของ Supabase (auth.users) เท่านั้น
 // เกมไม่คัดลอกอีเมลลงตาราง players และครูไม่เห็นอีเมลในแดชบอร์ด anon key เป็นคีย์สาธารณะ สิทธิ์จริงคุมด้วย RLS
 import { createClient } from "@supabase/supabase-js";
-import type { AccountInfo, RemoteBackend, RemoteRecord, SaveData } from "./progressStore";
+import { type AccountInfo, type RemoteBackend, type RemoteRecord, type SaveData, SHARED_CLASS } from "./progressStore";
 
 interface Row {
   data: SaveData;
   resume_code: string;
 }
 
-/** รหัสห้องเรียนของผู้เล่นที่เข้าสู่ระบบด้วย Google แต่ไม่มีรหัสห้องจากครู (ฐานข้อมูลต้องมีรหัสห้องเสมอ) */
-export const SOLO_CLASS_CODE = "SOLO";
 
 const toRecord = (row: Row | null | undefined): RemoteRecord | null => (row ? { data: row.data, resumeCode: row.resume_code } : null);
 
@@ -81,7 +79,7 @@ export function createSupabaseBackend(url: string, anonKey: string): RemoteBacke
     },
     async save(save) {
       await signedIn();
-      const { data, error } = await client.rpc("save_progress", { p_class_code: save.profile?.classCode || SOLO_CLASS_CODE, p_display_name: save.profile?.name ?? "", p_data: save });
+      const { data, error } = await client.rpc("save_progress", { p_class_code: SHARED_CLASS, p_display_name: save.profile?.name ?? "", p_data: save });
       if (error) throw error;
       return data as string;
     },

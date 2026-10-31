@@ -668,8 +668,8 @@ const SIGNIN_FLAG = "ai-trainer-quest-google-signin";
 const FORCE_SIGNIN_FLAG = "ai-trainer-quest-google-force";
 const ALREADY_LINKED = "identity_already_exists";
 
-/** มีชื่อและรหัสห้องเรียนแล้วจึงส่งขึ้นฐานข้อมูลกลาง ผู้เล่นที่ไม่ใส่รหัสห้องเรียนเก็บในเครื่องอย่างเดียว เว้นแต่เข้าสู่ระบบด้วย Google */
-const sharable = (data: SaveData, account: AccountInfo | null): boolean => Boolean(data.profile?.name && (data.profile.classCode || account?.provider === "google"));
+/** ลงทะเบียนแล้ว (มีชื่อ) จึงส่งขึ้นฐานข้อมูลกลาง ผู้เรียนทุกคนซิงก์อัตโนมัติ (รอบ 21 เอารหัสห้องเรียนออก ครูเห็นทุกคนในแดชบอร์ดเดียว) */
+const sharable = (data: SaveData): boolean => Boolean(data.profile?.name);
 
 /**
  * เก็บในเครื่องทันที แล้วส่งขึ้นฐานข้อมูลกลางแบบหน่วง ถ้าเครือข่ายล่มเกมยังเล่นต่อได้จากสำเนาในเครื่อง
@@ -774,7 +774,7 @@ export class SyncedProgressStore implements ProgressStore {
     }
     if (!record) {
       // ยังไม่มีในฐานข้อมูลกลาง: ใช้สำเนาในเครื่อง และส่งขึ้นถ้ามีรหัสห้องเรียนแล้ว
-      if (local && sharable(local, this.account)) this.schedule(local);
+      if (local && sharable(local)) this.schedule(local);
       else this.onStatus("local", null);
       return local;
     }
@@ -794,7 +794,7 @@ export class SyncedProgressStore implements ProgressStore {
 
   async save(data: SaveData): Promise<void> {
     await this.local.save(data);
-    if (sharable(data, this.account)) this.schedule(data);
+    if (sharable(data)) this.schedule(data);
   }
 
   async clear(): Promise<void> {
@@ -909,6 +909,7 @@ function restoreEvidenceImage(remote: SaveData, local: SaveData | null): SaveDat
   return { ...remote, rooms };
 }
 
-/** รหัสห้องเรียน: ตัวอักษรอังกฤษ ตัวเลข ขีด 1–20 ตัว ตรงกับที่ supabase/schema.sql ตรวจ */
+/** รูปแบบของรหัสกลุ่มในฐานข้อมูล (คอลัมน์ class_code) ตัวอักษรอังกฤษ ตัวเลข ขีด 1–20 ตัว ตรงกับที่ supabase/schema.sql ตรวจ */
 export const CLASS_CODE_PATTERN = /^[A-Z0-9_-]{1,20}$/;
-export const normalizeClassCode = (text: string): string => text.trim().toUpperCase();
+/** กลุ่มเดียวของผู้เรียนทุกคน (รอบ 21 เอารหัสห้องเรียนออกจากเกม) ผู้ดูแลถูกเก็บใต้ SOLO โดยฐานข้อมูล */
+export const SHARED_CLASS = "ALL";

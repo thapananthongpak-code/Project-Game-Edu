@@ -177,7 +177,7 @@ describe("CSV", () => {
     expect(lines).toHaveLength(4);
     const width = t.csv.students.length + 6 + 6 + 5 + 6;
     for (const line of lines) expect(line.split(",")).toHaveLength(width);
-    expect(lines[1].startsWith("PVC1,แก้ว,false,2026-10-02T03:00:00.000Z,1,6,3,4,1,90,true,A,2,6,4,0.4,2,1,1,17,")).toBe(true);
+    expect(lines[1].startsWith("แก้ว,false,2026-10-02T03:00:00.000Z,1,6,3,4,1,90,true,A,2,6,4,0.4,2,1,1,17,")).toBe(true);
   });
 
   it("คำถามทบทวนแบบเลือกตอบ: รายงานคะแนนรายหัวข้อ ไม่มีข้อความที่ผู้เรียนเขียน หัวข้อที่ไม่มีคะแนนไม่อยู่ในรายการ", () => {

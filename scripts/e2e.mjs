@@ -354,7 +354,7 @@ async function onboardRun(page, { name, topic1Correct, tap = false, shots = fals
   if (avatar) await press(page.getByTestId(`avatar-${avatar}`));
   assert.equal(await page.locator('[data-testid^="difficulty-"], [data-testid^="style-"]').count(), 0, "ไม่มีตัวเลือกระดับความยากหรือสไตล์การเรียน ทุกคนเริ่มที่แมพ 1");
   assert.match(await page.getByTestId("onboarding-journey").innerText(), /เกมมี 3 แมพ[\s\S]*เริ่มที่ Pixel AI Lab/, "หน้าลงทะเบียนบอกเส้นทาง 3 แมพ");
-  assert.equal(await page.getByTestId("class-code").count(), 0, "ยังไม่ตั้งค่าฐานข้อมูลกลาง: ไม่ถามรหัสห้องเรียน");
+  assert.equal(await page.getByTestId("class-code").count(), 0, "ไม่มีช่องรหัสห้องเรียนแล้ว (รอบ 21)");
   if (shots) await shot(page, "00-onboarding");
   await press(page.getByTestId("onboarding-next"));
   await page.getByTestId("pretest").waitFor();
@@ -1906,19 +1906,19 @@ async function playTeacher(page) {
     log("แดชบอร์ด: ฟังก์ชัน /api/teacher จริงปฏิเสธรหัสผ่านที่ผิด");
   }
 
-  // จำลองฐานข้อมูลกลาง: ผู้เรียน 3 คนในห้อง PVC1 (คนหนึ่งคือผู้เล่นที่เพิ่งเล่นจบ) และ 1 คนในห้องอื่น
+  // จำลองฐานข้อมูลกลาง: ผู้เรียน 4 คน (คนหนึ่งคือผู้เล่นที่เพิ่งเล่นจบ คนหนึ่งเริ่มใหม่จึงเก็บถาวร) ไม่มีรหัสห้องเรียนแล้ว (รอบ 21)
   const record = (id, name, classCode, data, archived = null) => ({ id, class_code: classCode, display_name: name, data: { ...data, profile: { ...data.profile, name, classCode } }, resume_code: `CODE00000${id}`, created_at: "2026-10-01T02:00:00Z", updated_at: `2026-10-02T0${id}:00:00Z`, archived_at: archived });
   const started = { ...save, posttest: null, battles: {}, rooms: { 1: { ...save.rooms[1], core: false, reviewDone: false, review: null, missed: { [terms[0].term]: 3 }, timeMs: 240000 } } };
-  const players = [record(1, "นักทดสอบ", "PVC1", save), record(2, "=เพิ่งเริ่ม", "PVC1", started), record(3, "เริ่มใหม่", "PVC1", started, "2026-10-02T05:00:00Z"), record(4, "ห้องอื่น", "PVC2", started)];
+  const players = [record(1, "นักทดสอบ", "PVC1", save), record(2, "=เพิ่งเริ่ม", "PVC1", started), record(3, "เริ่มใหม่", "PVC1", started, "2026-10-02T05:00:00Z"), record(4, "ปวช2-12", "ALL", started)];
   let deleted = null;
   await page.route("**/api/teacher", async (route) => {
     const body = route.request().postDataJSON();
     if (body.password !== "รหัสครู-2567") return route.fulfill({ status: 401, json: { error: "wrong_password" } });
-    if (body.action === "delete-class") {
-      deleted = body.classCode;
-      return route.fulfill({ json: { deleted: players.filter((p) => p.class_code === body.classCode).length } });
+    if (body.action === "delete-player") {
+      deleted = body.id;
+      return route.fulfill({ json: { deleted: 1 } });
     }
-    return route.fulfill({ json: { players: players.filter((p) => p.class_code !== deleted) } });
+    return route.fulfill({ json: { players: players.filter((p) => p.id !== deleted) } });
   });
   await page.getByTestId("teacher-password").fill("ผิด");
   await page.getByTestId("teacher-login").click();
@@ -1927,13 +1927,25 @@ async function playTeacher(page) {
   await page.getByTestId("teacher-login").click();
   await page.getByTestId("teacher-students").waitFor();
 
-  // ตารางนักเรียน: ไม่รวมข้อมูลเก็บถาวรจนกว่าจะเลือก กรองตามห้องได้
+  // ตารางนักเรียน: ทุกคนในตารางเดียว ไม่รวมข้อมูลเก็บถาวรจนกว่าจะเลือก ค้นหาชื่อได้ (แทนการเลือกห้อง)
   assert.equal(await page.getByTestId("teacher-student").count(), 3);
-  await page.getByTestId("teacher-class").selectOption("PVC1");
+  assert.equal(await page.getByTestId("teacher-class").count(), 0, "ไม่มีตัวเลือกห้องเรียนแล้ว");
+  await page.getByTestId("teacher-search").fill("ปวช2");
+  assert.deepEqual(await page.getByTestId("teacher-student").evaluateAll((rows) => rows.map((row) => row.dataset.name)), ["ปวช2-12"]);
+  assert.match(await page.getByTestId("teacher-search-count").innerText(), /แสดง 1 จาก 3 คน/);
+  // ลบรายคน: ยกเลิกแล้วไม่ลบ ยืนยันแล้วลบเฉพาะคนนั้น
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByTestId("teacher-delete").click();
+  assert.equal(deleted, null, "กดยกเลิก: ไม่ลบ");
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByTestId("teacher-delete").click();
+  await page.waitForFunction(() => /ลบแล้ว 1 รายการ/.test(document.querySelector('[data-testid="teacher-notice"]')?.textContent ?? ""));
+  assert.equal(deleted, 4);
+  await page.getByTestId("teacher-search").fill("");
   assert.deepEqual(await page.getByTestId("teacher-student").evaluateAll((rows) => rows.map((row) => row.dataset.name)), ["=เพิ่งเริ่ม", "นักทดสอบ"]);
   const done = page.locator('[data-testid="teacher-student"][data-name="นักทดสอบ"]');
   const cells = await done.locator("th, td").allInnerTexts();
-  assert.deepEqual(cells.slice(1, 12), ["PVC1", "แมพ 1", "6", "6/6", "14/15", "5/5", "6/6", "83.3%", "1/12", "11/12", "+10"], `แถวของผู้เรียนที่เล่นจบ: ${cells.join(" | ")}`);
+  assert.deepEqual(cells.slice(1, 11), ["แมพ 1", "6", "6/6", "14/15", "5/5", "6/6", "83.3%", "1/12", "11/12", "+10"], `แถวของผู้เรียนที่เล่นจบ: ${cells.join(" | ")}`);
   await done.getByTestId("teacher-details").click();
   // รายละเอียด: ผลคำถามทบทวนแบบเลือกตอบรายห้อง (ห้อง 1 ตอบผิดครั้งแรก 1 ข้อ) ไม่มีข้อความที่ผู้เรียนเขียน
   const answers = (await page.getByTestId("teacher-answers").innerText()).replace(/\s+/g, " ");
@@ -1968,13 +1980,13 @@ async function playTeacher(page) {
     return { name: file.suggestedFilename(), text: readFileSync(await file.path(), "utf8") };
   };
   const studentsFile = await download("teacher-export-students");
-  assert.match(studentsFile.name, /^students-PVC1-\d{4}-\d{2}-\d{2}\.csv$/);
+  assert.match(studentsFile.name, /^students-all-\d{4}-\d{2}-\d{2}\.csv$/);
   assert.equal(studentsFile.text.charCodeAt(0), 0xfeff, "CSV ต้องขึ้นต้นด้วย BOM ให้ Excel อ่านภาษาไทยได้");
   const lines = studentsFile.text.trim().split("\r\n");
   assert.equal(lines.length, 3);
-  assert.ok(lines.some((line) => line.startsWith("PVC1,นักทดสอบ,false,")) && lines.some((line) => line.startsWith("PVC1,'=เพิ่งเริ่ม,false,")), "ชื่อที่ขึ้นต้นด้วย = ต้องไม่ถูก Excel ตีความเป็นสูตร");
+  assert.ok(lines.some((line) => line.startsWith("นักทดสอบ,false,")) && lines.some((line) => line.startsWith("'=เพิ่งเริ่ม,false,")), "ชื่อที่ขึ้นต้นด้วย = ต้องไม่ถูก Excel ตีความเป็นสูตร");
   assert.ok(lines.find((line) => line.includes("นักทดสอบ")).includes(",1,6,6,14,5,83.3,true,"), "CSV มีแมพที่อยู่ (1–3) เรื่องที่ถึง แกน ดาว ทบทวน Accuracy ภาคสนาม");
-  assert.equal(lines[0].replace("\ufeff", "").split(",")[4], "map");
+  assert.equal(lines[0].replace("\ufeff", "").split(",")[3], "map");
   const column = lines[0].replace("\ufeff", "").split(",").indexOf("kaiju_defeated");
   assert.equal(lines.find((line) => line.includes("นักทดสอบ")).split(",")[column], "6", "CSV มีจำนวนไคจูที่ปราบได้");
   assert.equal(lines.find((line) => line.includes("นักทดสอบ")).split(",")[lines[0].replace("\ufeff", "").split(",").indexOf("side_activities_done")], "3", "CSV มีจำนวนกิจกรรมเสริมที่ทำ");
@@ -1982,18 +1994,8 @@ async function playTeacher(page) {
   assert.doesNotMatch(studentsFile.text, /คำตอบ/);
   assert.equal((await download("teacher-export-items")).text.trim().split("\r\n").length, 25);
 
-  // ลบข้อมูลของห้อง: ต้องพิมพ์รหัสห้องเรียนยืนยัน
-  page.once("dialog", (dialog) => dialog.accept("ผิดห้อง"));
-  await page.getByTestId("teacher-delete").click();
-  assert.equal(deleted, null, "พิมพ์รหัสไม่ตรง: ไม่ลบ");
-  page.once("dialog", (dialog) => dialog.accept("pvc1"));
-  await page.getByTestId("teacher-delete").click();
-  await page.waitForFunction(() => /ลบแล้ว 3 รายการ/.test(document.querySelector('[data-testid="teacher-notice"]')?.textContent ?? ""));
-  assert.equal(deleted, "PVC1");
-  await page.getByTestId("teacher-tab-students").click();
-  assert.deepEqual(await page.getByTestId("teacher-student").evaluateAll((rows) => rows.map((row) => row.dataset.name)), ["ห้องอื่น"]);
   await page.unroute("**/api/teacher");
-  log("แดชบอร์ดผู้สอน: รหัสผ่านผิดเข้าไม่ได้ ตารางนักเรียน (แมพ เรื่องที่ถึง แกน ดาว ทบทวน ปราบไคจู Accuracy ก่อน–หลัง) ผลคำถามทบทวนรายห้อง สรุปรายห้อง พัฒนาการรายสมรรถนะและรายข้อ ส่งออก CSV 2 ไฟล์ ลบข้อมูลรายห้องแบบยืนยัน");
+  log("แดชบอร์ดผู้สอน: รหัสผ่านผิดเข้าไม่ได้ ตารางนักเรียน (แมพ เรื่องที่ถึง แกน ดาว ทบทวน ปราบไคจู Accuracy ก่อน–หลัง) ผลคำถามทบทวนรายห้อง สรุปรายห้อง พัฒนาการรายสมรรถนะและรายข้อ ส่งออก CSV 2 ไฟล์ ค้นหาชื่อ ลบข้อมูลรายคนแบบยืนยัน (ไม่มีรหัสห้องเรียน)");
 }
 
 // ---------------------------------------------------------------- ระดับท้าทาย: ตรวจทั้งรอบ

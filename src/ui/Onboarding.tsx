@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { ui } from "../content/ui-strings";
 import { otherForm } from "../state/assessment";
-import { cloudEnabled, randomForm, useGameStore } from "../state/gameStore";
-import { CLASS_CODE_PATTERN, normalizeClassCode } from "../state/progressStore";
+import { randomForm, useGameStore } from "../state/gameStore";
 import { MAX_NAME_CHARS } from "../state/rules";
 import { AVATARS, type Avatar } from "../state/shop.config";
 import { art } from "./art";
@@ -36,13 +35,10 @@ export function Onboarding() {
   const setProfile = useGameStore((s) => s.setProfile);
   const completePretest = useGameStore((s) => s.completePretest);
   const [name, setName] = useState(profile?.name ?? "");
-  const [classCode, setClassCode] = useState(profile?.classCode ?? "");
   const [avatar, setAvatar] = useState<Avatar>(profile?.avatar ?? "a");
   // สุ่มชุดข้อสอบก่อนเรียน ผู้เรียนครึ่งหนึ่งได้ชุด A อีกครึ่งได้ชุด B แล้วสลับชุดตอนหลังเรียน
   const [form] = useState(randomForm);
   const dialog = useDialog<HTMLDivElement>();
-  const code = normalizeClassCode(classCode);
-  const codeValid = code === "" || CLASS_CODE_PATTERN.test(code);
 
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-ink/85 p-3 sm:p-6" data-testid="onboarding">
@@ -54,7 +50,7 @@ export function Onboarding() {
             className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
-              if (name.trim() && codeValid) setProfile({ name: name.trim(), difficulty: "easy", classCode: code, avatar });
+              if (name.trim()) setProfile({ name: name.trim(), difficulty: "easy", classCode: "", avatar });
             }}
           >
             <h1 className="text-2xl font-extrabold text-teal-dark">{ui.onboarding.title}</h1>
@@ -70,23 +66,6 @@ export function Onboarding() {
                 className="select-text rounded-md border-2 border-ink bg-paper p-2 text-base font-normal"
               />
             </label>
-            {cloudEnabled() && (
-              <label className="flex flex-col gap-1 font-semibold">
-                {ui.onboarding.classCode}
-                <input
-                  value={classCode}
-                  maxLength={20}
-                  placeholder={ui.onboarding.classCodePlaceholder}
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  aria-invalid={!codeValid}
-                  data-testid="class-code"
-                  onChange={(event) => setClassCode(event.target.value)}
-                  className="select-text rounded-md border-2 border-ink bg-paper p-2 text-base font-normal uppercase"
-                />
-                {!codeValid && <span className="text-sm font-normal text-wrong">{ui.onboarding.classCodeInvalid}</span>}
-              </label>
-            )}
             <div className="flex flex-col gap-1">
               <span className="font-semibold">{ui.onboarding.avatar}</span>
               <AvatarPicker value={avatar} onChange={setAvatar} />
@@ -94,7 +73,7 @@ export function Onboarding() {
             <p className="rounded-md border-2 border-ink bg-teal-light px-2 py-1.5 text-sm" data-testid="onboarding-journey">
               {ui.onboarding.journey}
             </p>
-            <button type="submit" className="btn self-end" disabled={!name.trim() || !codeValid} data-testid="onboarding-next">
+            <button type="submit" className="btn self-end" disabled={!name.trim()} data-testid="onboarding-next">
               {ui.onboarding.next}
             </button>
           </form>

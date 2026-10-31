@@ -122,10 +122,10 @@ async function device(browser) {
 const store = (page) => page.evaluate(() => window.__aitq.snapshot().store);
 const synced = (page) => page.waitForFunction(() => window.__aitq.snapshot().store.sync === "synced", null, { timeout: 15000 });
 
-async function register(page, name, classCode) {
+async function register(page, name) {
   await page.getByTestId("menu-new").click();
   await page.getByTestId("player-name").fill(name);
-  if (classCode !== null) await page.getByTestId("class-code").fill(classCode);
+  assert.equal(await page.getByTestId("class-code").count(), 0, "ไม่มีช่องรหัสห้องเรียน (รอบ 21)");
   return page.getByTestId("onboarding-next");
 }
 
@@ -154,21 +154,18 @@ async function googleSignIn(page, email) {
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 try {
   console.log("ฐานข้อมูลกลาง (Supabase จำลอง)");
-  // --- เครื่องที่ 1: ลงทะเบียนพร้อมรหัสห้องเรียน
+  // --- เครื่องที่ 1: ลงทะเบียน (ไม่มีรหัสห้องเรียนแล้ว ทุกคนซิงก์อัตโนมัติ)
   const first = await device(browser);
   assert.equal(await first.getByTestId("menu-resume").count(), 1, "ตั้งค่าฐานข้อมูลแล้ว เมนูมีปุ่มเล่นต่อจากเครื่องอื่น");
   assert.equal(db.signups, 0, "เปิดเกมเฉย ๆ ยังไม่สร้างบัญชี");
-  let next = await register(first, "แก้ว", "ปวช 1");
-  assert.equal(await next.isDisabled(), true, "รหัสห้องเรียนผิดรูปแบบ: ไปต่อไม่ได้");
-  await first.getByTestId("class-code").fill("pvc1-67");
-  assert.equal(await next.isDisabled(), false);
+  const next = await register(first, "แก้ว");
   await next.click();
   await pretest(first);
   await synced(first);
   assert.equal(db.signups, 1, "ล็อกอินแบบไม่ระบุตัวตนครั้งเดียว ตอนส่งข้อมูลครั้งแรก");
   assert.equal(db.players.length, 1);
   const row = db.players[0];
-  assert.deepEqual([row.class_code, row.display_name, row.data.version, row.data.pretest.items.length], ["PVC1-67", "แก้ว", 9, 12], "แถวในฐานข้อมูล: รหัสห้อง (ตัวพิมพ์ใหญ่) ชื่อที่แสดง และผลก่อนเรียนรายข้อ");
+  assert.deepEqual([row.class_code, row.display_name, row.data.version, row.data.pretest.items.length], ["ALL", "แก้ว", 9, 12], "แถวในฐานข้อมูล: กลุ่มเดียวของทุกคน ชื่อที่แสดง และผลก่อนเรียนรายข้อ");
   assert.deepEqual(Object.keys(row.data).sort(), ["battles", "maps", "npcs", "posttest", "pretest", "profile", "rooms", "shop", "story", "updatedAt", "version"], "ไม่มีข้อมูลอื่นนอกจากความคืบหน้าในเกม");
   const code = (await store(first)).resumeCode;
   assert.equal(code, row.resume_code);
@@ -177,7 +174,7 @@ try {
   assert.equal(await first.getByTestId("sync").getAttribute("data-status"), "synced");
   await first.screenshot({ path: "test-results/25-cloud-profile.png" });
   await first.getByRole("button", { name: "ปิด", exact: true }).click();
-  log(`เครื่องที่ 1: ลงทะเบียนด้วยรหัสห้อง PVC1-67 ข้อมูลขึ้นฐานข้อมูลกลาง สมุดเควสแสดงสถานะและรหัสเล่นต่อ ${code}`);
+  log(`เครื่องที่ 1: ลงทะเบียนโดยไม่มีรหัสห้องเรียน ข้อมูลขึ้นฐานข้อมูลกลางเอง สมุดเควสแสดงสถานะและรหัสเล่นต่อ ${code}`);
 
   assert.deepEqual([row.data.profile.difficulty, Object.keys(row.data.profile).sort()], ["easy", ["avatar", "classCode", "difficulty", "name"]], "โปรไฟล์ในฐานข้อมูล: แมพที่อยู่ (เริ่มที่แมพ 1) ไม่มีช่องอื่น");
 
@@ -219,7 +216,7 @@ try {
   await second.getByTestId("resume-submit").click();
   await second.waitForFunction(() => window.__aitq.snapshot().store.screen === "hall");
   const moved = await store(second);
-  assert.deepEqual([moved.profile.name, moved.profile.classCode, moved.pretest.items.length, moved.resumeCode], ["แก้ว", "PVC1-67", 12, code]);
+  assert.deepEqual([moved.profile.name, moved.pretest.items.length, moved.resumeCode], ["แก้ว", 12, code]);
   assert.equal(db.players.length, 1, "เล่นต่อจากเครื่องอื่นต้องไม่สร้างผู้เล่นซ้ำ");
   log("เครื่องที่ 2: รหัสผิดถูกปฏิเสธ รหัสถูกได้ความคืบหน้าเดิมและไม่สร้างแถวซ้ำ");
 
@@ -238,7 +235,6 @@ try {
   await second.waitForFunction(() => window.__aitq.snapshot().store.sync === "local");
   assert.equal(row.archived_at, null, "ผู้เล่นใหม่บนเครื่องร่วม: แถวของคนเดิมยังใช้งานอยู่");
   await second.getByTestId("player-name").fill("ต้น");
-  await second.getByTestId("class-code").fill("PVC1-67");
   await second.getByTestId("onboarding-next").click();
   await pretest(second);
   await synced(second);
@@ -270,33 +266,32 @@ try {
   assert.equal(db.players.length, 2);
   log("ผู้เรียนคนเดิมเริ่มใหม่ทั้งหมด: ข้อมูลชุดเดิมถูกเก็บถาวรไว้ให้ครู ไม่ถูกลบ");
 
-  // --- ไม่ใส่รหัสห้องเรียน: ไม่มีอะไรออกจากเครื่อง
+  // --- ไม่มีรหัสห้องเรียนแล้ว (รอบ 21): ผู้เรียนที่ลงทะเบียนทุกคนขึ้นฐานข้อมูลกลางเอง
   const solo = await device(browser);
-  const savesBeforeSolo = db.saves;
-  await (await register(solo, "เล่นคนเดียว", "")).click();
+  const signupsBeforeSolo = db.signups;
+  await (await register(solo, "เล่นคนเดียว")).click();
   await pretest(solo);
-  await solo.waitForTimeout(3500);
-  assert.equal(db.saves, savesBeforeSolo, "ไม่มีรหัสห้องเรียน: ไม่ส่งความคืบหน้าขึ้นฐานข้อมูลกลาง");
-  assert.equal(db.signups, 2, "ผู้เล่นที่ไม่ใส่รหัสห้องเรียนไม่ถูกสร้างบัญชี (มีแค่เครื่องที่ 1 และ 2)");
-  assert.equal((await store(solo)).sync, "local");
-  assert.equal(db.players.some((player) => player.display_name === "เล่นคนเดียว"), false);
-  log("ไม่ใส่รหัสห้องเรียน: เก็บในเครื่องอย่างเดียว ไม่ส่งข้อมูลออก");
+  await synced(solo);
+  assert.equal(db.signups, signupsBeforeSolo + 1, "ลงทะเบียนแล้วได้บัญชีไม่ระบุตัวตนตอนส่งข้อมูลครั้งแรก");
+  assert.equal(db.players.find((player) => player.display_name === "เล่นคนเดียว")?.class_code, "ALL");
+  log("ไม่มีรหัสห้องเรียน: ผู้เรียนทุกคนซิงก์ขึ้นฐานข้อมูลกลางในกลุ่มเดียว");
 
   // ================================================================ เข้าสู่ระบบด้วย Google (ทางเลือก)
   console.log("เข้าสู่ระบบด้วย Google (จำลอง)");
-  // --- ผู้เล่นที่เก็บในเครื่องอย่างเดียวเข้าสู่ระบบ: ความคืบหน้าในเครื่องกลายเป็นของบัญชีนั้น ไม่สร้างบัญชีไม่ระบุตัวตน
+  // --- เครื่องที่มีบัญชีไม่ระบุตัวตนเข้าสู่ระบบ: ผูกความคืบหน้าเดิมเข้ากับบัญชี Google ไม่สร้างบัญชีใหม่
+  const signupsBeforeGoogle = db.signups;
   await solo.getByRole("button", { name: "เมนู" }).click();
-  assert.equal(await solo.getByTestId("google-account").getAttribute("data-provider"), "none");
+  assert.equal(await solo.getByTestId("google-account").getAttribute("data-provider"), "anonymous");
   await googleSignIn(solo, "kaew@example.com");
   assert.equal(await solo.getByTestId("google-account").getAttribute("data-provider"), "google");
   assert.match(await solo.getByTestId("google-email").innerText(), /kaew@example\.com/);
   assert.equal(new URL(solo.url()).hash, "", "token ถูกลบออกจาก URL หลังเข้าสู่ระบบ");
   await synced(solo);
   const soloRow = db.players.find((player) => player.display_name === "เล่นคนเดียว");
-  assert.deepEqual([soloRow.class_code, soloRow.data.pretest.items.length, db.signups], ["SOLO", 12, 2], "ความคืบหน้าในเครื่องขึ้นฐานข้อมูลใต้รหัสห้อง SOLO โดยไม่สร้างบัญชีไม่ระบุตัวตน");
+  assert.deepEqual([soloRow.class_code, soloRow.data.pretest.items.length, db.signups], ["ALL", 12, signupsBeforeGoogle], "ผูกบัญชี: แถวเดิมอยู่กลุ่มเดียวกับทุกคน ไม่สร้างบัญชีใหม่");
   assert.equal(JSON.stringify(soloRow.data).includes("kaew@example.com"), false, "อีเมลไม่ถูกบันทึกลงความคืบหน้า");
   await solo.screenshot({ path: "test-results/28-cloud-google.png" });
-  log("ผู้เล่นที่เก็บในเครื่องอย่างเดียวเข้าสู่ระบบด้วย Google: ความคืบหน้าขึ้นฐานข้อมูลใต้รหัสห้อง SOLO เมนูแสดงบัญชี อีเมลไม่อยู่ในความคืบหน้า");
+  log("เข้าสู่ระบบด้วย Google: ผูกความคืบหน้าเดิมของเครื่องเข้ากับบัญชี เมนูแสดงบัญชี อีเมลไม่อยู่ในความคืบหน้า");
 
   // --- เครื่องใหม่: เข้าสู่ระบบบัญชีเดิมแล้วได้ความคืบหน้าเดิม ไม่สร้างแถวซ้ำ
   const fresh = await device(browser);
@@ -314,9 +309,8 @@ try {
   assert.equal(soloRow.archived_at, null);
   log("ออกจากระบบ: สำเนาในเครื่องถูกลบ ความคืบหน้าของบัญชียังอยู่ในฐานข้อมูล");
 
-  // --- เครื่องที่มีบัญชีไม่ระบุตัวตนอยู่แล้ว (ลงทะเบียนด้วยรหัสห้อง): ผูกบัญชี Google ใหม่เข้ากับความคืบหน้าเดิม
+  // --- เครื่องที่มีบัญชีไม่ระบุตัวตนอยู่แล้ว: ผูกบัญชี Google ใหม่เข้ากับความคืบหน้าเดิม
   await first.getByTestId("player-name").fill("นิด");
-  await first.getByTestId("class-code").fill("PVC1-67");
   await first.getByTestId("onboarding-next").click();
   await pretest(first);
   await synced(first);
@@ -331,11 +325,10 @@ try {
   await googleSignIn(linked, "nid@example.com");
   await linked.locator('[data-testid="menu-continue"]:not([disabled])').waitFor();
   assert.match(await linked.getByTestId("menu-continue").innerText(), /เล่นต่อ \(นิด\)/);
-  log("เครื่องที่ลงทะเบียนด้วยรหัสห้องอยู่แล้ว: ผูกบัญชี Google เข้ากับความคืบหน้าเดิม แล้วเล่นต่อจากเครื่องอื่นด้วยบัญชีนั้นได้");
+  log("เครื่องที่ลงทะเบียนอยู่แล้ว: ผูกบัญชี Google เข้ากับความคืบหน้าเดิม แล้วเล่นต่อจากเครื่องอื่นด้วยบัญชีนั้นได้");
 
   // --- บัญชี Google ที่มีความคืบหน้าอยู่แล้ว ผูกกับเครื่องที่มีผู้เล่นอีกคนไม่ได้: แจ้งเตือน ความคืบหน้าทั้งสองฝั่งไม่ถูกแตะ กดอีกครั้งจึงสลับไปบัญชีนั้น
   await second.getByTestId("player-name").fill("ฝน");
-  await second.getByTestId("class-code").fill("PVC1-67");
   await second.getByTestId("onboarding-next").click();
   await pretest(second);
   await synced(second);
@@ -362,13 +355,13 @@ try {
   assert.equal((await store(linked)).battles && Object.keys((await store(linked)).battles).length, 0, "นักเรียนไม่ได้สถานะจบเกม");
   log("บัญชีของนักเรียน (Google ธรรมดา ไม่ระบุตัวตน เก็บในเครื่อง) ไม่ใช่ผู้ดูแล เครดิตและความคืบหน้าตามจริง");
 
-  // --- ผู้ดูแล: ลงทะเบียนด้วยรหัสห้องก่อน (บัญชีไม่ระบุตัวตน) แล้วเข้าสู่ระบบด้วย Google ของผู้ดูแล
+  // --- ผู้ดูแล: ลงทะเบียนก่อน (บัญชีไม่ระบุตัวตน) แล้วเข้าสู่ระบบด้วย Google ของผู้ดูแล
   const boss = await device(browser);
-  await (await register(boss, "ผู้ดูแล", "PVC1-67")).click();
+  await (await register(boss, "ผู้ดูแล")).click();
   await pretest(boss);
   await synced(boss);
   const bossRow = db.players.find((player) => player.display_name === "ผู้ดูแล");
-  assert.equal(bossRow.class_code, "PVC1-67", "ก่อนเป็นผู้ดูแลยังเป็นผู้เล่นทั่วไป");
+  assert.equal(bossRow.class_code, "ALL", "ก่อนเป็นผู้ดูแลยังเป็นผู้เล่นทั่วไป");
   assert.equal(Object.keys(bossRow.data.battles).length, 0);
   await boss.getByRole("button", { name: "เมนู" }).click();
   await googleSignIn(boss, db.adminEmail);
@@ -383,10 +376,10 @@ try {
   assert.doesNotMatch(await boss.getByTestId("credits").innerText(), /∞/);
   assert.equal(await boss.getByTestId("hud-level").isVisible(), true);
   await boss.screenshot({ path: "test-results/42-admin.png" });
-  // บันทึกตามปกติ แต่ใต้ห้อง SOLO ไม่ใช่ห้องเรียนที่ใส่ไว้ตอนลงทะเบียน (ไม่ขึ้นแดชบอร์ดของห้อง)
+  // บันทึกตามปกติ แต่ใต้กลุ่ม SOLO ไม่ใช่กลุ่มของผู้เรียน (ไม่ขึ้นแดชบอร์ดผู้สอน)
   await synced(boss);
   assert.deepEqual([bossRow.class_code, Object.keys(bossRow.data.battles).length, bossRow.data.shop.spent <= -1_000_000], ["SOLO", 13, true], "ข้อมูลจบเกมของผู้ดูแลอยู่ใต้ห้อง SOLO");
-  assert.equal(db.players.filter((player) => player.class_code === "PVC1-67" && player.display_name === "ผู้ดูแล").length, 0);
+  assert.equal(db.players.filter((player) => player.class_code === "ALL" && player.display_name === "ผู้ดูแล").length, 0);
   // ซื้อของแล้วเครดิตลดลงจริง และเปิดหน้าใหม่แล้วยังอยู่ในสถานะจบเกม
   await boss.reload();
   await boss.waitForFunction(() => window.__aitq?.snapshot().store.ready);

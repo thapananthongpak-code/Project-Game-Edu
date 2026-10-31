@@ -144,7 +144,6 @@ export function MainMenu() {
   const hasSave = useGameStore(hasSaveData);
   const profile = useGameStore((s) => s.profile);
   const continueGame = useGameStore((s) => s.continueGame);
-  const account = useGameStore((s) => s.account);
   const audio = useAudioSettings();
   const [panel, setPanel] = useState<null | "resume" | "reset" | "howto">(null);
   const name = profile?.name ?? "";
@@ -225,7 +224,7 @@ export function MainMenu() {
               </section>
             )}
             {panel === "resume" && <ResumeForm onClose={() => setPanel(null)} />}
-            {panel === "reset" && <ResetConfirm name={name || ui.questLog.name} shared={cloudEnabled() && (Boolean(profile?.classCode) || account?.provider === "google")} onClose={() => setPanel(null)} />}
+            {panel === "reset" && <ResetConfirm name={name || ui.questLog.name} shared={cloudEnabled()} onClose={() => setPanel(null)} />}
             {ready && googleLoginEnabled() && <GoogleAccount />}
           </div>
           <p className="mt-3 text-xs text-mist">{ui.menu.prototype}</p>

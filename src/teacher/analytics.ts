@@ -295,7 +295,6 @@ export function studentsCsv(players: readonly Player[], headers: { fixed: readon
     const s = summarizeStudent(player);
     const { save } = player;
     return [
-      s.classCode,
       s.name,
       s.archived,
       s.updatedAt,

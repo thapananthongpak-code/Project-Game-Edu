@@ -13,7 +13,8 @@ describe("/api/teacher", () => {
     expect(result).toEqual({ status: 200, body: { players: [{ id: "1", display_name: "แก้ว" }] } });
     const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toMatch(/^https:\/\/example\.supabase\.co\/rest\/v1\/players\?select=/);
-    expect(url).not.toContain("class_code=");
+    // ไม่มีรหัสห้องเรียนแล้ว: ทุกคนยกเว้นกลุ่ม SOLO ของบัญชีผู้ดูแล
+    expect(url).toContain("&class_code=neq.SOLO&");
     expect(init.headers).toMatchObject({ apikey: "service-key", Authorization: "Bearer service-key" });
     expect(JSON.stringify(result.body)).not.toContain("service-key");
   });
@@ -38,24 +39,19 @@ describe("/api/teacher", () => {
     expect(await call({ password: env.TEACHER_PASSWORD }, ok([]) as unknown as typeof fetch, { SUPABASE_SERVICE_ROLE_KEY: undefined })).toEqual({ status: 503, body: { error: "no_database" } });
   });
 
-  it("กรองตามรหัสห้องเรียน และปฏิเสธรหัสที่ผิดรูปแบบ (กันการแทรกเงื่อนไขในคำค้น)", async () => {
-    const fetchFn = ok([]);
-    await call({ password: env.TEACHER_PASSWORD, classCode: "PVC1-67" }, fetchFn as unknown as typeof fetch);
-    expect((fetchFn.mock.calls[0] as unknown as [string])[0]).toContain("&class_code=eq.PVC1-67&");
-    for (const classCode of ["PVC1&select=*", "a b", "x".repeat(21), 5]) {
-      expect(await call({ password: env.TEACHER_PASSWORD, classCode }, fetchFn as unknown as typeof fetch)).toEqual({ status: 400, body: { error: "bad_class_code" } });
+  it("ลบข้อมูลรายคน: ต้องระบุรหัสแถวที่ถูกรูปแบบเสมอ (กันการแทรกเงื่อนไขในคำค้น) และลบข้อมูลของผู้ดูแลไม่ได้", async () => {
+    const fetchFn = ok([{ id: "1" }]);
+    for (const id of [undefined, "", "1&select=*", "x".repeat(36), 5]) {
+      expect(await call({ password: env.TEACHER_PASSWORD, action: "delete-player", id }, fetchFn as unknown as typeof fetch)).toEqual({ status: 400, body: { error: "bad_player_id" } });
     }
-    expect(fetchFn).toHaveBeenCalledTimes(1);
-  });
-
-  it("ลบข้อมูล: ต้องระบุห้องเรียนเสมอ และลบเฉพาะห้องนั้น", async () => {
-    const fetchFn = ok([{ id: "1" }, { id: "2" }]);
-    expect(await call({ password: env.TEACHER_PASSWORD, action: "delete-class" }, fetchFn as unknown as typeof fetch)).toEqual({ status: 400, body: { error: "class_code_required" } });
     expect(fetchFn).not.toHaveBeenCalled();
-    expect(await call({ password: env.TEACHER_PASSWORD, action: "delete-class", classCode: "PVC1" }, fetchFn as unknown as typeof fetch)).toEqual({ status: 200, body: { deleted: 2 } });
+    const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    expect(await call({ password: env.TEACHER_PASSWORD, action: "delete-player", id }, fetchFn as unknown as typeof fetch)).toEqual({ status: 200, body: { deleted: 1 } });
     const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe("https://example.supabase.co/rest/v1/players?select=id&class_code=eq.PVC1");
+    expect(url).toBe(`https://example.supabase.co/rest/v1/players?select=id&id=eq.${id}&class_code=neq.SOLO`);
     expect(init.method).toBe("DELETE");
+    // คำสั่งลบทั้งห้องแบบเดิมไม่มีแล้ว
+    expect(await call({ password: env.TEACHER_PASSWORD, action: "delete-class", classCode: "PVC1" }, fetchFn as unknown as typeof fetch)).toEqual({ status: 400, body: { error: "bad_action" } });
     expect(await call({ password: env.TEACHER_PASSWORD, action: "drop" }, fetchFn as unknown as typeof fetch)).toEqual({ status: 400, body: { error: "bad_action" } });
   });
 

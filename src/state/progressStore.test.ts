@@ -4,13 +4,13 @@ import { emptyField } from "./field";
 import {
   type AccountInfo,
   CLASS_CODE_PATTERN,
+  SHARED_CLASS,
   emptyBattle,
   emptyRoom,
   emptySave,
   emptyShop,
   LocalProgressStore,
   migrateSave,
-  normalizeClassCode,
   type RemoteBackend,
   type RemoteRecord,
   type SaveData,
@@ -469,10 +469,9 @@ describe("withoutEvidenceImage", () => {
   });
 });
 
-describe("รหัสห้องเรียน", () => {
-  it("ตัดช่องว่างและแปลงเป็นตัวพิมพ์ใหญ่ก่อนตรวจ", () => {
-    expect(normalizeClassCode("  pvc1-67 ")).toBe("PVC1-67");
-    expect(CLASS_CODE_PATTERN.test("PVC1-67")).toBe(true);
+describe("รหัสกลุ่มในฐานข้อมูล", () => {
+  it("กลุ่มเดียวของผู้เรียนทุกคนผ่านรูปแบบที่ฐานข้อมูลตรวจ", () => {
+    expect(CLASS_CODE_PATTERN.test(SHARED_CLASS)).toBe(true);
     for (const bad of ["", "ปวช1", "A B", "A".repeat(21), "A/1"]) expect(CLASS_CODE_PATTERN.test(bad)).toBe(false);
   });
 });
@@ -531,12 +530,15 @@ describe("SyncedProgressStore", () => {
     expect(statuses.at(-1)).toEqual(["synced", "ABCDE12345"]);
   });
 
-  it("ไม่มีรหัสห้องเรียน: ไม่ส่งออกจากเครื่อง", async () => {
+  it("ไม่มีรหัสห้องเรียนแล้ว (รอบ 21): ผู้เรียนที่ลงทะเบียนแล้วทุกคนส่งขึ้นฐานข้อมูลกลาง ผู้ที่ยังไม่ลงทะเบียนไม่ส่ง", async () => {
     const remote = fakeRemote();
     const { store, local } = make(remote.backend);
-    await store.save({ ...sample, profile: { name: "ทดสอบ", difficulty: "easy", classCode: "", avatar: "a" } });
+    await store.save({ ...sample, profile: null });
     await vi.advanceTimersByTimeAsync(10000);
     expect(remote.state.saves).toHaveLength(0);
+    await store.save({ ...sample, profile: { name: "ทดสอบ", difficulty: "easy", classCode: "", avatar: "a" } });
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(remote.state.saves).toHaveLength(1);
     expect(await local.load()).not.toBeNull();
   });
 
@@ -687,8 +689,12 @@ describe("SyncedProgressStore", () => {
       const before = googleRemote(null);
       const first = makeWith(before.backend, flags, local);
       await first.store.load();
+      // รอบ 21 ทุกคนซิงก์: เครื่องนี้มีบัญชีไม่ระบุตัวตนแล้ว ครั้งแรกเกมพยายามผูกบัญชีนี้กับ Google (link)
+      // บัญชี Google นั้นมีความคืบหน้าอยู่แล้วจึงผูกไม่ได้ เกมตั้งธงให้ครั้งถัดไปเข้าสู่ระบบบัญชีนั้นตรง ๆ
+      flags.setItem("ai-trainer-quest-google-force", "1");
       await first.store.signInWithGoogle();
-      expect(before.auth.calls).toEqual(["signin"]);
+      // ออกจากบัญชีไม่ระบุตัวตนของเครื่องก่อน แล้วเข้าสู่ระบบ Google
+      expect(before.auth.calls).toEqual(["signout", "signin"]);
 
       // หน้าเกมเปิดใหม่หลังถูกพากลับมา ตอนนี้เป็นบัญชี Google ที่มีความคืบหน้าอยู่แล้ว
       const after = googleRemote(google, { data: mine, resumeCode: "GOOGLE0001" });

@@ -104,13 +104,12 @@ export function QuestLog() {
                 <div className="text-xl font-extrabold" data-testid="profile-name">
                   {profile.name}
                 </div>
-                {profile.classCode && <div className="text-sm font-semibold text-slate">{fmt(ui.questLog.classCode, { code: profile.classCode })}</div>}
                 <div className="text-sm font-bold text-teal-dark" data-testid="profile-credits">
                   {fmt(ui.questLog.credits, { n: credits })}
                 </div>
               </div>
             </div>
-            {cloudEnabled() && profile.classCode && (
+            {cloudEnabled() && (
               <div className="rounded-md border-2 border-ink bg-paper px-3 py-2 text-sm" data-testid="sync" data-status={sync}>
                 <div className="font-semibold" role="status">
                   {ui.questLog.sync[sync]}

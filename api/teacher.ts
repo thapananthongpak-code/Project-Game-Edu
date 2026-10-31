@@ -18,8 +18,12 @@ export interface TeacherResult {
   body: { players: unknown[] } | { deleted: number } | { error: string };
 }
 
-/** ต้องตรงกับ CLASS_CODE_PATTERN ใน src/state/progressStore.ts และ supabase/schema.sql (มีเทสต์ตรวจ) */
+/** รูปแบบของคอลัมน์ class_code ต้องตรงกับ CLASS_CODE_PATTERN ใน src/state/progressStore.ts และ supabase/schema.sql (มีเทสต์ตรวจ) */
 export const CLASS_CODE = /^[A-Z0-9_-]{1,20}$/;
+/** กลุ่มที่ฐานข้อมูลใช้เก็บข้อมูลของบัญชีผู้ดูแล (save_progress ใน supabase/schema.sql) ไม่แสดงในแดชบอร์ด */
+export const ADMIN_CLASS = "SOLO";
+/** รหัสแถวของผู้เล่น (uuid) */
+const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /** รหัสผ่านที่สั้นกว่านี้ถือว่ายังไม่ได้ตั้งค่า */
 export const MIN_PASSWORD_CHARS = 8;
 const MAX_ROWS = 2000;
@@ -36,7 +40,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function handleTeacher(input: unknown, env: TeacherEnv, fetchFn: typeof fetch = fetch, delayMs = WRONG_PASSWORD_DELAY_MS): Promise<TeacherResult> {
   if (!env.TEACHER_PASSWORD || env.TEACHER_PASSWORD.length < MIN_PASSWORD_CHARS) return { status: 503, body: { error: "not_configured" } };
-  const { password, classCode, action = "list" } = (input && typeof input === "object" ? input : {}) as { password?: unknown; classCode?: unknown; action?: unknown };
+  const { password, id, action = "list" } = (input && typeof input === "object" ? input : {}) as { password?: unknown; id?: unknown; action?: unknown };
 
   if (typeof password !== "string" || !samePassword(password, env.TEACHER_PASSWORD)) {
     // หน่วงคำตอบ ทำให้การเดารหัสผ่านทีละคำช้าลง
@@ -44,18 +48,18 @@ export async function handleTeacher(input: unknown, env: TeacherEnv, fetchFn: ty
     return { status: 401, body: { error: "wrong_password" } };
   }
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return { status: 503, body: { error: "no_database" } };
-  if (classCode !== undefined && classCode !== "" && (typeof classCode !== "string" || !CLASS_CODE.test(classCode))) return { status: 400, body: { error: "bad_class_code" } };
-  if (action !== "list" && action !== "delete-class") return { status: 400, body: { error: "bad_action" } };
+  if (action !== "list" && action !== "delete-player") return { status: 400, body: { error: "bad_action" } };
 
   const base = `${env.SUPABASE_URL.replace(/\/+$/, "")}/rest/v1/players`;
   const headers = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` };
-  const filter = classCode ? `&class_code=eq.${encodeURIComponent(classCode as string)}` : "";
+  // ไม่มีรหัสห้องเรียนแล้ว (รอบ 21): ครูเห็นผู้เรียนทุกคน ยกเว้นกลุ่ม SOLO ซึ่งฐานข้อมูลใช้เก็บข้อมูลของบัญชีผู้ดูแลเสมอ
+  const filter = `&class_code=neq.${ADMIN_CLASS}`;
 
   try {
-    if (action === "delete-class") {
-      // ลบข้อมูลทั้งห้องเมื่อจบภาคเรียน ต้องระบุรหัสห้องเรียนเสมอ ไม่มีคำสั่งลบทั้งฐานข้อมูล
-      if (!classCode) return { status: 400, body: { error: "class_code_required" } };
-      const response = await fetchFn(`${base}?select=id${filter}`, { method: "DELETE", headers: { ...headers, Prefer: "return=representation" } });
+    if (action === "delete-player") {
+      // ลบข้อมูลของผู้เรียนรายคน ต้องระบุรหัสแถวเสมอ ไม่มีคำสั่งลบทั้งฐานข้อมูล และลบข้อมูลของผู้ดูแลไม่ได้
+      if (typeof id !== "string" || !PLAYER_ID.test(id)) return { status: 400, body: { error: "bad_player_id" } };
+      const response = await fetchFn(`${base}?select=id&id=eq.${id}${filter}`, { method: "DELETE", headers: { ...headers, Prefer: "return=representation" } });
       if (!response.ok) return { status: 502, body: { error: `database_${response.status}` } };
       return { status: 200, body: { deleted: ((await response.json()) as unknown[]).length } };
     }
